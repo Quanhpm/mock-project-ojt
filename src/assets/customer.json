@@ -1,0 +1,64 @@
+{
+  "customers": [
+    {
+      "id": 1,
+      "phone": "0901111111",
+      "email": "an.nguyen@test.com",
+      "password_hash": "123456",
+      "name": "Nguyen Van An",
+      "avatar_url": "https://i.pravatar.cc/150?img=1",
+      "is_active": true,
+      "is_deleted": false,
+      "created_at": "2026-02-01T08:00:00Z",
+      "updated_at": "2026-02-01T08:00:00Z"
+    },
+    {
+      "id": 2,
+      "phone": "0902222222",
+      "email": "binh.tran@test.com",
+      "password_hash": "123456",
+      "name": "Tran Thi Binh",
+      "avatar_url": "https://i.pravatar.cc/150?img=2",
+      "is_active": true,
+      "is_deleted": false,
+      "created_at": "2026-02-01T08:10:00Z",
+      "updated_at": "2026-02-01T08:10:00Z"
+    },
+    {
+      "id": 3,
+      "phone": "0903333333",
+      "email": "chau.le@test.com",
+      "password_hash": "123456",
+      "name": "Le Minh Chau",
+      "avatar_url": "https://i.pravatar.cc/150?img=3",
+      "is_active": true,
+      "is_deleted": false,
+      "created_at": "2026-02-01T08:20:00Z",
+      "updated_at": "2026-02-01T08:20:00Z"
+    },
+    {
+      "id": 4,
+      "phone": "0904444444",
+      "email": "dat.pham@test.com",
+      "password_hash": "123456",
+      "name": "Pham Quoc Dat",
+      "avatar_url": "https://i.pravatar.cc/150?img=4",
+      "is_active": true,
+      "is_deleted": false,
+      "created_at": "2026-02-01T08:30:00Z",
+      "updated_at": "2026-02-01T08:30:00Z"
+    },
+    {
+      "id": 5,
+      "phone": "0905555555",
+      "email": "huy.hoang@test.com",
+      "password_hash": "123456",
+      "name": "Hoang Gia Huy",
+      "avatar_url": "https://i.pravatar.cc/150?img=5",
+      "is_active": true,
+      "is_deleted": false,
+      "created_at": "2026-02-01T08:40:00Z",
+      "updated_at": "2026-02-01T08:40:00Z"
+    }
+  ]
+}
