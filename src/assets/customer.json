@@ -4,7 +4,7 @@
       "id": 1,
       "phone": "0901111111",
       "email": "an.nguyen@test.com",
-      "password_hash": "123456",
+      "password_hash": "12345678",
       "name": "Nguyen Van An",
       "avatar_url": "https://i.pravatar.cc/150?img=1",
       "is_active": true,
