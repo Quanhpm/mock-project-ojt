@@ -35,6 +35,6 @@ const App = () => {
     </BrowserRouter>
   );
 };
-//tes
+//test
 
 export default App;
