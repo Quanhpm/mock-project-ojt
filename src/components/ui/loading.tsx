@@ -1,1 +1,1 @@
-// Loading component
+//lazyloading component
