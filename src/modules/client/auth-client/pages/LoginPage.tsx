@@ -54,9 +54,20 @@ function LoginPage() {
   };
 
   return (
-    <div>
+    <>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Sign In</h1>
+        <p className="text-gray-600 text-sm">Enter your details to access your account.</p>
+      </div>
+
       <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={errorMessage} />
-    </div>
+
+      <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
+        <p className="text-sm text-gray-600 text-center mb-8">
+          Don't have an account? <a href="/client/register" className="text-orange-500 hover:text-orange-600 font-semibold">Create an Account</a>
+        </p>
+      </div>
+    </>
   );
 }
 

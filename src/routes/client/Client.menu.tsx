@@ -28,5 +28,10 @@ export const CLIENT_MENU: ClientMenuItem[] = [
     component: React.lazy(() => import("@/modules/client/auth-client/pages/LoginPage")),
     isEnd: true,
   },
-  
+  {
+    label: "Register",
+    path: ROUTER_URL.CLIENT_ROUTER.REGISTER,
+    component: React.lazy(() => import("@/modules/client/auth-client/pages/RegisterPage")),
+    isEnd: true,
+  },
 ]

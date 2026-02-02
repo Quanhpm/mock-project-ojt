@@ -36,27 +36,10 @@ const AuthClientLayout = () => {
       </div>
 
       {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen p-6 lg:p-12 bg-gray-50">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen p-6 lg:p-12 bg-[var(--cf-bg)]">
         <div className="w-full max-w-sm">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Sign In</h1>
-            <p className="text-gray-600 text-sm">Enter your details to access your account.</p>
-          </div>
-
-          <div className="bg-white rounded-lg p-8 shadow-sm mb-8">
+          <div className="bg-[var(--cf-surface)] rounded-lg p-8 shadow-sm">
             <Outlet />
-          </div>
-
-          <div className="pt-8 border-t border-gray-200">
-            <p className="text-sm text-gray-600 text-center mb-8">
-              Don't have an account? <a href="/client/register" className="text-orange-500 hover:text-orange-600 font-semibold">Create an Account</a>
-            </p>
-
-            <div className="flex items-center justify-center gap-6 text-xs text-gray-600">
-              <a href="#" className="hover:text-gray-900">Terms of Service</a>
-              <a href="#" className="hover:text-gray-900">Privacy Policy</a>
-              <a href="#" className="hover:text-gray-900">Help Center</a>
-            </div>
           </div>
         </div>
       </div>
