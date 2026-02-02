@@ -45,7 +45,7 @@ function UserManagement() {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto px-8 pb-8">
           {/* Filters & Toolbar */}
-          <div className="bg-surface-light p-4 rounded-xl shadow-sm border border-slate-200 mb-6 sticky top-0 z-20">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 sticky top-0 z-20">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
@@ -124,7 +124,7 @@ function UserManagement() {
           </div>
 
           {/* Table Container */}
-          <div className="bg-surface-light rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -298,7 +298,7 @@ function UserManagement() {
                     <td className="p-4">
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" />
-                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary" />
+                        <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary" />
                       </label>
                     </td>
                     <td className="p-4 text-right">
