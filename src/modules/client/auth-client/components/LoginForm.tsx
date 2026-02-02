@@ -17,10 +17,8 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
     return (
         <form 
             onSubmit={handleSubmit(onSubmit)} 
-            className="w-full max-w-md mx-auto p-6 rounded-2xl shadow-sm bg-[var(--cf-bg)] space-y-5 border border-[var(--cf-secondary)]/20"
+            className="w-full max-w-md mx-auto p-6 rounded-2xl bg-white space-y-5"
         >
-            <h2 className="text-2xl font-bold text-[var(--cf-primary)] text-center mb-2">Login</h2>
-
             {error && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200">
                     <p className="text-sm text-red-600">{error}</p>
@@ -53,7 +51,7 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
             <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isLoading ? "Đang đăng nhập..." : "Login"}
             </button>
