@@ -13,31 +13,6 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema)
     });
-<<<<<<< Updated upstream
-    const onSubmit = async (data: LoginFormValues) => {
-        const user = mockUsers.find(u => u.email === data.email);
-        
-        if (!user) {
-
-        } 
-        else {
-            // if (user.password !==) {
-                
-            // }
-        }
-    }
-
-    return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <div>
-                <label>Email</label>
-                <input {...register("email")} />
-                {errors.email && <p>{errors.email.message}</p>}
-            </div>
-            <div>
-                <label>Password</label>
-                <input {...register("password")}
-=======
 
     return (
         <form 
@@ -71,13 +46,9 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
                     className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
                     placeholder="••••••••"
                     disabled={isLoading}
->>>>>>> Stashed changes
                 />
-                {errors.password && <p>{errors.password.message}</p>}
+                {errors.password && <p className="text-xs text-red-600 mt-1 ml-1">{errors.password.message}</p>}
             </div>
-<<<<<<< Updated upstream
-            <button type="submit">Login</button>
-=======
 
             <button 
                 type="submit" 
@@ -86,7 +57,6 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
             >
                 {isLoading ? "Đang đăng nhập..." : "Login"}
             </button>
->>>>>>> Stashed changes
         </form>
     )
 }
