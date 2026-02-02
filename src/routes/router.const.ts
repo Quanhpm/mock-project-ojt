@@ -13,6 +13,7 @@ export const ROUTER_URL = {
     CHECKOUT: `checkout`,
     PRODUCTS: `products`,
     CATEGORIES: `categories`,
+    REGISTER: `/client/register`,
   },
 
   ADMIN: `/admin`,

@@ -11,7 +11,7 @@ const AdminGuard = () => {
   }
 
   if (!user || !isNonCustomerRole(user.role)) {
-    return <Navigate to={ROUTER_URL.ADMIN_ROUTER.LOGIN} replace />;
+    return <Navigate to={ROUTER_URL.CLIENT_ROUTER.LOGIN} replace />;
   }
 
   return <Outlet />;
