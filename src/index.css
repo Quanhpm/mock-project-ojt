@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+:root {
+  --cf-bg: #EDE0D4; /* Nền chính – sáng, nhẹ mắt */
+  --cf-surface: #E6CCB2; /* Nền bề mặt – card, form */
+  --cf-accent-light: #DDB892; /* Màu nhấn sáng – hover, bàn trống */
+  --cf-secondary: #B08968; /* Màu phụ – border, button phụ */
+  --cf-primary: #7F5539; /* Màu chính – thương hiệu, nút chính */
+  --cf-dark: #9C6644;   /* Màu đậm – nhấn mạnh, trạng thái đã đặt */
+}
