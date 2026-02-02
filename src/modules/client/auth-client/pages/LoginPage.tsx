@@ -2,12 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
 import { useClientAuthStore } from '../stores/client-auth.store';
+import { useToast } from '@/hooks/use-toast.hook';
 import mockUsers from '@/assets/customer.json';
 import { ROUTER_URL } from '@/routes/router.const';
 
 function LoginPage() {
   const navigate = useNavigate();
   const login = useClientAuthStore((state) => state.login);
+  const { success, error: showError } = useToast();
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,12 +21,16 @@ function LoginPage() {
       const user = mockUsers.customers.find((u) => u.email === data.email);
 
       if (!user) {
-        setErrorMessage('Email không tồn tại');
+        const errMsg = 'Email không tồn tại';
+        setErrorMessage(errMsg);
+        showError(errMsg, 'Đăng nhập thất bại');
         return;
       }
 
       if (user.password_hash !== data.password) {
-        setErrorMessage('Mật khẩu không chính xác');
+        const errMsg = 'Mật khẩu không chính xác';
+        setErrorMessage(errMsg);
+        showError(errMsg, 'Đăng nhập thất bại');
         return;
       }
 
@@ -40,6 +46,7 @@ function LoginPage() {
         updated_at: user.updated_at,
       });
 
+      success(`Chào mừng ${user.name}! Đăng nhập thành công`, 'Thành công');
       navigate(ROUTER_URL.HOME);
     } finally {
       setIsLoading(false);
