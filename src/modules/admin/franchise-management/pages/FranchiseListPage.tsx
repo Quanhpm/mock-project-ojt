@@ -7,6 +7,7 @@ interface Franchise {
   createdAt: string;
 }
 
+// dữ liệu giả lập
 const mockFranchises: Franchise[] = [
   {
     id: "1",
