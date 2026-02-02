@@ -1,6 +1,6 @@
 import React from 'react'
 
-function DashboardPage() {
+function UserManagement() {
   return (
     <div>
       
@@ -8,4 +8,4 @@ function DashboardPage() {
   )
 }
 
-export default DashboardPage
+export default UserManagement
