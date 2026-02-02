@@ -2,12 +2,14 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
 import { useClientAuthStore } from '../stores/client-auth.store';
+import { useToast } from '@/hooks/use-toast.hook';
 import mockUsers from '@/assets/customer.json';
 import { ROUTER_URL } from '@/routes/router.const';
 
 function LoginPage() {
   const navigate = useNavigate();
   const login = useClientAuthStore((state) => state.login);
+  const { success, error: showError } = useToast();
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -19,12 +21,16 @@ function LoginPage() {
       const user = mockUsers.customers.find((u) => u.email === data.email);
 
       if (!user) {
-        setErrorMessage('Email không tồn tại');
+        const errMsg = 'Email không tồn tại';
+        setErrorMessage(errMsg);
+        showError(errMsg, 'Đăng nhập thất bại');
         return;
       }
 
       if (user.password_hash !== data.password) {
-        setErrorMessage('Mật khẩu không chính xác');
+        const errMsg = 'Mật khẩu không chính xác';
+        setErrorMessage(errMsg);
+        showError(errMsg, 'Đăng nhập thất bại');
         return;
       }
 
@@ -40,6 +46,7 @@ function LoginPage() {
         updated_at: user.updated_at,
       });
 
+      success(`Chào mừng ${user.name}! Đăng nhập thành công`, 'Thành công');
       navigate(ROUTER_URL.HOME);
     } finally {
       setIsLoading(false);
@@ -47,9 +54,20 @@ function LoginPage() {
   };
 
   return (
-    <div>
+    <>
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Sign In</h1>
+        <p className="text-gray-600 text-sm">Enter your details to access your account.</p>
+      </div>
+
       <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={errorMessage} />
-    </div>
+
+      <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
+        <p className="text-sm text-gray-600 text-center mb-8">
+          Don't have an account? <a href="/client/register" className="text-orange-500 hover:text-orange-600 font-semibold">Create an Account</a>
+        </p>
+      </div>
+    </>
   );
 }
 

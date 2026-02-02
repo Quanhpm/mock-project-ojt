@@ -4,6 +4,7 @@ import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
 import { AdminAuthRoutes, AdminRoutes, ClientAuthRoutes, ClientPublicRoutes, ClientRoutes } from "./routes";
+import { ToasterComponent } from "@/components/ui/toast";
 
 const App = () => {
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -32,9 +33,11 @@ const App = () => {
 
       {/* Global loading */}
       <Loading />
+
+      {/* Toast notifications */}
+      <ToasterComponent />
     </BrowserRouter>
   );
 };
-//tes
 
 export default App;
