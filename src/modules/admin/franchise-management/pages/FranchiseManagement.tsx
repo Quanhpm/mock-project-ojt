@@ -1,11 +1,10 @@
-import React from 'react'
+import React from "react";
+import FranchiseListPage from "./FranchiseListPage";
 
-function FranchiseManagement() {
+export default function FranchiseManagement() {
   return (
     <div>
-      
+      <FranchiseListPage />
     </div>
-  )
+  );
 }
-
-export default FranchiseManagement
