@@ -36,7 +36,7 @@ const ClientHeader = () => {
               to="/" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Trang chủ
+              Homepage
             </Link>
             <Link 
               to="/menu" 
@@ -48,13 +48,19 @@ const ClientHeader = () => {
               to="/about" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Về chúng tôi
+              About Us
             </Link>
             <Link 
               to="/contact" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Liên hệ
+              Contact Us
+            </Link>
+            <Link 
+              to="/location" 
+              className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+            >
+              Location
             </Link>
           </nav>
 

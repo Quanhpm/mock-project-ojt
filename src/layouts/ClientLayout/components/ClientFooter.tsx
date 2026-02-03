@@ -2,57 +2,50 @@ import { Link } from 'react-router-dom';
 
 /**
  * ClientFooter - Footer cho GUEST (chưa đăng nhập)
- * Đơn giản, chỉ hiển thị thông tin cơ bản
+ * Design 2 phần: Social/Feedback + Company Info
  */
 const ClientFooter = () => {
   return (
-    <footer className="bg-[var(--cf-primary)] text-white py-12 mt-auto">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* About */}
-          <div>
-            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <span className="text-2xl">☕</span>
-              BOUTIQUE BREWS
-            </h3>
-            <p className="text-white/80 text-sm">
-              Mang đến những hạt cà phê tuyệt vời nhất từ khắp nơi trên thế giới.
-            </p>
-          </div>
+    <footer className="text-[var(--cf-primary)] mt-auto">
+      {/* Top Section - Social & Feedback */}
+      <div className="bg-[#e8dcc4] py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Left Side - Brand Info */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-5xl">☕</span>
+                <h3 className="text-2xl font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed">
+                Experience the world's finest coffee beans, ethically sourced and expertly roasted for your perfect cup.
+              </p>
+            </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-semibold mb-4">Liên kết nhanh</h4>
-            <ul className="space-y-2 text-sm text-white/80">
-              <li><Link to="/" className="hover:text-white transition-colors">Trang chủ</Link></li>
-              <li><Link to="/menu" className="hover:text-white transition-colors">Menu</Link></li>
-              <li><Link to="/about" className="hover:text-white transition-colors">Về chúng tôi</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors">Liên hệ</Link></li>
-            </ul>
-          </div>
-
-          {/* Account */}
-          <div>
-            <h4 className="font-semibold mb-4">Tài khoản</h4>
-            <ul className="space-y-2 text-sm text-white/80">
-              <li><Link to="/client/login" className="hover:text-white transition-colors">Đăng nhập</Link></li>
-              <li><Link to="/client/register" className="hover:text-white transition-colors">Đăng ký</Link></li>
-            </ul>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h4 className="font-semibold mb-4">Liên hệ</h4>
-            <ul className="space-y-2 text-sm text-white/80">
-              <li>📞 1900-xxxx</li>
-              <li>📧 contact@boutiquebrews.com</li>
-              <li>📍 123 Coffee Street, HCM</li>
-            </ul>
+            {/* Right Side - Feedback Section */}
+            <div>
+              <h3 className="text-xl font-bold mb-4 uppercase tracking-wider">Luôn Lắng Nghe</h3>
+              <p className="text-sm mb-4 text-gray-700">
+                Chúng tôi rất mong được lắng nghe về trải nghiệm của bạn ngày hôm nay
+              </p>
+              <button className="w-full bg-[var(--cf-primary)] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[var(--cf-dark)] transition-colors mb-2">
+                 lắng nghe
+              </button>
+              <p className="text-xs text-gray-500">Chúng tôi tôn trọng quyền riêng tư của bạn</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="border-t border-white/20 mt-8 pt-8 text-center text-sm text-white/60">
-          © 2026 Boutique Brews. All rights reserved.
+      {/* Bottom Section - Company Info */}
+      <div className="bg-[var(--cf-primary)] text-white py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-sm space-y-2">
+            <p className="font-semibold">Công ty TNHH Boutique Brews</p>
+            <p>Mã số DN: 999999999</p>
+            <p>Địa chỉ: FPT Software</p>
+            <p className="text-white/80 pt-2">©2026 - 2026 CÔNG TY TNHH </p>
+          </div>
         </div>
       </div>
     </footer>
