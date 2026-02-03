@@ -1,7 +1,11 @@
-import { PageHeader, UserFilters, UserTableRow, Pagination } from '../components'
+import { PageHeader, UserFilters, UserTableRow, Pagination, CreateUserModal, EditUserModal } from '../components'
 import { useUserFilters, useUserList } from '../hooks'
+import { useState } from 'react'
 
 function UserManagement() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingUser, setEditingUser] = useState<any>(null)
+
   const {
     filters,
     setSearchTerm,
@@ -22,12 +26,23 @@ function UserManagement() {
   } = useUserList(filters)
 
   const handleCreateUser = () => {
-    console.log('Create user clicked')
-    // TODO: Implement create user logic
+    setIsCreateModalOpen(true)
+  }
+
+  const handleSaveUser = (userData: any) => {
+    console.log('New user data:', userData)
+    // TODO: Implement save user logic
   }
 
   const handleEditUser = (userId: number) => {
-    console.log('Edit user:', userId)
+    const user = users.find((u) => u.id === userId)
+    if (user) {
+      setEditingUser(user)
+    }
+  }
+
+  const handleSaveEditUser = (userId: number, userData: any) => {
+    console.log('Edit user:', userId, userData)
     // TODO: Implement edit user logic
   }
 
@@ -103,6 +118,19 @@ function UserManagement() {
           </div>
         </div>
       </main>
+
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={handleSaveUser}
+      />
+
+      <EditUserModal
+        isOpen={!!editingUser}
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onSave={handleSaveEditUser}
+      />
     </div>
   )
 }

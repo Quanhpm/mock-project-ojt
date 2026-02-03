@@ -1,18 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { mockUsers } from '@/mock/data/users.mock'
+import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mock/data'
 import type { UserFilters } from './useUserFilters.hook'
 
-export interface User {
-  id: number
-  email: string
-  name: string
-  phone: string
-  avatar_url: string
-  is_active: boolean
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
-}
+export type User = UserWithRolesAndFranchises
 
 export const useUserList = (filters: UserFilters) => {
   const [users, setUsers] = useState<User[]>([])
@@ -20,8 +10,8 @@ export const useUserList = (filters: UserFilters) => {
   const itemsPerPage = 5
 
   useEffect(() => {
-    // Load mock data
-    setUsers(mockUsers)
+    // Load mock data with roles and franchises
+    setUsers(getUsersWithRolesAndFranchises())
   }, [])
 
   // Filter users based on search and filters
@@ -39,10 +29,25 @@ export const useUserList = (filters: UserFilters) => {
         (filters.statusFilter === 'active' && user.is_active) ||
         (filters.statusFilter === 'inactive' && !user.is_active)
 
-      // You can add more filter logic here for role and franchise
-      // For now, we'll just check search and status
+      // Role filter
+      const matchesRole =
+        filters.roleFilter === 'all' ||
+        user.roles.some((role) => {
+          if (filters.roleFilter === 'manager') return role.roleCode === 'FRANCHISE_MANAGER'
+          if (filters.roleFilter === 'barista') return role.roleCode === 'STAFF'
+          if (filters.roleFilter === 'admin') return role.roleCode === 'SUPER_ADMIN'
+          return false
+        })
 
-      return matchesSearch && matchesStatus
+      // Franchise filter
+      const matchesFranchise =
+        filters.franchiseFilter === 'all' ||
+        user.roles.some((role) => {
+          if (!role.franchiseId) return filters.franchiseFilter === 'global'
+          return role.franchiseId.toString() === filters.franchiseFilter
+        })
+
+      return matchesSearch && matchesStatus && matchesRole && matchesFranchise
     })
   }, [users, filters])
 

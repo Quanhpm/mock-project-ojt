@@ -14,6 +14,9 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   onEdit,
   onDelete,
 }) => {
+  // Get primary role (first role)
+  const primaryRole = user.roles[0] || null
+
   return (
     <tr className="group hover:bg-slate-50 transition-colors">
       <td className="p-4">
@@ -31,16 +34,30 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         </div>
       </td>
       <td className="p-4">
-        <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-          User
-        </span>
+        {primaryRole ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
+              primaryRole.roleCode === 'SUPER_ADMIN'
+                ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
+                : primaryRole.roleCode === 'FRANCHISE_MANAGER'
+                  ? 'bg-blue-50 text-blue-700 ring-blue-700/10'
+                  : 'bg-green-50 text-green-700 ring-green-700/10'
+            }`}
+          >
+            {primaryRole.roleName}
+          </span>
+        ) : (
+          <span className="text-sm text-slate-400">No role</span>
+        )}
       </td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <span className="material-symbols-outlined text-slate-400 text-[18px]">
             storefront
           </span>
-          <span className="text-slate-700">N/A</span>
+          <span className="text-slate-700">
+            {primaryRole?.franchiseName || 'Global'}
+          </span>
         </div>
       </td>
       <td className="p-4">

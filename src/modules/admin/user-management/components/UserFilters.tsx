@@ -67,9 +67,10 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               className="block w-full appearance-none rounded-lg border-0 py-2.5 pl-3 pr-10 text-slate-900 bg-slate-100 ring-1 ring-inset ring-slate-200 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 cursor-pointer"
             >
               <option value="all">All Franchises</option>
-              <option value="nyc">New York - DT</option>
-              <option value="seattle">Seattle - North</option>
-              <option value="chicago">Chicago - Loop</option>
+              <option value="global">Global</option>
+              <option value="1">HCM - Quận 1</option>
+              <option value="2">HCM - Quận 7</option>
+              <option value="3">HN - Hoàn Kiếm</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
               <span className="material-symbols-outlined text-sm">expand_more</span>
