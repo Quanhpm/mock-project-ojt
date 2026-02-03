@@ -61,6 +61,12 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductCreatePage")),
   },
   {
+    label: "Edit Product",
+    path: `${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/edit/:id`,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductActionPage")),
+  },
+  {
     label: "Inventory",
     path: ROUTER_URL.ADMIN_ROUTER.INVENTORY,
     icon: <Warehouse size={18} />,

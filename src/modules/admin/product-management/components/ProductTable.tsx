@@ -1,21 +1,42 @@
 import { mockProducts } from "@/mock/data/products.mock";
-import { Package, AlertTriangle, MapPin, Search, Download, Edit2, Plus, Trash2 } from "lucide-react";
+import { mockFranchises } from "@/mock/data/franchises.mock";
+import { Package, AlertTriangle, MapPin, Download, Edit2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ProductFilters from "./ProductFilters";
+import ProductAction from "./ProductAction";
 
 export default function ProductTable() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [franchiseFilter, setFranchiseFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string; productName: string }>({
+    isOpen: false,
+    productId: "",
+    productName: ""
+  });
   const itemsPerPage = 10;
 
   const lowStockCount = mockProducts.filter(p => p.stock < 10).length;
   const activeLocations = 12; // Mock data
 
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = mockProducts.filter(product => {
+    // Filter by search term (name or ID)
+    const matchesSearch = searchTerm === "" || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.id.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filter by category
+    const matchesCategory = categoryFilter === "" || product.categoryId === categoryFilter;
+    
+    // Filter by franchise
+    const matchesFranchise = franchiseFilter === "" || 
+      (product as any).franchiseIds?.includes(parseInt(franchiseFilter));
+    
+    return matchesSearch && matchesCategory && matchesFranchise;
+  });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -28,6 +49,20 @@ export default function ProductTable() {
       "Phụ kiện": "#9c27b0",
     };
     return colors[categoryName] || "#757575";
+  };
+
+  const handleDeleteClick = (productId: string, productName: string) => {
+    setDeleteModal({
+      isOpen: true,
+      productId,
+      productName
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    console.log("Delete product:", deleteModal.productId);
+    alert(`Product "${deleteModal.productName}" has been deleted successfully!`);
+    // Here you would typically call an API to delete the product
   };
 
   return (
@@ -163,86 +198,15 @@ export default function ProductTable() {
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div style={{ 
-        backgroundColor: "white", 
-        padding: "16px", 
-        borderRadius: "12px",
-        marginBottom: "16px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        display: "flex",
-        gap: "12px",
-        alignItems: "center"
-      }}>
-        <div style={{ 
-          flex: 1, 
-          position: "relative",
-          display: "flex",
-          alignItems: "center"
-        }}>
-          <Search size={18} color="#6c757d" style={{ 
-            position: "absolute", 
-            left: "12px" 
-          }} />
-          <input
-            type="text"
-            placeholder="Search by product name or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 12px 10px 40px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              outline: "none"
-            }}
-          />
-        </div>
-        
-        <select style={{
-          padding: "10px 12px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          fontSize: "14px",
-          cursor: "pointer",
-          backgroundColor: "white"
-        }}>
-          <option>All Categories</option>
-          <option>Điện thoại</option>
-          <option>Laptop</option>
-          <option>Phụ kiện</option>
-        </select>
-
-        <select style={{
-          padding: "10px 12px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          fontSize: "14px",
-          cursor: "pointer",
-          backgroundColor: "white"
-        }}>
-          <option>All Franchises</option>
-          <option>Downtown</option>
-          <option>Airport T2</option>
-          <option>Westside</option>
-        </select>
-
-        <button style={{
-          padding: "10px 16px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "8px",
-          fontSize: "14px",
-          cursor: "pointer",
-          backgroundColor: "white",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px"
-        }}>
-          <Download size={16} />
-          Export
-        </button>
-      </div>
+      {/* Filters */}
+      <ProductFilters
+        onSearchChange={setSearchTerm}
+        onCategoryChange={setCategoryFilter}
+        onFranchiseChange={setFranchiseFilter}
+        searchValue={searchTerm}
+        categoryValue={categoryFilter}
+        franchiseValue={franchiseFilter}
+      />
 
       {/* Table */}
       <div style={{ 
@@ -386,33 +350,25 @@ export default function ProductTable() {
                 </td>
                 <td style={{ padding: "16px" }}>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    <span style={{
-                      backgroundColor: "#f5f5f5",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "11px",
-                      color: "#424242"
-                    }}>
-                      Downtown
-                    </span>
-                    <span style={{
-                      backgroundColor: "#f5f5f5",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "11px",
-                      color: "#424242"
-                    }}>
-                      Airport T2
-                    </span>
-                    <span style={{
-                      backgroundColor: "#f5f5f5",
-                      padding: "4px 8px",
-                      borderRadius: "4px",
-                      fontSize: "11px",
-                      color: "#424242"
-                    }}>
-                      Westside
-                    </span>
+                    {(product as any).franchiseIds?.map((franchiseId: number) => {
+                      const franchise = mockFranchises.find(f => f.id === franchiseId);
+                      if (!franchise) return null;
+                      return (
+                        <span key={franchiseId} style={{
+                          backgroundColor: "#f5f5f5",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          fontSize: "11px",
+                          color: "#424242"
+                        }}>
+                          {franchise.name}
+                        </span>
+                      );
+                    }) || (
+                      <span style={{ fontSize: "12px", color: "#9e9e9e", fontStyle: "italic" }}>
+                        No franchises
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td style={{ padding: "16px", textAlign: "center" }}>
@@ -424,29 +380,30 @@ export default function ProductTable() {
                         border: "none",
                         cursor: "pointer",
                         padding: "8px",
-                        borderRadius: "6px"
+                        borderRadius: "6px",
+                        transition: "background-color 0.2s"
                       }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f5f5f5"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                       title="Edit"
                     >
                       <Edit2 size={18} color="#6c757d" />
                     </button>
                     <button 
-                      onClick={() => {
-                        if (confirm(`Are you sure you want to delete ${product.name}?`)) {
-                          console.log("Delete product:", product.id);
-                          alert("Product deleted!");
-                        }
-                      }}
+                      onClick={() => handleDeleteClick(product.id, product.name)}
                       style={{
                         backgroundColor: "transparent",
                         border: "none",
                         cursor: "pointer",
                         padding: "8px",
-                        borderRadius: "6px"
+                        borderRadius: "6px",
+                        transition: "background-color 0.2s"
                       }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#ffebee"}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
                       title="Delete"
                     >
-                      <Trash2 size={18} color="#6c757d" />
+                      <Trash2 size={18} color="#f44336" />
                     </button>
                   </div>
                 </td>
@@ -515,6 +472,15 @@ export default function ProductTable() {
           </div>
         </div>
       </div>
+
+      {/* Delete Modal */}
+      <ProductAction
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
+        onConfirm={handleDeleteConfirm}
+        productName={deleteModal.productName}
+        productId={deleteModal.productId}
+      />
     </div>
   );
 }
