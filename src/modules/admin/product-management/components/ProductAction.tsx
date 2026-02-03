@@ -151,26 +151,6 @@ export default function ProductAction({
                 </p>
               </div>
             </div>
-
-            <div style={{
-              marginTop: "16px",
-              padding: "12px",
-              backgroundColor: "#fff3e0",
-              borderRadius: "6px",
-              border: "1px solid #ffe0b2",
-              display: "flex",
-              gap: "8px"
-            }}>
-              <AlertTriangle size={16} color="#f57c00" style={{ flexShrink: 0, marginTop: "2px" }} />
-              <p style={{
-                margin: 0,
-                fontSize: "13px",
-                color: "#e65100",
-                lineHeight: "1.5"
-              }}>
-                <strong>Warning:</strong> All product data including inventory records, pricing history, and franchise availability will be permanently deleted.
-              </p>
-            </div>
           </div>
 
           {/* Footer */}

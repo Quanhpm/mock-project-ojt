@@ -93,9 +93,12 @@ export default function ProductForm() {
               fontSize: "14px",
               fontWeight: "600",
               cursor: "pointer",
-              backgroundColor: "#ff9800",
-              color: "white"
+              backgroundColor: "#8B4513",
+              color: "white",
+              transition: "background-color 0.2s"
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
           >
             Create Product
           </button>
@@ -109,7 +112,7 @@ export default function ProductForm() {
             {/* Product Identity Section */}
             <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#ff9800" />
+                <Package size={18} color="#8B4513" />
                 <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Product Identity</h2>
               </div>
 
@@ -137,7 +140,7 @@ export default function ProductForm() {
                     />
                     <RefreshCw size={16} color="#6c757d" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", cursor: "pointer" }} />
                   </div>
-                  <p style={{ fontSize: "11px", color: "#ff9800", margin: "4px 0 0 0" }}>AUTO-GENERATED</p>
+                  <p style={{ fontSize: "11px", color: "#8B4513", margin: "4px 0 0 0" }}>AUTO-GENERATED</p>
                 </div>
 
                 {/* Product Name */}
@@ -270,14 +273,14 @@ export default function ProductForm() {
             <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Package size={18} color="#ff9800" />
+                  <Package size={18} color="#8B4513" />
                   <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Franchise Mapping</h2>
                 </div>
                 <button
                   type="button"
                   style={{
                     fontSize: "13px",
-                    color: "#ff9800",
+                    color: "#8B4513",
                     backgroundColor: "transparent",
                     border: "none",
                     cursor: "pointer",
@@ -360,7 +363,7 @@ export default function ProductForm() {
             {/* Inventory Status Section */}
             <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#ff9800" />
+                <Package size={18} color="#8B4513" />
                 <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Inventory Status</h2>
               </div>
 
@@ -429,8 +432,8 @@ export default function ProductForm() {
                 gap: "8px",
                 marginBottom: "20px"
               }}>
-                <AlertCircle size={16} color="#ff9800" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <p style={{ margin: 0, fontSize: "12px", color: "#e65100" }}>
+                <AlertCircle size={16} color="#8B4513" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p style={{ margin: 0, fontSize: "12px", color: "#6d3610" }}>
                   Provide is now managed within the core identity and franchise map for better consistency.
                 </p>
               </div>
@@ -455,7 +458,7 @@ export default function ProductForm() {
                           width: "44px",
                           height: "24px",
                           borderRadius: "12px",
-                          backgroundColor: formData[item.field as keyof typeof formData] ? "#ff9800" : "#e0e0e0",
+                          backgroundColor: formData[item.field as keyof typeof formData] ? "#8B4513" : "#e0e0e0",
                           position: "relative",
                           cursor: "pointer",
                           transition: "background-color 0.2s"
