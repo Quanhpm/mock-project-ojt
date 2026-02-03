@@ -1,15 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users,
-  Store,
-  Settings,
-  Moon,
-  Sun,
-  X,
-  Menu,
-} from "lucide-react";
+import { LayoutDashboard, Users, Store, Settings, X, Menu } from "lucide-react";
 
 interface MenuItem {
   name: string;
@@ -47,12 +38,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
   const location = useLocation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    // Implement dark mode logic here
-  };
 
   const isActivePath = (path: string) => {
     return (
@@ -117,17 +102,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         })}
       </nav>
 
-      {/* Bottom Section - User Info & Dark Mode */}
-      <div className="border-t border-gray-200 px-4 py-4 space-y-4">
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={toggleDarkMode}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-        >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          <span>Dark Mode</span>
-        </button>
-
+      {/* Bottom Section - User Info */}
+      <div className="border-t border-gray-200 px-4 py-4">
         {/* User Profile */}
         <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
           <div
