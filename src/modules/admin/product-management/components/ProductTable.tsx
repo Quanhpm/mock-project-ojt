@@ -1,6 +1,5 @@
 import { mockProducts, mockCategories } from "@/mock/data/products.mock";
 import { mockFranchises } from "@/mock/data/franchises.mock";
-import { Edit2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductAction from "./ProductAction";
@@ -122,7 +121,7 @@ export default function ProductTable() {
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
             >
-              <Plus size={20} />
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>add</span>
               <span>Create Product</span>
             </button>
           </div>
@@ -564,14 +563,20 @@ export default function ProductTable() {
                                 border: "none",
                                 borderRadius: "6px",
                                 backgroundColor: "transparent",
-                                color: "#197fe6",
+                                color: "#94a3b8",
                                 cursor: "pointer",
-                                transition: "background-color 0.2s"
+                                transition: "all 0.2s"
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#e7f3ff"}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(25, 127, 230, 0.05)";
+                                e.currentTarget.style.color = "#197fe6";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "#94a3b8";
+                              }}
                             >
-                              <Edit2 size={16} />
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>edit_square</span>
                             </button>
                             <button
                               onClick={() => handleDeleteClick(product.id, product.name)}
@@ -584,14 +589,20 @@ export default function ProductTable() {
                                 border: "none",
                                 borderRadius: "6px",
                                 backgroundColor: "transparent",
-                                color: "#dc3545",
+                                color: "#94a3b8",
                                 cursor: "pointer",
-                                transition: "background-color 0.2s"
+                                transition: "all 0.2s"
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#ffebee"}
-                              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "#fee";
+                                e.currentTarget.style.color = "#ef4444";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "#94a3b8";
+                              }}
                             >
-                              <Trash2 size={16} />
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
                             </button>
                           </div>
                         </td>
