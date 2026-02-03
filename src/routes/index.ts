@@ -7,3 +7,4 @@ export * from "./client/Client.menu";
 export * from "./client/Client.route";
 export * from "./client/ClientAuth.route";
 export * from "./client/ClientPublic.route";
+export * from "./client/HomePrivate.route";
