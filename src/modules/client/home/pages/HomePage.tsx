@@ -1,299 +1,213 @@
-import { Link } from 'react-router-dom';
-import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
+import { useState, useEffect } from 'react';
+
+const MENU_DATA = [
+  { id: 1, title: 'CÀ PHÊ VIỆT NAM', img: 'https://images.unsplash.com/photo-1544787210-282dd0dc51a6?q=80&w=600&auto=format&fit=crop' },
+  { id: 2, title: 'TRÀ SHAN TUYẾT CỔ THỤ', img: 'https://images.unsplash.com/photo-1594631252845-29fc458695d1?q=80&w=600&auto=format&fit=crop' },
+  { id: 3, title: 'BẠC SỈU BOUTIQUE BREWS', img: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=600&auto=format&fit=crop' },
+  { id: 4, title: 'TRÁI CÂY TƯƠI THEO MÙA', img: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=600&auto=format&fit=crop' },
+  { id: 5, title: 'BÒ BÍA PHƯƠNG', img: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=600&auto=format&fit=crop' },
+];
+
+const GROCERY_DATA = [
+  { id: 1, title: 'CÀ PHÊ', img: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?q=80&w=400&auto=format&fit=crop' },
+  { id: 2, title: 'TRÀ CỔ THỤ', img: 'https://images.unsplash.com/photo-1563911191320-458ff6220d16?q=80&w=400&auto=format&fit=crop' },
+  { id: 3, title: 'SET QUÀ TẶNG', img: 'https://images.unsplash.com/photo-1549462111-80a2b988c838?q=80&w=400&auto=format&fit=crop' },
+  { id: 4, title: 'QUÀ LƯU NIỆM', img: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=400&auto=format&fit=crop' },
+  { id: 5, title: 'KHÁC', img: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?q=80&w=400&auto=format&fit=crop' },
+];
+
+const BANNER_SLIDES = [
+  { id: 1, img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop' },
+  { id: 2, img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1600&auto=format&fit=crop' },
+  { id: 3, img: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?q=80&w=1600&auto=format&fit=crop' },
+  { id: 4, img: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1600&auto=format&fit=crop' },
+  { id: 5, img: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=1600&auto=format&fit=crop' },
+];
 
 function HomePage() {
-  const { isLoggedIn } = useClientAuthStore();
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % BANNER_SLIDES.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + BANNER_SLIDES.length) % BANNER_SLIDES.length);
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % BANNER_SLIDES.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="bg-[var(--cf-bg)]">
-      {/* Hero Section */}
-      <section 
-        className="relative h-[600px] bg-cover bg-center flex items-center justify-center"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1509785307050-d4066910ec1e?w=1920&h=1080&fit=crop")',
-        }}
-      >
-        <div className="absolute inset-0 bg-black/50"></div>
-        
-        <div className="relative z-10 text-center text-white px-4 max-w-4xl">
-          <div className="inline-block px-4 py-2 mb-6 border border-orange-500 rounded-full">
-            <span className="text-orange-500 font-semibold tracking-wider">☕ BOUTIQUE BREWS</span>
-          </div>
-          
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight">
-            Start Your<br />Morning Right
-          </h1>
-          
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join our community of coffee lovers and earn rewards with every sip. 
-            Experience the finest beans sourced ethically from around the globe.
-          </p>
-          
-          <div className="flex gap-4 justify-center">
-            <Link
-              to="/menu"
-              className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105"
+    <div className="bg-[var(--cf-bg)] overflow-x-hidden">
+      {/* 1. HERO BANNER */}
+      <section className="bg-[var(--cf-secondary)] px-4 py-6 md:px-10 md:py-8">
+        <div className="max-w-screen-xl mx-auto relative rounded-2xl overflow-hidden shadow-2xl aspect-video md:aspect-[21/9]">
+          {/* Slides */}
+          {BANNER_SLIDES.map((slide, index) => (
+            <div
+              key={slide.id}
+              className={`absolute inset-0 transition-opacity duration-700 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
             >
-              Khám phá Menu
-            </Link>
-            {!isLoggedIn && (
-              <Link
-                to="/client/register"
-                className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-bold rounded-lg border-2 border-white transition-all"
-              >
-                Đăng ký ngay
-              </Link>
-            )}
+              <img 
+                src={slide.img} 
+                alt={`Banner ${slide.id}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+
+          {/* Navigation Buttons */}
+          <button
+            onClick={prevSlide}
+            className="hidden md:block absolute left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 rounded-full p-3 transition-all duration-300"
+            aria-label="Previous Banner"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+          
+          <button
+            onClick={nextSlide}
+            className="hidden md:block absolute right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 rounded-full p-3 transition-all duration-300"
+            aria-label="Next Banner"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+
+          {/* Indicators */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            {BANNER_SLIDES.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`h-2 rounded-full transition-all ${
+                  index === currentSlide 
+                    ? 'w-4 bg-white' 
+                    : 'w-2 bg-white/50'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[var(--cf-primary)] mb-4">
-              Tại sao chọn chúng tôi?
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Chúng tôi cam kết mang đến trải nghiệm cà phê tuyệt vời nhất cho bạn
-            </p>
+      {/* 2. MENU SECTION */}
+      <section className="py-16 px-4 max-w-screen-xl mx-auto">
+        <h2 className="font-serif font-black uppercase tracking-[0.2em] text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
+          Thực Đơn
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8">
+          {MENU_DATA.map((item) => (
+            <div 
+              key={item.id} 
+              className="cursor-pointer transition-transform hover:-translate-y-1"
+            >
+              <div className="aspect-square rounded-3xl overflow-hidden border-4 border-transparent hover:border-[var(--cf-primary)] transition-all duration-300 bg-[var(--cf-surface)]">
+                <img 
+                  src={item.img} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+                  loading="lazy"
+                />
+              </div>
+              <p className="mt-4 text-center font-bold text-xs md:text-sm uppercase tracking-tight md:tracking-normal leading-tight text-[var(--cf-primary)]">
+                {item.title}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 3. GLOBAL PRESENCE */}
+      <section className="bg-[var(--cf-surface)] py-20 px-4 border-t border-[var(--cf-secondary)]">
+        <h2 className="font-serif font-black uppercase tracking-[0.2em] text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
+          Quốc Tế
+        </h2>
+        <div className="max-w-4xl mx-auto relative">
+          <img 
+            src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=1000&auto=format&fit=crop" 
+            alt="World Map" 
+            className="w-full grayscale sepia contrast-110 opacity-80 mix-blend-multiply"
+            loading="lazy"
+          />
+          {/* Map Markers */}
+          <div className="absolute top-[22%] left-[72%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            VIETNAM
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="text-center p-8 rounded-2xl bg-[var(--cf-surface)] hover:shadow-xl transition-shadow">
-              <div className="text-5xl mb-4">🌱</div>
-              <h3 className="text-xl font-bold text-[var(--cf-primary)] mb-3">
-                100% Organic
-              </h3>
-              <p className="text-gray-600">
-                Hạt cà phê organic được trồng và chăm sóc tự nhiên, 
-                không sử dụng hóa chất độc hại
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="text-center p-8 rounded-2xl bg-[var(--cf-surface)] hover:shadow-xl transition-shadow">
-              <div className="text-5xl mb-4">⚡</div>
-              <h3 className="text-xl font-bold text-[var(--cf-primary)] mb-3">
-                Giao hàng nhanh
-              </h3>
-              <p className="text-gray-600">
-                Đặt hàng online và nhận trong vòng 30 phút. 
-                Cam kết giữ nhiệt độ và chất lượng tốt nhất
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="text-center p-8 rounded-2xl bg-[var(--cf-surface)] hover:shadow-xl transition-shadow">
-              <div className="text-5xl mb-4">🎁</div>
-              <h3 className="text-xl font-bold text-[var(--cf-primary)] mb-3">
-                Tích điểm đổi quà
-              </h3>
-              <p className="text-gray-600">
-                Mỗi đơn hàng tích điểm, đổi quà hấp dẫn. 
-                Ưu đãi đặc biệt cho thành viên thân thiết
-              </p>
-            </div>
+          <div className="absolute top-[35%] left-[48%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            LONDON
+          </div>
+          <div className="absolute top-[30%] left-[80%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            CANTON
+          </div>
+          <div className="absolute top-[25%] left-[85%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            TAIPEI
+          </div>
+          <div className="absolute top-[75%] left-[88%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            SYDNEY
+          </div>
+          <div className="absolute top-[45%] left-[92%] bg-[var(--cf-primary)] text-white text-[10px] px-2 py-1 rounded shadow-md -translate-x-1/2 whitespace-nowrap font-semibold">
+            TO BE CONTINUED...
           </div>
         </div>
       </section>
 
-      {/* Popular Products Section */}
-      <section className="py-20 bg-[var(--cf-bg)]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[var(--cf-primary)] mb-4">
-              Sản phẩm nổi bật
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Những món được yêu thích nhất tại Boutique Brews
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {/* Product Card 1 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
-                <span className="text-7xl">☕</span>
+      {/* 4. GROCERY SECTION */}
+      <section className="py-16 px-4 max-w-screen-xl mx-auto">
+        <h2 className="font-serif font-black uppercase tracking-[0.2em] text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
+          Tạp Hoá
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8">
+          {GROCERY_DATA.map((item) => (
+            <div key={item.id} className="cursor-pointer">
+              <div className="aspect-[4/5] bg-white rounded-xl p-4 flex items-center justify-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                <img 
+                  src={item.img} 
+                  alt={item.title} 
+                  className="w-full h-4/5 object-contain"
+                  loading="lazy"
+                />
               </div>
-              <div className="p-6">
-                <h3 className="font-bold text-lg text-[var(--cf-primary)] mb-2">
-                  Espresso
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Cà phê espresso đậm đà, tinh túy Ý
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-orange-500">45.000đ</span>
-                  <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                    Đặt ngay
-                  </button>
-                </div>
-              </div>
+              <p className="mt-4 text-center font-bold text-sm uppercase tracking-wider text-[var(--cf-primary)]">
+                {item.title}
+              </p>
             </div>
-
-            {/* Product Card 2 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
-                <span className="text-7xl">🥤</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-bold text-lg text-[var(--cf-primary)] mb-2">
-                  Latte
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Sữa tươi hòa quyện cùng cà phê
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-orange-500">55.000đ</span>
-                  <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                    Đặt ngay
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Card 3 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                <span className="text-7xl">🧊</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-bold text-lg text-[var(--cf-primary)] mb-2">
-                  Cold Brew
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Cà phê ủ lạnh 24h, mát lạnh sảng khoái
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-orange-500">60.000đ</span>
-                  <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                    Đặt ngay
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Card 4 */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow">
-              <div className="h-48 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-                <span className="text-7xl">🍵</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-bold text-lg text-[var(--cf-primary)] mb-2">
-                  Matcha Latte
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  Trà xanh Matcha Nhật Bản cao cấp
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-orange-500">65.000đ</span>
-                  <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                    Đặt ngay
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center mt-12">
-            <Link
-              to="/menu"
-              className="inline-block px-8 py-4 bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] text-white font-bold rounded-lg shadow-lg transition-all"
-            >
-              Xem toàn bộ Menu →
-            </Link>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* CTA Section */}
-      {!isLoggedIn && (
-        <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Bắt đầu hành trình cà phê của bạn
-            </h2>
-            <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-              Đăng ký ngay hôm nay để nhận ưu đãi 20% cho đơn hàng đầu tiên
-            </p>
-            <Link
-              to="/client/register"
-              className="inline-block px-10 py-4 bg-white text-orange-500 font-bold rounded-lg shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
-            >
-              Đăng ký miễn phí
-            </Link>
-          </div>
-        </section>
-      )}
-
-      {/* Testimonials Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-[var(--cf-primary)] mb-4">
-              Khách hàng nói gì về chúng tôi
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-[var(--cf-surface)] p-8 rounded-2xl">
-              <div className="flex items-center mb-4">
-                <img 
-                  src="https://i.pravatar.cc/150?img=1" 
-                  alt="Customer" 
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <div>
-                  <h4 className="font-bold text-[var(--cf-primary)]">Nguyễn Văn An</h4>
-                  <div className="text-yellow-500">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "Cà phê ở đây thật sự tuyệt vời! Hương vị đậm đà, 
-                giá cả hợp lý. Tôi sẽ quay lại nhiều lần nữa."
-              </p>
-            </div>
-
-            {/* Testimonial 2 */}
-            <div className="bg-[var(--cf-surface)] p-8 rounded-2xl">
-              <div className="flex items-center mb-4">
-                <img 
-                  src="https://i.pravatar.cc/150?img=2" 
-                  alt="Customer" 
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <div>
-                  <h4 className="font-bold text-[var(--cf-primary)]">Trần Thị Bình</h4>
-                  <div className="text-yellow-500">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "Không gian đẹp, nhân viên thân thiện. 
-                Cold brew ở đây là món yêu thích của tôi!"
-              </p>
-            </div>
-
-            {/* Testimonial 3 */}
-            <div className="bg-[var(--cf-surface)] p-8 rounded-2xl">
-              <div className="flex items-center mb-4">
-                <img 
-                  src="https://i.pravatar.cc/150?img=3" 
-                  alt="Customer" 
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <div>
-                  <h4 className="font-bold text-[var(--cf-primary)]">Lê Minh Châu</h4>
-                  <div className="text-yellow-500">⭐⭐⭐⭐⭐</div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "Giao hàng nhanh, đóng gói cẩn thận. 
-                Chương trình tích điểm rất hấp dẫn!"
-              </p>
+      {/* 5. STORY SECTION */}
+      <section className="px-4 pb-20 max-w-screen-xl mx-auto">
+        <h2 className="font-serif font-black uppercase tracking-[0.2em] text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
+          Câu Chuyện Boutique Brews
+        </h2>
+        <div className="relative aspect-video md:aspect-[21/7] rounded-3xl overflow-hidden shadow-2xl border-t-8 border-[var(--cf-dark)]">
+          <img 
+            src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1600&auto=format&fit=crop" 
+            alt="Our Story" 
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+            <div className="border-2 border-white/50 px-8 py-6 md:px-20 md:py-12 bg-black/10 backdrop-blur-sm text-center">
+              <h3 className="text-white font-serif font-black uppercase tracking-[0.2em] text-2xl md:text-6xl leading-tight">
+                Boutique<br/>Brews
+              </h3>
             </div>
           </div>
         </div>
