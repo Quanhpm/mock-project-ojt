@@ -5,10 +5,12 @@ import AuthClientLayout from "@/layouts/AuthClientLayout/AuthClientLayout";
 
 const LoginPage = React.lazy(() => import("@/modules/client/auth-client/pages/LoginPage"));
 const ForgotPasswordPage = React.lazy(() => import("@/modules/client/auth-client/pages/ForgotPasswordPage"));
+const RegisterPage = React.lazy(() => import("@/modules/client/auth-client/pages/RegisterPage"));
 
 export const ClientAuthRoutes = (
   <Route element={<AuthClientLayout />}>
     <Route path={ROUTER_URL.CLIENT_ROUTER.LOGIN} element={<LoginPage />} />
+    <Route path={ROUTER_URL.CLIENT_ROUTER.REGISTER} element={<RegisterPage />} />
     <Route path={ROUTER_URL.CLIENT_ROUTER.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
   </Route>
 );
