@@ -167,7 +167,7 @@ export default function ProductActionPage() {
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
         <span 
           onClick={() => navigate("/admin/products")}
-          style={{ cursor: "pointer", color: "#ff9800" }}
+          style={{ cursor: "pointer", color: "#8B4513" }}
         >
           Products
         </span> › <span style={{ color: "#212529" }}>Edit Product</span>
@@ -227,12 +227,15 @@ export default function ProductActionPage() {
               fontSize: "14px",
               fontWeight: "600",
               cursor: "pointer",
-              backgroundColor: "#ff9800",
+              backgroundColor: "#8B4513",
               color: "white",
               display: "flex",
               alignItems: "center",
-              gap: "8px"
+              gap: "8px",
+              transition: "background-color 0.2s"
             }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
           >
             <Save size={18} />
             Save Changes
@@ -247,7 +250,7 @@ export default function ProductActionPage() {
             {/* Product Identity */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-                <Package size={20} color="#ff9800" />
+                <Package size={20} color="#8B4513" />
                 <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>Product Identity</h2>
               </div>
 
@@ -439,13 +442,16 @@ export default function ProductActionPage() {
                     display: "inline-block",
                     marginTop: "16px",
                     padding: "8px 16px",
-                    backgroundColor: "#ff9800",
+                    backgroundColor: "#8B4513",
                     color: "white",
                     borderRadius: "6px",
                     cursor: "pointer",
                     fontSize: "14px",
-                    fontWeight: "500"
+                    fontWeight: "500",
+                    transition: "background-color 0.2s"
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
                 >
                   Choose Files
                 </label>
@@ -531,14 +537,17 @@ export default function ProductActionPage() {
                   onClick={addSpecification}
                   style={{
                     padding: "10px 20px",
-                    backgroundColor: "#ff9800",
+                    backgroundColor: "#8B4513",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontWeight: "500",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    transition: "background-color 0.2s"
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
                 >
                   Add
                 </button>
@@ -713,13 +722,16 @@ export default function ProductActionPage() {
                   onClick={addTag}
                   style={{
                     padding: "8px 16px",
-                    backgroundColor: "#ff9800",
+                    backgroundColor: "#8B4513",
                     color: "white",
                     border: "none",
                     borderRadius: "8px",
                     fontSize: "14px",
-                    cursor: "pointer"
+                    cursor: "pointer",
+                    transition: "background-color 0.2s"
                   }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
                 >
                   Add
                 </button>
@@ -730,8 +742,8 @@ export default function ProductActionPage() {
                   <span
                     key={tag}
                     style={{
-                      backgroundColor: "#fff3e0",
-                      color: "#f57c00",
+                      backgroundColor: "#f5e6d3",
+                      color: "#8B4513",
                       padding: "6px 12px",
                       borderRadius: "16px",
                       fontSize: "13px",
