@@ -48,4 +48,3 @@ const AuthClientLayout = () => {
 };
 
 export default AuthClientLayout;
-

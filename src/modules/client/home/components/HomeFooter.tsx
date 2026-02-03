@@ -1,10 +1,11 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 /**
- * ClientFooter - Footer cho GUEST (chưa đăng nhập)
- * Đơn giản, chỉ hiển thị thông tin cơ bản
+ * HomeFooter - Footer cho USER ĐÃ ĐĂNG NHẬP
+ * Có thêm links cho các trang private
  */
-const ClientFooter = () => {
+const HomeFooter: React.FC = () => {
   return (
     <footer className="bg-[var(--cf-primary)] text-white py-12 mt-auto">
       <div className="container mx-auto px-4">
@@ -31,12 +32,14 @@ const ClientFooter = () => {
             </ul>
           </div>
 
-          {/* Account */}
+          {/* My Account */}
           <div>
-            <h4 className="font-semibold mb-4">Tài khoản</h4>
+            <h4 className="font-semibold mb-4">Tài khoản của tôi</h4>
             <ul className="space-y-2 text-sm text-white/80">
-              <li><Link to="/client/login" className="hover:text-white transition-colors">Đăng nhập</Link></li>
-              <li><Link to="/client/register" className="hover:text-white transition-colors">Đăng ký</Link></li>
+              <li><Link to="/home/cart" className="hover:text-white transition-colors">Giỏ hàng</Link></li>
+              <li><Link to="/home/order-history" className="hover:text-white transition-colors">Đơn hàng</Link></li>
+              <li><Link to="/home/profile" className="hover:text-white transition-colors">Hồ sơ</Link></li>
+              <li><Link to="/home/change-password" className="hover:text-white transition-colors">Đổi mật khẩu</Link></li>
             </ul>
           </div>
 
@@ -59,4 +62,4 @@ const ClientFooter = () => {
   );
 };
 
-export default ClientFooter;
+export default HomeFooter;
