@@ -34,7 +34,6 @@ const chartConfig = {
 
 export const OrderSourceComparison: React.FC<Props> = ({ filters: _filters, data = [] }) => {
   const colors = ['var(--cf-primary)', 'var(--cf-accent-light)'];
-  const totalOrders = data.reduce((sum, item) => sum + item.orders, 0);
 
   const chartData = data.map((item) => ({
     name: item.name,
