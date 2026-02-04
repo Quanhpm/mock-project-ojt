@@ -2,7 +2,7 @@ import { mockProducts, mockCategories } from "@/mockdata";
 import { mockFranchises } from "@/mockdata";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ProductAction from "./ProductAction";
+import ProductDelete from "./ProductDelete";
 
 export default function ProductTable() {
   const navigate = useNavigate();
@@ -719,7 +719,7 @@ export default function ProductTable() {
       </main>
 
       {/* Delete Modal */}
-      <ProductAction
+      <ProductDelete
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
         onConfirm={handleDeleteConfirm}
