@@ -42,6 +42,12 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Store size={18} />,
     component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseManagement")),
   },
+  {
+    label: "Create Franchise",
+    path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/create`,
+    icon: <Store size={18} />,
+    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseCreatePage")),
+  },
   // {
   //   label: "Categories",
   //   path: ROUTER_URL.ADMIN_ROUTER.CATEGORY,
