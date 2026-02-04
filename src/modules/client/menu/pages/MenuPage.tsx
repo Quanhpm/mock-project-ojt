@@ -56,15 +56,15 @@ function MenuPage() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex">
+        <div className="min-h-screen bg-[var(--cf-bg)] flex w-screen">
             {/* Navigation - Sticky */}
-            <nav className="sticky top-0 left-0 z-10 bg-white border-r border-gray-200 shadow-sm w-64 py-4">
+            <nav className="fixed top-16 left-0 z-10 w-64 py-4">
                 <div className="flex flex-col gap-4 px-4">
                     {(categories as any).categories.map((item: Category) => (
                         <button
                             key={item.code}
                             onClick={() => scrollToSection(item.code)}
-                            className="px-4 py-2 rounded-lg whitespace-nowrap text-sm font-medium transition-colors hover:bg-blue-100 hover:text-blue-600 active:scale-95"
+                            className="px-4 py-2 rounded-lg whitespace-nowrap text-sm text-[var(--cf-primary)] font-medium transition-colors hover:bg-[var(--cf-secondary)] hover:text-white active:scale-95"
                         >
                             {item.name}
                         </button>
@@ -73,7 +73,7 @@ function MenuPage() {
             </nav>
 
             {/* Content Section - Right */}
-            <div className="flex-1 px-8 py-8 bg-gray-50">
+            <div className="flex-1 ml-64 px-8 py-8 border-l border-gray-200">
                 <div className="max-w-7xl mx-auto">
                     {(categories as any).categories.map((category: Category) => {
                         const categoryProducts = getProductsByCategory(category.id);
@@ -83,18 +83,18 @@ function MenuPage() {
                                 ref={(el) => {
                                     if (el) sectionRefs.current[category.code] = el;
                                 }}
-                                className="mb-12"
+                                className="mb-12 scroll-mt-20"
                             >
                                 {/* Tiêu đề danh mục */}
                                 <div className="mb-6">
-                                    <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                    <h2 className="text-3xl font-bold text-[var(--cf-primary)] mb-2">
                                         {category.name}
                                     </h2>
-                                    <p className="text-gray-600">{category.description}</p>
+                                    <p className="text-gray-700">{category.description}</p>
                                 </div>
 
                                 {/* Lưới sản phẩm */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                                     {categoryProducts.length > 0 ? (
                                         categoryProducts.map((product: Product) => (
                                             <Item
@@ -106,7 +106,7 @@ function MenuPage() {
                                         ))
                                     ) : (
                                         <p className="col-span-full text-center text-gray-500 py-8">
-                                            Không có sản phẩm nào trong danh mục này
+                                            None
                                         </p>
                                     )}
                                 </div>
