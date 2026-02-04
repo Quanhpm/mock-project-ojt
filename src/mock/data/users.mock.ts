@@ -3,7 +3,7 @@ export const mockUsers = [
   {
     id: 1,
     email: "admin@example.com",
-    password: "123", // hashed "password123"
+    password: "admin123", 
     name: "Nguyễn Văn Admin",
     phone: "0123456789",
     avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
