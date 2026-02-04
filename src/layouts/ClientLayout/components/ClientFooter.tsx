@@ -1,54 +1,55 @@
+import logo from '@/assets/img/logo.png';
+
+/**
+ * ClientFooter - Footer cho GUEST (chưa đăng nhập)
+ * Design 2 phần: Social/Feedback + Company Info
+ */
 const ClientFooter = () => {
   return (
-    <footer className="text-white py-8 mt-auto" style={{ backgroundColor: 'var(--cf-primary)' }}>
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* About Section */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Về Chúng Tôi</h3>
-            <p className="text-sm" style={{ color: 'var(--cf-accent-light)' }}>
-              Chúng tôi cung cấp sản phẩm chất lượng cao với dịch vụ khách hàng tốt nhất.
-            </p>
-          </div>
+    <footer className="text-[var(--cf-primary)] mt-auto">
+      {/* Top Section - Social & Feedback */}
+      <div className="bg-[#e8dcc4] py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Left Side - Brand Info */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src={logo} 
+                  alt="Boutique Brews Logo" 
+                  className="h-16 w-auto"
+                />
+                <h3 className="text-2xl font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed">
+                Experience the world's finest coffee beans, ethically sourced and expertly roasted for your perfect cup.
+              </p>
+            </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Liên Kết Nhanh</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="/shop" className="text-sm transition-colors" style={{ color: 'var(--cf-accent-light)' }}>
-                  Cửa Hàng
-                </a>
-              </li>
-              <li>
-                <a href="/about" className="text-sm transition-colors" style={{ color: 'var(--cf-accent-light)' }}>
-                  Giới Thiệu
-                </a>
-              </li>
-              <li>
-                <a href="/contact" className="text-sm transition-colors" style={{ color: 'var(--cf-accent-light)' }}>
-                  Liên Hệ
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Liên Hệ</h3>
-            <ul className="space-y-2 text-sm" style={{ color: 'var(--cf-accent-light)' }}>
-              <li>Email: support@example.com</li>
-              <li>Điện thoại: (84) 123-456-789</li>
-              <li>Địa chỉ: Hà Nội, Việt Nam</li>
-            </ul>
+            {/* Right Side - Feedback Section */}
+            <div>
+              <h3 className="text-xl font-bold mb-4 uppercase tracking-wider">Luôn Lắng Nghe</h3>
+              <p className="text-sm mb-4 text-gray-700">
+                Chúng tôi rất mong được lắng nghe về trải nghiệm của bạn ngày hôm nay
+              </p>
+              <button className="w-full bg-[var(--cf-primary)] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[var(--cf-dark)] transition-colors mb-2">
+                 lắng nghe
+              </button>
+              <p className="text-xs text-gray-500">Chúng tôi tôn trọng quyền riêng tư của bạn</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Copyright */}
-        <div className="border-t mt-8 pt-6 text-center" style={{ borderColor: 'var(--cf-dark)' }}>
-          <p className="text-sm" style={{ color: 'var(--cf-accent-light)' }}>
-            © {new Date().getFullYear()} All rights reserved.
-          </p>
+      {/* Bottom Section - Company Info */}
+      <div className="bg-[var(--cf-primary)] text-white py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-sm space-y-2">
+            <p className="font-semibold">Công ty TNHH Boutique Brews</p>
+            <p>Mã số DN: 999999999</p>
+            <p>Địa chỉ: FPT Software</p>
+            <p className="text-white/80 pt-2">©2026 - 2026 CÔNG TY TNHH </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,0 +1,28 @@
+[
+  {
+    "id": 1,
+    "code": "HN001",
+    "name": "Chi nhánh Hà Nội",
+    "logo_url": "https://picsum.photos/seed/franchise1/400",
+    "address": "123 Phố Huế, Hai Bà Trưng, Hà Nội",
+    "opened_at": "2024-01-15T08:00:00Z",
+    "closed_at": null,
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-15T08:00:00Z",
+    "updated_at": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": 2,
+    "code": "HCM001",
+    "name": "Chi nhánh TP.HCM",
+    "logo_url": "https://picsum.photos/seed/franchise2/400",
+    "address": "456 Nguyễn Huệ, Quận 1, TP.HCM",
+    "opened_at": "2024-02-01T08:00:00Z",
+    "closed_at": null,
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-01T08:00:00Z",
+    "updated_at": "2024-02-01T08:00:00Z"
+  }
+]

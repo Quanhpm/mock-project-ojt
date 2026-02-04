@@ -51,6 +51,11 @@ export const ToasterComponent = () => (
     richColors
     closeButton
     theme="light"
+    toastOptions={{
+      style: {
+        marginTop: '70px',
+      },
+    }}
   />
 );
 

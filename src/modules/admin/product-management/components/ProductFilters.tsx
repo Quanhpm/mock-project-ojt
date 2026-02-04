@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { mockCategories } from "@/mock/data/products.mock";
-import { mockFranchises } from "@/mock/data/franchises.mock";
+import { mockCategories } from "@/mockdata";
+import { mockFranchises } from "@/mockdata";
 
 interface ProductFiltersProps {
   onSearchChange: (search: string) => void;

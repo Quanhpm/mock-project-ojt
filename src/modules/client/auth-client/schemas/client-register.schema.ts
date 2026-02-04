@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { mockUsers } from "@/mock/data/users.mock";
+import { mockUsers } from "@/mockdata";
 
 export const registerSchema = z.object({
     name: z.string().min(5, "Must be 5 characters"),
