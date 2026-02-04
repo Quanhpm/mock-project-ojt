@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import Item from "../components/Item"
-import categories from '@/assets/products/category.json';
-import products from '@/assets/products/product.json';
+import categories from '@/mockdata/categories.json';
+import products from '@/mockdata/products.json';
 
 interface Category {
     id: number;
@@ -101,7 +101,7 @@ function MenuPage() {
                                                 key={product.id}
                                                 id={product.id}
                                                 name={product.name}
-                                                price={`${product.min_price.toLocaleString('vi-VN')} - ${product.max_price.toLocaleString('vi-VN')} ₫`}
+                                                price={product.min_price}
                                             />
                                         ))
                                     ) : (

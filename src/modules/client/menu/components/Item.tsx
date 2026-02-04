@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 interface ItemProps {
     id: string | number; // Nhớ thêm id vào props để điều hướng
     name: string;
-    price: string;
+    price: number;
 }
 
 function Item({ id, name, price }: ItemProps) {
@@ -19,7 +19,7 @@ function Item({ id, name, price }: ItemProps) {
                     {name}
                 </h5>
                 <p className="text-white font-bold text-slate-900">
-                    {price}
+                    {price} ₫
                 </p>
         </div>
     );
