@@ -1,8 +1,60 @@
-import { mockProducts, mockCategories } from "@/mockdata";
-import { mockFranchises } from "@/mockdata";
+import { 
+  mockProducts, 
+  mockCategories, 
+  mockFranchises,
+  productFranchise,
+  inventory,
+  categoryFranchise,
+  productCategoryFranchise
+} from "@/mockdata";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ProductAction from "./ProductAction";
+import ProductDelete from "./ProductDelete";
+
+// Helper functions to work with normalized data
+const getProductStock = (productId: number) => {
+  const productFranchises = productFranchise.filter(pf => pf.product_id === productId);
+  let totalStock = 0;
+  
+  productFranchises.forEach(pf => {
+    const inv = inventory.find(i => i.product_franchise_id === pf.id);
+    if (inv && inv.is_active) {
+      totalStock += inv.quantity;
+    }
+  });
+  
+  return totalStock;
+};
+
+const getProductFranchiseIds = (productId: number) => {
+  return productFranchise
+    .filter(pf => pf.product_id === productId && pf.is_active)
+    .map(pf => pf.franchise_id);
+};
+
+const getProductCategoryId = (productId: number, franchiseId: number = 1) => {
+  // Find product_franchise first
+  const pf = productFranchise.find(pf => pf.product_id === productId && pf.franchise_id === franchiseId);
+  if (!pf) return null;
+  
+  // Find category through product_category_franchise
+  const pcf = productCategoryFranchise.find(pcf => pcf.product_franchise_id === pf.id);
+  if (!pcf) return null;
+  
+  // Find category_franchise to get category_id
+  const cf = categoryFranchise.find(cf => cf.id === pcf.category_franchise_id);
+  return cf?.category_id || null;
+};
+
+const getProductPrice = (productId: number, franchiseId: number = 1) => {
+  const pf = productFranchise.find(pf => pf.product_id === productId && pf.franchise_id === franchiseId);
+  return pf?.price_base || 0;
+};
+
+const getProductCategory = (productId: number, franchiseId: number = 1) => {
+  const categoryId = getProductCategoryId(productId, franchiseId);
+  return categoryId ? mockCategories.find(c => c.id === categoryId) : null;
+};
 
 export default function ProductTable() {
   const navigate = useNavigate();
@@ -19,28 +71,31 @@ export default function ProductTable() {
   const [productStatus, setProductStatus] = useState<Record<string, boolean>>(
     mockProducts.reduce((acc, product) => ({
       ...acc,
-      [product.id]: product.stock > 0
+      [product.id]: getProductStock(product.id) > 0
     }), {})
   );
   const itemsPerPage = 10;
 
   const filteredProducts = mockProducts.filter(product => {
-    // Filter by search term (name or ID)
+    // Filter by search term (name or SKU)
     const matchesSearch = searchTerm === "" || 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.id.toLowerCase().includes(searchTerm.toLowerCase());
+      product.SKU.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Filter by category
-    const matchesCategory = categoryFilter === "all" || product.categoryId === categoryFilter;
+    const productCategoryId = getProductCategoryId(product.id);
+    const matchesCategory = categoryFilter === "all" || productCategoryId?.toString() === categoryFilter;
     
     // Filter by franchise
+    const productFranchiseIds = getProductFranchiseIds(product.id);
     const matchesFranchise = franchiseFilter === "all" || 
-      (product.franchiseIds?.includes(parseInt(franchiseFilter)) ?? false);
+      productFranchiseIds.includes(parseInt(franchiseFilter));
     
-    // Filter by status
+    // Filter by status (stock)
+    const productStock = getProductStock(product.id);
     const matchesStatus = statusFilter === "all" || 
-      (statusFilter === "in-stock" && product.stock > 0) ||
-      (statusFilter === "out-of-stock" && product.stock === 0);
+      (statusFilter === "in-stock" && productStock > 0) ||
+      (statusFilter === "out-of-stock" && productStock === 0);
     
     return matchesSearch && matchesCategory && matchesFranchise && matchesStatus;
   });
@@ -404,9 +459,12 @@ export default function ProductTable() {
                 </thead>
                 <tbody style={{ borderTop: "1px solid #e9ecef" }}>
                   {currentProducts.map((product) => {
+                    const productFranchiseIds = getProductFranchiseIds(product.id);
                     const productFranchises = mockFranchises.filter(f => 
-                      (product.franchiseIds?.includes(f.id) ?? false) && f.is_active && !f.is_deleted
+                      productFranchiseIds.includes(f.id) && f.is_active && !f.is_deleted
                     );
+                    const productCategory = getProductCategory(product.id);
+                    const productPrice = getProductPrice(product.id);
                     
                     return (
                       <tr
@@ -429,7 +487,7 @@ export default function ProductTable() {
                         <td style={{ padding: "16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                             <img
-                              src={product.images?.[0]}
+                              src={`https://picsum.photos/seed/product${product.id}/400`}
                               alt={product.name}
                               style={{
                                 width: "40px",
@@ -456,10 +514,10 @@ export default function ProductTable() {
                             borderRadius: "9999px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            backgroundColor: getCategoryColor(product.category.name) + "15",
-                            color: getCategoryColor(product.category.name)
+                            backgroundColor: getCategoryColor(productCategory?.name || "Default") + "15",
+                            color: getCategoryColor(productCategory?.name || "Default")
                           }}>
-                            {product.category.name}
+                            {productCategory?.name || "No Category"}
                           </span>
                         </td>
                         <td style={{
@@ -468,7 +526,7 @@ export default function ProductTable() {
                           fontWeight: "600",
                           color: "#212529"
                         }}>
-                          ${(product.price / 1000).toFixed(2)}
+                          ${(productPrice / 1000).toFixed(2)}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <label style={{
@@ -579,7 +637,7 @@ export default function ProductTable() {
                               <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>edit_square</span>
                             </button>
                             <button
-                              onClick={() => handleDeleteClick(product.id, product.name)}
+                              onClick={() => handleDeleteClick(product.id.toString(), product.name)}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -719,7 +777,7 @@ export default function ProductTable() {
       </main>
 
       {/* Delete Modal */}
-      <ProductAction
+      <ProductDelete
         isOpen={deleteModal.isOpen}
         onClose={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
         onConfirm={handleDeleteConfirm}
