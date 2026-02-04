@@ -84,7 +84,7 @@ export default function AdminLoginPage() {
           <div className="absolute inset-0 flex items-end p-10">
             <div className="text-white italic max-w-xs">
               <p className="text-sm">
-                "Coffee is a language in itself."
+                Coffee is a language in itself.
               </p>
               <p className="mt-3 text-xs opacity-90">
                 — Jackie Chan
@@ -93,23 +93,23 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        {/* ✅ RIGHT FORM - GIỮ NGUYÊN */}
-        <div className="w-full md:w-1/2 flex items-center justify-center bg-white">
-          <div className="w-full max-w-md p-10">
-            <div className="mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-orange-600 text-white p-2 rounded">
-                  ☕
+        {/* ✅ RIGHT FORM - UPDATED WITH NEW COLOR SCHEME */}
+        <div className="w-full md:w-1/2 flex items-center justify-center px-4" style={{ backgroundColor: 'var(--cf-surface)' }}>
+          <div className="w-full max-w-2xl p-12 rounded-2xl" style={{ backgroundColor: 'var(--cf-bg)' }}>
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="text-4xl p-3 rounded-lg" style={{ backgroundColor: 'var(--cf-primary)', color: 'white' }}>
+                  <img src="https://cdn.discordapp.com/attachments/1460639504233660461/1468430883915829421/BeautyPlus-IMAGE-ENHANCER-1770171590197.png?ex=6983fe54&is=6982acd4&hm=1ddcc827aab77ba595859871a202719c2ebfbb26c9061ffdde807c3077cd2ebe" alt="BrewBase Logo" className="w-10 h-10 object-contain" />
                 </div>
-                <div className="text-xl font-semibold">
+                <div className="text-2xl font-bold" style={{ color: 'var(--cf-primary)' }}>
                   BrewBase
                 </div>
               </div>
 
-              <h1 className="text-3xl font-bold mt-6 text-gray-900">
+              <h1 className="text-5xl font-bold mt-8" style={{ color: 'var(--cf-primary)' }}>
                 Welcome back
               </h1>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-lg mt-3" style={{ color: 'var(--cf-secondary)' }}>
                 Log in to the Coffee Chain Admin Portal
               </p>
             </div>
@@ -121,9 +121,9 @@ export default function AdminLoginPage() {
               onClearError={() => setAuthError(null)}
             />
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-base mt-8" style={{ color: 'var(--cf-secondary)' }}>
               Need help?{" "}
-              <a className="text-orange-600 hover:underline">
+              <a className="hover:underline font-semibold" style={{ color: 'var(--cf-primary)' }}>
                 Contact Support
               </a>
             </p>
