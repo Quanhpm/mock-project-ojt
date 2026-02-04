@@ -45,8 +45,7 @@ const App = () => {
         </Routes>
       </Suspense>
 
-      {/* Global loading */}
-      <Loading />
+
 
       {/* Toast notifications */}
       <ToasterComponent />

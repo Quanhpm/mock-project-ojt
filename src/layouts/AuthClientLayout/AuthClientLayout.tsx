@@ -1,6 +1,14 @@
 import { Outlet} from 'react-router-dom';
+import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
+import LoadingLayout from '@/layouts/LoadingLayout';
 
 const AuthClientLayout = () => {
+  const authLoading = useClientAuthStore((state) => state.authLoading);
+
+  if (authLoading) {
+    return <LoadingLayout />;
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Banner */}
