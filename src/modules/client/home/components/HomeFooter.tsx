@@ -1,10 +1,11 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 /**
- * ClientFooter - Footer cho GUEST (chưa đăng nhập)
- * Design 2 phần: Social/Feedback + Company Info
+ * HomeFooter - Footer cho USER ĐÃ ĐĂNG NHẬP
+ * Có thêm links cho các trang private
  */
-const ClientFooter = () => {
+const HomeFooter: React.FC = () => {
   return (
     <footer className="text-[var(--cf-primary)] mt-auto">
       {/* Top Section - Social & Feedback */}
@@ -52,4 +53,4 @@ const ClientFooter = () => {
   );
 };
 
-export default ClientFooter;
+export default HomeFooter;

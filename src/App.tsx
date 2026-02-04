@@ -1,13 +1,19 @@
-import  Loading  from "@/layouts/LoadingLayout/LoadingLayout";
-import { useAuthStore } from "@/stores/auth.store";
+import Loading from "@/layouts/LoadingLayout/LoadingLayout";
+import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
-import { AdminAuthRoutes, AdminRoutes, ClientAuthRoutes, ClientPublicRoutes, ClientRoutes } from "./routes";
+import { 
+  AdminAuthRoutes, 
+  AdminRoutes, 
+  ClientAuthRoutes, 
+  ClientPublicRoutes, 
+  HomePrivateRoutes 
+} from "./routes";
 import { ToasterComponent } from "@/components/ui/toast";
 
 const App = () => {
-  const hydrate = useAuthStore((state) => state.hydrate);
+  const hydrate = useClientAuthStore((state) => state.hydrate);
 
   // sync localStorage -> store when reload
   useEffect(() => {
@@ -18,15 +24,23 @@ const App = () => {
     <BrowserRouter>
       <Suspense fallback={<Loading />}>
         <Routes>
-          {/* Admin */}
+          {/* ========== ADMIN ROUTES ========== */}
           {AdminAuthRoutes}
           {AdminRoutes}
 
-          {/* Client */}
+          {/* ========== CLIENT AUTH ROUTES ========== */}
+          {/* Login, Register, Forgot Password */}
           {ClientAuthRoutes}
-          {ClientPublicRoutes}
-          {ClientRoutes}
 
+          {/* ========== CLIENT PUBLIC ROUTES ========== */}
+          {/* Guest có thể truy cập: /, /menu, /about, /contact */}
+          {ClientPublicRoutes}
+
+          {/* ========== HOME PRIVATE ROUTES ========== */}
+          {/* Cần đăng nhập: /home, /home/cart, /home/profile */}
+          {HomePrivateRoutes}
+
+          {/* ========== 404 NOT FOUND ========== */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
@@ -39,5 +53,6 @@ const App = () => {
     </BrowserRouter>
   );
 };
+//test
 
 export default App;

@@ -1,16 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Users,
-  Store,
-  Settings,
-  Moon,
-  Sun,
-  X,
-  Menu,
-} from "lucide-react";
-//ádfasdfasdfasdfasdf
+import { LayoutDashboard, Users, Store, Settings, X, Package } from "lucide-react";
+
+// Theme colors
+const THEME_COLORS = {
+  primary: "#7f5539",
+  primaryLight: "#7f55391a",
+} as const;
+
 interface MenuItem {
   name: string;
   path: string;
@@ -38,6 +35,11 @@ const menuItems: MenuItem[] = [
     path: "/admin/settings",
     icon: <Settings size={20} />,
   },
+  {
+    name: "Products",
+    path: "/admin/products",
+    icon: <Package size={20} />,
+  },
 ];
 
 interface SidebarProps {
@@ -47,12 +49,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
   const location = useLocation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    // Implement dark mode logic here
-  };
 
   const isActivePath = (path: string) => {
     return (
@@ -67,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-lg flex items-center justify-center"
-            style={{ backgroundColor: "#7f5539" }}
+            style={{ backgroundColor: THEME_COLORS.primary }}
           >
             <Store className="text-white" size={24} />
           </div>
@@ -77,13 +73,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         <button
           onClick={onMobileClose}
           className="lg:hidden text-gray-500 hover:text-gray-700 transition-colors"
+          aria-label="Close sidebar"
         >
           <X size={24} />
         </button>
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto" aria-label="Main navigation">
         {menuItems.map((item) => {
           const isActive = isActivePath(item.path);
           return (
@@ -101,12 +98,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
               `}
               style={
                 isActive
-                  ? { backgroundColor: "#7f55391a", color: "#7f5539" }
+                  ? { backgroundColor: THEME_COLORS.primaryLight, color: THEME_COLORS.primary }
                   : {}
               }
             >
               <span
-                style={isActive ? { color: "#7f5539" } : {}}
+                style={isActive ? { color: THEME_COLORS.primary } : {}}
                 className={isActive ? "" : "text-gray-500"}
               >
                 {item.icon}
@@ -117,22 +114,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         })}
       </nav>
 
-      {/* Bottom Section - User Info & Dark Mode */}
-      <div className="border-t border-gray-200 px-4 py-4 space-y-4">
-        {/* Dark Mode Toggle */}
-        <button
-          onClick={toggleDarkMode}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-        >
-          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-          <span>Dark Mode</span>
-        </button>
-
+      {/* Bottom Section - User Info */}
+      <div className="border-t border-gray-200 px-4 py-4">
         {/* User Profile */}
         <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: "#7f5539" }}
+            style={{ backgroundColor: THEME_COLORS.primary }}
           >
             <span className="text-white font-semibold text-sm">AM</span>
           </div>
@@ -154,6 +142,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={onMobileClose}
+          aria-hidden="true"
         />
       )}
 

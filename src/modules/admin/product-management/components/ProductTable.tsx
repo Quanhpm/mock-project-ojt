@@ -35,7 +35,7 @@ export default function ProductTable() {
     
     // Filter by franchise
     const matchesFranchise = franchiseFilter === "all" || 
-      (product as any).franchiseIds?.includes(parseInt(franchiseFilter));
+      (product.franchiseIds?.includes(parseInt(franchiseFilter)) ?? false);
     
     // Filter by status
     const matchesStatus = statusFilter === "all" || 
@@ -405,7 +405,7 @@ export default function ProductTable() {
                 <tbody style={{ borderTop: "1px solid #e9ecef" }}>
                   {currentProducts.map((product) => {
                     const productFranchises = mockFranchises.filter(f => 
-                      (product as any).franchiseIds?.includes(f.id) && f.is_active && !f.is_deleted
+                      (product.franchiseIds?.includes(f.id) ?? false) && f.is_active && !f.is_deleted
                     );
                     
                     return (
