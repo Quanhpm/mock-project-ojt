@@ -8,31 +8,31 @@ const ClientFooter = () => {
   return (
     <footer className="text-[var(--cf-primary)] mt-auto">
       {/* Top Section - Social & Feedback */}
-      <div className="bg-[#e8dcc4] py-12">
+      <div className="bg-[#e8dcc4] py-6">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Side - Brand Info */}
             <div>
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-2 mb-3">
                 <img 
                   src={logo} 
                   alt="Boutique Brews Logo" 
-                  className="h-16 w-auto"
+                  className="h-10 w-auto"
                 />
-                <h3 className="text-2xl font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
+                <h3 className="text-lg font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
               </div>
-              <p className="text-white/90 text-sm leading-relaxed">
+              <p className="text-white/90 text-xs leading-relaxed">
                 Experience the world's finest coffee beans, ethically sourced and expertly roasted for your perfect cup.
               </p>
             </div>
 
             {/* Right Side - Feedback Section */}
             <div>
-              <h3 className="text-xl font-bold mb-4 uppercase tracking-wider">Luôn Lắng Nghe</h3>
-              <p className="text-sm mb-4 text-gray-700">
+              <h3 className="text-base font-bold mb-2 uppercase tracking-wider">Luôn Lắng Nghe</h3>
+              <p className="text-xs mb-3 text-gray-700">
                 Chúng tôi rất mong được lắng nghe về trải nghiệm của bạn ngày hôm nay
               </p>
-              <button className="w-full bg-[var(--cf-primary)] text-white py-3 px-6 rounded-lg font-semibold hover:bg-[var(--cf-dark)] transition-colors mb-2">
+              <button className="w-full bg-[var(--cf-primary)] text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-[var(--cf-dark)] transition-colors mb-1">
                  lắng nghe
               </button>
               <p className="text-xs text-gray-500">Chúng tôi tôn trọng quyền riêng tư của bạn</p>
@@ -42,13 +42,13 @@ const ClientFooter = () => {
       </div>
 
       {/* Bottom Section - Company Info */}
-      <div className="bg-[var(--cf-primary)] text-white py-8">
+      <div className="bg-[var(--cf-primary)] text-white py-4">
         <div className="container mx-auto px-4">
-          <div className="text-sm space-y-2">
+          <div className="text-xs space-y-1">
             <p className="font-semibold">Công ty TNHH Boutique Brews</p>
-            <p>Mã số DN: 999999999</p>
+            <p>Mã số DN: FS-GROUP-2</p>
             <p>Địa chỉ: FPT Software</p>
-            <p className="text-white/80 pt-2">©2026 - 2026 CÔNG TY TNHH </p>
+            <p className="text-white/80 pt-1">©2026 - 2026 CÔNG TY TNHH NHÓM 2-FS </p>
           </div>
         </div>
       </div>
