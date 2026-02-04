@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { mockUsers } from "@/mock/data/users.mock";
+import { mockUsers } from "@/mockdata";
 import { ROUTER_URL } from "@/routes/router.const";
 import { useAdminAuthStore } from "../stores/admin-auth.store";
 

@@ -1,6 +1,6 @@
 import { X, AlertTriangle } from "lucide-react";
 
-interface ProductActionProps {
+interface ProductDeleteProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -8,13 +8,13 @@ interface ProductActionProps {
   productId: string;
 }
 
-export default function ProductAction({ 
+export default function ProductDelete({ 
   isOpen, 
   onClose, 
   onConfirm, 
   productName,
   productId 
-}: ProductActionProps) {
+}: ProductDeleteProps) {
   if (!isOpen) return null;
 
   const handleConfirm = () => {

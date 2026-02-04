@@ -17,11 +17,13 @@ interface ClientAuthState {
   user: ClientUser | null;
   isLoggedIn: boolean;
   isInitialized: boolean;
+  authLoading: boolean;
 
   login: (user: ClientUser) => void;
   logout: () => void;
   hydrate: () => void;
   updateUser: (user: Partial<ClientUser>) => void;
+  setAuthLoading: (loading: boolean) => void;
 }
 
 export const useClientAuthStore = create<ClientAuthState>()(
@@ -30,6 +32,7 @@ export const useClientAuthStore = create<ClientAuthState>()(
       user: null,
       isLoggedIn: false,
       isInitialized: false,
+      authLoading: false,
 
       login: (user) => {
         set({ user, isLoggedIn: true });
@@ -47,6 +50,10 @@ export const useClientAuthStore = create<ClientAuthState>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         }));
+      },
+
+      setAuthLoading: (loading) => {
+        set({ authLoading: loading });
       },
     }),
     {

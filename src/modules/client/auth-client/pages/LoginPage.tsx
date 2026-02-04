@@ -3,26 +3,30 @@ import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
 import { useClientAuthStore } from '../stores/client-auth.store';
 import { useToast } from '@/hooks/use-toast.hook';
-import mockUsers from '@/assets/customer.json';
+import customers from '@/mockdata/customers.json';
 import { ROUTER_URL } from '@/routes/router.const';
+import { Suspense, lazy } from 'react';
+import LoadingLayout from '@/layouts/LoadingLayout';
 
 function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const login = useClientAuthStore((state) => state.login);
+  const { login, setAuthLoading } = useClientAuthStore();
   const { success, error: showError } = useToast();
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   // Lấy route trước đó từ location.state hoặc mặc định về HOME
   const from = (location.state as { from?: string })?.from || ROUTER_URL.HOME;
 
   const handleLogin = async (data: { email: string; password: string }) => {
-    setIsLoading(true);
+    setAuthLoading(true);
     setErrorMessage('');
 
     try {
-      const user = mockUsers.customers.find((u) => u.email === data.email);
+      // Simulate loading delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const user = customers.find((u) => u.email === data.email);
 
       if (!user) {
         const errMsg = 'Email không tồn tại';
@@ -31,7 +35,7 @@ function LoginPage() {
         return;
       }
 
-      if (user.password_hash !== data.password) {
+      if (user.password !== data.password) {
         const errMsg = 'Mật khẩu không chính xác';
         setErrorMessage(errMsg);
         showError(errMsg, 'Đăng nhập thất bại');
@@ -50,12 +54,12 @@ function LoginPage() {
         updated_at: user.updated_at,
       });
 
-      success(`Chào mừng ${user.name}! Đăng nhập thành công`, 'Thành công');
+      success(`Chào mừng ${user.name}! Đăng nhập thành công`);
       
       // Redirect về trang trước đó hoặc HOME
       navigate(from, { replace: true });
     } finally {
-      setIsLoading(false);
+      setAuthLoading(false);
     }
   };
 
@@ -77,7 +81,7 @@ function LoginPage() {
         )}
       </div>
 
-      <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={errorMessage} />
+      <LoginForm onSubmit={handleLogin} isLoading={false} error={errorMessage} />
 
       <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
         <p className="text-sm text-gray-600 text-center mb-8">

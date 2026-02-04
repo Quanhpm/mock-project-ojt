@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "code": "GLOBAL_ADMIN",
+    "name": "Quản trị viên toàn hệ thống",
+    "description": "Có quyền truy cập và quản lý toàn bộ hệ thống",
+    "scope": "GLOBAL",
+    "is_deleted": false,
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z"
+  },
+  {
+    "id": 2,
+    "code": "FRANCHISE_MANAGER",
+    "name": "Quản lý chi nhánh",
+    "description": "Quản lý hoạt động của một chi nhánh cụ thể",
+    "scope": "FRANCHISE",
+    "is_deleted": false,
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z"
+  },
+  {
+    "id": 3,
+    "code": "STAFF",
+    "name": "Nhân viên",
+    "description": "Nhân viên bán hàng và phục vụ khách hàng",
+    "scope": "FRANCHISE",
+    "is_deleted": false,
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z"
+  },
+  {
+    "id": 4,
+    "code": "WAREHOUSE",
+    "name": "Nhân viên kho",
+    "description": "Quản lý kho hàng và inventory",
+    "scope": "FRANCHISE",
+    "is_deleted": false,
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z"
+  }
+]

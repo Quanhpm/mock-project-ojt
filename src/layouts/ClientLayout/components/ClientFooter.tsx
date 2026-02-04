@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import logo from '@/assets/img/logo.png';
 
 /**
  * ClientFooter - Footer cho GUEST (chưa đăng nhập)
@@ -14,7 +14,11 @@ const ClientFooter = () => {
             {/* Left Side - Brand Info */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-5xl">☕</span>
+                <img 
+                  src={logo} 
+                  alt="Boutique Brews Logo" 
+                  className="h-16 w-auto"
+                />
                 <h3 className="text-2xl font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
               </div>
               <p className="text-white/90 text-sm leading-relaxed">

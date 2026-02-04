@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "franchise_id": 1,
+    "name": "Ca sáng",
+    "start_time": "06:00:00",
+    "end_time": "14:00:00",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-15T08:00:00Z",
+    "updated_at": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": 2,
+    "franchise_id": 1,
+    "name": "Ca chiều",
+    "start_time": "14:00:00",
+    "end_time": "22:00:00",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-15T08:00:00Z",
+    "updated_at": "2024-01-15T08:00:00Z"
+  },
+  {
+    "id": 3,
+    "franchise_id": 2,
+    "name": "Ca sáng",
+    "start_time": "07:00:00",
+    "end_time": "15:00:00",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-01T08:00:00Z",
+    "updated_at": "2024-02-01T08:00:00Z"
+  },
+  {
+    "id": 4,
+    "franchise_id": 2,
+    "name": "Ca tối",
+    "start_time": "15:00:00",
+    "end_time": "23:00:00",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-01T08:00:00Z",
+    "updated_at": "2024-02-01T08:00:00Z"
+  }
+]
