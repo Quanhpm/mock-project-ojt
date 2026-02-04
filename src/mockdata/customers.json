@@ -1,0 +1,112 @@
+[
+  {
+    "id": 1,
+    "phone": "0987654321",
+    "email": "customer1@gmail.com",
+    "name": "Nguyễn Văn A",
+    "avatar_url": "https://picsum.photos/seed/customer1/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-20T08:00:00Z",
+    "updated_at": "2024-01-20T08:00:00Z"
+  },
+  {
+    "id": 2,
+    "phone": "0987654322",
+    "email": "customer2@gmail.com", 
+    "name": "Trần Thị B",
+    "avatar_url": "https://picsum.photos/seed/customer2/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-21T08:00:00Z",
+    "updated_at": "2024-01-21T08:00:00Z"
+  },
+  {
+    "id": 3,
+    "phone": "0987654323",
+    "email": null,
+    "name": "Lê Văn C",
+    "avatar_url": "https://picsum.photos/seed/customer3/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-22T08:00:00Z",
+    "updated_at": "2024-01-22T08:00:00Z"
+  },
+  {
+    "id": 4,
+    "phone": "0987654324",
+    "email": "customer4@gmail.com",
+    "name": "Phạm Thị D",
+    "avatar_url": "https://picsum.photos/seed/customer4/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-23T08:00:00Z",
+    "updated_at": "2024-01-23T08:00:00Z"
+  },
+  {
+    "id": 5,
+    "phone": "0987654325",
+    "email": "customer5@gmail.com",
+    "name": "Hoàng Văn E",
+    "avatar_url": "https://picsum.photos/seed/customer5/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-24T08:00:00Z",
+    "updated_at": "2024-01-24T08:00:00Z"
+  },
+  {
+    "id": 6,
+    "phone": "0987654326",
+    "email": null,
+    "name": "Vũ Thị F",
+    "avatar_url": "https://picsum.photos/seed/customer6/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-01T08:00:00Z",
+    "updated_at": "2024-02-01T08:00:00Z"
+  },
+  {
+    "id": 7,
+    "phone": "0987654327",
+    "email": "customer7@gmail.com",
+    "name": "Đặng Văn G",
+    "avatar_url": "https://picsum.photos/seed/customer7/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-02T08:00:00Z",
+    "updated_at": "2024-02-02T08:00:00Z"
+  },
+  {
+    "id": 8,
+    "phone": "0987654328",
+    "email": "customer8@gmail.com",
+    "name": "Bùi Thị H",
+    "avatar_url": "https://picsum.photos/seed/customer8/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-03T08:00:00Z",
+    "updated_at": "2024-02-03T08:00:00Z"
+  },
+  {
+    "id": 9,
+    "phone": "0987654329",
+    "email": null,
+    "name": "Cao Văn I",
+    "avatar_url": "https://picsum.photos/seed/customer9/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-04T08:00:00Z",
+    "updated_at": "2024-02-04T08:00:00Z"
+  },
+  {
+    "id": 10,
+    "phone": "0987654330",
+    "email": "customer10@gmail.com",
+    "name": "Đinh Thị K",
+    "avatar_url": "https://picsum.photos/seed/customer10/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-05T08:00:00Z",
+    "updated_at": "2024-02-05T08:00:00Z"
+  }
+]

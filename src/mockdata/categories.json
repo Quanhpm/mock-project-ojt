@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "code": "COFFEE",
+    "name": "Cà phê",
+    "description": "Các loại đồ uống cà phê",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": 2,
+    "code": "TEA",
+    "name": "Trà",
+    "description": "Các loại trà và trà sữa",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": 3,
+    "code": "BAKERY",
+    "name": "Bánh ngọt",
+    "description": "Bánh kẹo và đồ nướng",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": 4,
+    "code": "SMOOTHIE",
+    "name": "Sinh tố",
+    "description": "Sinh tố hoa quả tươi",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-10T08:00:00Z"
+  },
+  {
+    "id": 5,
+    "code": "JUICE",
+    "name": "Nước ép",
+    "description": "Nước ép hoa quả tươi",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-10T08:00:00Z",
+    "updated_at": "2024-01-10T08:00:00Z"
+  }
+]

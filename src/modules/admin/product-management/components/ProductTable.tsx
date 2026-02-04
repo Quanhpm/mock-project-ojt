@@ -1,5 +1,5 @@
-import { mockProducts, mockCategories } from "@/mock/data/products.mock";
-import { mockFranchises } from "@/mock/data/franchises.mock";
+import { mockProducts, mockCategories } from "@/mockdata";
+import { mockFranchises } from "@/mockdata";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductAction from "./ProductAction";

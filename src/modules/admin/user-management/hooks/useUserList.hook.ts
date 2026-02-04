@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mock/data'
+import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mockdata'
 import type { UserFilters } from './useUserFilters.hook'
 
 export type User = UserWithRolesAndFranchises

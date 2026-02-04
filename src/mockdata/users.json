@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1,
+    "email": "admin@franchise.com",
+    "password": "123",
+    "name": "Nguyễn Văn Admin",
+    "phone": "0901234567",
+    "avatar_url": "https://picsum.photos/seed/user1/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-01T08:00:00Z",
+    "updated_at": "2024-01-01T08:00:00Z",
+    "role": "admin"
+  },
+  {
+    "id": 2,
+    "email": "manager.hanoi@franchise.com",
+    "password": "123",
+    "name": "Trần Thị Lan",
+    "phone": "0902234567",
+    "avatar_url": "https://picsum.photos/seed/user2/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-15T08:00:00Z",
+    "updated_at": "2024-01-15T08:00:00Z",
+    "role": "manager"
+  },
+  {
+    "id": 3,
+    "email": "staff1.hanoi@franchise.com",
+    "password_hash": "$2b$10$rJZZqE5X8ZJ9PQKyYzJMXO1tHvNuAWrP3SX5nV8mH9wL2qE4YhGxO",
+    "name": "Lê Minh Tuấn",
+    "phone": "0903234567",
+    "avatar_url": "https://picsum.photos/seed/user3/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-20T08:00:00Z",
+    "updated_at": "2024-01-20T08:00:00Z",
+    "role": "staff"
+  },
+  {
+    "id": 4,
+    "email": "staff2.hcm@franchise.com",
+    "password": "123",
+    "name": "Phạm Thị Mai",
+    "phone": "0904234567",
+    "avatar_url": "https://picsum.photos/seed/user4/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-05T08:00:00Z",
+    "updated_at": "2024-02-05T08:00:00Z",
+    "role": "staff"
+  },
+  {
+    "id": 5,
+    "email": "warehouse.hanoi@franchise.com",
+    "password": "123",
+    "name": "Hoàng Văn Đức",
+    "phone": "0905234567",
+    "avatar_url": "https://picsum.photos/seed/user5/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-01-25T08:00:00Z",
+    "updated_at": "2024-01-25T08:00:00Z",
+    "role": "warehouse"
+  }
+]
