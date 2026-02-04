@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
 
@@ -8,12 +8,20 @@ import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
  * Có avatar và dropdown menu
  */
 const HomeHeader: React.FC = () => {
-  const { user, logout } = useClientAuthStore();
+  const { user, logout, isLoggedIn } = useClientAuthStore();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Check login status
+  useEffect(() => {
+    if (!isLoggedIn) {
+      navigate('/client/login');
+    }
+  }, [isLoggedIn, navigate]);
+
   const handleLogout = () => {
     logout();
+    setIsDropdownOpen(false);
     navigate('/');
   };
 
@@ -35,7 +43,7 @@ const HomeHeader: React.FC = () => {
               to="/" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Trang chủ
+              HomePage
             </Link>
             <Link 
               to="/menu" 
@@ -47,34 +55,52 @@ const HomeHeader: React.FC = () => {
               to="/about" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Về chúng tôi
+              About Us
             </Link>
             <Link 
               to="/contact" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Liên hệ
+              Contact Us
             </Link>
             <Link 
-              to="/home/cart" 
-              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
-            >
-              🛒 Giỏ hàng
-            </Link>
-            <Link 
-              to="/home/order-history" 
+              to="/location" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              📦 Đơn hàng
+              Location
+            </Link>
+            <Link 
+              to="/franchise" 
+              className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+            >
+              Franchise
             </Link>
           </nav>
 
-          {/* User Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
+          {/* Right Side - User Menu */}
+          <div className="flex items-center gap-4">
+            {/* Cart Link */}
+            <Link
+              to="/home/cart"
+              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
+              🛒Cart
+            </Link>
+            
+            {/* Order History Link */}
+            <Link
+              to="/home/order-history"
+              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+            >
+              📦 Order History
+            </Link>
+
+            {/* User Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
+              >
               <img 
                 src={user?.avatar_url || 'https://i.pravatar.cc/150'} 
                 alt={user?.name}
@@ -117,6 +143,7 @@ const HomeHeader: React.FC = () => {
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
