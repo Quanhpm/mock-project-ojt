@@ -50,7 +50,7 @@ function LoginPage() {
         updated_at: user.updated_at,
       });
 
-      success(`Chào mừng ${user.name}! Đăng nhập thành công`, 'Thành công');
+      success(`Chào mừng ${user.name}! Đăng nhập thành công`);
       
       // Redirect về trang trước đó hoặc HOME
       navigate(from, { replace: true });
