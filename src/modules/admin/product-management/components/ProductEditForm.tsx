@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Package, Upload, X } from "lucide-react";
-import { mockProducts, mockCategories } from "@/mock/data/products.mock";
-import { mockFranchises } from "@/mock/data/franchises.mock";
+import { mockProducts, mockCategories, mockFranchises } from "@/mockdata";
 
 export default function ProductEditForm() {
   const navigate = useNavigate();
