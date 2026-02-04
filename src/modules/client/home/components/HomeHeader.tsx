@@ -43,37 +43,37 @@ const HomeHeader: React.FC = () => {
               to="/" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              HomePage
+              Trang Chủ
             </Link>
             <Link 
               to="/menu" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Menu
+              Thực Đơn
             </Link>
             <Link 
               to="/about" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              About Us
+              Về Chúng Tôi
             </Link>
             <Link 
               to="/contact" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Contact Us
+              Liên Hệ Với Chúng Tôi
             </Link>
             <Link 
               to="/location" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Location
+              Địa Điểm
             </Link>
             <Link 
               to="/franchise" 
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              Franchise
+              Nhượng Quyền
             </Link>
           </nav>
 
@@ -84,7 +84,7 @@ const HomeHeader: React.FC = () => {
               to="/home/cart"
               className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              🛒Cart
+              🛒 Giỏ Hàng
             </Link>
             
             {/* Order History Link */}
@@ -92,7 +92,7 @@ const HomeHeader: React.FC = () => {
               to="/home/order-history"
               className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              📦 Order History
+              📦 Lịch Sử Đơn Hàng
             </Link>
 
             {/* User Dropdown */}
