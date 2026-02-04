@@ -1,7 +1,7 @@
 import { z } from "zod";
-import customersData from '@/assets/customer.json';
+import customers from '@/mockdata/customers.json';
 
-const customers = customersData.customers;
+
 
 export const loginSchema = z.object({
     email: z.string().min(1, "Input your email").email("Invalid email format"),
@@ -18,7 +18,7 @@ export const loginSchema = z.object({
         return; 
     }
 
-    if (customer.password_hash !== data.password) {
+    if (customer.password !== data.password) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Wrong password!",

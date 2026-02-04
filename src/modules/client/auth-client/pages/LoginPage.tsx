@@ -3,7 +3,7 @@ import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
 import { useClientAuthStore } from '../stores/client-auth.store';
 import { useToast } from '@/hooks/use-toast.hook';
-import mockUsers from '@/assets/customer.json';
+import customers from '@/mockdata/customers.json';
 import { ROUTER_URL } from '@/routes/router.const';
 
 function LoginPage() {
@@ -22,7 +22,7 @@ function LoginPage() {
     setErrorMessage('');
 
     try {
-      const user = mockUsers.customers.find((u) => u.email === data.email);
+      const user = customers.find((u) => u.email === data.email);
 
       if (!user) {
         const errMsg = 'Email không tồn tại';
@@ -31,7 +31,7 @@ function LoginPage() {
         return;
       }
 
-      if (user.password_hash !== data.password) {
+      if (user.password !== data.password) {
         const errMsg = 'Mật khẩu không chính xác';
         setErrorMessage(errMsg);
         showError(errMsg, 'Đăng nhập thất bại');
