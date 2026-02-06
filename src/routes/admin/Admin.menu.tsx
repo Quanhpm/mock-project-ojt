@@ -78,7 +78,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Orders",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER,
     icon: <ShoppingCart size={18} />,
-    component: React.lazy(() => import("@/modules/admin/dashboard/pages/DashboardPage")), // Temporary placeholder
+    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),
     module: "orders",
   },
   {
