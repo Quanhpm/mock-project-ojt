@@ -1,10 +1,10 @@
 // src/config/permissions.config.ts
 type RoleCode = 'GLOBAL_ADMIN' | 'FRANCHISE_MANAGER' | 'STAFF' | 'WAREHOUSE';
-type Module = 'dashboard' | 'users' | 'franchise' | 'products' | 'inventory' | 'customers' | 'orders';
+type Module = 'dashboard' | 'users' | 'franchise' | 'products' | 'inventory' | 'customers' | 'orders' | 'shifts';
 
 export const ROLE_PERMISSIONS: Record<RoleCode, Module[]> = {
-  GLOBAL_ADMIN: ['dashboard', 'users', 'franchise', 'products', 'inventory', 'customers', 'orders'],
-  FRANCHISE_MANAGER: ['dashboard', 'products', 'inventory', 'customers', 'orders'],
+  GLOBAL_ADMIN: ['dashboard', 'users', 'franchise', 'products', 'inventory', 'customers', 'orders', 'shifts'],
+  FRANCHISE_MANAGER: ['dashboard', 'products', 'inventory', 'customers', 'orders', 'shifts'],
   STAFF: ['dashboard', 'customers', 'orders'],
   WAREHOUSE: ['dashboard', 'inventory', 'products']
 };
