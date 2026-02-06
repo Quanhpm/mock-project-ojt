@@ -6,6 +6,7 @@ import {
   Warehouse,
   UserCircle,
   ShoppingCart,
+  Clock,
 } from "lucide-react";
 import React, { type JSX } from "react";
 import { ROUTER_URL } from "../router.const";
@@ -78,8 +79,15 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Orders",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER,
     icon: <ShoppingCart size={18} />,
-    component: React.lazy(() => import("@/modules/admin/dashboard/pages/DashboardPage")), // Temporary placeholder
+    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),
     module: "orders",
+  },
+  {
+    label: "Shifts",
+    path: ROUTER_URL.ADMIN_ROUTER.SHIFT,
+    icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftManagement")),
+    module: "shifts",
   },
   {
     label: "Create Product",
