@@ -1,5 +1,5 @@
 import { LOCAL_STORAGE } from "@/consts";
-import type { UserAccount } from "@/models";
+import type { UserAccount } from "@/types";
 
 export function setItemInLocalStorage<T>(key: string, value: T): void {
   localStorage.setItem(key, JSON.stringify(value));

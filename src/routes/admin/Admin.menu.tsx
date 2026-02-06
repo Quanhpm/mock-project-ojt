@@ -1,13 +1,11 @@
 import {
-  
-    LayoutDashboard,
-    Package,
-    
-    Store,
-    
-    UserCircle,
-    Users,
-    Warehouse,
+  LayoutDashboard,
+  Package,
+  Store,
+  Users,
+  Warehouse,
+  UserCircle,
+  ShoppingCart,
 } from "lucide-react";
 import React, { type JSX } from "react";
 import { ROUTER_URL } from "../router.const";
@@ -19,6 +17,8 @@ export type AdminMenuItem = {
   icon: React.ReactNode;
   component: React.LazyExoticComponent<() => JSX.Element>;
   isEnd?: boolean;
+  module: string;
+  hideFromSidebar?: boolean; // ← ADD: Ẩn khỏi sidebar
 };
 
 /* TODO: auth pages: login, verify token, reset password, change password */
@@ -28,6 +28,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.DASHBOARD,
     icon: <LayoutDashboard size={16} />,
     component: React.lazy(() => import("@/modules/admin/dashboard/pages/DashboardPage")),
+    module: "dashboard",
     isEnd: true,
   },
   {
@@ -35,55 +36,68 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.USER,
     icon: <Users size={18} />,
     component: React.lazy(() => import("@/modules/admin/user-management/pages/UserManagement")),
+    module: "users", 
   },
   {
     label: "Franchise",
     path: ROUTER_URL.ADMIN_ROUTER.FRANCHISE,
     icon: <Store size={18} />,
     component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseManagement")),
+    module: "franchise",
   },
   {
     label: "Create Franchise",
     path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/create`,
     icon: <Store size={18} />,
     component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseCreatePage")),
+    module: "franchise",
+    hideFromSidebar: true, // ← Ẩn khỏi sidebar
   },
-  // {
-  //   label: "Categories",
-  //   path: ROUTER_URL.ADMIN_ROUTER.CATEGORY,
-  //   icon: <Tags size={18} />,
-  //   component: React.lazy(() => import("@/pages/admin/category/Category.page")),
-  // },
   {
     label: "Products",
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT,
     icon: <Package size={18} />,
     component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductListPage")),
-  },
-  {
-    label: "Create Product",
-    path: `${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/create`,
-    icon: <Package size={18} />,
-    component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductCreatePage")),
-  },
-  {
-    label: "Edit Product",
-    path: `${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/edit/:id`,
-    icon: <Package size={18} />,
-    component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductActionPage")),
+    module: "products",     // ✨ ADD
   },
   {
     label: "Inventory",
     path: ROUTER_URL.ADMIN_ROUTER.INVENTORY,
     icon: <Warehouse size={18} />,
     component: React.lazy(() => import("@/modules/admin/inventory-management/pages/InventoryManagement")),
+    module: "inventory",   
   },
   {
     label: "Customers",
     path: ROUTER_URL.ADMIN_ROUTER.CUSTOMER,
     icon: <UserCircle size={18} />,
     component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerManagement")),
+    module: "customers",
   },
+  {
+    label: "Orders",
+    path: ROUTER_URL.ADMIN_ROUTER.ORDER,
+    icon: <ShoppingCart size={18} />,
+    component: React.lazy(() => import("@/modules/admin/dashboard/pages/DashboardPage")), // Temporary placeholder
+    module: "orders",
+  },
+  {
+    label: "Create Product",
+    path: `${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/create`,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductCreatePage")),
+    module: "products",
+    hideFromSidebar: true, // ← Ẩn khỏi sidebar
+  },
+  {
+    label: "Edit Product",
+    path: `${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/edit/:id`,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductActionPage")),
+    module: "products",
+    hideFromSidebar: true, // ← Ẩn khỏi sidebar
+  },
+  
   // {
   //   label: "Orders",
   //   path: ROUTER_URL.ADMIN_ROUTER.ORDER,
