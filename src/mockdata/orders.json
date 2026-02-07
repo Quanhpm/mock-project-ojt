@@ -1,17 +1,152 @@
-[
-  {"id": 1, "code": "ORD001", "franchise_id": 1, "customer_id": 1, "type": "POS", "status": "COMPLETED", "total_amount": 95000, "confirmed_at": "2024-01-20T10:05:00Z", "completed_at": "2024-01-20T10:15:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-01-20T10:00:00Z", "updated_at": "2024-01-20T10:15:00Z"},
-  {"id": 2, "code": "ORD002", "franchise_id": 1, "customer_id": 2, "type": "ONLINE", "status": "COMPLETED", "total_amount": 140000, "confirmed_at": "2024-01-21T11:05:00Z", "completed_at": "2024-01-21T11:25:00Z", "cancelled_at": null, "created_by": null, "is_deleted": false, "created_at": "2024-01-21T11:00:00Z", "updated_at": "2024-01-21T11:25:00Z"},
-  {"id": 3, "code": "ORD003", "franchise_id": 1, "customer_id": 3, "type": "POS", "status": "COMPLETED", "total_amount": 55000, "confirmed_at": "2024-01-22T09:35:00Z", "completed_at": "2024-01-22T09:45:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-01-22T09:30:00Z", "updated_at": "2024-01-22T09:45:00Z"},
-  {"id": 4, "code": "ORD004", "franchise_id": 2, "customer_id": 4, "type": "ONLINE", "status": "COMPLETED", "total_amount": 225000, "confirmed_at": "2024-01-23T12:20:00Z", "completed_at": "2024-01-23T12:40:00Z", "cancelled_at": null, "created_by": null, "is_deleted": false, "created_at": "2024-01-23T12:15:00Z", "updated_at": "2024-01-23T12:40:00Z"},
-  {"id": 5, "code": "ORD005", "franchise_id": 1, "customer_id": 5, "type": "POS", "status": "COMPLETED", "total_amount": 85000, "confirmed_at": "2024-01-24T08:50:00Z", "completed_at": "2024-01-24T09:00:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-01-24T08:45:00Z", "updated_at": "2024-01-24T09:00:00Z"},
-  {"id": 6, "code": "ORD006", "franchise_id": 1, "customer_id": 1, "type": "POS", "status": "CANCELLED", "total_amount": 30000, "confirmed_at": "2024-01-25T14:05:00Z", "completed_at": null, "cancelled_at": "2024-01-25T14:10:00Z", "created_by": 3, "is_deleted": false, "created_at": "2024-01-25T14:00:00Z", "updated_at": "2024-01-25T14:10:00Z"},
-  {"id": 7, "code": "ORD007", "franchise_id": 1, "customer_id": 2, "type": "ONLINE", "status": "COMPLETED", "total_amount": 120000, "confirmed_at": "2024-01-26T16:10:00Z", "completed_at": "2024-01-26T16:30:00Z", "cancelled_at": null, "created_by": null, "is_deleted": false, "created_at": "2024-01-26T16:05:00Z", "updated_at": "2024-01-26T16:30:00Z"},
-  {"id": 8, "code": "ORD008", "franchise_id": 1, "customer_id": 3, "type": "POS", "status": "COMPLETED", "total_amount": 75000, "confirmed_at": "2024-01-27T10:15:00Z", "completed_at": "2024-01-27T10:25:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-01-27T10:10:00Z", "updated_at": "2024-01-27T10:25:00Z"},
-  {"id": 9, "code": "ORD009", "franchise_id": 1, "customer_id": 1, "type": "POS", "status": "COMPLETED", "total_amount": 60000, "confirmed_at": "2024-01-28T15:35:00Z", "completed_at": "2024-01-28T15:45:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-01-28T15:30:00Z", "updated_at": "2024-01-28T15:45:00Z"},
-  {"id": 10, "code": "ORD010", "franchise_id": 1, "customer_id": 2, "type": "ONLINE", "status": "COMPLETED", "total_amount": 105000, "confirmed_at": "2024-01-30T14:25:00Z", "completed_at": "2024-01-30T14:45:00Z", "cancelled_at": null, "created_by": null, "is_deleted": false, "created_at": "2024-01-30T14:20:00Z", "updated_at": "2024-01-30T14:45:00Z"},
-  {"id": 11, "code": "ORD011", "franchise_id": 2, "customer_id": 6, "type": "POS", "status": "COMPLETED", "total_amount": 45000, "confirmed_at": "2024-02-01T10:35:00Z", "completed_at": "2024-02-01T10:45:00Z", "cancelled_at": null, "created_by": 4, "is_deleted": false, "created_at": "2024-02-01T10:30:00Z", "updated_at": "2024-02-01T10:45:00Z"},
-  {"id": 12, "code": "ORD012", "franchise_id": 1, "customer_id": 5, "type": "POS", "status": "COMPLETED", "total_amount": 90000, "confirmed_at": "2024-02-01T17:25:00Z", "completed_at": "2024-02-01T17:35:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-02-01T17:20:00Z", "updated_at": "2024-02-01T17:35:00Z"},
-  {"id": 13, "code": "ORD013", "franchise_id": 2, "customer_id": 7, "type": "ONLINE", "status": "COMPLETED", "total_amount": 180000, "confirmed_at": "2024-02-02T14:05:00Z", "completed_at": "2024-02-02T14:25:00Z", "cancelled_at": null, "created_by": null, "is_deleted": false, "created_at": "2024-02-02T14:00:00Z", "updated_at": "2024-02-02T14:25:00Z"},
-  {"id": 14, "code": "ORD014", "franchise_id": 1, "customer_id": 8, "type": "POS", "status": "COMPLETED", "total_amount": 120000, "confirmed_at": "2024-02-03T15:35:00Z", "completed_at": "2024-02-03T15:45:00Z", "cancelled_at": null, "created_by": 3, "is_deleted": false, "created_at": "2024-02-03T15:30:00Z", "updated_at": "2024-02-03T15:45:00Z"},
-  {"id": 15, "code": "ORD015", "franchise_id": 2, "customer_id": 4, "type": "POS", "status": "PREPARING", "total_amount": 150000, "confirmed_at": "2024-02-04T11:20:00Z", "completed_at": null, "cancelled_at": null, "created_by": 4, "is_deleted": false, "created_at": "2024-02-04T11:15:00Z", "updated_at": "2024-02-04T11:20:00Z"}
-]
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "total_orders": 15,
+      "completed_orders": 12,
+      "cancelled_orders": 2,
+      "preparing_orders": 1,
+      "total_revenue": {
+        "value": 1490000,
+        "currency": "VND"
+      }
+    },
+    "orders": [
+      {
+        "id": 15,
+        "code": "ORD015",
+        "store": { "id": 2, "name": "Boutique Brews - Q3" },
+        "channel": "POS",
+        "status": { "code": "PREPARING", "label": "Đang pha chế", "color": "warning" },
+        "pricing": { "total": 150000, "currency": "VND" },
+        "meta": { "items_count": 3, "created_at": "2024-02-04T11:15:00Z" }
+      },
+      {
+        "id": 14,
+        "code": "ORD014",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 120000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-02-03T15:30:00Z" }
+      },
+      {
+        "id": 13,
+        "code": "ORD013",
+        "store": { "id": 2, "name": "Boutique Brews - Q3" },
+        "channel": "ONLINE",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 180000, "currency": "VND" },
+        "meta": { "items_count": 4, "created_at": "2024-02-02T14:00:00Z" }
+      },
+      {
+        "id": 12,
+        "code": "ORD012",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 90000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-02-01T17:20:00Z" }
+      },
+      {
+        "id": 11,
+        "code": "ORD011",
+        "store": { "id": 2, "name": "Boutique Brews - Q3" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 45000, "currency": "VND" },
+        "meta": { "items_count": 1, "created_at": "2024-02-01T10:30:00Z" }
+      },
+      {
+        "id": 10,
+        "code": "ORD010",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "ONLINE",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 105000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-01-30T14:20:00Z" }
+      },
+      {
+        "id": 9,
+        "code": "ORD009",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 60000, "currency": "VND" },
+        "meta": { "items_count": 1, "created_at": "2024-01-28T15:30:00Z" }
+      },
+      {
+        "id": 8,
+        "code": "ORD008",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 75000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-01-27T10:10:00Z" }
+      },
+      {
+        "id": 7,
+        "code": "ORD007",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "ONLINE",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 120000, "currency": "VND" },
+        "meta": { "items_count": 3, "created_at": "2024-01-26T16:05:00Z" }
+      },
+      {
+        "id": 6,
+        "code": "ORD006",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "CANCELLED", "label": "Đã huỷ", "color": "neutral" },
+        "pricing": { "total": 30000, "currency": "VND" },
+        "meta": { "items_count": 1, "created_at": "2024-01-25T14:00:00Z" }
+      },
+      {
+        "id": 5,
+        "code": "ORD005",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 85000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-01-24T08:45:00Z" }
+      },
+      {
+        "id": 4,
+        "code": "ORD004",
+        "store": { "id": 2, "name": "Boutique Brews - Q3" },
+        "channel": "ONLINE",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 225000, "currency": "VND" },
+        "meta": { "items_count": 4, "created_at": "2024-01-23T12:15:00Z" }
+      },
+      {
+        "id": 3,
+        "code": "ORD003",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 55000, "currency": "VND" },
+        "meta": { "items_count": 1, "created_at": "2024-01-22T09:30:00Z" }
+      },
+      {
+        "id": 2,
+        "code": "ORD002",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "ONLINE",
+        "status": { "code": "COMPLETED", "label": "Hoàn tất", "color": "success" },
+        "pricing": { "total": 140000, "currency": "VND" },
+        "meta": { "items_count": 3, "created_at": "2024-01-21T11:00:00Z" }
+      },
+      {
+        "id": 1,
+        "code": "ORD001",
+        "store": { "id": 1, "name": "Boutique Brews - Q1" },
+        "channel": "POS",
+        "status": { "code": "CANCELLED", "label": "Đã huỷ", "color": "neutral" },
+        "pricing": { "total": 95000, "currency": "VND" },
+        "meta": { "items_count": 2, "created_at": "2024-01-20T10:00:00Z" }
+      }
+    ]
+  }
+}
