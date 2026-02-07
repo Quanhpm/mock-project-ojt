@@ -1,4 +1,4 @@
-import { isNonCustomerRole } from "@/models";
+import { isNonCustomerRole } from "@/types";
 import { useAuthStore } from "@/stores/auth.store";
 import { Navigate, Outlet } from "react-router-dom";
 import { ROUTER_URL } from "../router.const";

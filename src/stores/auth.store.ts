@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { LOCAL_STORAGE } from "@/consts";
 import { getItemInLocalStorage, setItemInLocalStorage, removeItemInLocalStorage } from "@/utils";
-import type { UserAccount } from "@/models";
+import type { UserAccount } from "@/types";
 
 interface AuthState {
   user: UserAccount | null;

@@ -1,22 +1,33 @@
 export const ROUTER_URL = {
+  // ========== PUBLIC ROUTES (Guest có thể truy cập) ==========
   HOME: "/",
-  ABOUT: `/about`,
-  CONTACT: `/contact`,
-  VERSION: `/version`,
+  MENU: "/menu",
+  ABOUT: "/about",
+  CONTACT: "/contact",
+  VERSION: "/version",
 
-  CLIENT: `/client`,
+  // ========== AUTH ROUTES ==========
+  CLIENT: "/client",
   CLIENT_ROUTER: {
-    LOGIN: `/client/login`,
-    FORGOT_PASSWORD: `/client/forgot-password`,
-    CART: `cart`,
-    PAYMENT: `payment`,
-    CHECKOUT: `checkout`,
-    PRODUCTS: `products`,
-    CATEGORIES: `categories`,
-    REGISTER: `/client/register`,
+    LOGIN: "/client/login",
+    REGISTER: "/client/register",
+    FORGOT_PASSWORD: "/client/forgot-password",
   },
 
-  ADMIN: `/admin`,
+  // ========== PRIVATE ROUTES (Cần đăng nhập - ClientGuard) ==========
+  HOME_PRIVATE: "/home",
+  HOME_ROUTER: {
+    DASHBOARD: "/home",
+    CART: "/home/cart",
+    SELECT_FRANCHISE: "/home/select-franchise",
+    CHECKOUT: "/home/checkout",
+    PROFILE: "/home/profile",
+    CHANGE_PASSWORD: "/home/change-password",
+    ORDER_HISTORY: "/home/order-history",
+  },
+
+  // ========== ADMIN ROUTES ==========
+  ADMIN: "/admin",
   ADMIN_ROUTER: {
     LOGIN: `/admin/login`,
     FORGOT_PASSWORD: `/admin/forgot-password`,

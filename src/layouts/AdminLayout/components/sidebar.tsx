@@ -15,46 +15,17 @@ const THEME_COLORS = {
   primaryLight: "#7f55391a",
 } as const;
 
-interface MenuItem {
-  name: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-const menuItems: MenuItem[] = [
-  {
-    name: "Dashboard",
-    path: "/admin/dashboard",
-    icon: <LayoutDashboard size={20} />,
-  },
-  {
-    name: "Users",
-    path: "/admin/users",
-    icon: <Users size={20} />,
-  },
-  {
-    name: "Franchises",
-    path: "/admin/franchises",
-    icon: <Store size={20} />,
-  },
-  {
-    name: "Settings",
-    path: "/admin/settings",
-    icon: <Settings size={20} />,
-  },
-  {
-    name: "Products",
-    path: "/admin/products",
-    icon: <Package size={20} />,
-  },
-];
-
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
+  menuItems: AdminMenuItem[]; // ✨ Use role-filtered menu items
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isMobileOpen, 
+  onMobileClose, 
+  menuItems // ✨ Use props instead of hard-coded array
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -127,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
               >
                 {item.icon}
               </span>
-              <span>{item.name}</span>
+              <span>{item.label}</span>
             </Link>
           );
         })}
