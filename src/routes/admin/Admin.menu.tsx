@@ -16,7 +16,7 @@ export type AdminMenuItem = {
   label: string;
   path: string;
   icon: React.ReactNode;
-  component: React.LazyExoticComponent<() => JSX.Element>;
+  component: React.LazyExoticComponent<React.FC<any>>;
   isEnd?: boolean;
   module: string;
   hideFromSidebar?: boolean; // ← ADD: Ẩn khỏi sidebar
