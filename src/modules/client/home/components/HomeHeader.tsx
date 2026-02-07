@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
+import { useCartStore } from '@/stores/cart.store';
 import { ShoppingCart, ClipboardClock, User, KeyRound, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
 /**
@@ -10,6 +11,8 @@ import logo2 from '@/assets/img/logo2.png';
  */
 const HomeHeader: React.FC = () => {
   const { user, logout, isLoggedIn } = useClientAuthStore();
+  const cartItems = useCartStore((state) => state.items);
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -84,9 +87,14 @@ const HomeHeader: React.FC = () => {
             {/* Cart Link */}
             <Link
               to="/home/cart"
-              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ShoppingCart />
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
             {/* Order History Link */}
