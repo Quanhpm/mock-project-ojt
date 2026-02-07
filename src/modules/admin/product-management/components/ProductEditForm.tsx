@@ -1,64 +1,109 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Package, Upload, X } from "lucide-react";
 import { mockProducts, mockCategories, mockFranchises } from "@/mockdata";
+import productFranchises from "@/mockdata/product_franchise.json";
+import inventory from "@/mockdata/inventory.json";
 
 export default function ProductEditForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [imagePreview, setImagePreview] = useState<string[]>([]);
   
-  const [formData, setFormData] = useState({
-    id: "",
-    name: "",
-    description: "",
-    price: "",
-    originalPrice: "",
-    categoryId: "",
-    brand: "",
-    sku: "",
-    stock: 0,
-    status: "active" as const,
-    rating: 0,
-    reviewCount: 0,
-    tags: [] as string[],
-    specifications: {} as Record<string, string>,
-    images: [] as string[]
+  // Helper functions to get product data from normalized structure
+  const getProductPrice = (productId: number, franchiseId: number = 1) => {
+    const productFranchise = productFranchises.find(
+      pf => pf.product_id === productId && pf.franchise_id === franchiseId
+    );
+    return productFranchise ? productFranchise.price_base : 0;
+  };
+
+  const getProductStock = (productId: number, franchiseId: number = 1) => {
+    const productFranchise = productFranchises.find(
+      pf => pf.product_id === productId && pf.franchise_id === franchiseId
+    );
+    if (productFranchise) {
+      const inventoryItem = inventory.find(
+        inv => inv.product_franchise_id === productFranchise.id
+      );
+      return inventoryItem ? inventoryItem.quantity : 0;
+    }
+    return 0;
+  };
+
+  const getProductFranchiseIds = (productId: number) => {
+    return productFranchises
+      .filter(pf => pf.product_id === productId)
+      .map(pf => pf.franchise_id);
+  };
+
+  // Initialize form data based on product ID
+  const [formData, setFormData] = useState(() => {
+    if (id) {
+      const productId = parseInt(id);
+      const product = mockProducts.find(p => p.id === productId);
+      if (product) {
+        const price = getProductPrice(product.id);
+        const stock = getProductStock(product.id);
+        
+        return {
+          id: product.id.toString(),
+          name: product.name,
+          description: product.description,
+          price: price.toString(),
+          originalPrice: product.max_price.toString(),
+          categoryId: product.category_id.toString(),
+          brand: product.SKU, // Using SKU as brand for now
+          sku: product.SKU,
+          stock: stock,
+          status: product.is_active ? "active" : "inactive",
+          rating: 4.5, // Default rating
+          reviewCount: 0, // Default review count
+          tags: [] as string[], // Default empty tags
+          specifications: {} as Record<string, string>, // Default empty specifications
+          images: product.image_url ? [product.image_url] : []
+        };
+      }
+    }
+
+    return {
+      id: "",
+      name: "",
+      description: "",
+      price: "",
+      originalPrice: "",
+      categoryId: "",
+      brand: "",
+      sku: "",
+      stock: 0,
+      status: "active",
+      rating: 0,
+      reviewCount: 0,
+      tags: [] as string[],
+      specifications: {} as Record<string, string>,
+      images: [] as string[]
+    };
   });
 
-  const [franchiseAvailability, setFranchiseAvailability] = useState<number[]>([]);
+  const [imagePreview, setImagePreview] = useState<string[]>(() => {
+    if (id) {
+      const productId = parseInt(id);
+      const product = mockProducts.find(p => p.id === productId);
+      return product?.image_url ? [product.image_url] : [];
+    }
+    return [];
+  });
+  
+  const [franchiseAvailability, setFranchiseAvailability] = useState<number[]>(() => {
+    if (id) {
+      const productId = parseInt(id);
+      return getProductFranchiseIds(productId);
+    }
+    return [];
+  });
+
   const [tagInput, setTagInput] = useState("");
   const [specKey, setSpecKey] = useState("");
   const [specValue, setSpecValue] = useState("");
-
-  useEffect(() => {
-    if (id) {
-      const product = mockProducts.find(p => p.id === id);
-      if (product) {
-        setFormData({
-          id: product.id,
-          name: product.name,
-          description: product.description,
-          price: product.price.toString(),
-          originalPrice: product.originalPrice.toString(),
-          categoryId: product.categoryId,
-          brand: product.brand,
-          sku: product.sku,
-          stock: product.stock,
-          status: product.status,
-          rating: product.rating,
-          reviewCount: product.reviewCount,
-          tags: product.tags,
-          specifications: product.specifications,
-          images: product.images || []
-        });
-        setImagePreview(product.images || []);
-        // Load franchise availability if exists
-        const productFranchises = (product as any).franchiseIds || [1, 2, 3];
-        setFranchiseAvailability(productFranchises);
-      }
-    }
-  }, [id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

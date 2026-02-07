@@ -1,2 +1,2 @@
-export * from "./user.model";
-export * from "./role.model"
+// Backward compatibility - re-export from types
+export * from "../types/user.type";

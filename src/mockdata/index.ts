@@ -80,7 +80,7 @@ export const getUsersWithRolesAndFranchises = (): UserWithRolesAndFranchises[] =
 
     return {
       ...user,
-      password_hash: user.password_hash || '',
+      password_hash: user.password || '',
       roles,
     } as UserWithRolesAndFranchises
   })

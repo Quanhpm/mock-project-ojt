@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { mockUsers } from "@/mockdata";
 import { ROUTER_URL } from "@/routes/router.const";
 import { useAdminAuthStore } from "../stores/admin-auth.store";
+import type { UserAccount, RoleType } from "@/types";
 
 import { AdminLoginForm } from "../components/AdminLoginForm";
 import { AdminLoadingForm } from "../components/AdminLoadingForm";
@@ -14,7 +15,6 @@ export default function AdminLoginPage() {
   const navigate = useNavigate();
   const setAdmin = useAdminAuthStore((s) => s.setAdmin);
 
-  const [authError, setAuthError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -27,31 +27,41 @@ export default function AdminLoginPage() {
       const admin = mockUsers.find(
         (u) =>
           u.email === data.email &&
-          u.password === data.password &&
-          u.role === "admin"
+          (u.password === data.password || u.password_hash === data.password) &&
+          u.is_active && 
+          !u.is_deleted &&
+          // Allow all admin roles, not just "admin"
+          ['GLOBAL_ADMIN', 'FRANCHISE_MANAGER', 'STAFF', 'WAREHOUSE'].includes(u.role)
       );
 
       if (!admin) {
         setLoading(false);
-        setAuthError("Email hoặc mật khẩu không đúng");
         setToastMessage("Đăng nhập không thành công");
         setToastType("error");
         setShowToast(true);
         return;
       }
 
-      setAdmin(admin);
-      setAuthError(null);
+      // Transform admin data to UserAccount format
+      const userAccount: UserAccount = {
+        id: admin.id,
+        role: admin.role as RoleType,
+        email: admin.email
+      };
+
+      setAdmin(userAccount);
       setToastMessage("Đăng nhập thành công");
       setToastType("success");
       setShowToast(true);
 
       setTimeout(() => {
-        navigate(
-          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`,
-          { replace: true }
-        );
-      }, 1000);
+        const targetPath = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`;
+        console.log('🔍 Login redirect to:', targetPath);
+        console.log('ROUTER_URL.ADMIN:', ROUTER_URL.ADMIN);
+        console.log('ROUTER_URL.ADMIN_ROUTER.DASHBOARD:', ROUTER_URL.ADMIN_ROUTER.DASHBOARD);
+        
+        navigate(targetPath, { replace: true });
+      }, 1500); // Increase delay để đảm bảo store update
     }, 1500);
   };
 
@@ -116,9 +126,7 @@ export default function AdminLoginPage() {
 
             <AdminLoginForm
               onSubmit={handleLogin}
-              authError={authError}
               isSubmitting={loading}
-              onClearError={() => setAuthError(null)}
             />
 
             <p className="text-center text-base mt-8" style={{ color: 'var(--cf-secondary)' }}>

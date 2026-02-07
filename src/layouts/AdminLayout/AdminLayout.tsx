@@ -1,11 +1,18 @@
 import React, { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import Sidebar from "./components/sidebar";
 import { Menu } from "lucide-react";
+import { useRoleBasedMenu } from '@/routes/admin/AdminRoleMenu';
+import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store';
 
 function AdminLayout() {
+    const allowedMenuItems = useRoleBasedMenu();    
+  const { admin, roleCode } = useAdminAuthStore();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  if (!admin || !roleCode) {
+    return <Navigate to="/admin/login" replace />;
+  }
   const toggleMobileSidebar = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
@@ -20,6 +27,7 @@ function AdminLayout() {
       <Sidebar
         isMobileOpen={isMobileSidebarOpen}
         onMobileClose={closeMobileSidebar}
+        menuItems={allowedMenuItems}
       />
 
       {/* Main Content Area */}

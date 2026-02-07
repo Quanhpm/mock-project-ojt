@@ -22,7 +22,7 @@ const ClientFooter = () => {
                 <h3 className="text-lg font-bold uppercase tracking-wide text-white">BOUTIQUE BREWS</h3>
               </div>
               <p className="text-white/90 text-xs leading-relaxed">
-                Experience the world's finest coffee beans, ethically sourced and expertly roasted for your perfect cup.
+                Hạt cà phê tinh tuyển toàn cầu, nguồn gốc minh bạch, rang xay chuẩn vị cho từng tách cà phê.
               </p>
             </div>
 
