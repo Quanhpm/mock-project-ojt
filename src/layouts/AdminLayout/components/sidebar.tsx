@@ -1,8 +1,9 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Store, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Store, X, LogOut } from "lucide-react";
 import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { ROUTER_URL } from "@/routes/router.const";
 
 // Theme colors
 const THEME_COLORS = {
@@ -22,7 +23,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   menuItems // ✨ Use props instead of hard-coded array
 }) => {
   const location = useLocation();
-  const { admin, roleCode, franchiseId } = useAdminAuthStore();
+  const navigate = useNavigate();
+  const { admin, roleCode, franchiseId, logout } = useAdminAuthStore();
+
+  const handleLogout = () => {
+    logout(); // Clear store + localStorage
+    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
+  };
 
   const isActivePath = (path: string) => {
     return (
@@ -90,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Bottom Section - User Info */}
       <div className="border-t border-gray-200 px-4 py-4">
-        {/* User Profile */}
+        {/* User Profile with Logout */}
         <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-lg">
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center"
@@ -108,6 +115,18 @@ const Sidebar: React.FC<SidebarProps> = ({
               {roleCode} {franchiseId && `- Franchise ${franchiseId}`}
             </p>
           </div>
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg hover:bg-red-50 transition-colors duration-200 group"
+            title="Logout"
+            aria-label="Logout"
+          >
+            <LogOut 
+              size={18} 
+              className="text-gray-500 group-hover:text-red-600 transition-colors duration-200" 
+            />
+          </button>
         </div>
       </div>
     </>
