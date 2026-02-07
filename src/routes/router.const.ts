@@ -45,5 +45,6 @@ export const ROUTER_URL = {
     LOYALTY: "loyalty",
     PAYMENT: "payments",
     INVENTORY: "inventory",
+    SHIFT: "shifts",
   },
 };

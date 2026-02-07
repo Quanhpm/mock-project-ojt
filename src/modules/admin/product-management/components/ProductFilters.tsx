@@ -290,7 +290,7 @@ export default function ProductFilters({
               alignItems: "center",
               gap: "6px"
             }}>
-              Category: {mockCategories.find(c => c.id === localCategory)?.name}
+              Category: {mockCategories.find(c => c.id == Number(localCategory))?.name}
               <button
                 onClick={() => {
                   setLocalCategory("");

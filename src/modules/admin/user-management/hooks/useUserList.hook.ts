@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mockdata'
 import type { UserFilters } from './useUserFilters.hook'
 
 export type User = UserWithRolesAndFranchises
 
 export const useUserList = (filters: UserFilters) => {
-  const [users, setUsers] = useState<User[]>([])
+  const [users, setUsers] = useState<User[]>(() => {
+    // Initialize with mock data directly
+    return getUsersWithRolesAndFranchises()
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
-
-  useEffect(() => {
-    // Load mock data with roles and franchises
-    setUsers(getUsersWithRolesAndFranchises())
-  }, [])
 
   // Filter users based on search and filters
   const filteredUsers = useMemo(() => {

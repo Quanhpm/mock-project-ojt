@@ -1,6 +1,8 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Store, Settings, X, Package } from "lucide-react";
+import { Store, X } from "lucide-react";
+import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
 // Theme colors
 const THEME_COLORS = {
@@ -8,47 +10,19 @@ const THEME_COLORS = {
   primaryLight: "#7f55391a",
 } as const;
 
-interface MenuItem {
-  name: string;
-  path: string;
-  icon: React.ReactNode;
-}
-
-const menuItems: MenuItem[] = [
-  {
-    name: "Dashboard",
-    path: "/admin/dashboard",
-    icon: <LayoutDashboard size={20} />,
-  },
-  {
-    name: "Users",
-    path: "/admin/users",
-    icon: <Users size={20} />,
-  },
-  {
-    name: "Franchises",
-    path: "/admin/franchises",
-    icon: <Store size={20} />,
-  },
-  {
-    name: "Settings",
-    path: "/admin/settings",
-    icon: <Settings size={20} />,
-  },
-  {
-    name: "Products",
-    path: "/admin/products",
-    icon: <Package size={20} />,
-  },
-];
-
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
+  menuItems: AdminMenuItem[]; // ✨ Use role-filtered menu items
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  isMobileOpen, 
+  onMobileClose, 
+  menuItems // ✨ Use props instead of hard-coded array
+}) => {
   const location = useLocation();
+  const { admin, roleCode, franchiseId } = useAdminAuthStore();
 
   const isActivePath = (path: string) => {
     return (
@@ -108,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
               >
                 {item.icon}
               </span>
-              <span>{item.name}</span>
+              <span>{item.label}</span>
             </Link>
           );
         })}
@@ -122,13 +96,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isMobileOpen, onMobileClose }) => {
             className="w-10 h-10 rounded-full flex items-center justify-center"
             style={{ backgroundColor: THEME_COLORS.primary }}
           >
-            <span className="text-white font-semibold text-sm">AM</span>
+            <span className="text-white font-semibold text-sm">
+              {admin?.email?.charAt(0).toUpperCase() || "A"}
+            </span>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">
-              Alex Morgan
+              {admin?.email || "Admin User"}
             </p>
-            <p className="text-xs text-gray-500 truncate">Super Admin</p>
+            <p className="text-xs text-gray-500 truncate">
+              {roleCode} {franchiseId && `- Franchise ${franchiseId}`}
+            </p>
           </div>
         </div>
       </div>

@@ -10,7 +10,8 @@
     "is_deleted": false,
     "created_at": "2024-01-01T08:00:00Z",
     "updated_at": "2024-01-01T08:00:00Z",
-    "role": "admin"
+    "role": "GLOBAL_ADMIN",
+    "franchise_id": null
   },
   {
     "id": 2,
@@ -23,12 +24,13 @@
     "is_deleted": false,
     "created_at": "2024-01-15T08:00:00Z",
     "updated_at": "2024-01-15T08:00:00Z",
-    "role": "manager"
+    "role": "FRANCHISE_MANAGER",
+    "franchise_id": 1
   },
   {
     "id": 3,
     "email": "staff1.hanoi@franchise.com",
-    "password_hash": "$2b$10$rJZZqE5X8ZJ9PQKyYzJMXO1tHvNuAWrP3SX5nV8mH9wL2qE4YhGxO",
+    "password": "123",
     "name": "Lê Minh Tuấn",
     "phone": "0903234567",
     "avatar_url": "https://picsum.photos/seed/user3/400",
@@ -36,7 +38,8 @@
     "is_deleted": false,
     "created_at": "2024-01-20T08:00:00Z",
     "updated_at": "2024-01-20T08:00:00Z",
-    "role": "staff"
+    "role": "STAFF",
+    "franchise_id": 1
   },
   {
     "id": 4,
@@ -49,7 +52,8 @@
     "is_deleted": false,
     "created_at": "2024-02-05T08:00:00Z",
     "updated_at": "2024-02-05T08:00:00Z",
-    "role": "staff"
+    "role": "STAFF",
+    "franchise_id": 2
   },
   {
     "id": 5,
@@ -62,6 +66,35 @@
     "is_deleted": false,
     "created_at": "2024-01-25T08:00:00Z",
     "updated_at": "2024-01-25T08:00:00Z",
-    "role": "warehouse"
+    "role": "WAREHOUSE",
+    "franchise_id": 1
+  },
+  {
+    "id": 6,
+    "email": "manager.hcm@franchise.com",
+    "password": "123",
+    "name": "Nguyễn Thanh Hùng",
+    "phone": "0906234567",
+    "avatar_url": "https://picsum.photos/seed/user6/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-01T08:00:00Z",
+    "updated_at": "2024-02-01T08:00:00Z",
+    "role": "FRANCHISE_MANAGER",
+    "franchise_id": 2
+  },
+  {
+    "id": 7,
+    "email": "warehouse.hcm@franchise.com",
+    "password": "123",
+    "name": "Vũ Thị Hoa",
+    "phone": "0907234567",
+    "avatar_url": "https://picsum.photos/seed/user7/400",
+    "is_active": true,
+    "is_deleted": false,
+    "created_at": "2024-02-03T08:00:00Z",
+    "updated_at": "2024-02-03T08:00:00Z",
+    "role": "WAREHOUSE",
+    "franchise_id": 2
   }
 ]
