@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
+import { useCartStore } from '@/stores/cart.store';
+import { ShoppingCart, Package } from 'lucide-react';
 
 /**
  * HomeHeader - Header cho USER ĐÃ ĐĂNG NHẬP
@@ -9,6 +11,8 @@ import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
  */
 const HomeHeader: React.FC = () => {
   const { user, logout } = useClientAuthStore();
+  const cartItems = useCartStore((state) => state.items);
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -57,15 +61,22 @@ const HomeHeader: React.FC = () => {
             </Link>
             <Link 
               to="/home/cart" 
-              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              🛒 Giỏ hàng
+              <ShoppingCart size={20} />
+              <span>Giỏ hàng</span>
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                  {totalItems}
+                </span>
+              )}
             </Link>
             <Link 
               to="/home/order-history" 
-              className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
-              📦 Đơn hàng
+              <Package size={20} />
+              <span>Đơn hàng</span>
             </Link>
           </nav>
 
