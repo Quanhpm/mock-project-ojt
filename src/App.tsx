@@ -34,10 +34,13 @@ const App = () => {
 
           {/* ========== CLIENT PUBLIC ROUTES ========== */}
           {/* Guest có thể truy cập: /, /menu, /about, /contact */}
+          {/* Layout: ClientLayout (header động: guest → ClientHeader, logged in → HomeHeader) */}
           {ClientPublicRoutes}
 
           {/* ========== HOME PRIVATE ROUTES ========== */}
-          {/* Cần đăng nhập: /home, /home/cart, /home/profile */}
+          {/* Cần đăng nhập: /cart, /order-history, /profile, /change-password, /checkout */}
+          {/* Layout: ClientLayout (header động: HomeHeader + ClientFooter) */}
+          {/* Guard: ClientGuard (redirect to /client/login if not authenticated) */}
           {HomePrivateRoutes}
 
           {/* ========== 404 NOT FOUND ========== */}

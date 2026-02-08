@@ -1,6 +1,6 @@
 import { Outlet } from 'react-router';
 import ClientHeader from './components/ClientHeader';
-import HomeHeader from '@/modules/client/home/components/HomeHeader';
+import HomeHeader from './components/HomeHeader';
 import ClientFooter from './components/ClientFooter';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 
