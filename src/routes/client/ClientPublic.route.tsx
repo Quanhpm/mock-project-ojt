@@ -17,24 +17,11 @@ const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
  * KHÔNG cần đăng nhập
  */
 export const ClientPublicRoutes = (
-<<<<<<< HEAD
-  <>
-    <Route element={<ClientLayout />}>
-      <Route path={ROUTER_URL.HOME} element={<HomePage />} />
-      <Route path={ROUTER_URL.MENU} element={<MenuPage />} />
-      <Route path={ROUTER_URL.MENU_ROUTER} element={<Item />} />
-      <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
-    </Route>
-    <Route element={<ContactLayout />}>
-      <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
-    </Route>
-  </>
-=======
   <Route element={<ClientLayout />}>
     <Route path={ROUTER_URL.HOME} element={<HomePage />} />
     <Route path={ROUTER_URL.MENU} element={<MenuPage />} />
+    <Route path={ROUTER_URL.MENU_ROUTER} element={<Item />} />
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
   </Route>
->>>>>>> 1e831fc9d16a9fd6bef4ad27e68424457853881a
 );

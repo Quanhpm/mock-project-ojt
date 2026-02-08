@@ -1,8 +1,5 @@
 import { useRef } from "react";
-<<<<<<< HEAD
 import { useNavigate } from "react-router-dom";
-=======
->>>>>>> 1e831fc9d16a9fd6bef4ad27e68424457853881a
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import { useCartStore } from '@/stores/cart.store';
@@ -33,10 +30,10 @@ interface Product {
 }
 
 function MenuPage() {
-    const navigate = useNavigate();
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const addItem = useCartStore((state) => state.addItem);
     const { success } = useToast();
+    const navigate = useNavigate();
 
     const getCategoryIcon = (code: string): string => {
         const iconMap: { [key: string]: string } = {
@@ -99,123 +96,6 @@ function MenuPage() {
                                 onClick={() => scrollToSection(item.code)}
                                 className="group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden"
                             >
-<<<<<<< HEAD
-                                {/* Tiêu đề danh mục */}
-                                <div className="bg-[var(--cf-dark)] px-5 py-4 shadow-sm">
-                                    <h2 className="text-2xl font-black text-white mb-1 drop-shadow-sm">
-                                        {category.name}
-                                    </h2>
-                                    <p className="text-white/95 font-medium text-sm">{category.description}</p>
-                                </div>
-
-                                {/* Bảng sản phẩm */}
-                                <div className="overflow-hidden">
-                                    {categoryProducts.length > 0 ? (
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full">
-                                                <thead className="bg-secondary sticky top-0 z-10 shadow-sm">
-                                                    <tr>
-                                                        <th className="px-4 py-3 text-left text-xs font-black text-white uppercase tracking-wider w-20">
-                                                            Hình ảnh
-                                                        </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-black text-white uppercase tracking-wider">
-                                                            Tên sản phẩm
-                                                        </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-black text-white uppercase tracking-wider">
-                                                            Mô tả
-                                                        </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-black text-white uppercase tracking-wider w-32">
-                                                            Giá
-                                                        </th>
-                                                        <th className="px-4 py-3 text-center text-xs font-black text-white uppercase tracking-wider w-28">
-                                                            Mua
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-secondary/10">
-                                                    {categoryProducts.map((product: Product, index: number) => (
-                                                        <tr
-                                                            key={product.id}
-                                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
-                                                            className="hover:bg-background-light/60 transition-colors cursor-pointer group"
-                                                        >
-                                                            {/* Hình ảnh */}
-                                                            <td className="px-4 py-3">
-                                                                <div className="w-14 h-14 rounded-lg overflow-hidden bg-background-light shadow-sm group-hover:shadow-md transition-shadow">
-                                                                    {product.image_url ? (
-                                                                        <img
-                                                                            src={product.image_url}
-                                                                            alt={product.name}
-                                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-secondary">
-                                                                            <span className="material-icons-outlined text-xl">image</span>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            </td>
-
-                                                            {/* Tên sản phẩm */}
-                                                            <td className="px-4 py-3">
-                                                                <div className="font-bold text-primary text-sm group-hover:text-[var(--cf-dark)] transition-colors">
-                                                                    {product.name}
-                                                                </div>
-                                                                <div className="text-xs text-primary/50 mt-0.5">
-                                                                    SKU: {product.SKU}
-                                                                </div>
-                                                            </td>
-
-                                                            {/* Mô tả */}
-                                                            <td className="px-4 py-3">
-                                                                <p className="text-sm text-primary/80 line-clamp-2 max-w-md leading-relaxed">
-                                                                    {product.description}
-                                                                </p>
-                                                            </td>
-
-                                                            {/* Giá */}
-                                                            <td className="px-4 py-3">
-                                                                <div className="font-bold text-primary text-sm">
-                                                                    {product.min_price.toLocaleString('vi-VN')} ₫
-                                                                </div>
-                                                                {product.min_price !== product.max_price && (
-                                                                    <div className="text-xs text-primary/60 mt-0.5">
-                                                                        đến {product.max_price.toLocaleString('vi-VN')} ₫
-                                                                    </div>
-                                                                )}
-                                                            </td>
-
-                                                            {/* Hành động */}
-                                                            <td className="px-4 py-3">
-                                                                <div className="flex items-center justify-center gap-2">
-                                                                    <button
-                                                                        onClick={(e) => handleAddToCart(product, e)}
-                                                                        className="group/btn relative px-4 py-2.5 bg-gradient-to-r from-[var(--cf-accent-light)] to-[var(--cf-secondary)] text-[var(--cf-dark)] text-xs font-bold rounded-lg hover:from-[var(--cf-secondary)] hover:to-[var(--cf-dark)] hover:text-white transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 active:scale-95 overflow-hidden"
-                                                                        title="Thêm vào giỏ hàng"
-                                                                    >
-                                                                        <span className="absolute inset-0 bg-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></span>
-                                                                        <span className="relative z-10">Thêm vào giỏ hàng</span>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="px-6 py-10 text-center">
-                                            <span className="material-icons-outlined text-4xl text-secondary/30 mb-2">KHO</span>
-                                            <p className="text-primary/50 text-base">
-                                                Chưa có sản phẩm trong danh mục này
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-=======
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <span className="material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors">{getCategoryIcon(item.code)}</span>
@@ -223,7 +103,6 @@ function MenuPage() {
                             </button>
                         ))}
                     </div>
->>>>>>> 1e831fc9d16a9fd6bef4ad27e68424457853881a
                 </div>
             </aside>
 
@@ -261,7 +140,8 @@ function MenuPage() {
                                     categoryProducts.map((product: Product) => (
                                         <div
                                             key={product.id}
-                                            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
+                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
+                                            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
                                         >
                                             {/* Product Info */}
                                             <div className="flex items-center gap-6 flex-1">
