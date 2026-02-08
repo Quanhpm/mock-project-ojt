@@ -16,15 +16,15 @@ export const ROUTER_URL = {
   },
 
   // ========== PRIVATE ROUTES (Cần đăng nhập - ClientGuard) ==========
-  HOME_PRIVATE: "/home",
+  HOME_PRIVATE: "/",
   HOME_ROUTER: {
-    DASHBOARD: "/home",
-    CART: "/home/cart",
-    SELECT_FRANCHISE: "/home/select-franchise",
-    CHECKOUT: "/home/checkout",
-    PROFILE: "/home/profile",
-    CHANGE_PASSWORD: "/home/change-password",
-    ORDER_HISTORY: "/home/order-history",
+    DASHBOARD: "/",
+    CART: "/cart",
+    SELECT_FRANCHISE: "/select-franchise",
+    CHECKOUT: "/checkout",
+    PROFILE: "/profile",
+    CHANGE_PASSWORD: "/change-password",
+    ORDER_HISTORY: "/order-history",
   },
 
   // ========== ADMIN ROUTES ==========

@@ -74,7 +74,7 @@ export default function ProductTable() {
       [product.id]: getProductStock(product.id) > 0
     }), {})
   );
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
 
   const filteredProducts = mockProducts.filter(product => {
     // Filter by search term (name or SKU)
