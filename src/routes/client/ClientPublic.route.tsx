@@ -7,7 +7,8 @@ import ClientLayout from "@/layouts/ClientLayout/ClientLayout";
 const HomePage = React.lazy(() => import("@/modules/client/home/pages/HomePage"));
 const AboutPage = React.lazy(() => import("@/modules/client/about"));
 const ContactPage = React.lazy(() => import("@/modules/client/contact"));
-const MenuPage = React.lazy(() => import("@/modules/client/menu"));
+const MenuPage = React.lazy(() => import("@/modules/client/menu/pages/MenuPage"));
+const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
 
 /**
  * ClientPublicRoutes - Các route PUBLIC cho GUEST
@@ -19,6 +20,7 @@ export const ClientPublicRoutes = (
   <Route element={<ClientLayout />}>
     <Route path={ROUTER_URL.HOME} element={<HomePage />} />
     <Route path={ROUTER_URL.MENU} element={<MenuPage />} />
+    <Route path={ROUTER_URL.MENU_ROUTER} element={<Item />} />
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
   </Route>

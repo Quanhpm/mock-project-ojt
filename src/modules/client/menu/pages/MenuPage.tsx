@@ -1,8 +1,10 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import { useCartStore } from '@/stores/cart.store';
 import { useToast } from '@/hooks/use-toast.hook';
+import { slugify } from "@/utils/slugify.util";
 
 interface Category {
     id: number;
@@ -31,6 +33,7 @@ function MenuPage() {
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const addItem = useCartStore((state) => state.addItem);
     const { success } = useToast();
+    const navigate = useNavigate();
 
     const getCategoryIcon = (code: string): string => {
         const iconMap: { [key: string]: string } = {
@@ -137,7 +140,8 @@ function MenuPage() {
                                     categoryProducts.map((product: Product) => (
                                         <div
                                             key={product.id}
-                                            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
+                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
+                                            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
                                         >
                                             {/* Product Info */}
                                             <div className="flex items-center gap-6 flex-1">

@@ -362,5 +362,31 @@
     "max_price": 55000,
     "is_active": true,
     "is_deleted": false
+  },
+  {
+    "id": 29,
+    "SKU": "TR007",
+    "name": "Trà tắc size M",
+    "description": "Trà tắc chua ngọt thanh mát (size M)",
+    "content": "Trà pha cùng tắc tươi, vị chua ngọt cân bằng, giải khát.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 25000,
+    "max_price": 25000,
+    "is_active": true,
+    "is_deleted": false
+  },
+  {
+    "id": 30,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": false
   }
 ]
