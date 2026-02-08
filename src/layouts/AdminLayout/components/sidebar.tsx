@@ -7,7 +7,11 @@ import {
   Settings,
   X,
   Package,
+  LogOut,
 } from "lucide-react";
+import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { ROUTER_URL } from "@/routes/router.const";
 
 // Theme colors
 const THEME_COLORS = {
@@ -28,6 +32,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { admin, roleCode, franchiseId, logout } = useAdminAuthStore();
+
+  const handleLogout = () => {
+    logout(); // Clear store + localStorage
+    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
+  };
 
   const isActivePath = (path: string) => {
     return (
@@ -118,8 +128,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             }
           `}
         >
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-amber-700 to-amber-900">
-            <span className="text-white font-semibold text-sm">AM</span>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: THEME_COLORS.primary }}
+          >
+            <span className="text-white font-semibold text-sm">
+              {admin?.email?.charAt(0).toUpperCase() || "A"}
+            </span>
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p
@@ -129,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : "text-gray-800 group-hover:text-amber-900"
               }`}
             >
-              Alex Morgan
+              {admin?.email || "Admin User"}
             </p>
             <p
               className={`text-xs truncate transition-colors ${
@@ -138,9 +153,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : "text-gray-500 group-hover:text-amber-700"
               }`}
             >
-              Super Admin
+              {roleCode} {franchiseId && `- Franchise ${franchiseId}`}
             </p>
           </div>
+        </button>
+
+        {/* Logout Button - Separate */}
+        <button
+          onClick={handleLogout}
+          className="w-full mt-2 flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-all duration-200 group"
+        >
+          <LogOut className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm font-medium">Đăng xuất</span>
         </button>
       </div>
     </>
