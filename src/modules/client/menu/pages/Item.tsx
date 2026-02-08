@@ -1,7 +1,14 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useCartStore } from "@/stores/cart.store";
+import type { Topping, SugarLevel, IceLevel } from "@/stores/cart.store";
 import products from "@/mockdata/products.json"
+
+const TOPPINGS: Topping[] = [
+    { code: "PEARL", name: "Trân châu", price: 5000 },
+    { code: "PUDDING", name: "Pudding", price: 7000 },
+    { code: "JELLY", name: "Thạch", price: 4000 },
+];
 
 interface ItemType {
     id: number;
@@ -23,6 +30,11 @@ function Item() {
     const product = products.find(u => u.id === Number(id));
     const navigate = useNavigate();
 
+    const [sugar, setSugar] = useState<SugarLevel>(50);
+    const [ice, setIce] = useState<IceLevel>(50);
+    const [toppings, setToppings] = useState<Topping[]>([]);
+
+
     if (!product) {
         return <div>Product not found</div>;
     }
@@ -33,17 +45,22 @@ function Item() {
 
     const addItem = useCartStore((s) => s.addItem);
     const handleAddToCart = () => {
+        const extras_total = toppings.reduce((sum, t) => sum + t.price, 0);
+
         addItem(
             {
-                id: product.id,            
-                productId: product.id,     
+                id: Date.now(),
+                productId: product.id,
                 name: product.name,
-                price: product.min_price,   
+                price: product.min_price,
                 image_url: product.image_url,
                 SKU: product.SKU,
+                options: { sugar, ice, toppings},
+                extras_total,
             },
-            qty 
+            qty
         );
+
     };
 
     const getBaseName = (name: string) => {
@@ -67,6 +84,13 @@ function Item() {
         products as ItemType[]
     );
 
+    const toggleTopping = (t: Topping) => {
+        setToppings((prev) =>
+            prev.some((x) => x.code === t.code)
+                ? prev.filter((x) => x.code !== t.code)
+                : [...prev, t]
+        );
+    };
 
     return (
         <div className="min-h-screen w-full px-4 py-8 md:px-6 lg:px-10">
@@ -119,6 +143,53 @@ function Item() {
                             </div>
                         </div>
                     )}
+                    <div>
+                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Độ ngọt</span>
+                        <select
+                            value={sugar}
+                            onChange={(e) => setSugar(Number(e.target.value) as SugarLevel)}
+                            className="w-full mt-4 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        >
+                            <option value={0}>Không đường</option>
+                            <option value={30}>10%</option>
+                            <option value={50}>30%</option>
+                            <option value={70}>50%</option>
+                            <option value={100}>100%</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Lượng đá</span>
+                        <select
+                            value={ice}
+                            onChange={(e) => setIce(Number(e.target.value) as IceLevel)}
+                            className="w-full mt-4 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        >
+                            <option value={0}>Không đá</option>
+                            <option value={30}>10%</option>
+                            <option value={50}>30%</option>
+                            <option value={70}>50%</option>
+                            <option value={100}>100%</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Toppings</span>
+                        <div className="flex flex-wrap gap-3 mt-4">
+                            {TOPPINGS.map((t) => {
+                                const isSelected = toppings.some((x) => x.code === t.code);
+                                return (
+                                    <button
+                                        key={t.code}
+                                        onClick={() => toggleTopping(t)}
+                                        className={`px-4 py-2 rounded-full border-2 transition-all font-medium cursor-pointer
+                                            ${isSelected ? "border-orange-500 bg-orange-500 text-white" : "border-gray-200 hover:border-gray-400 text-gray-600 hover:bg-gray-50"}
+                                        `}
+                                    >
+                                        {t.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
                     <div>
                         <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Số lượng:</span>
                         <div className="flex items-center gap-3 mt-4">
