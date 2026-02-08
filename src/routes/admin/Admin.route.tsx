@@ -7,7 +7,7 @@ import { ADMIN_MENU } from "./Admin.menu.tsx";
 
 // Lazy load Account Settings Page
 const AccountSettingsPage = React.lazy(
-  () => import("@/layouts/AdminLayout/components/user"),
+  () => import("@/modules/admin/account-settings/user.tsx"),
 );
 
 export const AdminRoutes = (
