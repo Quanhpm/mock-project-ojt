@@ -62,6 +62,38 @@ const SEED: Franchise[] = [
     createdAt: '2024-09-15',
     contact: '0956789012',
   },
+  {
+    id: '5',
+    title: 'Nhượng quyền Cafe Riverside',
+    location: 'Cần Thơ - Ninh Kiều',
+    status: 'published',
+    createdAt: '2024-10-18',
+    contact: '0901122334',
+  },
+  {
+    id: '6',
+    title: 'Nhượng quyền Cafe Old Quarter',
+    location: 'Hà Nội - Hoàn Kiếm',
+    status: 'draft',
+    createdAt: '2024-10-20',
+    contact: '0905566778',
+  },
+  {
+    id: '7',
+    title: 'Nhượng quyền Cafe Seaside',
+    location: 'Nha Trang - Trần Phú',
+    status: 'published',
+    createdAt: '2024-10-22',
+    contact: '0912233445',
+  },
+  {
+    id: '8',
+    title: 'Nhượng quyền Cafe Central Park',
+    location: 'TP.HCM - Bình Thạnh',
+    status: 'inactive',
+    createdAt: '2024-10-25',
+    contact: '0933445566',
+  },
 ]
 
 /** ================== Helpers ================== */
