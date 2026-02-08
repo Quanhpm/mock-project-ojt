@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
+import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { useCartStore } from '@/stores/cart.store';
 import { ShoppingCart, ClipboardClock, User, KeyRound, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
@@ -34,7 +34,7 @@ const HomeHeader: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/home" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <img 
               src={logo2} 
               alt="Boutique Brews Logo" 
@@ -86,7 +86,7 @@ const HomeHeader: React.FC = () => {
           <div className="flex items-center gap-4">
             {/* Cart Link */}
             <Link
-              to="/home/cart"
+              to="/cart"
               className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ShoppingCart />
@@ -99,7 +99,7 @@ const HomeHeader: React.FC = () => {
 
             {/* Order History Link */}
             <Link
-              to="/home/order-history"
+              to="/order-history"
               className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ClipboardClock />
@@ -131,14 +131,14 @@ const HomeHeader: React.FC = () => {
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
                   <Link
-                    to="/home/profile"
+                    to="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
                   <Link
-                    to="/home/change-password"
+                    to="/change-password"
                     className="w-full flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                     onClick={() => setIsDropdownOpen(false)}
                   >
