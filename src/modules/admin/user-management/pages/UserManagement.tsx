@@ -52,13 +52,13 @@ function UserManagement() {
   }
 
   return (
-    <div className="flex h-screen w-full">
+    <div className="flex flex-col w-full">
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+      <main className="flex flex-col flex-1">
         <PageHeader totalUsers={totalUsers} onCreateUser={handleCreateUser} />
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto px-8 pb-8">
+        {/* Content Area */}
+        <div className="px-8 pb-8">
           <UserFilters
             searchTerm={filters.searchTerm}
             roleFilter={filters.roleFilter}
@@ -73,7 +73,7 @@ function UserManagement() {
 
           {/* Table Container */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="overflow-x-auto">
+            <div>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">

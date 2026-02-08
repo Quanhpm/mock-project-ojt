@@ -23,7 +23,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
   return (
     <aside className="w-96 shrink-0 bg-white flex flex-col z-10 shadow-xl border-l border-gray-100">
       {/* Header */}
-      <div className="p-5 border-b border-gray-100">
+      <div className="p-5 border-b border-gray-100 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-amber-800">Order #{order.orderNumber}</h2>
           <select
@@ -46,7 +46,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
       </div>
 
       {/* Items List */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div className="max-h-[calc(100vh-450px)] overflow-y-scroll p-5 space-y-4">
         {order.items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-gray-400">
             <ShoppingCart size={40} className="mb-3 opacity-50" />
@@ -109,7 +109,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
 
       {/* Summary */}
       {order.items.length > 0 && (
-        <div className="mt-auto bg-white p-5 border-t border-gray-100 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="shrink-0 bg-white p-5 border-t border-gray-100 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>Subtotal</span>
             <span className="font-bold text-gray-800">VND {order.subtotal.toFixed(2)}</span>
