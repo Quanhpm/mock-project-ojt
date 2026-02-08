@@ -7,7 +7,7 @@ import {
   categoryFranchise,
   productCategoryFranchise
 } from "@/mockdata";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductDelete from "./ProductDelete";
 
@@ -63,6 +63,14 @@ export default function ProductTable() {
   const [franchiseFilter, setFranchiseFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Remove page scroll
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string; productName: string }>({
     isOpen: false,
     productId: "",
@@ -135,9 +143,9 @@ export default function ProductTable() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden" }}>
       {/* Main Content */}
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", position: "relative" }}>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}>
         {/* Top Header & Breadcrumbs */}
         <header style={{ width: "100%", padding: "24px 32px", display: "flex", flexDirection: "column", gap: "24px", flexShrink: 0, zIndex: 10 }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -182,9 +190,9 @@ export default function ProductTable() {
           </div>
         </header>
 
-        {/* Scrollable Content Area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 32px 32px" }}>
-          {/* Filters & Toolbar */}
+        {/* Content Area - No Scroll */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 32px 32px", overflow: "hidden" }}>
+          {/* Filters & Toolbar - Fixed */}
           <div style={{
             backgroundColor: "white",
             padding: "16px",
@@ -192,9 +200,7 @@ export default function ProductTable() {
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
             border: "1px solid #e9ecef",
             marginBottom: "24px",
-            position: "sticky",
-            top: 0,
-            zIndex: 20
+            flexShrink: 0
           }}>
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               {/* Search */}
@@ -372,15 +378,18 @@ export default function ProductTable() {
             </div>
           </div>
 
-          {/* Table Container */}
+          {/* Table Container - Scrollable */}
           <div style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
             backgroundColor: "white",
             borderRadius: "12px",
             boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
             border: "1px solid #e9ecef",
             overflow: "hidden"
           }}>
-            <div style={{ overflowX: "auto" }}>
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
               <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
@@ -671,16 +680,17 @@ export default function ProductTable() {
               </table>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - Fixed at Bottom */}
             <div style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               borderTop: "1px solid #e9ecef",
               backgroundColor: "#f8f9fa",
-              padding: "12px 24px"
+              padding: "12px 24px",
+              flexShrink: 0
             }}>
-              <div style={{ display: "none", flex: 1, alignItems: "center", justifyContent: "space-between" }} className="sm:flex sm:flex-1 sm:items-center sm:justify-between">
+              <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
                     Showing <span style={{ fontWeight: "500" }}>{startIndex + 1}</span> to{" "}
@@ -691,53 +701,88 @@ export default function ProductTable() {
                   </p>
                 </div>
                 <div>
-                  <nav aria-label="Pagination" style={{ display: "inline-flex", borderRadius: "8px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
+                  <nav aria-label="Pagination" style={{ display: "inline-flex" }}>
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                       style={{
-                        position: "relative",
                         display: "inline-flex",
                         alignItems: "center",
-                        padding: "8px 12px",
+                        justifyContent: "center",
+                        padding: "8px 16px",
                         fontSize: "14px",
                         fontWeight: "500",
-                        color: "#374151",
+                        color: currentPage === 1 ? "#9ca3af" : "#374151",
                         backgroundColor: "white",
                         border: "1px solid #e5e7eb",
                         borderTopLeftRadius: "6px",
                         borderBottomLeftRadius: "6px",
+                        borderRight: "none",
                         cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                        opacity: currentPage === 1 ? 0.5 : 1,
-                        transition: "background-color 0.2s"
+                        transition: "all 0.2s"
                       }}
-                      onMouseEnter={(e) => currentPage !== 1 && (e.currentTarget.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== 1) {
+                          e.currentTarget.style.backgroundColor = "#f9fafb";
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "white";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                      }}
                     >
                       Previous
                     </button>
-                    {[...Array(Math.min(5, totalPages))].map((_, i) => {
-                      const pageNum = i + 1;
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 3) {
+                        pageNum = i + 1;
+                      } else {
+                        if (currentPage === 1) {
+                          pageNum = i + 1;
+                        } else if (currentPage === totalPages) {
+                          pageNum = totalPages - 2 + i;
+                        } else {
+                          pageNum = currentPage - 1 + i;
+                        }
+                      }
+                      
                       return (
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
                           style={{
-                            position: "relative",
                             display: "inline-flex",
                             alignItems: "center",
-                            padding: "8px 16px",
+                            justifyContent: "center",
+                            minWidth: "40px",
+                            padding: "8px 12px",
                             fontSize: "14px",
                             fontWeight: currentPage === pageNum ? "600" : "500",
                             color: currentPage === pageNum ? "white" : "#374151",
-                            backgroundColor: currentPage === pageNum ? "#197fe6" : "white",
-                            border: "1px solid #e5e7eb",
-                            borderLeft: "none",
+                            backgroundColor: currentPage === pageNum ? "#8B4513" : "white",
+                            border: "1px solid",
+                            borderColor: currentPage === pageNum ? "#8B4513" : "#e5e7eb",
+                            borderRight: "none",
                             cursor: "pointer",
-                            transition: "background-color 0.2s"
+                            transition: "all 0.2s"
                           }}
-                          onMouseEnter={(e) => currentPage !== pageNum && (e.currentTarget.style.backgroundColor = "#f9fafb")}
-                          onMouseLeave={(e) => currentPage !== pageNum && (e.currentTarget.style.backgroundColor = "white")}
+                          onMouseEnter={(e) => {
+                            if (currentPage !== pageNum) {
+                              e.currentTarget.style.backgroundColor = "#f9fafb";
+                              e.currentTarget.style.borderColor = "#d1d5db";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (currentPage !== pageNum) {
+                              e.currentTarget.style.backgroundColor = "white";
+                              e.currentTarget.style.borderColor = "#e5e7eb";
+                            } else {
+                              e.currentTarget.style.backgroundColor = "#8B4513";
+                              e.currentTarget.style.borderColor = "#8B4513";
+                            }
+                          }}
                         >
                           {pageNum}
                         </button>
@@ -747,24 +792,30 @@ export default function ProductTable() {
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                       style={{
-                        position: "relative",
                         display: "inline-flex",
                         alignItems: "center",
-                        padding: "8px 12px",
+                        justifyContent: "center",
+                        padding: "8px 16px",
                         fontSize: "14px",
                         fontWeight: "500",
-                        color: "#374151",
+                        color: currentPage === totalPages ? "#9ca3af" : "#374151",
                         backgroundColor: "white",
                         border: "1px solid #e5e7eb",
-                        borderLeft: "none",
                         borderTopRightRadius: "6px",
                         borderBottomRightRadius: "6px",
                         cursor: currentPage === totalPages ? "not-allowed" : "pointer",
-                        opacity: currentPage === totalPages ? 0.5 : 1,
-                        transition: "background-color 0.2s"
+                        transition: "all 0.2s"
                       }}
-                      onMouseEnter={(e) => currentPage !== totalPages && (e.currentTarget.style.backgroundColor = "#f9fafb")}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "white"}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== totalPages) {
+                          e.currentTarget.style.backgroundColor = "#f9fafb";
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "white";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                      }}
                     >
                       Next
                     </button>
