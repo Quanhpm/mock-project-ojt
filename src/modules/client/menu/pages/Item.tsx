@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useCartStore } from "@/stores/cart.store";
 import type { Topping, SugarLevel, IceLevel } from "@/stores/cart.store";
 import products from "@/mockdata/products.json"
+import { useToast } from '@/hooks/use-toast.hook';
+import { slugify } from "@/utils/slugify.util";
 
 const TOPPINGS: Topping[] = [
     { code: "PEARL", name: "Trân châu", price: 5000 },
@@ -25,23 +27,25 @@ interface ItemType {
 }
 
 function Item() {
-    const { id } = useParams<{ id: string }>();
-    console.log("param", id);
-    const product = products.find(u => u.id === Number(id));
+    const { slug } = useParams<{ slug: string }>();
+    const product = products.find(
+        (p) => slugify(p.name) === slug
+    );
+    if (!product) {
+        return <div>Product not found</div>;
+    }
+
     const navigate = useNavigate();
 
     const [sugar, setSugar] = useState<SugarLevel>(50);
     const [ice, setIce] = useState<IceLevel>(50);
     const [toppings, setToppings] = useState<Topping[]>([]);
 
-
-    if (!product) {
-        return <div>Product not found</div>;
-    }
-
     const [qty, setQty] = useState(1);
     const dec = () => setQty((q) => Math.max(1, q - 1));
     const inc = () => setQty((q) => q + 1);
+
+    const { success } = useToast();
 
     const addItem = useCartStore((s) => s.addItem);
     const handleAddToCart = () => {
@@ -55,12 +59,13 @@ function Item() {
                 price: product.min_price,
                 image_url: product.image_url,
                 SKU: product.SKU,
-                options: { sugar, ice, toppings},
+                options: { sugar, ice, toppings },
                 extras_total,
             },
             qty
         );
-
+        success("Thêm vào giỏ hàng thành công!");
+        navigate("/menu");
     };
 
     const getBaseName = (name: string) => {

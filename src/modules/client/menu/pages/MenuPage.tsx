@@ -4,6 +4,7 @@ import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import { useCartStore } from '@/stores/cart.store';
 import { useToast } from '@/hooks/use-toast.hook';
+import { slugify } from "@/utils/slugify.util";
 
 interface Category {
     id: number;
@@ -137,7 +138,7 @@ function MenuPage() {
                                                     {categoryProducts.map((product: Product, index: number) => (
                                                         <tr
                                                             key={product.id}
-                                                            onClick={() => navigate(`/product/${product.id}`)}
+                                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
                                                             className="hover:bg-background-light/60 transition-colors cursor-pointer group"
                                                         >
                                                             {/* Hình ảnh */}
