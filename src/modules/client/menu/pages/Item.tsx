@@ -134,7 +134,7 @@ function Item() {
                                     return (
                                         <button
                                             key={p.id}
-                                            onClick={() => navigate(`/product/${p.id}`)}
+                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
                                             className={`px-6 py-2 rounded-full border-2 transition-all font-medium cursor-pointer
                                     ${isActive
                                                     ? "border-black bg-black text-white shadow-md"
