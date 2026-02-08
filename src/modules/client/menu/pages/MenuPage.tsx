@@ -2,6 +2,8 @@ import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
+import { useCartStore } from '@/stores/cart.store';
+import { useToast } from '@/hooks/use-toast.hook';
 
 interface Category {
     id: number;
@@ -29,6 +31,8 @@ interface Product {
 function MenuPage() {
     const navigate = useNavigate();
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+    const addItem = useCartStore((state) => state.addItem);
+    const { success } = useToast();
 
     const scrollToSection = (code: string) => {
         const element = sectionRefs.current[code];
@@ -50,10 +54,19 @@ function MenuPage() {
         );
     };
 
-    const handleAddToCart = (productId: number, e: React.MouseEvent) => {
+    const handleAddToCart = (product: Product, e: React.MouseEvent) => {
         e.stopPropagation();
-        // TODO: Implement add to cart logic
-        console.log('Thêm sản phẩm vào giỏ:', productId);
+        
+        addItem({
+            id: product.id,
+            productId: product.id,
+            name: product.name,
+            price: product.min_price,
+            image_url: product.image_url,
+            SKU: product.SKU
+        });
+
+        success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
     };
 
     return (
@@ -177,7 +190,7 @@ function MenuPage() {
                                                             <td className="px-4 py-3">
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     <button
-                                                                        onClick={(e) => handleAddToCart(product.id, e)}
+                                                                        onClick={(e) => handleAddToCart(product, e)}
                                                                         className="group/btn relative px-4 py-2.5 bg-gradient-to-r from-[var(--cf-accent-light)] to-[var(--cf-secondary)] text-[var(--cf-dark)] text-xs font-bold rounded-lg hover:from-[var(--cf-secondary)] hover:to-[var(--cf-dark)] hover:text-white transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 active:scale-95 overflow-hidden"
                                                                         title="Thêm vào giỏ hàng"
                                                                     >
