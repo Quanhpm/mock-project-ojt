@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useCartStore } from "@/stores/cart.store";
 import products from "@/mockdata/products.json"
 
 interface ItemType {
@@ -22,14 +23,28 @@ function Item() {
     const product = products.find(u => u.id === Number(id));
     const navigate = useNavigate();
 
+    if (!product) {
+        return <div>Product not found</div>;
+    }
+
     const [qty, setQty] = useState(1);
     const dec = () => setQty((q) => Math.max(1, q - 1));
     const inc = () => setQty((q) => q + 1);
 
-
-    if (!product) {
-        return <div>Product not found</div>;
-    }
+    const addItem = useCartStore((s) => s.addItem);
+    const handleAddToCart = () => {
+        addItem(
+            {
+                id: product.id,            
+                productId: product.id,     
+                name: product.name,
+                price: product.min_price,   
+                image_url: product.image_url,
+                SKU: product.SKU,
+            },
+            qty 
+        );
+    };
 
     const getBaseName = (name: string) => {
         return name.replace(/size\s*[A-Z]/i, "").trim()
@@ -126,7 +141,10 @@ function Item() {
                             </button>
                         </div>
                     </div>
-                    <button className="w-full mt-auto bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] cursor-pointer text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        className="w-full mt-auto bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] cursor-pointer text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
                         Thêm vào giỏ hàng
                     </button>
                 </div>

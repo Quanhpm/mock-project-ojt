@@ -13,7 +13,7 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: Omit<CartItem, 'quantity'>) => void;
+  addItem: (product: Omit<CartItem, 'quantity'>, quantity?: number) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
@@ -26,21 +26,23 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
 
-      addItem: (product) => {
+      addItem: (product, quantity = 1) => {
         const items = get().items;
         const existingItem = items.find(item => item.productId === product.productId);
+
+        const qty = Math.max(1, Math.floor(quantity));
 
         if (existingItem) {
           set({
             items: items.map(item =>
               item.productId === product.productId
-                ? { ...item, quantity: item.quantity + 1 }
+                ? { ...item, quantity: item.quantity + qty }
                 : item
             )
           });
         } else {
           set({
-            items: [...items, { ...product, quantity: 1 }]
+            items: [...items, { ...product, quantity: qty }]
           });
         }
       },
