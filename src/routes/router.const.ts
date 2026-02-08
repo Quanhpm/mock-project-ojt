@@ -2,6 +2,7 @@ export const ROUTER_URL = {
   // ========== PUBLIC ROUTES (Guest có thể truy cập) ==========
   HOME: "/",
   MENU: "/menu",
+  MENU_ROUTER: "/product/:id",
   ABOUT: "/about",
   CONTACT: "/contact",
   VERSION: "/version",

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import Item from "../components/Item"
+import { useNavigate } from "react-router-dom";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 
@@ -27,6 +27,7 @@ interface Product {
 }
 
 function MenuPage() {
+    const navigate = useNavigate();
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     const scrollToSection = (code: string) => {
@@ -123,6 +124,7 @@ function MenuPage() {
                                                     {categoryProducts.map((product: Product, index: number) => (
                                                         <tr
                                                             key={product.id}
+                                                            onClick={() => navigate(`/product/${product.id}`)}
                                                             className="hover:bg-background-light/60 transition-colors cursor-pointer group"
                                                         >
                                                             {/* Hình ảnh */}
