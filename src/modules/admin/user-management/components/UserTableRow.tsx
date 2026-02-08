@@ -16,6 +16,11 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
 }) => {
   // Get primary role (first role)
   const primaryRole = user.roles[0] || null
+  
+  // Get unique franchises
+  const franchises = Array.from(
+    new Set(user.roles.map(role => role.franchiseName || 'Global'))
+  )
 
   return (
     <tr className="group hover:bg-slate-50 transition-colors">
@@ -55,9 +60,19 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
           <span className="material-symbols-outlined text-slate-400 text-[18px]">
             storefront
           </span>
-          <span className="text-slate-700">
-            {primaryRole?.franchiseName || 'Global'}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-slate-700 font-medium">
+              {franchises.length === 1 
+                ? franchises[0]
+                : `${franchises.length} franchises`
+              }
+            </span>
+            {franchises.length > 1 && (
+              <span className="text-xs text-slate-500">
+                {franchises.join(', ')}
+              </span>
+            )}
+          </div>
         </div>
       </td>
       <td className="p-4">

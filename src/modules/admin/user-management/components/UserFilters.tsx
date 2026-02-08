@@ -24,7 +24,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   onClearFilters,
 }) => {
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 sticky top-0 z-20">
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 z-20">
       <div className="flex flex-col md:flex-row gap-4">
         {/* Search */}
         <div className="flex-1 relative">
