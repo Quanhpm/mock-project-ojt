@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import { useCartStore } from '@/stores/cart.store';
+import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { useToast } from '@/hooks/use-toast.hook';
 import { slugify } from "@/utils/slugify.util";
+import { ROUTER_URL } from '@/routes/router.const';
 
 interface Category {
     id: number;
@@ -32,7 +34,8 @@ interface Product {
 function MenuPage() {
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const addItem = useCartStore((state) => state.addItem);
-    const { success } = useToast();
+    const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+    const { success, error } = useToast();
     const navigate = useNavigate();
 
     const getCategoryIcon = (code: string): string => {
@@ -67,6 +70,17 @@ function MenuPage() {
 
     const handleAddToCart = (product: Product, e: React.MouseEvent) => {
         e.stopPropagation();
+        
+        // Kiểm tra đăng nhập
+        if (!isLoggedIn) {
+            error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+            setTimeout(() => {
+                navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, { 
+                    state: { from: ROUTER_URL.MENU } 
+                });
+            }, 1500);
+            return;
+        }
         
         addItem({
             id: product.id,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { useCartStore } from '@/stores/cart.store';
@@ -16,17 +16,14 @@ const HomeHeader: React.FC = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Check login status
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/client/login');
-    }
-  }, [isLoggedIn, navigate]);
-
   const handleLogout = () => {
-    logout();
     setIsDropdownOpen(false);
-    navigate('/');
+    // Navigate trước, logout sau để tránh ClientGuard redirect về login
+    navigate('/', { replace: true });
+    // Delay logout một chút để navigate hoàn thành trước
+    setTimeout(() => {
+      logout();
+    }, 50);
   };
 
   return (

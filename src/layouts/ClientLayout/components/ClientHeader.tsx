@@ -14,9 +14,13 @@ const ClientHeader = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
-    logout();
     setIsDropdownOpen(false);
-    navigate('/');
+    // Navigate trước, logout sau để tránh ClientGuard redirect về login
+    navigate('/', { replace: true });
+    // Delay logout một chút để navigate hoàn thành trước
+    setTimeout(() => {
+      logout();
+    }, 50);
   };
 
   return (

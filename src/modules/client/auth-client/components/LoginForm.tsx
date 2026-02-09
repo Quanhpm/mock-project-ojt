@@ -37,12 +37,7 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center">
-                        <label className="text-sm font-semibold text-[var(--cf-primary)] ml-1">Password</label>
-                        <a href="/client/forgot-password" className="text-xs text-orange-500 hover:text-orange-600 font-semibold">
-                            Forgot Password?
-                        </a>
-                    </div>
+                    <label className="text-sm font-semibold text-[var(--cf-primary)] ml-1">Password</label>
                     <input 
                         {...register("password")} 
                         type="password"
@@ -51,6 +46,9 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
                         disabled={isLoading}
                     />
                     {errors.password && <p className="text-xs text-red-600 mt-1 ml-1">{errors.password.message}</p>}
+                    <a href="/client/forgot-password" className="text-xs text-orange-500 hover:text-orange-600 font-semibold ml-auto">
+                        Forgot Password?
+                    </a>
                 </div>
 
                 <button 
