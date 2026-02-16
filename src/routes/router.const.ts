@@ -26,6 +26,7 @@ export const ROUTER_URL = {
     PROFILE: "/profile",
     CHANGE_PASSWORD: "/change-password",
     ORDER_HISTORY: "/order-history",
+    LOCATION: "/location",
   },
 
   // ========== ADMIN ROUTES ==========

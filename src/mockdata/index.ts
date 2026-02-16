@@ -19,6 +19,7 @@ import promotions from './promotions.json';
 import orderStatusLogs from './order_status_logs.json';
 import loyaltyTransactions from './loyalty_transactions.json';
 import auditLogs from './audit_logs.json';
+import location from './location.json';
 
 // Backward compatibility exports (matching old mock/data structure)
 export const mockUsers = users;
@@ -124,6 +125,9 @@ export const mockData = {
   orderStatusLogs,
   loyaltyTransactions,
   auditLogs,
+  
+  // Store Locations
+  location,
 };
 
 export default mockData;
@@ -158,4 +162,7 @@ export {
   orderStatusLogs,
   loyaltyTransactions,
   auditLogs,
+  
+  // Store Locations
+  location,
 };
