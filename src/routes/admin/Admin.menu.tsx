@@ -8,7 +8,7 @@ import {
   ShoppingCart,
   Clock,
 } from "lucide-react";
-import React, { type JSX } from "react";
+import React from "react";
 import { ROUTER_URL } from "../router.const";
 
 
