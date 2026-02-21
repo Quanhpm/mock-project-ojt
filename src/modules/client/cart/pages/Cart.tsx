@@ -8,7 +8,7 @@ import { Confirm } from '../components/Confirm';
 function Cart() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
-  
+
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [removeItemConfirm, setRemoveItemConfirm] = useState<{
     show: boolean;
@@ -37,6 +37,20 @@ function Cart() {
     if (removeItemConfirm.productId) {
       removeItem(removeItemConfirm.productId);
     }
+  };
+
+  // option note
+  const formatOptionsNote = (item: any) => {
+    const opt = item.options;
+    if (!opt) return "";
+
+    const sizeText = opt.size?.code ? `size ${String(opt.size.code)}` : "";
+    const sugarText = `sugar: ${opt.sugar}`;
+    const iceText = `ice: ${opt.ice}`;
+    const toppingText =
+      opt.toppings?.length ? `topping: ${opt.toppings.map((t: any) => t.code).join(", ")}` : "";
+
+    return [sizeText, sugarText, iceText, toppingText].filter(Boolean).join(" || ");
   };
 
   if (items.length === 0) {
@@ -113,6 +127,11 @@ function Cart() {
                   <p className="text-sm text-[var(--cf-primary)]/60 mb-3">
                     SKU: {item.SKU}
                   </p>
+                  {item.options && (
+                    <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
+                      {formatOptionsNote(item)}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
@@ -136,10 +155,10 @@ function Cart() {
                     {/* Price */}
                     <div className="text-right">
                       <div className="font-bold text-[var(--cf-secondary)] text-lg">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')} ₫
+                        {((item.price + (item.extras_total ?? 0)) * item.quantity).toLocaleString('vi-VN')} ₫
                       </div>
                       <div className="text-sm text-[var(--cf-primary)]/60">
-                        {item.price.toLocaleString('vi-VN')} ₫ × {item.quantity}
+                        {(item.price + (item.extras_total ?? 0)).toLocaleString('vi-VN')} ₫ × {item.quantity}
                       </div>
                     </div>
                   </div>
