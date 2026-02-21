@@ -1,0 +1,244 @@
+[
+  {
+    "id": 1,
+    "name": "Boutique Brews – TP.HCM",
+    "address": "Khu Công Nghệ Cao, TP Thủ Đức, TP.HCM",
+    "phone": "0909 111 111",
+    "latitude": 10.8411,
+    "longitude": 106.805
+  },
+  {
+    "id": 2,
+    "name": "Boutique Brews – Hà Nội",
+    "address": "Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+    "phone": "0909 222 222",
+    "latitude": 21.0135,
+    "longitude": 105.5259
+  },
+  {
+    "id": 3,
+    "name": "Boutique Brews – Đà Nẵng",
+    "address": "Khu đô thị FPT City, Ngũ Hành Sơn, Đà Nẵng",
+    "phone": "0909 333 333",
+    "latitude": 15.9753,
+    "longitude": 108.257
+  },
+  {
+    "id": 4,
+    "name": "Boutique Brews – Cần Thơ",
+    "address": "KDC Hưng Phú, Cái Răng, Cần Thơ",
+    "phone": "0909 444 444",
+    "latitude": 10.012,
+    "longitude": 105.7687
+  },
+  {
+    "id": 5,
+    "name": "Boutique Brews – Quy Nhơn",
+    "address": "Khu đô thị An Phú Thịnh, Quy Nhơn, Bình Định",
+    "phone": "0909 555 555",
+    "latitude": 13.782,
+    "longitude": 109.2197
+  }
+  ,
+  {
+    "id": 6,
+    "name": "Boutique Brews – Quận 1",
+    "address": "Nguyễn Huệ, Quận 1, TP.HCM",
+    "phone": "0909 111 006",
+    "latitude": 10.7769,
+    "longitude": 106.7009
+  },
+  {
+    "id": 7,
+    "name": "Boutique Brews – Bình Thạnh",
+    "address": "Điện Biên Phủ, Bình Thạnh, TP.HCM",
+    "phone": "0909 111 007",
+    "latitude": 10.8016,
+    "longitude": 106.7115
+  },
+  {
+    "id": 8,
+    "name": "Boutique Brews – Phú Nhuận",
+    "address": "Phan Xích Long, Phú Nhuận, TP.HCM",
+    "phone": "0909 111 008",
+    "latitude": 10.7991,
+    "longitude": 106.6878
+  },
+  {
+    "id": 9,
+    "name": "Boutique Brews – Cầu Giấy",
+    "address": "Duy Tân, Cầu Giấy, Hà Nội",
+    "phone": "0909 222 009",
+    "latitude": 21.0367,
+    "longitude": 105.7827
+  },
+  {
+    "id": 10,
+    "name": "Boutique Brews – Hoàn Kiếm",
+    "address": "Tràng Tiền, Hoàn Kiếm, Hà Nội",
+    "phone": "0909 222 010",
+    "latitude": 21.0245,
+    "longitude": 105.8570
+  },
+  {
+    "id": 11,
+    "name": "Boutique Brews – Tây Hồ",
+    "address": "Xuân Diệu, Tây Hồ, Hà Nội",
+    "phone": "0909 222 011",
+    "latitude": 21.0703,
+    "longitude": 105.8180
+  },
+  {
+    "id": 12,
+    "name": "Boutique Brews – Hải Châu",
+    "address": "Bạch Đằng, Hải Châu, Đà Nẵng",
+    "phone": "0909 333 012",
+    "latitude": 16.0678,
+    "longitude": 108.2208
+  },
+  {
+    "id": 13,
+    "name": "Boutique Brews – Sơn Trà",
+    "address": "Võ Nguyên Giáp, Sơn Trà, Đà Nẵng",
+    "phone": "0909 333 013",
+    "latitude": 16.0836,
+    "longitude": 108.2450
+  },
+  {
+    "id": 14,
+    "name": "Boutique Brews – Ninh Kiều",
+    "address": "Hai Bà Trưng, Ninh Kiều, Cần Thơ",
+    "phone": "0909 444 014",
+    "latitude": 10.0352,
+    "longitude": 105.7830
+  },
+  {
+    "id": 15,
+    "name": "Boutique Brews – Bình Thủy",
+    "address": "Cách Mạng Tháng 8, Bình Thủy, Cần Thơ",
+    "phone": "0909 444 015",
+    "latitude": 10.0710,
+    "longitude": 105.7390
+  },
+  {
+    "id": 16,
+    "name": "Boutique Brews – Nha Trang",
+    "address": "Trần Phú, Nha Trang",
+    "phone": "0909 555 016",
+    "latitude": 12.2388,
+    "longitude": 109.1967
+  },
+  {
+    "id": 17,
+    "name": "Boutique Brews – Huế",
+    "address": "Hùng Vương, Huế",
+    "phone": "0909 555 017",
+    "latitude": 16.4637,
+    "longitude": 107.5909
+  },
+  {
+    "id": 18,
+    "name": "Boutique Brews – Vũng Tàu",
+    "address": "Thùy Vân, Vũng Tàu",
+    "phone": "0909 555 018",
+    "latitude": 10.4114,
+    "longitude": 107.1362
+  },
+  {
+    "id": 19,
+    "name": "Boutique Brews – Biên Hòa",
+    "address": "Phạm Văn Thuận, Biên Hòa",
+    "phone": "0909 555 019",
+    "latitude": 10.9574,
+    "longitude": 106.8420
+  },
+  {
+    "id": 20,
+    "name": "Boutique Brews – Hải Phòng",
+    "address": "Lê Hồng Phong, Hải Phòng",
+    "phone": "0909 555 020",
+    "latitude": 20.8449,
+    "longitude": 106.6881
+  },
+  {
+    "id": 21,
+    "name": "Boutique Brews – Bắc Ninh",
+    "address": "Nguyễn Văn Cừ, Bắc Ninh",
+    "phone": "0909 555 021",
+    "latitude": 21.1861,
+    "longitude": 106.0763
+  },
+  {
+    "id": 22,
+    "name": "Boutique Brews – Bình Dương",
+    "address": "Thủ Dầu Một, Bình Dương",
+    "phone": "0909 555 022",
+    "latitude": 10.9804,
+    "longitude": 106.6519
+  },
+  {
+    "id": 23,
+    "name": "Boutique Brews – Đà Lạt",
+    "address": "Trần Phú, Đà Lạt",
+    "phone": "0909 555 023",
+    "latitude": 11.9404,
+    "longitude": 108.4583
+  },
+  {
+    "id": 24,
+    "name": "Boutique Brews – Thanh Hóa",
+    "address": "Lê Hoàn, Thanh Hóa",
+    "phone": "0909 555 024",
+    "latitude": 19.8067,
+    "longitude": 105.7851
+  },
+  {
+    "id": 25,
+    "name": "Boutique Brews – Nghệ An",
+    "address": "Quang Trung, Vinh, Nghệ An",
+    "phone": "0909 555 025",
+    "latitude": 18.6796,
+    "longitude": 105.6813
+  },
+  {
+    "id": 26,
+    "name": "Boutique Brews – Quảng Ninh",
+    "address": "Hạ Long, Quảng Ninh",
+    "phone": "0909 555 026",
+    "latitude": 20.9518,
+    "longitude": 107.0735
+  },
+  {
+    "id": 27,
+    "name": "Boutique Brews – Bình Định",
+    "address": "An Nhơn, Bình Định",
+    "phone": "0909 555 027",
+    "latitude": 13.7750,
+    "longitude": 109.2300
+  },
+  {
+    "id": 28,
+    "name": "Boutique Brews – Long An",
+    "address": "Tân An, Long An",
+    "phone": "0909 555 028",
+    "latitude": 10.5350,
+    "longitude": 106.4137
+  },
+  {
+    "id": 29,
+    "name": "Boutique Brews – Tiền Giang",
+    "address": "Mỹ Tho, Tiền Giang",
+    "phone": "0909 555 029",
+    "latitude": 10.3600,
+    "longitude": 106.3590
+  },
+  {
+    "id": 30,
+    "name": "Boutique Brews – An Giang",
+    "address": "Long Xuyên, An Giang",
+    "phone": "0909 555 030",
+    "latitude": 10.3864,
+    "longitude": 105.4352
+  }
+
+]

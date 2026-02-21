@@ -21,10 +21,12 @@ export const ROUTER_URL = {
     DASHBOARD: "/",
     CART: "/cart",
     SELECT_FRANCHISE: "/select-franchise",
+    FRANCHISE: "/franchise",
     CHECKOUT: "/checkout",
     PROFILE: "/profile",
     CHANGE_PASSWORD: "/change-password",
     ORDER_HISTORY: "/order-history",
+    LOCATION: "/location",
   },
 
   // ========== ADMIN ROUTES ==========
