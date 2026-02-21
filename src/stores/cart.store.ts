@@ -4,6 +4,13 @@ import { persist } from 'zustand/middleware';
 // Topping
 export type SugarLevel = 0 | 30 | 50 | 70 | 100;
 export type IceLevel = 0 | 30 | 50 | 70 | 100;
+export type SizeCode = "S" | "M" | "L";
+
+export type Size = {
+  code: SizeCode;     // "S", "M", "L"
+  label: string;     // "Size S", "Size M", "Size L"
+  bonusPrice: number;    // giá topping (snapshot)
+};
 
 export type Topping = {
   code: string;     // "PEARL", "PUDDING"
@@ -12,6 +19,7 @@ export type Topping = {
 };
 
 export type ItemOptions = {
+  size?: Size;
   sugar: SugarLevel;
   ice: IceLevel;
   toppings: Topping[];
@@ -45,7 +53,8 @@ interface CartState {
 const optionsKey = (opt?: ItemOptions) => {
   if (!opt) return "no_opt";
   const toppingCodes = (opt.toppings ?? []).map(t => t.code).sort().join(",");
-  return `s${opt.sugar}-i${opt.ice}-t[${toppingCodes}]-n:${(opt.note ?? "").trim()}`;
+  const sizeCode = opt.size?.code ?? "NO_SIZE";
+  return `z${sizeCode}-s${opt.sugar}-i${opt.ice}-t[${toppingCodes}]-n:${(opt.note ?? "").trim()}`;
 };
 
 
