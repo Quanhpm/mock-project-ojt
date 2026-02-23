@@ -67,7 +67,6 @@ function Item() {
     const handleAddToCart = () => {
         addItem(
             {
-                id: Date.now(),
                 productId: product.id,
                 name: product.name,
                 price: product.min_price,
