@@ -45,8 +45,8 @@ function Cart() {
     if (!opt) return "";
 
     const sizeText = opt.size?.code ? `size ${String(opt.size.code)}` : "";
-    const sugarText = `sugar: ${opt.sugar}`;
-    const iceText = `ice: ${opt.ice}`;
+    const sugarText = `sugar: ${opt.sugar.label}`;
+    const iceText = `ice: ${opt.ice.label}`;
     const toppingText =
       opt.toppings?.length ? `topping: ${opt.toppings.map((t: any) => t.code).join(", ")}` : "";
 

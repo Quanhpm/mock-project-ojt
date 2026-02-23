@@ -1,30 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-// Topping
-export type SugarLevel = 0 | 30 | 50 | 70 | 100;
-export type IceLevel = 0 | 30 | 50 | 70 | 100;
-export type SizeCode = "S" | "M" | "L";
-
-export type Size = {
-  code: SizeCode;     // "S", "M", "L"
-  label: string;     // "Size S", "Size M", "Size L"
-  bonusPrice: number;    // giá topping (snapshot)
-};
-
-export type Topping = {
-  code: string;     // "PEARL", "PUDDING"
-  name: string;     // "Trân châu", "Pudding"
-  price: number;    // giá topping (snapshot)
-};
-
-export type ItemOptions = {
-  size?: Size;
-  sugar: SugarLevel;
-  ice: IceLevel;
-  toppings: Topping[];
-  note?: string;
-};
+import type { ItemOptions } from '../types/product-option.type';
 
 
 export interface CartItem {
