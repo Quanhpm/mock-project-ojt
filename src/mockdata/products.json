@@ -374,7 +374,7 @@
     "min_price": 25000,
     "max_price": 25000,
     "is_active": true,
-    "is_deleted": false
+    "is_deleted": true
   },
   {
     "id": 30,
@@ -387,6 +387,6 @@
     "min_price": 30000,
     "max_price": 30000,
     "is_active": true,
-    "is_deleted": false
+    "is_deleted": true
   }
 ]

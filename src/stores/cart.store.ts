@@ -1,30 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-// Topping
-export type SugarLevel = 0 | 30 | 50 | 70 | 100;
-export type IceLevel = 0 | 30 | 50 | 70 | 100;
-export type SizeCode = "S" | "M" | "L";
-
-export type Size = {
-  code: SizeCode;     // "S", "M", "L"
-  label: string;     // "Size S", "Size M", "Size L"
-  bonusPrice: number;    // giá topping (snapshot)
-};
-
-export type Topping = {
-  code: string;     // "PEARL", "PUDDING"
-  name: string;     // "Trân châu", "Pudding"
-  price: number;    // giá topping (snapshot)
-};
-
-export type ItemOptions = {
-  size?: Size;
-  sugar: SugarLevel;
-  ice: IceLevel;
-  toppings: Topping[];
-  note?: string;
-};
+import type { ItemOptions } from '../types/product-option.type';
 
 
 export interface CartItem {
@@ -57,6 +33,18 @@ const optionsKey = (opt?: ItemOptions) => {
   return `z${sizeCode}-s${opt.sugar}-i${opt.ice}-t[${toppingCodes}]-n:${(opt.note ?? "").trim()}`;
 };
 
+export   // option note
+  const formatOptionsNote = (item: any) => {
+    const opt = item.options;
+    if (!opt) return "size: s || sugar: 0% || ice: 0%";
+
+    const sizeText = opt.size?.code ? `size ${String(opt.size.code)}` : "";
+    const sugarText = `sugar: ${opt.sugar.label}`;
+    const iceText = `ice: ${opt.ice.label}`;
+    const toppingText =
+      opt.toppings?.length ? `topping: ${opt.toppings.map((t: any) => t.code).join(", ")}` : "";
+    return [sizeText, sugarText, iceText, toppingText].filter(Boolean).join(" || ");
+  };
 
 export const useCartStore = create<CartState>()(
   persist(
