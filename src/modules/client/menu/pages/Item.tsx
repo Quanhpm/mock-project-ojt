@@ -84,43 +84,38 @@ function Item() {
     };
 
     return (
-        <div className="min-h-screen bg-[var(--cf-bg)] py-4 px-8 flex items-center justify-center">
+        <div className="h-full bg-[var(--cf-bg)] px-8 py-4 flex items-center justify-center">
             <main className="w-full grid grid-cols-1 md:grid-cols-10 gap-8 items-start">
                 {/* LEFT COLUMN: Image */}
                 <section className="md:col-span-3 w-full">
-                    <div className="sticky top-8">
-                        <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-white">
-                            <img
-                                src={product.image_url}
-                                alt={product.name}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
+                    <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-white">
+                        <img
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                 </section>
 
                 {/* RIGHT COLUMN: Product Info & Options */}
                 <section className="md:col-span-7 w-full">
                     <div className="bg-[var(--cf-surface)] p-8 rounded-[2rem] shadow-sm space-y-8 border border-white/40">
-                        <header className="space-y-2">
-
+                        <header className="space-y-1">
                             <h1 className="text-3xl md:text-4xl font-black text-[var(--cf-primary)] uppercase tracking-tight">
                                 {product.name}
                             </h1>
-
                             <p className="text-[var(--cf-primary)] italic opacity-80 text-lg">
                                 {product.description}
                             </p>
-
-                            <div className="text-3xl font-black text-[var(--cf-primary)] pt-2">
+                            <div className="text-3xl font-black text-[var(--cf-primary)]">
                                 {product.min_price.toLocaleString()}đ
                             </div>
                         </header>
 
                         {/* Options Container */}
-                        <div className="space-y-8">
+                        <div className="space-y-5">
                             {/* Size Selection */}
-                            <section className="space-y-3">
+                            <section className="space-y-2">
                                 <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
                                     Kích thước
                                 </h3>
@@ -132,8 +127,8 @@ function Item() {
                                                 key={s.code}
                                                 onClick={() => setSize(s)}
                                                 className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer ${active
-                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
-                                                        : "bg-white/60 border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-white"
+                                                    ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                    : "bg-white/60 border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-white"
                                                     }`}
                                             >
                                                 {s.label}{" "}
@@ -146,7 +141,7 @@ function Item() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Sugar Level Selection */}
-                                <section className="space-y-3">
+                                <section className="space-y-2">
                                     <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
                                         Mức đường
                                     </h3>
@@ -158,8 +153,8 @@ function Item() {
                                                     key={s.value}
                                                     onClick={() => setSugar(s)}
                                                     className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
-                                                            ? "bg-[var(--cf-primary)] text-white shadow-md"
-                                                            : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
+                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
                                                         }`}
                                                 >
                                                     {s.label}
@@ -170,7 +165,7 @@ function Item() {
                                 </section>
 
                                 {/* Ice Level Selection */}
-                                <section className="space-y-3">
+                                <section className="space-y-2">
                                     <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
                                         Mức đá
                                     </h3>
@@ -182,8 +177,8 @@ function Item() {
                                                     key={i.value}
                                                     onClick={() => setIce(i)}
                                                     className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
-                                                            ? "bg-[var(--cf-primary)] text-white shadow-md"
-                                                            : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
+                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
                                                         }`}
                                                 >
                                                     {i.label}
@@ -196,7 +191,7 @@ function Item() {
 
 
                             {/* Toppings Selection */}
-                            <section className="space-y-3">
+                            <section className="space-y-2">
                                 <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
                                     Toppings
                                 </h3>
@@ -208,8 +203,8 @@ function Item() {
                                                 key={t.code}
                                                 onClick={() => toggleTopping(t)}
                                                 className={`px-5 py-2.5 rounded-xl border transition-all cursor-pointer ${active
-                                                        ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white font-bold shadow-sm"
-                                                        : "border-[var(--cf-primary)] bg-white/60 text-[var(--cf-primary)] font-medium hover:bg-white"
+                                                    ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white font-bold shadow-sm"
+                                                    : "border-[var(--cf-primary)] bg-white/60 text-[var(--cf-primary)] font-medium hover:bg-white"
                                                     }`}
                                             >
                                                 {t.name}{" "}
