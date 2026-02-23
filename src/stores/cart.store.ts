@@ -33,6 +33,18 @@ const optionsKey = (opt?: ItemOptions) => {
   return `z${sizeCode}-s${opt.sugar}-i${opt.ice}-t[${toppingCodes}]-n:${(opt.note ?? "").trim()}`;
 };
 
+export   // option note
+  const formatOptionsNote = (item: any) => {
+    const opt = item.options;
+    if (!opt) return "size: s || sugar: 0% || ice: 0%";
+
+    const sizeText = opt.size?.code ? `size ${String(opt.size.code)}` : "";
+    const sugarText = `sugar: ${opt.sugar.label}`;
+    const iceText = `ice: ${opt.ice.label}`;
+    const toppingText =
+      opt.toppings?.length ? `topping: ${opt.toppings.map((t: any) => t.code).join(", ")}` : "";
+    return [sizeText, sugarText, iceText, toppingText].filter(Boolean).join(" || ");
+  };
 
 export const useCartStore = create<CartState>()(
   persist(

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useCartStore } from '@/stores/cart.store';
+import { useCartStore, formatOptionsNote } from '@/stores/cart.store';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
@@ -37,20 +37,6 @@ function Cart() {
     if (removeItemConfirm.productId) {
       removeItem(removeItemConfirm.productId);
     }
-  };
-
-  // option note
-  const formatOptionsNote = (item: any) => {
-    const opt = item.options;
-    if (!opt) return "";
-
-    const sizeText = opt.size?.code ? `size ${String(opt.size.code)}` : "";
-    const sugarText = `sugar: ${opt.sugar.label}`;
-    const iceText = `ice: ${opt.ice.label}`;
-    const toppingText =
-      opt.toppings?.length ? `topping: ${opt.toppings.map((t: any) => t.code).join(", ")}` : "";
-
-    return [sizeText, sugarText, iceText, toppingText].filter(Boolean).join(" || ");
   };
 
   if (items.length === 0) {
@@ -124,14 +110,12 @@ function Cart() {
                   <h3 className="font-bold text-[var(--cf-dark)] text-lg mb-1">
                     {item.name}
                   </h3>
-                  <p className="text-sm text-[var(--cf-primary)]/60 mb-3">
+                  <p className="text-sm text-[var(--cf-primary)]/60 mb-1">
                     SKU: {item.SKU}
                   </p>
-                  {item.options && (
                     <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
                       {formatOptionsNote(item)}
                     </p>
-                  )}
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
