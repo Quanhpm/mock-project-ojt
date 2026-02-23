@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import products from '@/mockdata/products.json';
 import worldMapImage from '@/assets/img/anh-home-page.png';
 import Logo from '@/assets/img/logobb.png';
+import ProductCard from '../components/ProductCard';
 
 interface Product {
     id: number;
@@ -19,21 +21,23 @@ interface Product {
 
 // Lấy 5 sản phẩm nổi bật cho menu (món ăn)
 const MENU_DATA = (products as Product[])
-  .filter(p => p.is_active && !p.is_deleted && p.category_id === 3) // Category 3: Bánh ngọt
+  .filter(p => p.is_active && !p.is_deleted && p.category_id === 3)
   .slice(0, 5)
   .map(p => ({
     id: p.id,
+    name: p.name,
     title: p.name.toUpperCase(),
     img: p.image_url
   }));
 
 // Lấy 5 signature drinks (đồ uống đặc biệt)
 const SIGNATURE_DRINKS = (products as Product[])
-  .filter(p => p.is_active && !p.is_deleted && [1, 2].includes(p.category_id)) // Category 1,2: Cà phê, Trà
-  .sort((a, b) => b.max_price - a.max_price) // Sắp xếp theo giá cao nhất
+  .filter(p => p.is_active && !p.is_deleted && [1, 2].includes(p.category_id))
+  .sort((a, b) => b.max_price - a.max_price)
   .slice(0, 5)
   .map(p => ({
     id: p.id,
+    name: p.name,
     title: p.name.toUpperCase(),
     img: p.image_url
   }));
@@ -133,25 +137,18 @@ function HomePage() {
         <h2 className="font-black uppercase tracking-wider text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
           Thực Đơn
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8">
+        <div className="grid grid-cols-5 gap-8">
           {MENU_DATA.map((item) => (
-            <div 
-              key={item.id} 
-              className="cursor-pointer transition-transform hover:-translate-y-1"
-            >
-              <div className="aspect-square rounded-3xl overflow-hidden border-4 border-transparent hover:border-[var(--cf-primary)] transition-all duration-300 bg-[var(--cf-surface)]">
-                <img 
-                  src={item.img} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
-                  loading="lazy"
-                />
-              </div>
-              <p className="mt-4 text-center font-bold text-xs md:text-sm uppercase tracking-tight md:tracking-normal leading-tight text-[var(--cf-primary)]">
-                {item.title}
-              </p>
-            </div>
+            <ProductCard key={item.id} {...item} />
           ))}
+        </div>
+        <div className="text-center mt-10">
+          <Link
+            to="/menu"
+            className="inline-block px-8 py-3 border-2 border-[var(--cf-primary)] text-[var(--cf-primary)] font-bold uppercase tracking-wider rounded-full hover:bg-[var(--cf-primary)] hover:text-white transition-all duration-300"
+          >
+            Xem thêm
+          </Link>
         </div>
       </section>
 
@@ -175,22 +172,18 @@ function HomePage() {
         <h2 className="font-black uppercase tracking-wider text-center mb-10 md:mb-16 text-3xl md:text-5xl text-[var(--cf-primary)]">
           Tinh Hoa Quán
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8">
+        <div className="grid grid-cols-5 gap-8">
           {SIGNATURE_DRINKS.map((item) => (
-            <div key={item.id} className="cursor-pointer">
-              <div className="aspect-[4/5] bg-white rounded-xl p-4 flex items-center justify-center shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                <img 
-                  src={item.img} 
-                  alt={item.title} 
-                  className="w-full h-4/5 object-cover rounded-lg"
-                  loading="lazy"
-                />
-              </div>
-              <p className="mt-4 text-center font-bold text-sm uppercase tracking-wider text-[var(--cf-primary)]">
-                {item.title}
-              </p>
-            </div>
+            <ProductCard key={item.id} {...item} />
           ))}
+        </div>
+        <div className="text-center mt-10">
+          <Link
+            to="/menu"
+            className="inline-block px-8 py-3 border-2 border-[var(--cf-primary)] text-[var(--cf-primary)] font-bold uppercase tracking-wider rounded-full hover:bg-[var(--cf-primary)] hover:text-white transition-all duration-300"
+          >
+            Xem thêm
+          </Link>
         </div>
       </section>
 
