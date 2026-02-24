@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import { useCartStore } from '@/stores/cart.store';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { useCartStore, formatOptionsNote } from '@/stores/cart.store';
+import type { CartItem } from '@/stores/cart.store';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { Confirm } from '../components/Confirm';
+import CartItemEditor from '../components/CartItemEditor';
 
 function Cart() {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, clearCart, getTotalPrice } = useCartStore();
-  
+
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const [removeItemConfirm, setRemoveItemConfirm] = useState<{
     show: boolean;
-    productId: number | null;
+    itemId: string | null;
     productName: string;
-  }>({ show: false, productId: null, productName: '' });
+  }>({ show: false, itemId: null, productName: '' });
 
   const handleCheckout = () => {
     // TODO: Navigate to checkout page
@@ -29,13 +32,13 @@ function Cart() {
     clearCart();
   };
 
-  const handleRemoveItem = (productId: number, productName: string) => {
-    setRemoveItemConfirm({ show: true, productId, productName });
+  const handleRemoveItem = (itemId: string, productName: string) => {
+    setRemoveItemConfirm({ show: true, itemId, productName });
   };
 
   const handleConfirmRemoveItem = () => {
-    if (removeItemConfirm.productId) {
-      removeItem(removeItemConfirm.productId);
+    if (removeItemConfirm.itemId) {
+      removeItem(removeItemConfirm.itemId);
     }
   };
 
@@ -52,7 +55,7 @@ function Cart() {
           </p>
           <button
             onClick={() => navigate(ROUTER_URL.MENU)}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--cf-secondary)] text-white font-semibold rounded-lg hover:bg-[var(--cf-dark)] transition-colors"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[var(--cf-secondary)] text-white font-semibold rounded-lg hover:bg-[var(--cf-dark)] transition-colors cursor-pointer"
           >
             <ArrowLeft size={20} />
             Tiếp tục mua sắm
@@ -75,7 +78,7 @@ function Cart() {
           </div>
           <button
             onClick={handleClearCart}
-            className="text-red-500 hover:text-red-600 font-medium text-sm flex items-center gap-2"
+            className="text-red-500 hover:text-red-600 font-medium text-sm flex items-center gap-2 cursor-pointer"
           >
             <Trash2 size={16} />
             Xóa tất cả
@@ -87,7 +90,7 @@ function Cart() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div
-                key={item.productId}
+                key={item.id}
                 className="bg-white rounded-lg shadow-md p-6 flex gap-4 hover:shadow-lg transition-shadow"
               >
                 {/* Product Image */}
@@ -110,15 +113,18 @@ function Cart() {
                   <h3 className="font-bold text-[var(--cf-dark)] text-lg mb-1">
                     {item.name}
                   </h3>
-                  <p className="text-sm text-[var(--cf-primary)]/60 mb-3">
+                  <p className="text-sm text-[var(--cf-primary)]/60 mb-1">
                     SKU: {item.SKU}
                   </p>
+                    <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
+                      {formatOptionsNote(item)}
+                    </p>
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Minus size={16} />
                       </button>
@@ -126,8 +132,8 @@ function Cart() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Plus size={16} />
                       </button>
@@ -136,23 +142,32 @@ function Cart() {
                     {/* Price */}
                     <div className="text-right">
                       <div className="font-bold text-[var(--cf-secondary)] text-lg">
-                        {(item.price * item.quantity).toLocaleString('vi-VN')} ₫
+                        {((item.price + (item.extras_total ?? 0)) * item.quantity).toLocaleString('vi-VN')} ₫
                       </div>
                       <div className="text-sm text-[var(--cf-primary)]/60">
-                        {item.price.toLocaleString('vi-VN')} ₫ × {item.quantity}
+                        {(item.price + (item.extras_total ?? 0)).toLocaleString('vi-VN')} ₫ × {item.quantity}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Remove Button */}
-                <button
-                  onClick={() => handleRemoveItem(item.productId, item.name)}
-                  className="text-red-500 hover:text-red-600 p-2"
-                  title="Xóa sản phẩm"
-                >
-                  <Trash2 size={20} />
-                </button>
+                {/* Actions */}
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setEditingItem(item)}
+                    className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] p-2 transition-colors cursor-pointer"
+                    title="Chỉnh sửa"
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleRemoveItem(item.id, item.name)}
+                    className="text-red-500 hover:text-red-600 p-2 transition-colors cursor-pointer"
+                    title="Xóa sản phẩm"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -188,14 +203,14 @@ function Cart() {
 
               <button
                 onClick={handleCheckout}
-                className="w-full py-3 bg-gradient-to-r from-[var(--cf-accent-light)] to-[var(--cf-secondary)] text-[var(--cf-dark)] font-bold rounded-lg hover:from-[var(--cf-secondary)] hover:to-[var(--cf-dark)] hover:text-white transition-all duration-300 shadow-md hover:shadow-lg"
+                className="w-full py-3 bg-gradient-to-r from-[var(--cf-accent-light)] to-[var(--cf-secondary)] text-[var(--cf-dark)] font-bold rounded-lg hover:from-[var(--cf-secondary)] hover:to-[var(--cf-dark)] hover:text-white transition-all duration-300 shadow-md hover:shadow-lg cursor-pointer"
               >
                 Tiến hành thanh toán
               </button>
 
               <button
                 onClick={() => navigate(ROUTER_URL.MENU)}
-                className="w-full mt-3 py-3 border-2 border-[var(--cf-secondary)] text-[var(--cf-secondary)] font-semibold rounded-lg hover:bg-[var(--cf-secondary)] hover:text-white transition-colors"
+                className="w-full mt-3 py-3 border-2 border-[var(--cf-secondary)] text-[var(--cf-secondary)] font-semibold rounded-lg hover:bg-[var(--cf-secondary)] hover:text-white transition-colors cursor-pointer"
               >
                 Tiếp tục mua sắm
               </button>
@@ -219,7 +234,7 @@ function Cart() {
       {/* Confirm Remove Item Dialog */}
       <Confirm
         isOpen={removeItemConfirm.show}
-        onClose={() => setRemoveItemConfirm({ show: false, productId: null, productName: '' })}
+        onClose={() => setRemoveItemConfirm({ show: false, itemId: null, productName: '' })}
         onConfirm={handleConfirmRemoveItem}
         title="Xóa sản phẩm"
         message={`Bạn có chắc chắn muốn xóa "${removeItemConfirm.productName}" khỏi giỏ hàng?`}
@@ -227,6 +242,14 @@ function Cart() {
         cancelText="Hủy"
         type="danger"
       />
+
+      {/* Edit Cart Item Modal */}
+      {editingItem && (
+        <CartItemEditor
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+        />
+      )}
     </div>
   );
 }

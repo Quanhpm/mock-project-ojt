@@ -1,93 +1,60 @@
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+
+// Stores & Hooks
 import { useCartStore } from "@/stores/cart.store";
-import type { Topping, SugarLevel, IceLevel } from "@/stores/cart.store";
-import products from "@/mockdata/products.json"
-import { useToast } from '@/hooks/use-toast.hook';
+import { useToast } from "@/hooks/use-toast.hook";
+import type { Topping, SugarOption, IceOption, Size } from "@/types/product-option.type";
+
+// Utils & Data
+import products from "@/mockdata/products.json";
 import { slugify } from "@/utils/slugify.util";
 
-const TOPPINGS: Topping[] = [
-    { code: "PEARL", name: "Trân châu", price: 5000 },
-    { code: "PUDDING", name: "Pudding", price: 7000 },
-    { code: "JELLY", name: "Thạch", price: 4000 },
-];
+// Constants
+import {
+    SIZE_OPTIONS,
+    TOPPINGS,
+    SUGAR_LEVELS,
+    ICE_LEVELS,
+} from "@/types/product-option.type";
 
-interface ItemType {
-    id: number;
-    SKU: string;
-    name: string;
-    description: string;
-    content: string;
-    image_url: string;
-    category_id: number;
-    min_price: number;
-    max_price: number;
-    is_active: boolean;
-    is_deleted: boolean;
-}
-
+// --- COMPONENT ---
 function Item() {
     const { slug } = useParams<{ slug: string }>();
-    const product = products.find(
-        (p) => slugify(p.name) === slug
-    );
-    if (!product) {
-        return <div>Product not found</div>;
-    }
-
     const navigate = useNavigate();
-
-    const [sugar, setSugar] = useState<SugarLevel>(50);
-    const [ice, setIce] = useState<IceLevel>(50);
-    const [toppings, setToppings] = useState<Topping[]>([]);
-
-    const [qty, setQty] = useState(1);
-    const dec = () => setQty((q) => Math.max(1, q - 1));
-    const inc = () => setQty((q) => q + 1);
-
     const { success } = useToast();
-
     const addItem = useCartStore((s) => s.addItem);
-    const handleAddToCart = () => {
-        const extras_total = toppings.reduce((sum, t) => sum + t.price, 0);
 
-        addItem(
-            {
-                id: Date.now(),
-                productId: product.id,
-                name: product.name,
-                price: product.min_price,
-                image_url: product.image_url,
-                SKU: product.SKU,
-                options: { sugar, ice, toppings },
-                extras_total,
-            },
-            qty
+    // State
+    const [size, setSize] = useState<Size>(SIZE_OPTIONS[0]);
+    const [sugar, setSugar] = useState<SugarOption>(SUGAR_LEVELS[0]);
+    const [ice, setIce] = useState<IceOption>(ICE_LEVELS[0]);
+    const [toppings, setToppings] = useState<Topping[]>([]);
+    const [qty, setQty] = useState(1);
+
+    // Find Product
+    const product = products.find((p) => slugify(p.name) === slug);
+
+    // Memoized Totals
+    const { extrasTotal, totalPrice } = useMemo(() => {
+        if (!product) return { extrasTotal: 0, totalPrice: 0 };
+
+        const sizeExtra = size?.bonusPrice ?? 0;
+        const toppingExtra = toppings.reduce((sum, t) => sum + t.price, 0);
+        const extrasTotal = sizeExtra + toppingExtra;
+        const totalPrice = (product.min_price + extrasTotal) * qty;
+
+        return { extrasTotal, totalPrice };
+    }, [product, size, toppings, qty]);
+
+    // Handlers
+    if (!product) {
+        return (
+            <div className="p-10 text-center font-medium text-[var(--cf-primary)]">
+                Product not found
+            </div>
         );
-        success("Thêm vào giỏ hàng thành công!");
-        navigate("/menu");
-    };
-
-    const getBaseName = (name: string) => {
-        return name.replace(/size\s*[A-Z]/i, "").trim()
     }
-
-    const getSameProductsDifferentSize = (
-        currentProduct: ItemType,
-        allProducts: ItemType[]
-    ) => {
-        const baseName = getBaseName(currentProduct.name)
-
-        return allProducts.filter(
-            (p) =>
-                getBaseName(p.name) === baseName
-        )
-    }
-
-    const otherSizes = getSameProductsDifferentSize(
-        product,
-        products as ItemType[]
-    );
 
     const toggleTopping = (t: Topping) => {
         setToppings((prev) =>
@@ -97,136 +64,204 @@ function Item() {
         );
     };
 
+    const handleAddToCart = () => {
+        addItem(
+            {
+                productId: product.id,
+                name: product.name,
+                price: product.min_price,
+                image_url: product.image_url,
+                SKU: product.SKU,
+                options: { size, sugar, ice, toppings },
+                extras_total: extrasTotal,
+            },
+            qty
+        );
+
+        success("Thêm vào giỏ hàng thành công!");
+        navigate("/menu");
+    };
+
     return (
-        <div className="min-h-screen w-full px-4 py-8 md:px-6 lg:px-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start">
-                <div className="space-y-6">
-                    <div className="aspect-square overflow-hidden rounded-2xl bg-gray-100">
+        <div className="h-full bg-[var(--cf-bg)] px-8 py-4 flex items-center justify-center">
+            <main className="w-full grid grid-cols-1 md:grid-cols-10 gap-8 items-start">
+                {/* LEFT COLUMN: Image */}
+                <section className="md:col-span-3 w-full">
+                    <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-white">
                         <img
-                            src={product?.image_url}
-                            alt={product?.name}
-                            className="w-full h-full object-cover object-center"
+                            src={product.image_url}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
                         />
                     </div>
+                </section>
 
-                    <div className="space-y-3">
-                        <h3 className="text-3xl font-bold text-gray-900">{product?.name}</h3>
-                        <h5 className="text-2xl font-semibold text-orange-600">
-                            {product?.min_price?.toLocaleString()}đ
-                        </h5>
-                        <p className="text-gray-600 leading-relaxed">
-                            {product?.description}
-                            <span className="block mt-2 text-sm text-gray-400 italic">
-                                {product?.content}
-                            </span>
-                        </p>
-                    </div>
-                </div>
-
-                {/* CỘT PHẢI: Chọn Size và Thêm vào giỏ (Chiều cao linh hoạt theo nội dung) */}
-                <div className="flex flex-col gap-6 p-6 border border-gray-100 rounded-2xl shadow-sm bg-white">
-                    {otherSizes.length > 1 && (
-                        <div>
-                            <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Chọn kích thước</span>
-                            <div className="flex flex-wrap gap-3 mt-4">
-                                {otherSizes.map((p) => {
-                                    const isActive = p.id === product.id;
-                                    return (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => navigate(`/product/${p.id}`)}
-                                            className={`px-6 py-2 rounded-full border-2 transition-all font-medium cursor-pointer
-                                    ${isActive
-                                                    ? "border-black bg-black text-white shadow-md"
-                                                    : "border-gray-200 hover:border-gray-400 text-gray-600 hover:bg-gray-50"
-                                                }`}
-                                        >
-                                            Size {p.name.split("size")[1]}
-                                        </button>
-                                    );
-                                })}
+                {/* RIGHT COLUMN: Product Info & Options */}
+                <section className="md:col-span-7 w-full">
+                    <div className="bg-[var(--cf-surface)] p-8 rounded-[2rem] shadow-sm space-y-8 border border-white/40">
+                        <header className="space-y-1">
+                            <h1 className="text-3xl md:text-4xl font-black text-[var(--cf-primary)] uppercase tracking-tight">
+                                {product.name}
+                            </h1>
+                            <p className="text-[var(--cf-primary)] italic opacity-80 text-lg">
+                                {product.description}
+                            </p>
+                            <div className="text-3xl font-black text-[var(--cf-primary)]">
+                                {product.min_price.toLocaleString()}đ
                             </div>
+                        </header>
+
+                        {/* Options Container */}
+                        <div className="space-y-5">
+                            {/* Size Selection */}
+                            <section className="space-y-2">
+                                <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
+                                    Kích thước
+                                </h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {SIZE_OPTIONS.map((s) => {
+                                        const active = size.code === s.code;
+                                        return (
+                                            <button
+                                                key={s.code}
+                                                onClick={() => setSize(s)}
+                                                className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer ${active
+                                                    ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                    : "bg-white/60 border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-white"
+                                                    }`}
+                                            >
+                                                {s.label}{" "}
+                                                {s.bonusPrice > 0 ? `+${s.bonusPrice / 1000}k` : ""}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Sugar Level Selection */}
+                                <section className="space-y-2">
+                                    <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
+                                        Mức đường
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {SUGAR_LEVELS.map((s) => {
+                                            const active = sugar.value === s.value;
+                                            return (
+                                                <button
+                                                    key={s.value}
+                                                    onClick={() => setSugar(s)}
+                                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
+                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
+                                                        }`}
+                                                >
+                                                    {s.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+
+                                {/* Ice Level Selection */}
+                                <section className="space-y-2">
+                                    <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
+                                        Mức đá
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {ICE_LEVELS.map((i) => {
+                                            const active = ice.value === i.value;
+                                            return (
+                                                <button
+                                                    key={i.value}
+                                                    onClick={() => setIce(i)}
+                                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
+                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
+                                                        }`}
+                                                >
+                                                    {i.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            </div>
+
+
+                            {/* Toppings Selection */}
+                            <section className="space-y-2">
+                                <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
+                                    Toppings
+                                </h3>
+                                <div className="flex flex-wrap gap-3">
+                                    {TOPPINGS.map((t) => {
+                                        const active = toppings.some((x) => x.code === t.code);
+                                        return (
+                                            <button
+                                                key={t.code}
+                                                onClick={() => toggleTopping(t)}
+                                                className={`px-5 py-2.5 rounded-xl border transition-all cursor-pointer ${active
+                                                    ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white font-bold shadow-sm"
+                                                    : "border-[var(--cf-primary)] bg-white/60 text-[var(--cf-primary)] font-medium hover:bg-white"
+                                                    }`}
+                                            >
+                                                {t.name}{" "}
+                                                <span className="text-xs opacity-70">
+                                                    +{t.price / 1000}k
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </section>
                         </div>
-                    )}
-                    <div>
-                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Độ ngọt</span>
-                        <select
-                            value={sugar}
-                            onChange={(e) => setSugar(Number(e.target.value) as SugarLevel)}
-                            className="w-full mt-4 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                        >
-                            <option value={0}>Không đường</option>
-                            <option value={30}>10%</option>
-                            <option value={50}>30%</option>
-                            <option value={70}>50%</option>
-                            <option value={100}>100%</option>
-                        </select>
-                    </div>
-                    <div>
-                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Lượng đá</span>
-                        <select
-                            value={ice}
-                            onChange={(e) => setIce(Number(e.target.value) as IceLevel)}
-                            className="w-full mt-4 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-400"
-                        >
-                            <option value={0}>Không đá</option>
-                            <option value={30}>10%</option>
-                            <option value={50}>30%</option>
-                            <option value={70}>50%</option>
-                            <option value={100}>100%</option>
-                        </select>
-                    </div>
-                    <div>
-                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Toppings</span>
-                        <div className="flex flex-wrap gap-3 mt-4">
-                            {TOPPINGS.map((t) => {
-                                const isSelected = toppings.some((x) => x.code === t.code);
-                                return (
+
+                        {/* Footer Section: Total & CTA */}
+                        <footer className="space-y-6">
+                            <div className="flex items-end justify-between gap-4">
+                                <div>
+                                    <p className="text-xs font-bold text-[var(--cf-primary)]/60 uppercase tracking-widest mb-1">
+                                        Tổng cộng
+                                    </p>
+                                    <p className="text-4xl font-black text-[var(--cf-primary)]">
+                                        {totalPrice.toLocaleString()}đ
+                                    </p>
+                                </div>
+
+                                {/* Quantity Selector */}
+                                <div className="flex items-center bg-white rounded-full p-1 shadow-inner border border-[var(--cf-primary)]/10">
                                     <button
-                                        key={t.code}
-                                        onClick={() => toggleTopping(t)}
-                                        className={`px-4 py-2 rounded-full border-2 transition-all font-medium cursor-pointer
-                                            ${isSelected ? "border-orange-500 bg-orange-500 text-white" : "border-gray-200 hover:border-gray-400 text-gray-600 hover:bg-gray-50"}
-                                        `}
+                                        onClick={() => setQty((q) => Math.max(1, q - 1))}
+                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
                                     >
-                                        {t.name}
+                                        −
                                     </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                    <div>
-                        <span className="text-sm font-medium uppercase tracking-wider text-gray-500">Số lượng:</span>
-                        <div className="flex items-center gap-3 mt-4">
-                            <button
-                                type="button"
-                                onClick={dec}
-                                className="h-10 w-10 rounded-full border"
-                            >
-                                -
-                            </button>
+                                    <span className="px-6 font-black text-lg text-[var(--cf-primary)]">
+                                        {qty}
+                                    </span>
+                                    <button
+                                        onClick={() => setQty((q) => q + 1)}
+                                        className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
 
-                            <span className="min-w-8 text-center font-semibold">{qty}</span>
-
+                            {/* Add to Cart Button */}
                             <button
-                                type="button"
-                                onClick={inc}
-                                className="h-10 w-10 rounded-full border"
+                                onClick={handleAddToCart}
+                                className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer"
                             >
-                                +
+                                Thêm vào giỏ hàng
                             </button>
-                        </div>
+                        </footer>
                     </div>
-                    <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        className="w-full mt-auto bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] cursor-pointer text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-orange-200 flex items-center justify-center gap-2">
-                        Thêm vào giỏ hàng
-                    </button>
-                </div>
-            </div>
+                </section>
+            </main>
         </div>
-    )
+    );
 }
 
-export default Item
+export default Item;

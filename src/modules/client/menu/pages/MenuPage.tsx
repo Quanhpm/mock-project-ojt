@@ -83,7 +83,6 @@ function MenuPage() {
         }
         
         addItem({
-            id: product.id,
             productId: product.id,
             name: product.name,
             price: product.min_price,
