@@ -2,6 +2,7 @@ import AdminLayout from "@/layouts/AdminLayout/AdminLayout.tsx";
 import { Navigate, Route } from "react-router-dom";
 import React from "react";
 import AdminGuard from "../guard/AdminGuard.route.tsx";
+import ProtectedRoute from "../ProtectedRoute";
 import { ROUTER_URL } from "../router.const";
 import { ADMIN_MENU } from "./Admin.menu.tsx";
 
@@ -19,7 +20,16 @@ export const AdminRoutes = (
       />
 
       {ADMIN_MENU.map((item) => (
-        <Route key={item.path} path={item.path} element={<item.component />} />
+        <Route 
+          key={item.path} 
+          path={item.path} 
+          element={
+            <ProtectedRoute 
+              requiredModule={item.module}
+              element={<item.component />}
+            />
+          } 
+        />
       ))}
 
       {/* Account Settings Route */}

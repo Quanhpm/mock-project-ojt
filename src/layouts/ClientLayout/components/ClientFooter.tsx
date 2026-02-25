@@ -33,7 +33,7 @@ const ClientFooter = () => {
                 Chúng tôi rất mong được lắng nghe về trải nghiệm của bạn ngày hôm nay
               </p>
               <button className="w-full bg-[var(--cf-primary)] text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-[var(--cf-dark)] transition-colors mb-1">
-                 lắng nghe
+                Boutique Brews luôn lắng nghe
               </button>
               <p className="text-xs text-gray-500">Chúng tôi tôn trọng quyền riêng tư của bạn</p>
             </div>

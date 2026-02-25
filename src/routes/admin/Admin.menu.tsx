@@ -16,13 +16,12 @@ export type AdminMenuItem = {
   label: string;
   path: string;
   icon: React.ReactNode;
-  component: React.LazyExoticComponent<React.FC<any>>;
+  component: React.LazyExoticComponent<React.FC<object>>;
   isEnd?: boolean;
   module: string;
-  hideFromSidebar?: boolean; // ← ADD: Ẩn khỏi sidebar
+  hideFromSidebar?: boolean; 
 };
 
-/* TODO: auth pages: login, verify token, reset password, change password */
 export const ADMIN_MENU: AdminMenuItem[] = [
   {
     label: "Dashboard",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { useCartStore } from '@/stores/cart.store';
@@ -16,17 +16,14 @@ const HomeHeader: React.FC = () => {
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Check login status
-  useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/client/login');
-    }
-  }, [isLoggedIn, navigate]);
-
   const handleLogout = () => {
-    logout();
     setIsDropdownOpen(false);
-    navigate('/');
+    // Navigate trước, logout sau để tránh ClientGuard redirect về login
+    navigate('/', { replace: true });
+    // Delay logout một chút để navigate hoàn thành trước
+    setTimeout(() => {
+      logout();
+    }, 50);
   };
 
   return (
@@ -109,7 +106,7 @@ const HomeHeader: React.FC = () => {
             <div className="relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
+                className="!cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
               >
                 <img
                   src={user?.avatar_url || 'https://i.pravatar.cc/150'}
@@ -147,7 +144,7 @@ const HomeHeader: React.FC = () => {
                   <hr className="my-2" />
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
+                    className="!cursor-pointer w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                   >
                     <LogOut className="w-4 h-4" /> Đăng xuất
                   </button>

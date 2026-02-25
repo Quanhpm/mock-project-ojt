@@ -116,9 +116,9 @@ function Cart() {
                   <p className="text-sm text-[var(--cf-primary)]/60 mb-1">
                     SKU: {item.SKU}
                   </p>
-                    <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
-                      {formatOptionsNote(item)}
-                    </p>
+                  <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
+                    {formatOptionsNote(item)}
+                  </p>
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
@@ -128,9 +128,18 @@ function Cart() {
                       >
                         <Minus size={16} />
                       </button>
-                      <span className="font-semibold text-[var(--cf-dark)] w-8 text-center">
-                        {item.quantity}
-                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 1) {
+                            updateQuantity(item.id, val);
+                          }
+                        }}
+                        className="font-semibold text-[var(--cf-dark)] w-12 text-center border border-gray-200 rounded-md py-1 focus:outline-none focus:border-[var(--cf-secondary)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"
