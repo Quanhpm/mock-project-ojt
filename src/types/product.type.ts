@@ -1,16 +1,16 @@
 // Product type definition - aligned with DBML schema
 export interface Product {
-  id: number
-  SKU: string
-  name: string
-  description: string
-  content: string
-  min_price: number
-  max_price: number
-  is_active: boolean
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
+  id: number;
+  SKU: string;
+  name: string;
+  description: string;
+  content: string;
+  image_url: string;
+  category_id: number;
+  min_price: number;
+  max_price: number;
+  is_active: boolean;
+  is_deleted: boolean;
 }
 
 // Product Franchise type definition - aligned with DBML schema
@@ -71,4 +71,19 @@ export interface Inventory {
   is_deleted: boolean
   created_at: string
   updated_at: string
+}
+
+// Franchise type definition - aligned with DBML schema
+export interface Franchise {
+  id: number,
+  code: string;
+  name: string;
+  logo_url: string;
+  address: string;
+  opened_at: string;
+  closed_at: string | null;
+  is_active: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
 }

@@ -116,9 +116,9 @@ function Cart() {
                   <p className="text-sm text-[var(--cf-primary)]/60 mb-1">
                     SKU: {item.SKU}
                   </p>
-                    <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
-                      {formatOptionsNote(item)}
-                    </p>
+                  <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
+                    {formatOptionsNote(item)}
+                  </p>
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">

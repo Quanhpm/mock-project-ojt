@@ -9,6 +9,7 @@ import type { Topping, SugarOption, IceOption, Size } from "@/types/product-opti
 // Utils & Data
 import products from "@/mockdata/products.json";
 import { slugify } from "@/utils/slugify.util";
+import type { Product } from "@/types/product.type";
 
 // Constants
 import {
@@ -17,6 +18,9 @@ import {
     SUGAR_LEVELS,
     ICE_LEVELS,
 } from "@/types/product-option.type";
+import { ROUTER_URL } from "@/routes/router.const";
+import { error } from "console";
+import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 
 // --- COMPONENT ---
 function Item() {
@@ -24,6 +28,7 @@ function Item() {
     const navigate = useNavigate();
     const { success } = useToast();
     const addItem = useCartStore((s) => s.addItem);
+    const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
 
     // State
     const [size, setSize] = useState<Size>(SIZE_OPTIONS[0]);
@@ -36,7 +41,7 @@ function Item() {
     const product = products.find((p) => slugify(p.name) === slug);
 
     // Memoized Totals
-    const { extrasTotal, totalPrice } = useMemo(() => {
+        const { extrasTotal, totalPrice } = useMemo(() => {
         if (!product) return { extrasTotal: 0, totalPrice: 0 };
 
         const sizeExtra = size?.bonusPrice ?? 0;
@@ -64,23 +69,31 @@ function Item() {
         );
     };
 
-    const handleAddToCart = () => {
-        addItem(
-            {
+    const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+            e.stopPropagation();
+    
+            // Kiểm tra đăng nhập
+            if (!isLoggedIn) {
+                error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+                setTimeout(() => {
+                    navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
+                        state: { from: ROUTER_URL.MENU }
+                    });
+                }, 1500);
+                return;
+            }
+    
+            addItem({
                 productId: product.id,
                 name: product.name,
                 price: product.min_price,
                 image_url: product.image_url,
-                SKU: product.SKU,
-                options: { size, sugar, ice, toppings },
-                extras_total: extrasTotal,
-            },
-            qty
-        );
-
-        success("Thêm vào giỏ hàng thành công!");
-        navigate("/menu");
-    };
+                SKU: product.SKU
+            });
+    
+            success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
+            navigate("/menu");
+        };
 
     return (
         <div className="h-full bg-[var(--cf-bg)] px-8 py-4 flex items-center justify-center">
@@ -236,10 +249,13 @@ function Item() {
                                         className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
                                     >
                                         −
-                                    </button>
-                                    <span className="px-6 font-black text-lg text-[var(--cf-primary)]">
-                                        {qty}
-                                    </span>
+                                    </button>   
+                                    <input
+                                        type="number"
+                                        value={qty}
+                                        onChange={(e) => setQty(Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
+                                        className="w-16 text-center font-black text-lg text-[var(--cf-primary)] focus:outline-none"
+                                    />
                                     <button
                                         onClick={() => setQty((q) => q + 1)}
                                         className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
@@ -251,7 +267,7 @@ function Item() {
 
                             {/* Add to Cart Button */}
                             <button
-                                onClick={handleAddToCart}
+                                onClick={(e) => handleAddToCart(product, e)}
                                 className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer"
                             >
                                 Thêm vào giỏ hàng
