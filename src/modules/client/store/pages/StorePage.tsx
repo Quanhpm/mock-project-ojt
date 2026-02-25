@@ -32,20 +32,20 @@ export const StorePage = ({ stores }: StorePageProps) => {
   }, [stores, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[#F6EFE7] dark:bg-[#1d1815]">
+    <div className="min-h-screen bg-[var(--cf-bg)]">
       {/* Page Header */}
       <section className="max-w-[1440px] mx-auto w-full px-10 pt-16 pb-12 text-center">
-        <h1 className="text-[#5C3A21] dark:text-[#FFF8F1] text-5xl md:text-6xl font-black tracking-tight mb-4">
+        <h1 className="text-[var(--cf-dark)] text-5xl md:text-6xl font-black tracking-tight mb-4">
           Tìm Boutique Brews Gần Bạn
         </h1>
-        <p className="text-[#8B6A4E] dark:text-[#8B6A4E]/80 text-lg md:text-xl font-light max-w-2xl mx-auto mb-8">
+        <p className="text-[var(--cf-secondary)] text-lg md:text-xl font-light max-w-2xl mx-auto mb-8">
           Khám phá các không gian cà phê tinh tế của chúng tôi trên khắp Việt Nam
         </p>
 
         {/* Search Bar */}
         <div className="max-w-xl mx-auto relative">
           <svg
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8B6A4E]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--cf-secondary)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -62,12 +62,12 @@ export const StorePage = ({ stores }: StorePageProps) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm theo tên, địa chỉ hoặc số điện thoại..."
-            className="w-full bg-white/50 dark:bg-neutral-800/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-[#8b5e3c]/20 transition-all placeholder:text-[#8B6A4E]/50"
+            className="w-full bg-[var(--cf-surface)]/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-[var(--cf-primary)]/20 transition-all placeholder:text-[var(--cf-secondary)]/50"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8B6A4E] hover:text-[#8b5e3c] transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--cf-secondary)] hover:text-[var(--cf-primary)] transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -78,7 +78,7 @@ export const StorePage = ({ stores }: StorePageProps) => {
 
         {/* Results Count */}
         {searchQuery && (
-          <p className="text-[#8B6A4E] text-sm mt-4">
+          <p className="text-[var(--cf-secondary)] text-sm mt-4">
             {filteredStores.length > 0
               ? `Tìm thấy ${filteredStores.length} cửa hàng`
               : 'Không tìm thấy cửa hàng nào'}
