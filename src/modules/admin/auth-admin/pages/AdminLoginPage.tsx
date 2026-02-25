@@ -10,6 +10,7 @@ import { AdminLoginForm } from "../components/AdminLoginForm";
 import { AdminLoadingForm } from "../components/AdminLoadingForm";
 import { AdminToastForm } from "../components/AdminToastForm";
 import { type AdminLoginFormValues } from "../schemas/admin-login.schema";
+import logo from "../../../../assets/img/logo.png";
 
 export default function AdminLoginPage() {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ export default function AdminLoginPage() {
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-8">
                 <div className="text-4xl p-3 rounded-lg" style={{ backgroundColor: 'var(--cf-primary)', color: 'white' }}>
-                  <img src="https://cdn.discordapp.com/attachments/1460639504233660461/1468430883915829421/BeautyPlus-IMAGE-ENHANCER-1770171590197.png?ex=6983fe54&is=6982acd4&hm=1ddcc827aab77ba595859871a202719c2ebfbb26c9061ffdde807c3077cd2ebe" alt="BrewBase Logo" className="w-10 h-10 object-contain" />
+                  <img src={logo} alt="BrewBase Logo" className="w-10 h-10 object-contain" />
                 </div>
                 <div className="text-2xl font-bold" style={{ color: 'var(--cf-primary)' }}>
                   BrewBase
