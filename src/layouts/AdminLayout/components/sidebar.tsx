@@ -22,13 +22,13 @@ const THEME_COLORS = {
 interface SidebarProps {
   isMobileOpen: boolean;
   onMobileClose: () => void;
-  menuItems: AdminMenuItem[]; // ✨ Use role-filtered menu items
+  menuItems: AdminMenuItem[]; 
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   isMobileOpen, 
   onMobileClose, 
-  menuItems // ✨ Use props instead of hard-coded array
+  menuItems 
 }) => {
   const location = useLocation();
   const navigate = useNavigate();

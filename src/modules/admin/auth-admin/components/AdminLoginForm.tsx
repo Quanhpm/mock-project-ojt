@@ -1,109 +1,66 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-
 import {
   adminLoginSchema,
   type AdminLoginFormValues,
 } from "../schemas/admin-login.schema";
 
-type Props = {
-  onSubmit: (
-    data: AdminLoginFormValues,
-    helpers: {
-      setError: (
-        name: keyof AdminLoginFormValues,
-        error: { type: string; message?: string }
-      ) => void;
-    }
-  ) => void;
-  isSubmitting?: boolean;
-};
+interface AdminLoginFormProps {
+  onSubmit: (data: AdminLoginFormValues) => Promise<void>;
+  isLoading?: boolean;
+  error?: string;
+}
 
-export function AdminLoginForm({ onSubmit, isSubmitting }: Props) {
-  const {
-    register,
-    handleSubmit,
-    setError,
-    clearErrors,
-    formState: { errors },
-  } = useForm<AdminLoginFormValues>({
+export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: AdminLoginFormProps) {
+  const { register, handleSubmit, formState: { errors } } = useForm<AdminLoginFormValues>({
     resolver: zodResolver(adminLoginSchema),
-    mode: "onSubmit",
   });
 
   return (
     <form
-      noValidate
-      onSubmit={handleSubmit((data) =>
-        onSubmit(data, { setError })
-      )}
-      onChange={() => clearErrors()}
-      className="space-y-6"
+      onSubmit={handleSubmit(onSubmit)}
+      className="w-full max-w-md mx-auto p-6 rounded-2xl bg-[var(--cf-surface)] space-y-5"
     >
-      {/* Email */}
-      <div>
-        <label 
-          className="text-base font-medium text-gray-800"
-          style={{ color: 'var(--cf-primary)' }}
-        >
-          Email
-        </label>
+      {error && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm font-semibold text-[var(--cf-primary)] ml-1">Email</label>
         <input
-          type="text"
           {...register("email")}
-          className={`mt-2 w-full rounded-lg border-2 px-4 py-3 text-base focus:outline-none focus:ring-2
-            ${
-              errors.email
-                ? "border-red-500 focus:ring-red-500 focus:ring-opacity-50"
-                : "focus:ring-offset-2 border-gray-300"
-            }`}
-          style={!errors.email ? { '--tw-ring-color': 'var(--cf-primary)', borderColor: 'var(--cf-secondary)' } as any : undefined}
+          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
+          placeholder="admin@example.com"
+          disabled={isLoading}
         />
-        {errors.email && (
-          <p className="mt-2 text-sm text-red-500">
-            {errors.email.message}
-          </p>
-        )}
+        {errors.email && <p className="text-xs text-red-600 mt-1 ml-1">{errors.email.message}</p>}
       </div>
 
-      {/* Password */}
-      <div>
-        <label 
-          className="text-base font-medium text-gray-800"
-          style={{ color: 'var(--cf-primary)' }}
-        >
-          Password
-        </label>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-semibold text-[var(--cf-primary)] ml-1">Password</label>
+          <a href="/admin/forgot-password" className="text-xs text-orange-500 hover:text-orange-600 font-semibold">
+            Forgot Password?
+          </a>
+        </div>
         <input
-          type="password"
           {...register("password")}
-          className={`mt-2 w-full rounded-lg border-2 px-4 py-3 text-base focus:outline-none focus:ring-2
-            ${
-              errors.password
-                ? "border-red-500 focus:ring-red-500 focus:ring-opacity-50"
-                : "focus:ring-offset-2 border-gray-300"
-            }`}
-          style={!errors.password ? { '--tw-ring-color': 'var(--cf-primary)', borderColor: 'var(--cf-secondary)' } as any : undefined}
+          type="password"
+          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
+          placeholder="••••••••"
+          disabled={isLoading}
         />
-        {errors.password && (
-          <p className="mt-2 text-sm text-red-500">
-            {errors.password.message}
-          </p>
-        )}
+        {errors.password && <p className="text-xs text-red-600 mt-1 ml-1">{errors.password.message}</p>}
       </div>
 
       <button
         type="submit"
-        disabled={isSubmitting}
-        className="w-full text-white py-3 rounded-lg font-semibold text-lg transition-all disabled:opacity-60"
-        style={{
-          backgroundColor: 'var(--cf-primary)',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--cf-dark)'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--cf-primary)'
-        }
+        disabled={isLoading}
+        className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+        {isLoading ? "Đang đăng nhập..." : "Login"}
       </button>
     </form>
   );

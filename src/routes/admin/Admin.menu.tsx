@@ -16,13 +16,12 @@ export type AdminMenuItem = {
   label: string;
   path: string;
   icon: React.ReactNode;
-  component: React.LazyExoticComponent<React.FC<any>>;
+  component: React.LazyExoticComponent<React.FC<object>>;
   isEnd?: boolean;
   module: string;
-  hideFromSidebar?: boolean; // ← ADD: Ẩn khỏi sidebar
+  hideFromSidebar?: boolean; 
 };
 
-/* TODO: auth pages: login, verify token, reset password, change password */
 export const ADMIN_MENU: AdminMenuItem[] = [
   {
     label: "Dashboard",
@@ -88,8 +87,32 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Customers",
     path: ROUTER_URL.ADMIN_ROUTER.CUSTOMER,
     icon: <UserCircle size={18} />,
-    component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerManagement")),
+    component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerListPage")),
     module: "customers",
+  },
+  {
+    label: "Create Customer",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CUSTOMER}/create`,
+    icon: <UserCircle size={18} />,
+    component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerCreatePage")),
+    module: "customers",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Customer Detail",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CUSTOMER}/:id`,
+    icon: <UserCircle size={18} />,
+    component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerDetailPage")),
+    module: "customers",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Edit Customer",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CUSTOMER}/edit/:id`,
+    icon: <UserCircle size={18} />,
+    component: React.lazy(() => import("@/modules/admin/customer-management/pages/CustomerEditPage")),
+    module: "customers",
+    hideFromSidebar: true,
   },
   {
     label: "Orders",

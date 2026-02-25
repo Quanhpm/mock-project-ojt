@@ -1,14 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
-import franchises from '@/mockdata/franchises.json';
-import type { Product, Category, Franchise } from "@/types/product.type";
-import ProductCard from "../components/ProductCard";
+import { useCartStore } from '@/stores/cart.store';
+import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
+import { useToast } from '@/hooks/use-toast.hook';
+import { slugify } from "@/utils/slugify.util";
+import { ROUTER_URL } from '@/routes/router.const';
+
+interface Category {
+    id: number;
+    code: string;
+    name: string;
+    description: string;
+    is_active: boolean;
+    is_deleted: boolean;
+}
+
+interface Product {
+    id: number;
+    SKU: string;
+    name: string;
+    description: string;
+    content: string;
+    image_url: string;
+    category_id: number;
+    min_price: number;
+    max_price: number;
+    is_active: boolean;
+    is_deleted: boolean;
+}
 
 function MenuPage() {
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-    const [activeCategory, setActiveCategory] = useState<string>('');
-    const [search, setSearch] = useState<string>('');
+    const addItem = useCartStore((state) => state.addItem);
+    const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+    const { success, error } = useToast();
+    const navigate = useNavigate();
 
     const getCategoryIcon = (code: string): string => {
         const iconMap: { [key: string]: string } = {
@@ -31,43 +59,38 @@ function MenuPage() {
         }
     };
 
-    // Thêm hiệu ứng active cho sidebar khi cuộn đến section tương ứng
-    useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveCategory(entry.target.id);
-                    }
-                });
-            },
-            {
-                rootMargin: "-100px 0px -60% 0px",
-                threshold: 0.1,
-            }
-        );
-
-        Object.values(sectionRefs.current).forEach((section) => {
-            if (section) observer.observe(section);
-        });
-
-        return () => observer.disconnect();
-    }, []);
-
-    // Filter search
-    const filteredProducts = (products as Product[]).filter(
-        (product: Product) =>
-            product.name.toLowerCase().includes(search.toLowerCase()) ||
-            product.description.toLowerCase().includes(search.toLowerCase())
-    );
-
     const getProductsByCategory = (categoryId: number) => {
         return (products as Product[]).filter(
-            (product: Product) =>
-                product.category_id === categoryId &&
-                product.is_active &&
+            (product: Product) => 
+                product.category_id === categoryId && 
+                product.is_active && 
                 !product.is_deleted
         );
+    };
+
+    const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+        e.stopPropagation();
+        
+        // Kiểm tra đăng nhập
+        if (!isLoggedIn) {
+            error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+            setTimeout(() => {
+                navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, { 
+                    state: { from: ROUTER_URL.MENU } 
+                });
+            }, 1500);
+            return;
+        }
+        
+        addItem({
+            productId: product.id,
+            name: product.name,
+            price: product.min_price,
+            image_url: product.image_url,
+            SKU: product.SKU
+        });
+
+        success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
     };
 
     return (
@@ -84,16 +107,11 @@ function MenuPage() {
                             <button
                                 key={item.code}
                                 onClick={() => scrollToSection(item.code)}
-                                className={`group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
-                                    ${activeCategory === item.code
-                                        ? 'bg-[var(--cf-primary)] text-white'
-                                        : ''
-                                    }
-                                `}
+                                className="group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden"
                             >
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors ${activeCategory === item.code ? 'text-white' : ''}`}>{getCategoryIcon(item.code)}</span>
+                                <span className="material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors">{getCategoryIcon(item.code)}</span>
                                 <span className="relative z-10 tracking-wide">{item.name}</span>
                             </button>
                         ))}
@@ -111,113 +129,98 @@ function MenuPage() {
                     </p>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-6 items-stretch mb-2">
-                    {/* Search Bar */}
-                    <div className="md:w-1/3 w-full flex flex-col justify-center">
-                        <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--cf-dark)] mb-2 tracking-wide">
-                            <span className="material-icons-outlined text-[18px] text-[var(--cf-secondary)]">
-                                search
-                            </span>
-                            <span>Tìm kiếm</span>
-                        </h3>
-                        <input
-                            type="text"
-                            placeholder="Nhập tên sản phẩm..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
-                       text-[var(--cf-dark)] placeholder:text-[var(--cf-secondary)] 
-                       focus:outline-none focus:border-[var(--cf-primary)] 
-                       focus:ring-2 focus:ring-[var(--cf-primary)]/20 
-                       shadow-sm transition-all"
-                        />
-                    </div>
-
-                    {/* Franchise Selection */}
-                    <div className="md:w-2/3 w-full flex flex-col justify-center">
-                        <h3 className="text-sm font-semibold text-[var(--cf-dark)] mb-2 tracking-wide">
-                            Chọn chi nhánh
-                        </h3>
-                        <select
-                            className="h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
-                       text-[var(--cf-dark)] 
-                       focus:outline-none focus:border-[var(--cf-primary)] 
-                       focus:ring-2 focus:ring-[var(--cf-primary)]/20 
-                       shadow-sm transition-all cursor-pointer"
-                        >
-                            {franchises.map((franchise: Franchise) => (
-                                <option key={franchise.id} value={franchise.id}>
-                                    {franchise.name} - {franchise.address}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Product Sections */}
-                {search.length > 0 && (
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
-                            Kết quả tìm kiếm cho "{search}"
-                        </h2>
-
-                        {filteredProducts.length === 0 ? (
-                            <p className="text-[var(--cf-secondary)] text-base">
-                                Không tìm thấy sản phẩm phù hợp
-                            </p>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-4">
-                                {filteredProducts.map((product: Product) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
                 {/* Category Sections */}
-                {search.length === 0 &&
-                    (categories as Category[]).map((category: Category) => {
-                        const categoryProducts = getProductsByCategory(category.id);
-                        return (
-                            <div
-                                key={category.code}
-                                id={category.code}
-                                ref={(el) => {
-                                    if (el) sectionRefs.current[category.code] = el;
-                                }}
-                                className="flex flex-col gap-6 scroll-mt-20"
-                            >
-                                {/* Category Header */}
-                                <div className="border-b border-[var(--cf-secondary)]/20 pb-4">
-                                    <h2 className="text-2xl font-bold text-[var(--cf-dark)]">{category.name}</h2>
-                                    <p className="text-[var(--cf-secondary)] text-sm">{category.description}</p>
-                                </div>
-
-                                {/* Product List */}
-                                <div className="grid grid-cols-1 gap-4">
-                                    {categoryProducts.length > 0 ? (
-                                        categoryProducts.map((product: Product) => (
-                                            <ProductCard
-                                                key={product.id}
-                                                product={product}
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="px-6 py-10 text-center bg-[var(--cf-surface)] rounded-xl">
-                                            <span className="material-icons-outlined text-4xl text-[var(--cf-secondary)]/30 mb-2">inventory_2</span>
-                                            <p className="text-[var(--cf-secondary)] text-base">
-                                                Chưa có sản phẩm trong danh mục này
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
+                {(categories as Category[]).map((category: Category) => {
+                    const categoryProducts = getProductsByCategory(category.id);
+                    return (
+                        <div
+                            key={category.code}
+                            id={category.code}
+                            ref={(el) => {
+                                if (el) sectionRefs.current[category.code] = el;
+                            }}
+                            className="flex flex-col gap-6 scroll-mt-20"
+                        >
+                            {/* Category Header */}
+                            <div className="border-b border-[var(--cf-secondary)]/20 pb-4">
+                                <h2 className="text-2xl font-bold text-[var(--cf-dark)]">{category.name}</h2>
+                                <p className="text-[var(--cf-secondary)] text-sm">{category.description}</p>
                             </div>
-                        );
-                    })}
+
+                            {/* Product List */}
+                            <div className="grid grid-cols-1 gap-4">
+                                {categoryProducts.length > 0 ? (
+                                    categoryProducts.map((product: Product) => (
+                                        <div
+                                            key={product.id}
+                                            onClick={() => navigate(`/product/${slugify(product.name)}`)}
+                                            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
+                                        >
+                                            {/* Product Info */}
+                                            <div className="flex items-center gap-6 flex-1">
+                                                {/* Image */}
+                                                <div className="relative overflow-hidden rounded-lg size-24 shrink-0 bg-[var(--cf-bg)]">
+                                                    {product.image_url ? (
+                                                        <img
+                                                            src={product.image_url}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                                                                if (placeholder) placeholder.style.display = 'flex';
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <div className={`w-full h-full flex items-center justify-center text-[var(--cf-secondary)] ${product.image_url ? 'hidden' : ''}`}>
+                                                        <span className="material-icons-outlined text-xl">image</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Details */}
+                                                <div className="flex flex-col">
+                                                    <h3 className="text-lg font-bold text-[var(--cf-primary)]">{product.name}</h3>
+                                                    <span className="text-xs font-mono text-[var(--cf-secondary)] mb-1">#{product.SKU}</span>
+                                                    <p className="text-sm text-[var(--cf-secondary)] line-clamp-2 max-w-md">
+                                                        {product.description}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Price and Action */}
+                                            <div className="flex flex-col items-end gap-3 min-w-[120px]">
+                                                <div className="text-right">
+                                                    <span className="text-xl font-bold text-[var(--cf-dark)]">
+                                                        {product.min_price.toLocaleString('vi-VN')} ₫
+                                                    </span>
+                                                    {product.min_price !== product.max_price && (
+                                                        <div className="text-xs text-[var(--cf-secondary)] mt-0.5">
+                                                            đến {product.max_price.toLocaleString('vi-VN')} ₫
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={(e) => handleAddToCart(product, e)}
+                                                    className="bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2"
+                                                >
+                                                    <span className="material-icons-outlined text-[18px]">add</span>
+                                                    Thêm
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="px-6 py-10 text-center bg-[var(--cf-surface)] rounded-xl">
+                                        <span className="material-icons-outlined text-4xl text-[var(--cf-secondary)]/30 mb-2">inventory_2</span>
+                                        <p className="text-[var(--cf-secondary)] text-base">
+                                            Chưa có sản phẩm trong danh mục này
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
             </section>
         </div>
     );

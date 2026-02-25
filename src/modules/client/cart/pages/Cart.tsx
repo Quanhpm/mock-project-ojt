@@ -130,9 +130,15 @@ function Cart() {
                       </button>
                       <input
                         type="number"
+                        min={1}
                         value={item.quantity}
-                        onChange={(e) => updateQuantity(item.id, Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
-                        className="font-semibold text-[var(--cf-dark)] w-8 text-center focus:outline-none"
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 1) {
+                            updateQuantity(item.id, val);
+                          }
+                        }}
+                        className="font-semibold text-[var(--cf-dark)] w-12 text-center border border-gray-200 rounded-md py-1 focus:outline-none focus:border-[var(--cf-secondary)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
