@@ -37,7 +37,7 @@ export default function FranchiseManagement() {
   const isEmpty = totalItems === 0
 
   const handleDelete = (id: string) => {
-    if (!window.confirm('Bạn chắc chắn muốn xóa franchise này?')) return
+    if (!globalThis.confirm('Bạn chắc chắn muốn xóa franchise này?')) return
     remove(id)
   }
 
@@ -114,7 +114,7 @@ export default function FranchiseManagement() {
                         key={franchise.id}
                         franchise={franchise}
                         onToggleStatus={toggleStatus}
-                        onEdit={(id) => navigate(`/admin/franchises/${id}/edit`)}
+                        onEdit={(id) => navigate(`/admin/franchises/edit/${id}`)}
                         onDelete={handleDelete}
                       />
                     ))

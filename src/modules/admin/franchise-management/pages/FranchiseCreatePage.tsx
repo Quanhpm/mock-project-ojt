@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Save } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Save, Store } from "lucide-react";
 import { useFranchiseStore, type FranchiseCreateInput } from "../hooks/useFranchiseStore.hook";
 
 export default function FranchiseCreatePage() {
@@ -20,7 +20,7 @@ export default function FranchiseCreatePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     create(formData);
     alert("Franchise created successfully!");
@@ -28,140 +28,180 @@ export default function FranchiseCreatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-sm text-gray-500 mb-4">
-          <span
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+      <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/admin/franchises")}
+          style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "#8B4513" }}
+        >
+          Franchises
+        </button>{" "}
+        › <span style={{ color: "#212529" }}>Create Franchise</span>
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+        <div>
+          <button
+            type="button"
             onClick={() => navigate("/admin/franchises")}
-            className="cursor-pointer text-primary"
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: "8px 0",
+              marginBottom: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#6c757d",
+              fontSize: "14px"
+            }}
           >
-            Franchises
-          </span>{" "}
-          › <span className="text-gray-800">Create Franchise</span>
+            <ArrowLeft size={18} />
+            Back to Franchises
+          </button>
+          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
+            Create New Franchise
+          </h1>
+          <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
+            Add a new franchise with identity and operational settings.
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
-            <div>
-              <h2 className="text-2xl font-bold text-primary tracking-tight">
-                Create New Franchise
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Add a new franchise with identity and basic contact details.
-              </p>
-            </div>
-            <button
-              onClick={() => navigate("/admin/franchises")}
-              className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
-              aria-label="Close"
-              type="button"
-            >
-              <span className="material-symbols-outlined text-[24px]">close</span>
-            </button>
-          </div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/franchises")}
+            style={{
+              padding: "10px 20px",
+              border: "1px solid #e0e0e0",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+              backgroundColor: "white",
+              color: "#374151"
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="create-franchise-form"
+            style={{
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              backgroundColor: "#8B4513",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+          >
+            <Save size={18} />
+            Create Franchise
+          </button>
+        </div>
+      </div>
 
-          <form id="create-franchise-form" onSubmit={handleSubmit}>
-            <div className="overflow-y-auto p-6 md:p-8 bg-white space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <div className="lg:col-span-7 flex flex-col gap-8">
-                  <section>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="material-symbols-outlined text-primary text-[20px]">
-                        storefront
-                      </span>
-                      <h3 className="text-lg font-bold text-gray-800">Franchise Identity</h3>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                          Franchise Name
-                        </label>
-                        <input
-                          name="title"
-                          value={formData.title}
-                          onChange={handleChange}
-                          required
-                          placeholder="Enter franchise name"
-                          className="w-full h-10 px-3 rounded-md bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                          Location
-                        </label>
-                        <input
-                          name="location"
-                          value={formData.location}
-                          onChange={handleChange}
-                          required
-                          placeholder="Enter location (e.g., HCM - District 1)"
-                          className="w-full h-10 px-3 rounded-md bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                          Contact (Phone/Email)
-                        </label>
-                        <input
-                          name="contact"
-                          value={formData.contact}
-                          onChange={handleChange}
-                          required
-                          placeholder="Enter contact"
-                          className="w-full h-10 px-3 rounded-md bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
-                        />
-                      </div>
-                    </div>
-                  </section>
+      <form id="create-franchise-form" onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+                <Store size={18} color="#8B4513" />
+                <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>Franchise Identity</h2>
+              </div>
+
+              <div style={{ marginBottom: "16px" }}>
+                <label htmlFor="create-franchise-title" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
+                  Franchise Name *
+                </label>
+                <input
+                  id="create-franchise-title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  required
+                  placeholder="Enter franchise name"
+                  style={{ width: "100%", padding: "10px 12px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div>
+                  <label htmlFor="create-franchise-location" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
+                    Location *
+                  </label>
+                  <input
+                    id="create-franchise-location"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter location"
+                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box" }}
+                  />
                 </div>
 
-                <div className="lg:col-span-5 flex flex-col gap-6">
-                  <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="material-symbols-outlined text-primary text-[20px]">
-                        toggle_on
-                      </span>
-                      <h3 className="text-sm font-bold text-gray-800">Franchise Status</h3>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Status
-                      </label>
-                      <select
-                        name="status"
-                        value={formData.status}
-                        onChange={handleChange}
-                        className="w-full h-10 px-3 rounded-md bg-white border border-gray-200 text-gray-800 text-sm focus:ring-1 focus:ring-primary focus:border-primary"
-                      >
-                        <option value="draft">Draft</option>
-                        <option value="published">Published</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    </div>
-                  </section>
+                <div>
+                  <label htmlFor="create-franchise-contact" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
+                    Contact *
+                  </label>
+                  <input
+                    id="create-franchise-contact"
+                    name="contact"
+                    value={formData.contact}
+                    onChange={handleChange}
+                    required
+                    placeholder="Enter phone or email"
+                    style={{ width: "100%", padding: "10px 12px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box" }}
+                  />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => navigate("/admin/franchises")}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                <MapPin size={18} color="#8B4513" />
+                <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>Status</h2>
+              </div>
+
+              <label htmlFor="create-franchise-status" style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
+                Franchise Status
+              </label>
+              <select
+                id="create-franchise-status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                style={{ width: "100%", padding: "10px 12px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box", backgroundColor: "white" }}
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
-              >
-                <Save size={18} />
-                Create Franchise
-              </button>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+                <option value="inactive">Inactive</option>
+              </select>
             </div>
-          </form>
+
+            <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <Phone size={18} color="#8B4513" />
+                <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600" }}>Quick Info</h2>
+              </div>
+              <p style={{ margin: 0, fontSize: "14px", color: "#6c757d", lineHeight: 1.5 }}>
+                New franchise will be created with today as initial creation date.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 }
