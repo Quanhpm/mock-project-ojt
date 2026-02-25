@@ -1,5 +1,6 @@
 import Loading from "@/layouts/LoadingLayout/LoadingLayout";
 import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
@@ -13,12 +14,14 @@ import {
 import { ToasterComponent } from "@/components/ui/toast";
 
 const App = () => {
-  const hydrate = useClientAuthStore((state) => state.hydrate);
+  const clientHydrate = useClientAuthStore((state) => state.hydrate);
+  const adminHydrate = useAdminAuthStore((state) => state.hydrate);
 
   // sync localStorage -> store when reload
   useEffect(() => {
-    hydrate();
-  }, [hydrate]);
+    clientHydrate();
+    adminHydrate();
+  }, [clientHydrate, adminHydrate]);
 
   return (
     <BrowserRouter>

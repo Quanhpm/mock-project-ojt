@@ -2,10 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { ROUTER_URL } from "../router.const";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
-/**
- * AdminGuard - Protect admin routes
- * Only allow users with valid admin role to access
- */
+
 const AdminGuard = () => {
   const { admin, roleCode } = useAdminAuthStore();
 

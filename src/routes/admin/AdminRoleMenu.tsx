@@ -11,14 +11,14 @@ export const useRoleBasedMenu = (): AdminMenuItem[] => {
   
   return ADMIN_MENU.filter(menuItem => 
     hasPermission(roleCode, menuItem.module) && 
-    !menuItem.hideFromSidebar // ← Ẩn các item có hideFromSidebar: true
+    !menuItem.hideFromSidebar 
   );
 };
 
 export const getMenuByRole = (roleCode: string): AdminMenuItem[] => {
   return ADMIN_MENU.filter(menuItem => 
     hasPermission(roleCode, menuItem.module) && 
-    !menuItem.hideFromSidebar // ← Ẩn các item có hideFromSidebar: true
+    !menuItem.hideFromSidebar 
   );
 };
 
