@@ -128,9 +128,12 @@ function Cart() {
                       >
                         <Minus size={16} />
                       </button>
-                      <span className="font-semibold text-[var(--cf-dark)] w-8 text-center">
-                        {item.quantity}
-                      </span>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.id, Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
+                        className="font-semibold text-[var(--cf-dark)] w-8 text-center focus:outline-none"
+                      />
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"

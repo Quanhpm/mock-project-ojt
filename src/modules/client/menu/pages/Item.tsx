@@ -236,10 +236,13 @@ function Item() {
                                         className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
                                     >
                                         −
-                                    </button>
-                                    <span className="px-6 font-black text-lg text-[var(--cf-primary)]">
-                                        {qty}
-                                    </span>
+                                    </button>   
+                                    <input
+                                        type="number"
+                                        value={qty}
+                                        onChange={(e) => setQty(Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
+                                        className="w-16 text-center font-black text-lg text-[var(--cf-primary)] focus:outline-none"
+                                    />
                                     <button
                                         onClick={() => setQty((q) => q + 1)}
                                         className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--cf-surface)] text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all font-black text-xl cursor-pointer"
