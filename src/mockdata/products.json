@@ -388,5 +388,102 @@
     "max_price": 30000,
     "is_active": true,
     "is_deleted": true
+  },
+  {
+    "id": 31,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 32,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 33,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 34,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 35,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 36,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 37,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
+  },{
+    "id": 38,
+    "SKU": "TR008",
+    "name": "Trà tắc size L",
+    "description": "Trà tắc chua ngọt thanh mát (size L)",
+    "content": "Trà pha cùng tắc tươi, nhiều đá, dung tích lớn hơn.",
+    "image_url": "https://images.unsplash.com/photo-1622484211148-4d46b3c5d9fa?q=80&w=500&auto=format&fit=crop",
+    "category_id": 2,
+    "min_price": 30000,
+    "max_price": 30000,
+    "is_active": true,
+    "is_deleted": true
   }
 ]
