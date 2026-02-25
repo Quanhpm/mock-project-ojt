@@ -3,14 +3,28 @@ import { useCartStore } from '@/stores/cart.store';
 import { slugify } from "@/utils/slugify.util";
 import { useNavigate } from "react-router-dom";
 import { useToast } from '@/hooks/use-toast.hook';
+import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
+import { ROUTER_URL } from '@/routes/router.const';
 
 function ProductCard({ product }: { product: Product }) {
     const navigate = useNavigate();
     const addItem = useCartStore((state) => state.addItem);
-    const { success } = useToast();
+    const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+    const { success, error } = useToast();
 
     const handleAddToCart = (product: Product, e: React.MouseEvent) => {
         e.stopPropagation();
+
+        // Kiểm tra đăng nhập
+        if (!isLoggedIn) {
+            error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+            setTimeout(() => {
+                navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
+                    state: { from: ROUTER_URL.MENU }
+                });
+            }, 1500);
+            return;
+        }
 
         addItem({
             productId: product.id,
