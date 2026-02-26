@@ -2,13 +2,37 @@ import { useRef, useState, useEffect } from "react";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import franchises from '@/mockdata/franchises.json';
-import type { Product, Category, Franchise } from "@/types/product.type";
+import categoryFranchises from '@/mockdata/category_franchise.json';
+import productCategoryFranchises from '@/mockdata/product_category_franchise.json'
+import productFranchises from '@/mockdata/product_franchise.json';
+import type { Product, Category, Franchise, CategoryFranchise, ProductFranchise, ProductCategoryFranchise } from "@/types/product.type";
 import ProductCard from "../components/ProductCard";
 
 function MenuPage() {
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const [activeCategory, setActiveCategory] = useState<string>('');
     const [search, setSearch] = useState<string>('');
+    const [franchiseId, setFranchiseId] = useState<number>(1);
+
+    const getAllCategoryInFranchise = (franchiseId: number): Category[] => {
+        return (categoryFranchises as CategoryFranchise[]).filter((cf) => cf.franchise_id === franchiseId)
+            .map((cf) => (categories as Category[]).find((cat) => cat.id === cf.category_id))
+            .filter((cat): cat is Category => cat !== undefined);
+    };
+
+    const getAllProductInFranchise = (franchiseId: number): Product[] => {
+        return (productFranchises as ProductFranchise[]).filter((pf) => pf.franchise_id === franchiseId)
+            .map((pf) => (products as Product[]).find((p) => p.id === pf.product_id))
+            .filter((p): p is Product => p !== undefined);
+    };
+
+    const [allProductsInFranchise, setAllProductsInFranchise] = useState<Product[]>(getAllProductInFranchise(franchiseId));
+    const [allCategoriesInFranchise, setAllCategoriesInFranchise] = useState<Category[]>(getAllCategoryInFranchise(franchiseId));
+
+    useEffect(() => {
+        setAllProductsInFranchise(getAllProductInFranchise(franchiseId));
+        setAllCategoriesInFranchise(getAllCategoryInFranchise(franchiseId));
+    }, [franchiseId]);
 
     const getCategoryIcon = (code: string): string => {
         const iconMap: { [key: string]: string } = {
@@ -31,8 +55,9 @@ function MenuPage() {
         }
     };
 
+    // fix lại hàm này để đảm bảo lọc sản phẩm đúng theo category và franchise (them franchise id vào điều kiện lọc)
     const getProductsByCategory = (categoryId: number) => {
-        return (products as Product[]).filter(
+        return (allProductsInFranchise as Product[]).filter(
             (product: Product) =>
                 product.category_id === categoryId &&
                 product.is_active &&
@@ -64,10 +89,9 @@ function MenuPage() {
     }, []);
 
     // Filter search
-    const filteredProducts = (products as Product[]).filter(
+    const filteredProducts = (allProductsInFranchise as Product[]).filter(
         (product: Product) =>
-            product.name.toLowerCase().includes(search.toLowerCase()) ||
-            product.description.toLowerCase().includes(search.toLowerCase())
+            product.name.toLowerCase().includes(search.toLowerCase())
     );
 
     return (
@@ -80,7 +104,7 @@ function MenuPage() {
                             <h3 className="text-3xl font-black uppercase tracking-wide text-[var(--cf-dark)] mb-3">Danh mục</h3>
                             <div className="h-1.5 w-20 bg-gradient-to-r from-[var(--cf-primary)] to-[var(--cf-accent-light)] rounded-full"></div>
                         </div>
-                        {(categories as Category[]).map((item: Category) => (
+                        {(allCategoriesInFranchise as Category[]).map((item: Category) => (
                             <button
                                 key={item.code}
                                 onClick={() => scrollToSection(item.code)}
@@ -139,6 +163,8 @@ function MenuPage() {
                             Chọn chi nhánh
                         </h3>
                         <select
+                            value={franchiseId}
+                            onChange={(e) => setFranchiseId(parseInt(e.target.value))}
                             className="h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
                        text-[var(--cf-dark)] 
                        focus:outline-none focus:border-[var(--cf-primary)] 
@@ -180,7 +206,7 @@ function MenuPage() {
 
                 {/* Category Sections */}
                 {search.length === 0 &&
-                    (categories as Category[]).map((category: Category) => {
+                    (allCategoriesInFranchise as Category[]).map((category: Category) => {
                         const categoryProducts = getProductsByCategory(category.id);
                         return (
                             <div
