@@ -7,6 +7,7 @@ import {
   UserCircle,
   ShoppingCart,
   Clock,
+  Building2,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -30,6 +31,13 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     component: React.lazy(() => import("@/modules/admin/dashboard/pages/DashboardPage")),
     module: "dashboard",
     isEnd: true,
+  },
+  {
+    label: "Chọn Chi Nhánh",
+    path: ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE,
+    icon: <Building2 size={18} />,
+    component: React.lazy(() => import("@/modules/admin/side-selection/pages/FranchiseSelectionPage")),
+    module: "select-franchise",
   },
   {
     label: "Users",
