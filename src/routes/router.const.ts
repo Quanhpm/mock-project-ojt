@@ -6,6 +6,7 @@ export const ROUTER_URL = {
   ABOUT: "/about",
   CONTACT: "/contact",
   VERSION: "/version",
+  VERIFY_EMAIL: "/verify-customer-email/:token",
 
   // ========== AUTH ROUTES ==========
   CLIENT: "/client",
