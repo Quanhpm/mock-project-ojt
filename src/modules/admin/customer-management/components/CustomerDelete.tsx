@@ -6,6 +6,7 @@ interface CustomerDeleteProps {
   onConfirm: () => void;
   customerName: string;
   customerId: string;
+  isDeleting?: boolean;
 }
 
 export default function CustomerDelete({ 
@@ -13,13 +14,14 @@ export default function CustomerDelete({
   onClose, 
   onConfirm, 
   customerName,
-  customerId 
+  customerId,
+  isDeleting = false
 }: CustomerDeleteProps) {
   if (!isOpen) return null;
 
   const handleConfirm = () => {
+    if (isDeleting) return;
     onConfirm();
-    onClose();
   };
 
   return (
@@ -152,26 +154,32 @@ export default function CustomerDelete({
             </button>
             <button
               onClick={handleConfirm}
+              disabled={isDeleting}
               style={{
                 flex: 1,
                 padding: "10px 16px",
-                backgroundColor: "#dc3545",
+                backgroundColor: isDeleting ? "#ffc1c8" : "#dc3545",
                 border: "none",
                 borderRadius: "8px",
                 fontSize: "14px",
                 fontWeight: "600",
                 color: "white",
-                cursor: "pointer",
-                transition: "all 0.2s"
+                cursor: isDeleting ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+                opacity: isDeleting ? 0.7 : 1
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#c82333";
+                if (!isDeleting) {
+                  e.currentTarget.style.backgroundColor = "#c82333";
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#dc3545";
+                if (!isDeleting) {
+                  e.currentTarget.style.backgroundColor = "#dc3545";
+                }
               }}
             >
-              Delete Customer
+              {isDeleting ? "Deleting..." : "Delete Customer"}
             </button>
           </div>
         </div>
