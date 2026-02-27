@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
 import type { ProfileResponse, UserRoleItem } from '@/apis/endpoints/auth.api'
+import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
 import { ROUTER_URL } from '@/routes/router.const'
+
+const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
 
 interface UseFranchiseSelectionReturn {
   profile: ProfileResponse | null
@@ -16,7 +19,12 @@ interface UseFranchiseSelectionReturn {
 
 export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const navigate = useNavigate()
-  const [profile, setProfile] = useState<ProfileResponse | null>(null)
+  const admin = useAdminAuthStore((s) => s.admin)
+  const storeRoles = useAdminAuthStore((s) => s.roles)
+  const storeActiveContext = useAdminAuthStore((s) => s.activeContext)
+  const setProfile = useAdminAuthStore((s) => s.setProfile)
+  const logout = useAdminAuthStore((s) => s.logout)
+  const [profile, setLocalProfile] = useState<ProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -24,25 +32,25 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        // Nếu store đã có data (vừa login xong) → dùng luôn, không gọi API lại
+        if (admin && storeRoles.length > 0) {
+          setLocalProfile({
+            user: admin,
+            roles: storeRoles,
+            active_context: storeActiveContext,
+          })
+          setLoading(false)
+          return
+        }
+
+        // Nếu chưa có → gọi API
         const data = await getProfile()
         if (!data) {
           setError('Không thể tải thông tin người dùng')
           return
         }
 
-        // Đã có active_context → redirect dashboard luôn
-        if (data.active_context) {
-          navigate(ROUTER_URL.ADMIN_ROUTER.DASHBOARD, { replace: true })
-          return
-        }
-
-        // GLOBAL_ADMIN → không cần pick franchise
-        const isGlobalAdmin = data.roles.some(r => r.scope === 'GLOBAL')
-        if (isGlobalAdmin) {
-          navigate(ROUTER_URL.ADMIN_ROUTER.DASHBOARD, { replace: true })
-          return
-        }
-
+        setLocalProfile(data)
         setProfile(data)
       } catch {
         setError('Đã xảy ra lỗi khi tải thông tin')
@@ -52,22 +60,25 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     }
 
     fetchProfile()
-  }, [navigate])
+  }, [admin, storeRoles, storeActiveContext, setProfile])
 
   const handleSelectFranchise = async (franchiseId: string) => {
     setSwitching(franchiseId)
     try {
-      await switchContext(franchiseId)
-      navigate(ROUTER_URL.ADMIN_ROUTER.DASHBOARD, { replace: true })
+      const updatedProfile = await switchContext(franchiseId)
+      if (updatedProfile) {
+        setProfile(updatedProfile) // Cập nhật store với active_context mới
+      }
+      navigate(DASHBOARD_PATH, { replace: true })
     } catch {
       setError('Không thể chọn chi nhánh, vui lòng thử lại')
       setSwitching(null)
     }
   }
 
-  const handleLogout = () => {
-    // TODO: Implement logout khi Task 1 & 2 hoàn thành
-    console.log('Logout clicked')
+  const handleLogout = async () => {
+    await logout()
+    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
   }
 
   const franchiseRoles: UserRoleItem[] =

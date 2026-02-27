@@ -3,6 +3,11 @@ import { httpClient } from "@/apis/httpClient";
 
 // ======================== Types ========================
 
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -32,10 +37,25 @@ export interface ProfileResponse {
 
 // ======================== API Functions ========================
 
+/** POST /api/auth - Đăng nhập (backend set HttpOnly Cookie) */
+export const login = (data: LoginRequest): Promise<null> => {
+  return httpClient.post<null, LoginRequest>({
+    url: "/auth",
+    data,
+  });
+};
+
 /** GET /api/auth - Lấy thông tin user hiện tại */
 export const getProfile = (): Promise<ProfileResponse | null> => {
   return httpClient.get<ProfileResponse>({
     url: "/auth",
+  });
+};
+
+/** POST /api/auth/logout - Đăng xuất (server xóa cookie) */
+export const logout = (): Promise<null> => {
+  return httpClient.post<null>({
+    url: "/auth/logout",
   });
 };
 

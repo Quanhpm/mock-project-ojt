@@ -20,8 +20,9 @@ setupApi();
 const App = () => {
   const clientHydrate = useClientAuthStore((state) => state.hydrate);
   const adminHydrate = useAdminAuthStore((state) => state.hydrate);
+  const adminIsLoading = useAdminAuthStore((state) => state.isLoading);
 
-  // sync localStorage -> store when reload
+  // Khi reload: client hydrate từ localStorage, admin hydrate từ API (cookie)
   useEffect(() => {
     clientHydrate();
     adminHydrate();
@@ -29,33 +30,30 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          {/* ========== ADMIN ROUTES ========== */}
-          {AdminAuthRoutes}
-          {AdminRoutes}
+      {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
+      {adminIsLoading ? (
+        <Loading />
+      ) : (
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {/* ========== ADMIN ROUTES ========== */}
+            {AdminAuthRoutes}
+            {AdminRoutes}
 
-          {/* ========== CLIENT AUTH ROUTES ========== */}
-          {/* Login, Register, Forgot Password */}
-          {ClientAuthRoutes}
+            {/* ========== CLIENT AUTH ROUTES ========== */}
+            {ClientAuthRoutes}
 
-          {/* ========== CLIENT PUBLIC ROUTES ========== */}
-          {/* Guest có thể truy cập: /, /menu, /about, /contact */}
-          {/* Layout: ClientLayout (header động: guest → ClientHeader, logged in → HomeHeader) */}
-          {ClientPublicRoutes}
+            {/* ========== CLIENT PUBLIC ROUTES ========== */}
+            {ClientPublicRoutes}
 
-          {/* ========== HOME PRIVATE ROUTES ========== */}
-          {/* Cần đăng nhập: /cart, /order-history, /profile, /change-password, /checkout */}
-          {/* Layout: ClientLayout (header động: HomeHeader + ClientFooter) */}
-          {/* Guard: ClientGuard (redirect to /client/login if not authenticated) */}
-          {HomePrivateRoutes}
+            {/* ========== HOME PRIVATE ROUTES ========== */}
+            {HomePrivateRoutes}
 
-          {/* ========== 404 NOT FOUND ========== */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
-
-
+            {/* ========== 404 NOT FOUND ========== */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+      )}
 
       {/* Toast notifications */}
       <ToasterComponent />
