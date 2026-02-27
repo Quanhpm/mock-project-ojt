@@ -1,28 +1,25 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordForm from '../components/ForgotPasswordForm';
 import AuthCard from '@/components/ui/auth-card';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
+import { useClientForgotPassword } from '../hooks/use-client-forgot-password.hook';
 import type { ForgotPasswordFormValues } from '../schemas/client-forgot-password.schema';
 
 function ForgotPasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const { success } = useToast();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
+  const { sendResetEmail, isLoading, error: errorMessage } = useClientForgotPassword();
 
   const handleSubmit = async (data: ForgotPasswordFormValues) => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      success(`Mật khẩu tạm thời đã được gửi đến email  ${data.email}. Vui lòng kiểm tra hộp thư và đổi mật khẩu ngay để đảm bảo an toàn.`);
-      navigate(ROUTER_URL.CLIENT_ROUTER.CHANGE_PASSWORD);
-    } catch {
-      setErrorMessage('Có lỗi xảy ra, vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
+    const result = await sendResetEmail(data.email);
+
+    if (result.success) {
+      success(result.message);
+      // Redirect to login after sending reset email
+      navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || '/client/login');
+    } else {
+      showError(result.message, 'Gửi email thất bại');
     }
   };
 
@@ -41,7 +38,7 @@ function ForgotPasswordPage() {
       description="Nhập email của bạn, chúng tôi sẽ gửi mật khẩu mới ngay lập tức."
       footer={footer}
     >
-      <ForgotPasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage} />
+      <ForgotPasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage || ''} />
     </AuthCard>
   );
 }

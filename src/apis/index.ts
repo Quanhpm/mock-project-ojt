@@ -15,3 +15,4 @@ export type {
 
 // API Endpoints
 export * from "./endpoints";
+export * from "./endpointsCLIENT";

@@ -41,7 +41,7 @@ function ChangePasswordPage() {
       description=""
       footer={footer}
     >
-      <ChangePasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage} />
+      <ChangePasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage || ''} />
     </AuthCard>
   );
 }
