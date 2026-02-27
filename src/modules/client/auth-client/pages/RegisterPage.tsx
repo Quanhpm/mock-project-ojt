@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import RegisterForm from "../components/RegisterForm";
+import AuthCard from "@/components/ui/auth-card";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { showToast } from "@/components/ui/toast";
 import { ROUTER_URL } from "@/routes/router.const";
@@ -47,22 +48,23 @@ function RegisterPage() {
         }
     };
 
-    return (
+    const footer = (
         <>
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Account</h1>
-                <p className="text-gray-600 text-sm">Join us and start your journey today.</p>
-            </div>
-
-            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} error={errorMessage} />
-
-            <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
-                <p className="text-sm text-gray-600 text-center mb-8">
-                    Already have an account? <a href="/client/login" className="text-orange-500 hover:text-orange-600 font-semibold">Sign In</a>
-                </p>
-
-            </div>
+            Đã có tài khoản?{' '}
+            <a href="/client/login" className="text-[var(--cf-accent-light)] hover:text-white font-semibold transition-colors">
+                Đăng nhập
+            </a>
         </>
+    );
+
+    return (
+        <AuthCard
+            title="Tạo tài khoản mới"
+            description=""
+            footer={footer}
+        >
+            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} error={errorMessage} />
+        </AuthCard>
     );
 }
 

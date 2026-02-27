@@ -1,12 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
+import AuthCard from '@/components/ui/auth-card';
 import { useClientAuthStore } from '../stores/client-auth.store';
 import { useToast } from '@/hooks/use-toast.hook';
 import customers from '@/mockdata/customers.json';
 import { ROUTER_URL } from '@/routes/router.const';
-import { Suspense, lazy } from 'react';
-import LoadingLayout from '@/layouts/LoadingLayout';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -63,32 +62,30 @@ function LoginPage() {
     }
   };
 
-  // Kiểm tra xem có được redirect từ route private không
   const needsLogin = !!(location.state as { from?: string })?.from;
 
-  return (
+  const footer = (
     <>
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Sign In</h1>
-        <p className="text-gray-600 text-sm">Enter your details to access your account.</p>
-        
-        {needsLogin && (
-          <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-            <p className="text-sm text-yellow-800">
-              ⚠️ Vui lòng đăng nhập để tiếp tục
-            </p>
-          </div>
-        )}
-      </div>
-
-      <LoginForm onSubmit={handleLogin} isLoading={false} error={errorMessage} />
-
-      <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
-        <p className="text-sm text-gray-600 text-center mb-8">
-          Don't have an account? <a href="/client/register" className="text-orange-500 hover:text-orange-600 font-semibold">Create an Account</a>
-        </p>
-      </div>
+      Không có tài khoản{' '}
+      <a href="/client/register" className="text-[var(--cf-accent-light)] hover:text-white font-semibold transition-colors">
+        Tạo tài khoản mới
+      </a>
     </>
+  );
+
+  return (
+    <AuthCard
+      title="Chào mừng trở lại!"
+      description=""
+      footer={footer}
+    >
+      {needsLogin && (
+        <div className="mb-5 p-3 rounded-xl bg-yellow-400/20 border border-yellow-400/30">
+          <p className="text-sm text-yellow-200">⚠️ Vui lòng đăng nhập để tiếp tục</p>
+        </div>
+      )}
+      <LoginForm onSubmit={handleLogin} isLoading={false} error={errorMessage} />
+    </AuthCard>
   );
 }
 

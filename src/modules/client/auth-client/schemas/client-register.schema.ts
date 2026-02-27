@@ -2,15 +2,22 @@ import { z } from "zod"
 import { mockUsers } from "@/mockdata";
 
 export const registerSchema = z.object({
-    name: z.string().min(5, "Must be 5 characters"),
-    phone: z.string().min(10, "Input 10 numbers").regex(/^[0-9]+$/, "No alphabet include"),
-    email: z.string().min(1, "Input your email").email("Invalid email format"),
-    password: z.string().min(8, "Password required 8 characters"),
+    name: z.string().min(5, "Phải có 5 ký tự"),
+    phone: z.string().min(10, "Nhập đúng định dạng số điện thoại").regex(/^[0-9]+$/, "Số điện thoại không hợp lệ"),
+    email: z.string().min(1, "Nhập địa chỉ email").email("Email không hợp lệ"),
+    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+    confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu"),
 }).refine(
     (data) => !mockUsers.some(u => u.email === data.email),
     {
-        message: "Email is already used!",
+        message: "Email đã được sử dụng!",
         path: ["email"]
+    }
+).refine(
+    (data) => data.password === data.confirmPassword,
+    {
+        message: "Mật khẩu không khớp",
+        path: ["confirmPassword"]
     }
 );
 
