@@ -1,71 +1,96 @@
 import { create } from "zustand";
-import { LOCAL_STORAGE } from "@/consts";
-import { getItemInLocalStorage, setItemInLocalStorage, removeItemInLocalStorage } from "@/utils";
-import type { UserAccount } from "@/types";
-import { getRoleCode, getFranchiseId } from '../utils/auth-helpers';
+import type {
+  UserInfo,
+  UserRoleItem,
+  ActiveContext,
+  ProfileResponse,
+} from "@/apis/endpoints/auth.api";
+import { getProfile, logout as logoutApi } from "@/apis/endpoints/auth.api";
+
+// ======================== State Interface ========================
 
 interface AdminAuthState {
-  admin: UserAccount | null;
-  roleCode: string | null;        // ✨ ADD
-  franchiseId: number | null;     // ✨ ADD
-  token: string | null;
+  admin: UserInfo | null;
+  roles: UserRoleItem[];
+  activeContext: ActiveContext | null;
   isLoggedIn: boolean;
   isLoading: boolean;
 
-  setAdmin: (admin: UserAccount) => void;
-  setToken: (token: string) => void;
-  logout: () => void;
-  hydrate: () => void;  
+  // Lưu profile từ API response vào store
+  setProfile: (profile: ProfileResponse) => void;
+
+  // Gọi API logout → clear store
+  logout: () => Promise<void>;
+
+  // Gọi GET /auth để kiểm tra session còn sống không (thay hydrate cũ)
+  hydrate: () => Promise<void>;
 }
+
+// ======================== Derived Getters ========================
+
+/** Lấy roleCode hiện tại (ưu tiên active_context, fallback roles[0]) */
+export const getRoleCode = (state: AdminAuthState): string | null => {
+  if (state.activeContext?.role) return state.activeContext.role;
+  if (state.roles.length > 0) return state.roles[0].role;
+  return null;
+};
+
+/** Lấy franchiseId hiện tại */
+export const getFranchiseId = (state: AdminAuthState): string | null => {
+  if (state.activeContext?.franchiseId) return state.activeContext.franchiseId;
+  if (state.roles.length > 0) return state.roles[0].franchise_id;
+  return null;
+};
+
+// ======================== Store ========================
 
 export const useAdminAuthStore = create<AdminAuthState>((set) => ({
   admin: null,
-  roleCode: null,                 // ✨ ADD
-  franchiseId: null,              // ✨ ADD
-  token: null,
+  roles: [],
+  activeContext: null,
   isLoggedIn: false,
-  isLoading: false,
+  isLoading: true, // Bắt đầu true → chặn render routes cho đến khi hydrate xong
 
-  setAdmin: (admin) => {
-    const roleCode = getRoleCode(admin.id);          // ✨ ADD
-    const franchiseId = getFranchiseId(admin.id);    // ✨ ADD
-    
-    setItemInLocalStorage(LOCAL_STORAGE.ACCOUNT_ADMIN, admin);
-    set({ 
-      admin, 
-      roleCode,        // ✨ ADD
-      franchiseId,     // ✨ ADD
-      isLoggedIn: true 
+  setProfile: (profile) => {
+    set({
+      admin: profile.user,
+      roles: profile.roles,
+      activeContext: profile.active_context,
+      isLoggedIn: true,
     });
   },
 
-  setToken: (token) => {
-    set({ token });
-  },
-
-  logout: () => {
-    removeItemInLocalStorage(LOCAL_STORAGE.ACCOUNT_ADMIN);
-    set({ 
-      admin: null, 
-      roleCode: null,      // ✨ ADD
-      franchiseId: null,   // ✨ ADD
-      token: null, 
-      isLoggedIn: false 
-    });
-  },
-
-  hydrate: () => {
-    const savedAdmin = getItemInLocalStorage<UserAccount>(LOCAL_STORAGE.ACCOUNT_ADMIN);
-    if (savedAdmin) {
-      const roleCode = getRoleCode(savedAdmin.id);       // ✨ ADD
-      const franchiseId = getFranchiseId(savedAdmin.id); // ✨ ADD
-      
-      set({ 
-        admin: savedAdmin, 
-        roleCode,        // ✨ ADD
-        franchiseId,     // ✨ ADD
-        isLoggedIn: true 
+  logout: async () => {
+    try {
+      await logoutApi();
+    } catch {
+      // Ignore error — server có thể đã hết session
+    } finally {
+      set({
+        admin: null,
+        roles: [],
+        activeContext: null,
+        isLoggedIn: false,
       });
+    }
+  },
+
+  hydrate: async () => {
+    set({ isLoading: true });
+    try {
+      const profile = await getProfile();
+      if (profile) {
+        set({
+          admin: profile.user,
+          roles: profile.roles,
+          activeContext: profile.active_context,
+          isLoggedIn: true,
+        });
+      }
+    } catch {
+      // Cookie hết hạn hoặc chưa login → giữ state mặc định
+    } finally {
+      set({ isLoading: false });
     }
   },
 }));

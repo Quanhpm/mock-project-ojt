@@ -1,10 +1,11 @@
 // src/config/permissions.config.ts
-type RoleCode = 'GLOBAL_ADMIN' | 'FRANCHISE_MANAGER' | 'STAFF' | 'WAREHOUSE';
+// Role codes từ API: ADMIN, MANAGER, STAFF, WAREHOUSE
+type RoleCode = 'ADMIN' | 'MANAGER' | 'STAFF' | 'WAREHOUSE';
 type Module = 'dashboard' | 'users' | 'franchise' | 'products' | 'inventory' | 'customers' | 'orders' | 'shifts' | 'select-franchise';
 
 export const ROLE_PERMISSIONS: Record<RoleCode, Module[]> = {
-  GLOBAL_ADMIN: ['dashboard', 'users', 'franchise', 'products', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
-  FRANCHISE_MANAGER: ['dashboard', 'products', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
+  ADMIN: ['dashboard', 'users', 'franchise', 'products', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
+  MANAGER: ['dashboard', 'products', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
   STAFF: ['dashboard', 'customers', 'orders', 'select-franchise'],
   WAREHOUSE: ['dashboard', 'inventory', 'products', 'select-franchise']
 };

@@ -10,7 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
-import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useAdminAuthStore, getRoleCode, getFranchiseId } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { ROUTER_URL } from "@/routes/router.const";
 
 // Theme colors
@@ -32,10 +32,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { admin, roleCode, franchiseId, logout } = useAdminAuthStore();
+  const store = useAdminAuthStore();
+  const roleCode = getRoleCode(store);
+  const franchiseId = getFranchiseId(store);
+  const { admin, logout } = store;
 
-  const handleLogout = () => {
-    logout(); // Clear store + localStorage
+  const handleLogout = async () => {
+    await logout(); // Gọi API logout + clear store
     navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
   };
 
