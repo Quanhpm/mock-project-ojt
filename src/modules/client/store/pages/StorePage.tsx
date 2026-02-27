@@ -32,20 +32,20 @@ export const StorePage = ({ stores }: StorePageProps) => {
   }, [stores, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-[var(--cf-bg)]">
+    <div className="h-[600px] overflow-hidden bg-[var(--cf-bg)] flex flex-col">
       {/* Page Header */}
-      <section className="max-w-[1440px] mx-auto w-full px-10 pt-16 pb-12 text-center">
-        <h1 className="text-[var(--cf-dark)] text-5xl md:text-6xl font-black tracking-tight mb-4">
+      <section className="max-w-[1400px] mx-auto w-full px-6 pt-3 pb-3 text-center flex-shrink-0">
+        <h1 className="text-[var(--cf-dark)] text-2xl md:text-3xl font-black tracking-tight mb-1.5">
           Tìm Boutique Brews Gần Bạn
         </h1>
-        <p className="text-[var(--cf-secondary)] text-lg md:text-xl font-light max-w-2xl mx-auto mb-8">
+        <p className="text-[var(--cf-secondary)] text-xs md:text-sm font-light max-w-2xl mx-auto mb-3">
           Khám phá các không gian cà phê tinh tế của chúng tôi trên khắp Việt Nam
         </p>
 
         {/* Search Bar */}
-        <div className="max-w-xl mx-auto relative">
+        <div className="max-w-md mx-auto relative">
           <svg
-            className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--cf-secondary)]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--cf-secondary)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -62,14 +62,14 @@ export const StorePage = ({ stores }: StorePageProps) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm theo tên, địa chỉ hoặc số điện thoại..."
-            className="w-full bg-[var(--cf-surface)]/50 border-none rounded-xl pl-12 pr-4 py-3 text-sm focus:ring-2 focus:ring-[var(--cf-primary)]/20 transition-all placeholder:text-[var(--cf-secondary)]/50"
+            className="w-full bg-[var(--cf-surface)]/50 border-none rounded-lg pl-10 pr-10 py-2 text-xs focus:ring-2 focus:ring-[var(--cf-primary)]/20 transition-all placeholder:text-[var(--cf-secondary)]/50"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--cf-secondary)] hover:text-[var(--cf-primary)] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--cf-secondary)] hover:text-[var(--cf-primary)] transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -78,7 +78,7 @@ export const StorePage = ({ stores }: StorePageProps) => {
 
         {/* Results Count */}
         {searchQuery && (
-          <p className="text-[var(--cf-secondary)] text-sm mt-4">
+          <p className="text-[var(--cf-secondary)] text-xs mt-1.5">
             {filteredStores.length > 0
               ? `Tìm thấy ${filteredStores.length} cửa hàng`
               : 'Không tìm thấy cửa hàng nào'}
@@ -87,9 +87,9 @@ export const StorePage = ({ stores }: StorePageProps) => {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-[1440px] mx-auto w-full px-10 pb-20 flex flex-col lg:flex-row gap-8 h-[calc(100vh-380px)] min-h-[600px]">
+      <main className="max-w-[1400px] mx-auto w-full px-6 pb-3 flex flex-col lg:flex-row gap-3 flex-1 min-h-0 overflow-hidden">
         {/* Store List (1/3) */}
-        <aside className="w-full lg:w-1/3">
+        <aside className="w-full lg:w-1/3 min-h-0 overflow-hidden">
           <StoreList
             stores={filteredStores}
             selectedStore={selectedStore}
@@ -98,8 +98,8 @@ export const StorePage = ({ stores }: StorePageProps) => {
         </aside>
 
         {/* Map Section (2/3) */}
-        <section className="w-full lg:w-2/3 relative h-full min-h-[400px]">
-          <div className="w-full h-full rounded-xl overflow-hidden shadow-lg">
+        <section className="w-full lg:w-2/3 relative min-h-0 overflow-hidden">
+          <div className="w-full h-full rounded-lg overflow-hidden shadow-lg">
             <StoreMap
               stores={filteredStores}
               selectedStore={selectedStore}
