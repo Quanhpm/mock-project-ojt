@@ -1,12 +1,14 @@
-import React from 'react';
-import { ShoppingCart, Minus, Plus, Trash2, User } from 'lucide-react';
-import type { OrderItem, Order } from '../types/order.types';
+import React, { useState } from 'react';
+import { ShoppingCart, Minus, Plus, Trash2, User, Edit2 } from 'lucide-react';
+import type { OrderItem, Order, ItemOptions } from '../types/order.types.ts';
+import { EditItemModal } from './EditItemModal.tsx';
 
 interface OrderSidebarProps {
   order: Order;
   onAddItem?: (item: OrderItem) => void;
   onRemoveItem?: (itemId: string) => void;
   onUpdateQuantity?: (itemId: string, quantity: number) => void;
+  onEditItem?: (itemId: string, options: ItemOptions) => void;
   onOrderTypeChange?: (type: 'dine-in' | 'takeaway' | 'delivery') => void;
   onNotesChange?: (notes: string) => void;
 }
@@ -15,10 +17,12 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
   order,
   onUpdateQuantity,
   onRemoveItem,
+  onEditItem,
   onOrderTypeChange,
   onNotesChange,
 }) => {
   const TAX_RATE = 0.05;
+  const [editingItem, setEditingItem] = useState<OrderItem | null>(null);
 
   return (
     <aside className="w-96 shrink-0 bg-white flex flex-col z-10 shadow-xl border-l border-gray-100">
@@ -60,9 +64,24 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <p className="font-bold text-gray-800 text-sm">{item.name}</p>
-                      {item.notes && <p className="text-xs text-gray-500">{item.notes}</p>}
+                      {item.options && (
+                        <div className="mt-1 space-y-0.5">
+                          {item.options.size && (
+                            <p className="text-xs text-gray-500">Size: {item.options.size.label}</p>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            Đường: {item.options.sugar.label} | Đá: {item.options.ice.label}
+                          </p>
+                          {item.options.toppings.length > 0 && (
+                            <p className="text-xs text-gray-500">
+                              Topping: {item.options.toppings.map(t => t.name).join(', ')}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {item.notes && <p className="text-xs text-gray-500 mt-1">{item.notes}</p>}
                     </div>
-                    <p className="font-bold text-gray-800 text-sm">VND {(item.unitPrice * item.quantity).toFixed(2)}</p>
+                    <p className="font-bold text-gray-800 text-sm">{(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ</p>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -80,12 +99,22 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
                         <Plus size={16} />
                       </button>
                     </div>
-                    <button
-                      onClick={() => onRemoveItem?.(item.id)}
-                      className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setEditingItem(item)}
+                        className="text-gray-400 hover:text-amber-700 p-1 rounded hover:bg-amber-50 transition-colors"
+                        title="Chỉnh sửa"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+                      <button
+                        onClick={() => onRemoveItem?.(item.id)}
+                        className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
+                        title="Xóa"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {idx < order.items.length - 1 && <div className="h-px bg-gray-100 w-full" />}
@@ -112,22 +141,35 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
         <div className="shrink-0 bg-white p-5 border-t border-gray-100 space-y-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>Subtotal</span>
-            <span className="font-bold text-gray-800">VND {order.subtotal.toFixed(2)}</span>
+            <span className="font-bold text-gray-800">{order.subtotal.toLocaleString('vi-VN')}đ</span>
           </div>
           <div className="flex justify-between items-center text-sm text-gray-500">
             <span>Tax ({(TAX_RATE * 100).toFixed(0)}%)</span>
-            <span className="font-bold text-gray-800">VND {order.tax.toFixed(2)}</span>
+            <span className="font-bold text-gray-800">{order.tax.toLocaleString('vi-VN')}đ</span>
           </div>
           <div className="h-px bg-gray-100 w-full my-1" />
           <div className="flex justify-between items-center text-base font-bold text-amber-800 mb-2">
             <span>Total</span>
-            <span>VND {order.total.toFixed(2)}</span>
+            <span>{order.total.toLocaleString('vi-VN')}đ</span>
           </div>
           <button className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-700/20 flex items-center justify-between px-6 transition-all active:scale-[0.99] ring-offset-2 ring-offset-white focus:ring-2 focus:ring-amber-700">
             <span className="text-lg">Pay</span>
-            <span className="text-lg">VND {order.total.toFixed(2)}</span>
+            <span className="text-lg">{order.total.toLocaleString('vi-VN')}đ</span>
           </button>
         </div>
+      )}
+
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <EditItemModal
+          isOpen={!!editingItem}
+          onClose={() => setEditingItem(null)}
+          item={editingItem}
+          onSave={(itemId, options) => {
+            onEditItem?.(itemId, options);
+            setEditingItem(null);
+          }}
+        />
       )}
     </aside>
   );

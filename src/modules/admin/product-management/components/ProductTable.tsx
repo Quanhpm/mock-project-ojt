@@ -10,6 +10,7 @@ import {
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProductDelete from "./ProductDelete";
+import FranchiseViewModal from "./FranchiseViewModal";
 
 // Helper functions to work with normalized data
 const getProductStock = (productId: number) => {
@@ -76,6 +77,11 @@ export default function ProductTable() {
     productId: "",
     productName: ""
   });
+  const [franchiseModal, setFranchiseModal] = useState<{ isOpen: boolean; productId: number; productName: string }>({
+    isOpen: false,
+    productId: 0,
+    productName: ""
+  });
   const [productStatus, setProductStatus] = useState<Record<string, boolean>>(
     mockProducts.reduce((acc, product) => ({
       ...acc,
@@ -140,6 +146,14 @@ export default function ProductTable() {
     console.log("Delete product:", deleteModal.productId);
     alert(`Product "${deleteModal.productName}" has been deleted successfully!`);
     // Here you would typically call an API to delete the product
+  };
+
+  const handleViewFranchises = (productId: number, productName: string) => {
+    setFranchiseModal({
+      isOpen: true,
+      productId,
+      productName
+    });
   };
 
   return (
@@ -583,32 +597,43 @@ export default function ProductTable() {
                           </label>
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                            {productFranchises.length > 0 ? (
-                              productFranchises.map((franchise) => (
-                                <span
-                                  key={franchise.id}
-                                  style={{
-                                    display: "inline-block",
-                                    padding: "4px 8px",
-                                    borderRadius: "4px",
-                                    fontSize: "11px",
-                                    fontWeight: "500",
-                                    backgroundColor: "#e7f3ff",
-                                    color: "#0066cc"
-                                  }}
-                                >
-                                  {franchise.name}
-                                </span>
-                              ))
-                            ) : (
-                              <span style={{
-                                fontSize: "13px",
-                                color: "#6c757d",
-                                fontStyle: "italic"
-                              }}>
-                                No franchises
-                              </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                            <span style={{
+                              fontSize: "14px",
+                              fontWeight: "600",
+                              color: "#212529"
+                            }}>
+                              {productFranchises.length} chi nhánh
+                            </span>
+                            {productFranchises.length > 0 && (
+                              <button
+                                onClick={() => handleViewFranchises(product.id, product.name)}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "6px 12px",
+                                  fontSize: "13px",
+                                  fontWeight: "500",
+                                  color: "#0066cc",
+                                  backgroundColor: "#e7f3ff",
+                                  border: "1px solid #b3d9ff",
+                                  borderRadius: "6px",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s"
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "#cce6ff";
+                                  e.currentTarget.style.borderColor = "#80c1ff";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "#e7f3ff";
+                                  e.currentTarget.style.borderColor = "#b3d9ff";
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>visibility</span>
+                                Xem
+                              </button>
                             )}
                           </div>
                         </td>
@@ -834,6 +859,16 @@ export default function ProductTable() {
         onConfirm={handleDeleteConfirm}
         productName={deleteModal.productName}
         productId={deleteModal.productId}
+      />
+
+      {/* Franchise View Modal */}
+      <FranchiseViewModal
+        isOpen={franchiseModal.isOpen}
+        onClose={() => setFranchiseModal({ isOpen: false, productId: 0, productName: "" })}
+        franchises={mockFranchises.filter(f => 
+          getProductFranchiseIds(franchiseModal.productId).includes(f.id) && f.is_active && !f.is_deleted
+        )}
+        productName={franchiseModal.productName}
       />
     </div>
   );

@@ -115,7 +115,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
-    label: "Orders",
+    label: "Order Pos",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER,
     icon: <ShoppingCart size={18} />,
     component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
-import type { MenuItem } from '../types/order.types';
+import type { MenuItem } from '../types/order.types.ts';
 
 interface ProductCardProps {
   item: MenuItem;
@@ -29,7 +29,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onAddToCart }) =
         <p className="text-xs text-gray-500 mb-3 line-clamp-2">{item.description}</p>
 
         <div className="mt-auto flex items-center justify-between">
-          <span className="text-lg font-bold text-amber-700">VND {item.price.toFixed(2)}</span>
+          <span className="text-lg font-bold text-amber-700">{item.price.toLocaleString('vi-VN')}đ</span>
           <button
             onClick={() => onAddToCart(item)}
             className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm bg-gray-100 hover:bg-amber-700 text-amber-700 hover:text-white"
