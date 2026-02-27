@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { hasPermission } from "@/config/permissions.config";
-import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useAdminAuthStore, getRoleCode } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
 interface ProtectedRouteProps {
   requiredModule: string;
@@ -12,7 +12,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredModule, 
   element 
 }) => {
-  const { roleCode } = useAdminAuthStore();
+  const store = useAdminAuthStore();
+  const roleCode = getRoleCode(store);
   
   if (!roleCode || !hasPermission(roleCode, requiredModule)) {
     return <Navigate to="/admin/dashboard" replace />;

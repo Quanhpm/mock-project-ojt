@@ -1,6 +1,6 @@
 import productsData from '@/mockdata/products.json';
 import categoriesData from '@/mockdata/categories.json';
-import type { MenuItem, MenuCategory } from '../types/order.types';
+import type { MenuItem, MenuCategory } from '../types/order.types.ts';
 
 // Map categories from mockdata
 export const menuCategories: MenuCategory[] = categoriesData

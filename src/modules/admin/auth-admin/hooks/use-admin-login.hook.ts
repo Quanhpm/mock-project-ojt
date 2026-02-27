@@ -1,0 +1,59 @@
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { login, getProfile } from "@/apis/endpoints/auth.api";
+import { HttpError } from "@/apis/http.types";
+import { useAdminAuthStore } from "../stores/admin-auth.store";
+import { useToast } from "@/hooks/use-toast.hook";
+import { ROUTER_URL } from "@/routes/router.const";
+import type { AdminLoginFormValues } from "../schemas/admin-login.schema";
+
+export function useAdminLogin() {
+  const navigate = useNavigate();
+  const setProfile = useAdminAuthStore((s) => s.setProfile);
+  const { success, error: showError } = useToast();
+
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleLogin = useCallback(
+    async (data: AdminLoginFormValues) => {
+      setLoading(true);
+      setErrorMessage("");
+
+      try {
+        // 1. POST /auth → backend set HttpOnly Cookie
+        await login({ email: data.email, password: data.password });
+
+        // 2. GET /auth → lấy profile
+        const profile = await getProfile();
+
+        if (!profile) {
+          throw new Error("Không lấy được thông tin người dùng");
+        }
+
+        // 3. Lưu vào zustand store
+        setProfile(profile);
+
+        // 4. Luôn redirect → select-franchise để chọn chi nhánh
+        success("Đăng nhập thành công!");
+        navigate(
+          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
+          { replace: true },
+        );
+      } catch (err) {
+        const message =
+          err instanceof HttpError
+            ? err.message
+            : "Email hoặc mật khẩu không chính xác";
+
+        setErrorMessage(message);
+        showError(message, "Đăng nhập thất bại");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [navigate, setProfile, success, showError],
+  );
+
+  return { handleLogin, loading, errorMessage };
+}

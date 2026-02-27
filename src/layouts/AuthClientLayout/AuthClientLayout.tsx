@@ -1,6 +1,7 @@
-import { Outlet} from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import LoadingLayout from '@/layouts/LoadingLayout';
+import { Coffee } from "lucide-react";
 
 const AuthClientLayout = () => {
   const authLoading = useClientAuthStore((state) => state.authLoading);
@@ -10,46 +11,31 @@ const AuthClientLayout = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Banner */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 bg-cover bg-center relative"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1509785307050-d4066910ec1e?w=1000&h=1200&fit=crop")',
-        }}
-      >
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black/60"></div>
-        
-        {/* Content */}
-        <div className="relative z-10 text-center text-white max-w-md">
-          <div className="mb-8">
-            <div className="inline-block px-4 py-2 mb-6">
-              <span className="font-bold text-white">☕ BOUTIQUE BREWS</span>
-            </div>
-          </div>
-          
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
-            Start Your<br />Morning Right
-          </h1>
-          
-          <p className="text-gray-300 mb-8 leading-relaxed">
-            Join our community of coffee lovers and earn rewards with every sip. Experience the finest beans sourced ethically from around the globe.
-          </p>
-          
-          <div className="border-t border-orange-500 pt-6">
-            <p className="text-orange-500 font-semibold tracking-wider">PREMIUM EXPERIENCE</p>
-          </div>
-        </div>
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        backgroundImage:
+          'url("https://images.unsplash.com/photo-1509785307050-d4066910ec1e?w=1920&h=1080&fit=crop")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/55" />
+
+      {/* Decorative glow blobs */}
+      <div className="absolute -top-20 -left-20 w-96 h-96 bg-orange-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-16 w-[30rem] h-[30rem] bg-amber-800/20 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Brand header */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap flex items-center gap-2">
+        <Coffee size={25} className="text-white" />
+        <span className="text-xl font-extrabold text-white tracking-widest drop-shadow">BOUTIQUE BREWS</span>
       </div>
 
-      {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen p-6 lg:p-12 bg-[var(--cf-bg)]">
-        <div className="w-full max-w-sm">
-          <div className="bg-[var(--cf-surface)] rounded-lg p-8 shadow-sm">
-            <Outlet />
-          </div>
-        </div>
+      {/* Page content – AuthCard is rendered by each page */}
+      <div className="relative z-10 w-full max-w-md mt-10">
+        <Outlet />
       </div>
     </div>
   );
