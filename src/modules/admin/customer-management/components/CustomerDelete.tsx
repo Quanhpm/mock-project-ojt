@@ -9,13 +9,13 @@ interface CustomerDeleteProps {
   isDeleting?: boolean;
 }
 
-export default function CustomerDelete({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
+export default function CustomerDelete({
+  isOpen,
+  onClose,
+  onConfirm,
   customerName,
   customerId,
-  isDeleting = false
+  isDeleting = false,
 }: CustomerDeleteProps) {
   if (!isOpen) return null;
 
@@ -39,7 +39,7 @@ export default function CustomerDelete({
           zIndex: 999,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
         }}
       >
         {/* Modal */}
@@ -52,7 +52,7 @@ export default function CustomerDelete({
             maxWidth: "480px",
             padding: "32px",
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            position: "relative"
+            position: "relative",
           }}
         >
           {/* Close Button */}
@@ -70,7 +70,7 @@ export default function CustomerDelete({
               alignItems: "center",
               justifyContent: "center",
               color: "#6c757d",
-              transition: "color 0.2s"
+              transition: "color 0.2s",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = "#212529";
@@ -83,52 +83,63 @@ export default function CustomerDelete({
           </button>
 
           {/* Icon */}
-          <div style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "16px"
-          }}>
-            <div style={{
-              backgroundColor: "#fff3cd",
-              borderRadius: "50%",
-              padding: "12px",
+          <div
+            style={{
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
+              justifyContent: "center",
+              marginBottom: "16px",
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#fff3cd",
+                borderRadius: "50%",
+                padding: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
               <AlertTriangle size={32} style={{ color: "#ff9800" }} />
             </div>
           </div>
 
           {/* Title */}
-          <h2 style={{
-            fontSize: "20px",
-            fontWeight: "600",
-            color: "#212529",
-            margin: 0,
-            marginBottom: "8px",
-            textAlign: "center"
-          }}>
+          <h2
+            style={{
+              fontSize: "20px",
+              fontWeight: "600",
+              color: "#212529",
+              margin: 0,
+              marginBottom: "8px",
+              textAlign: "center",
+            }}
+          >
             Delete Customer
           </h2>
 
           {/* Description */}
-          <p style={{
-            fontSize: "14px",
-            color: "#6c757d",
-            margin: 0,
-            marginBottom: "16px",
-            textAlign: "center"
-          }}>
-            Are you sure you want to delete <strong>{customerName}</strong> (ID: {customerId})? This action cannot be undone.
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#6c757d",
+              margin: 0,
+              marginBottom: "16px",
+              textAlign: "center",
+            }}
+          >
+            Are you sure you want to delete <strong>{customerName}</strong> (ID:{" "}
+            {customerId})? This action cannot be undone.
           </p>
 
           {/* Actions */}
-          <div style={{
-            display: "flex",
-            gap: "12px",
-            marginTop: "24px"
-          }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              marginTop: "24px",
+            }}
+          >
             <button
               onClick={onClose}
               style={{
@@ -141,7 +152,7 @@ export default function CustomerDelete({
                 fontWeight: "600",
                 color: "#495057",
                 cursor: "pointer",
-                transition: "all 0.2s"
+                transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#f8f9fa";
@@ -166,7 +177,7 @@ export default function CustomerDelete({
                 color: "white",
                 cursor: isDeleting ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
-                opacity: isDeleting ? 0.7 : 1
+                opacity: isDeleting ? 0.7 : 1,
               }}
               onMouseEnter={(e) => {
                 if (!isDeleting) {

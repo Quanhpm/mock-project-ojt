@@ -252,14 +252,17 @@ export default function CustomerTable() {
 
   const handleToggleCustomerStatus = (customerId: string) => {
     // Get current status from state or customer data
-    const currentStatus = customerStatus[customerId] ?? customers.find(c => c.id === customerId)?.is_active ?? false;
-    
+    const currentStatus =
+      customerStatus[customerId] ??
+      customers.find((c) => c.id === customerId)?.is_active ??
+      false;
+
     // Optimistic UI update: Update state immediately
     setCustomerStatus((prev) => ({
       ...prev,
       [customerId]: !currentStatus,
     }));
-    
+
     // Call API to update customer status
     toggleStatus(
       customerId,
@@ -271,7 +274,7 @@ export default function CustomerTable() {
           ...prev,
           [customerId]: currentStatus,
         }));
-      }
+      },
     );
   };
 
@@ -292,34 +295,31 @@ export default function CustomerTable() {
   const handleDeleteConfirm = () => {
     // Prevent double clicks
     if (isDeleting) return;
-    
+
     // Call API to delete customer
-    deleteCustomer(
-      deleteModal.customerId,
-      () => {
-        // onSuccess: Close modal and refresh data
-        setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
-        
-        // Refresh customer list with current filters
-        const mapStatusFilter = (): boolean | null => {
-          if (statusFilter === "active") return true;
-          if (statusFilter === "inactive") return false;
-          return null;
-        };
-        
-        fetchCustomers({
-          searchCondition: {
-            keyword: searchTerm.trim(),
-            is_active: mapStatusFilter(),
-            is_deleted: false,
-          },
-          pageInfo: {
-            pageNum: currentPage,
-            pageSize: itemsPerPage,
-          },
-        });
-      }
-    );
+    deleteCustomer(deleteModal.customerId, () => {
+      // onSuccess: Close modal and refresh data
+      setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
+
+      // Refresh customer list with current filters
+      const mapStatusFilter = (): boolean | null => {
+        if (statusFilter === "active") return true;
+        if (statusFilter === "inactive") return false;
+        return null;
+      };
+
+      fetchCustomers({
+        searchCondition: {
+          keyword: searchTerm.trim(),
+          is_active: mapStatusFilter(),
+          is_deleted: false,
+        },
+        pageInfo: {
+          pageNum: currentPage,
+          pageSize: itemsPerPage,
+        },
+      });
+    });
   };
 
   const handleCloseDeleteModal = () => {
