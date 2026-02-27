@@ -54,6 +54,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true, // ← Ẩn khỏi sidebar
   },
   {
+    label: "Edit Franchise",
+    path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/edit/:id`,
+    icon: <Store size={18} />,
+    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseEditPage")),
+    module: "franchise",
+    hideFromSidebar: true,
+  },
+  {
     label: "Products",
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT,
     icon: <Package size={18} />,
@@ -127,6 +135,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Clock size={18} />,
     component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftManagement")),
     module: "shifts",
+  },
+  {
+    label: "Create Shift",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/create`,
+    icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftCreatePage")),
+    module: "shifts",
+    hideFromSidebar: true,
   },
   {
     label: "Create Product",

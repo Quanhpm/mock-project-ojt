@@ -158,7 +158,7 @@ export const useShiftCalendar = (filters: ShiftFilters) => {
     const todayKey = formatDateKey(new Date())
     const days: CalendarDay[] = []
 
-    for (let index = 0; index < 42; index += 1) {
+    for (let index = 0; index < 35; index += 1) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + index)
       const dateKey = formatDateKey(currentDate)
