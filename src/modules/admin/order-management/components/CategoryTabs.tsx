@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, Coffee, UtensilsCrossed, Cake, Wine, Plus } from 'lucide-react';
-import type { MenuCategory } from '../types/order.types';
+import type { MenuCategory } from '../types/order.types.ts';
 
 interface CategoryTabsProps {
   categories: MenuCategory[];
