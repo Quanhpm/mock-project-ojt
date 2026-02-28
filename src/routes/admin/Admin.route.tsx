@@ -20,9 +20,9 @@ export const AdminRoutes = (
         element={<Navigate to={ROUTER_URL.ADMIN_ROUTER.DASHBOARD} replace />}
       />
 
-      {/* SelectFranchiseGuard wraps all routes except select-franchise page itself */}
+      {/* SelectFranchiseGuard wraps all routes EXCEPT select-franchise */}
       <Route element={<SelectFranchiseGuard />}>
-        {ADMIN_MENU.map((item) => (
+        {ADMIN_MENU.filter(item => item.module !== 'select-franchise').map((item) => (
           <Route 
             key={item.path} 
             path={item.path} 
@@ -41,6 +41,20 @@ export const AdminRoutes = (
           element={<AccountSettingsPage />}
         />
       </Route>
+
+      {/* Select Franchise Route - OUTSIDE SelectFranchiseGuard */}
+      {ADMIN_MENU.filter(item => item.module === 'select-franchise').map((item) => (
+        <Route 
+          key={item.path} 
+          path={item.path} 
+          element={
+            <ProtectedRoute 
+              requiredModule={item.module}
+              element={<item.component />}
+            />
+          } 
+        />
+      ))}
     </Route>
   </Route>
 );

@@ -22,8 +22,13 @@ function FranchiseSelectionPage() {
     handlePageChange,
   } = useFranchiseSelection()
 
-  if (loading) return <LoadingScreen />
-  if (error) return <ErrorScreen message={error} />
+  if (loading) {
+    return <LoadingScreen />
+  }
+  
+  if (error) {
+    return <ErrorScreen message={error} />
+  }
 
   return (
     <div className="min-h-screen flex flex-col text-slate-900 transition-colors duration-300">
@@ -39,7 +44,7 @@ function FranchiseSelectionPage() {
             </h1>
           </div>
           <h2 className="text-secondary text-2xl font-semibold mb-2">
-            Xin chào, {userName} 👋
+            Xin chào, {userName}
           </h2>
           <p className="text-primary/70 font-medium text-lg">
             Chọn chi nhánh để bắt đầu ca làm việc
