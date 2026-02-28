@@ -10,7 +10,8 @@ import {
   AdminRoutes, 
   ClientAuthRoutes, 
   ClientPublicRoutes, 
-  HomePrivateRoutes 
+  HomePrivateRoutes,
+  VerifyEmailRoute 
 } from "./routes";
 import { ToasterComponent } from "@/components/ui/toast";
 
@@ -44,6 +45,9 @@ const App = () => {
 
               {/* ========== CLIENT PUBLIC ROUTES ========== */}
               {ClientPublicRoutes}
+
+              {/* ========== VERIFY EMAIL (standalone, no layout) ========== */}
+              {VerifyEmailRoute}
 
               {/* ========== HOME PRIVATE ROUTES ========== */}
               {HomePrivateRoutes}
