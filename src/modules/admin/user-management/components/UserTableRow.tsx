@@ -1,26 +1,17 @@
 import React from 'react'
-import type { UserFranchiseRoleItem } from '../hooks/useUserList.hook'
+import type { UserItem } from '../hooks/useUserList.hook'
 
 interface UserTableRowProps {
-  user: UserFranchiseRoleItem
+  user: UserItem
+  onView: (user: UserItem) => void
+  onEdit: (user: UserItem) => void
+  onDelete: (user: UserItem) => void
 }
 
-/** Badge color theo role_name */
-const getRoleBadgeStyle = (roleName: string) => {
-  const upper = roleName.toUpperCase()
-  if (upper.includes('ADMIN')) return 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-  if (upper.includes('MANAGER')) return 'bg-blue-50 text-blue-700 ring-blue-700/10'
-  if (upper.includes('STAFF')) return 'bg-amber-50 text-amber-700 ring-amber-600/20'
-  return 'bg-slate-50 text-slate-700 ring-slate-600/20'
-}
 
-/** Kiểm tra franchise_id có phải "undefined" / "null" không */
-const isGlobalFranchise = (franchiseId: string) => {
-  return !franchiseId || franchiseId === 'undefined' || franchiseId === 'null'
-}
 
-export const UserTableRow: React.FC<UserTableRowProps> = ({ user }) => {
-  const initial = user.user_name?.charAt(0)?.toUpperCase() || '?'
+export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onView, onEdit, onDelete }) => {
+  const initial = user.name?.charAt(0)?.toUpperCase() || '?'
 
   return (
     <tr className="group hover:bg-slate-50 transition-colors">
@@ -31,34 +22,15 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user }) => {
             {initial}
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="font-semibold text-slate-900 truncate">{user.user_name}</span>
-            <span className="text-sm text-slate-500 truncate">{user.user_email}</span>
+            <span className="font-semibold text-slate-900 truncate">{user.name}</span>
+            <span className="text-sm text-slate-500 truncate">{user.email}</span>
           </div>
         </div>
       </td>
 
-      {/* ROLES */}
-      <td className="p-4">
-        <span
-          className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${getRoleBadgeStyle(user.role_name)}`}
-        >
-          {user.role_name}
-        </span>
-      </td>
-
-      {/* FRANCHISE */}
-      <td className="p-4">
-        {isGlobalFranchise(user.franchise_id) ? (
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="material-symbols-outlined text-[18px]">public</span>
-            <span className="font-medium">Global</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-slate-400 text-[18px]">storefront</span>
-            <span className="text-slate-700 font-medium">{user.franchise_name}</span>
-          </div>
-        )}
+      {/* PHONE */}
+      <td className="p-4 text-slate-600">
+        {user.phone || '—'}
       </td>
 
       {/* STATUS */}
@@ -72,6 +44,95 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({ user }) => {
           />
           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
         </label>
+      </td>
+
+      {/* ACTIONS */}
+      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          {/* View Button */}
+          <button
+            onClick={() => onView(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e0f2fe'
+              e.currentTarget.style.color = '#0066cc'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="View Details"
+          >
+            <span className="material-symbols-outlined text-[20px]">visibility</span>
+          </button>
+
+          {/* Edit Button */}
+          <button
+            onClick={() => onEdit(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fef3c7'
+              e.currentTarget.style.color = '#92400e'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="Edit"
+          >
+            <span className="material-symbols-outlined text-[20px]">edit</span>
+          </button>
+
+          {/* Delete Button */}
+          <button
+            onClick={() => onDelete(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fee2e2'
+              e.currentTarget.style.color = '#dc2626'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="Delete"
+          >
+            <span className="material-symbols-outlined text-[20px]">delete</span>
+          </button>
+        </div>
       </td>
     </tr>
   )
