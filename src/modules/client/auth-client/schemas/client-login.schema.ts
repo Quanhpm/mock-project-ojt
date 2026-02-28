@@ -1,30 +1,12 @@
 import { z } from "zod";
-import customers from '@/mockdata/customers.json';
 
-
-
+/**
+ * Client-side validation for login form
+ * Only validates format - actual authentication is done by API
+ */
 export const loginSchema = z.object({
-    email: z.string().min(1, "Input your email").email("Invalid email format"),
-    password: z.string().min(6, "Password required 6 characters"),
-}).superRefine((data, ctx) => {
-    const customer = customers.find(u => u.email === data.email);
-
-    if (!customer) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Email is not registered!",
-            path: ["email"],
-        });
-        return; 
-    }
-
-    if (customer.password !== data.password) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Wrong password!",
-            path: ["password"],
-        });
-    }
+    email: z.string().min(1, "Vui lòng nhập địa chỉ email").email("Email không hợp lệ"),
+    password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;

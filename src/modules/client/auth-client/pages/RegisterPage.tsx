@@ -1,15 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import RegisterForm from "../components/RegisterForm";
-import { useClientAuthStore } from "../stores/client-auth.store";
+import AuthCard from "@/components/ui/auth-card";
 import { showToast } from "@/components/ui/toast";
 import { ROUTER_URL } from "@/routes/router.const";
+import { useClientRegister } from "../hooks/use-client-register.hook";
 
 function RegisterPage() {
     const navigate = useNavigate();
-    const login = useClientAuthStore((state) => state.login);
-    const [errorMessage, setErrorMessage] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const { register, isLoading, error: errorMessage } = useClientRegister();
 
     const handleRegister = async (data: {
         name: string;
@@ -17,52 +15,36 @@ function RegisterPage() {
         email: string;
         password: string;
     }) => {
-        setIsLoading(true);
-        setErrorMessage("");
+        const result = await register(data);
 
-        try {
-            const newUser = {
-                id: Math.random(),
-                email: data.email,
-                name: data.name,
-                phone: data.phone,
-                avatar_url: "https://i.pravatar.cc/150?img=32",
-                is_active: true,
-                is_deleted: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            };
-
-            login(newUser);
+        if (result.success && result.user) {
             showToast("Đăng ký thành công!", "success", {
-                description: `Chào mừng ${data.name} đến với gì gì đó`
+                description: `Chào mừng ${result.user.name} đến với hệ thống. Vui lòng kiểm tra email để xác thực tài khoản.`
             });
-            navigate(ROUTER_URL.HOME);
-        } catch (error) {
-            const errMsg = "Đăng ký thất bại";
-            setErrorMessage(errMsg);
-            showToast(errMsg, "error");
-        } finally {
-            setIsLoading(false);
+            // Redirect to login page after successful registration
+            navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || "/client/login");
+        } else {
+            showToast(result.message, "error");
         }
     };
 
-    return (
+    const footer = (
         <>
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Account</h1>
-                <p className="text-gray-600 text-sm">Join us and start your journey today.</p>
-            </div>
-
-            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} error={errorMessage} />
-
-            <div className="pt-8 border-t border-gray-200 w-full max-w-md mx-auto">
-                <p className="text-sm text-gray-600 text-center mb-8">
-                    Already have an account? <a href="/client/login" className="text-orange-500 hover:text-orange-600 font-semibold">Sign In</a>
-                </p>
-
-            </div>
+            Đã có tài khoản?{' '}
+            <a href="/client/login" className="text-[var(--cf-accent-light)] hover:text-white font-semibold transition-colors">
+                Đăng nhập
+            </a>
         </>
+    );
+
+    return (
+        <AuthCard
+            title="Tạo tài khoản mới"
+            description=""
+            footer={footer}
+        >
+            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} error={errorMessage || ''} />
+        </AuthCard>
     );
 }
 

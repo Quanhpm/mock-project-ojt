@@ -6,6 +6,7 @@ export const ROUTER_URL = {
   ABOUT: "/about",
   CONTACT: "/contact",
   VERSION: "/version",
+  VERIFY_EMAIL: "/verify-customer-email/:token",
 
   // ========== AUTH ROUTES ==========
   CLIENT: "/client",
@@ -13,6 +14,7 @@ export const ROUTER_URL = {
     LOGIN: "/client/login",
     REGISTER: "/client/register",
     FORGOT_PASSWORD: "/client/forgot-password",
+    CHANGE_PASSWORD: "/client/change-password",
   },
 
   // ========== PRIVATE ROUTES (Cần đăng nhập - ClientGuard) ==========
@@ -47,5 +49,6 @@ export const ROUTER_URL = {
     INVENTORY: `inventory`,
     SHIFT: `shifts`,
     ACCOUNT: `account`,
+    SELECT_FRANCHISE: `select-franchise`,
   },
 };

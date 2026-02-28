@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   PageHeader,
   ShiftCalendar,
   ShiftDayPanel,
   ShiftFilters,
-  CreateShiftAssignmentModal,
 } from '../components'
 import { useShiftCalendar, useShiftFilters } from '../hooks'
 
@@ -16,8 +16,8 @@ const formatDateKey = (date: Date) => {
 }
 
 function ShiftManagement() {
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const {
     filters,
@@ -36,22 +36,11 @@ function ShiftManagement() {
     filteredAssignments,
     staffOptions,
     franchiseOptions,
-    shiftOptions,
     assignmentByDate,
   } = useShiftCalendar(filters)
 
   const handleCreateAssignment = () => {
-    setIsCreateModalOpen(true)
-  }
-
-  const handleSaveAssignment = (payload: {
-    workDate: string
-    shiftId: number
-    staffId: number
-    status: 'ASSIGNED' | 'COMPLETED' | 'ABSENT'
-    note: string
-  }) => {
-    console.log('New assignment', payload)
+    navigate('/admin/shifts/create')
   }
 
   const handlePrevMonth = () => {
@@ -106,15 +95,6 @@ function ShiftManagement() {
           </div>
         </div>
       </main>
-
-      <CreateShiftAssignmentModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleSaveAssignment}
-        franchises={franchiseOptions}
-        staff={staffOptions}
-        shifts={shiftOptions}
-      />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ProductCard, OrderSidebar, MenuHeader, CategoryTabs } from '../components/index.ts';
 import { mockMenuItems, menuCategories } from '../mock/order.mock.ts';
-import type { Order, OrderItem, MenuItem } from '../types/order.types.ts';
+import type { Order, OrderItem, MenuItem, ItemOptions } from '../types/order.types.ts';
 
 export const OrderManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,6 +62,14 @@ export const OrderManagementPage: React.FC = () => {
           i.menuItemId === item.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       } else {
+        // Default options for new item
+        const defaultOptions: ItemOptions = {
+          size: undefined,
+          sugar: { label: '100%', value: 100 },
+          ice: { label: '100%', value: 100 },
+          toppings: [],
+        };
+
         updatedItems = [
           ...prev.items,
           {
@@ -70,6 +78,7 @@ export const OrderManagementPage: React.FC = () => {
             name: item.name,
             quantity: 1,
             unitPrice: item.price,
+            options: defaultOptions,
           },
         ];
       }
@@ -138,6 +147,35 @@ export const OrderManagementPage: React.FC = () => {
     }));
   };
 
+  const handleEditItem = (itemId: string, options: ItemOptions) => {
+    setOrder((prev) => {
+      const updatedItems = prev.items.map((i) => {
+        if (i.id === itemId) {
+          // Calculate new price with size bonus and toppings
+          const basePrice = mockMenuItems.find(m => m.id === i.menuItemId)?.price || i.unitPrice;
+          const sizeBonus = options.size?.bonusPrice || 0;
+          const toppingsCost = options.toppings.reduce((sum, t) => sum + t.price, 0);
+          const newUnitPrice = basePrice + sizeBonus + toppingsCost;
+
+          return { ...i, options, unitPrice: newUnitPrice };
+        }
+        return i;
+      });
+
+      const subtotal = updatedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const tax = Math.round(subtotal * TAX_RATE * 100) / 100;
+      const total = subtotal + tax;
+
+      return {
+        ...prev,
+        items: updatedItems,
+        subtotal,
+        tax,
+        total,
+      };
+    });
+  };
+
   return (
     <main className="flex-1 flex overflow-hidden h-screen bg-gray-50">
       {/* Menu Section */}
@@ -180,6 +218,7 @@ export const OrderManagementPage: React.FC = () => {
         order={order}
         onRemoveItem={handleRemoveItem}
         onUpdateQuantity={handleUpdateQuantity}
+        onEditItem={handleEditItem}
         onOrderTypeChange={handleOrderTypeChange}
         onNotesChange={handleNotesChange}
       />

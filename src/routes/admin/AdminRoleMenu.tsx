@@ -2,10 +2,11 @@
 import { ADMIN_MENU} from './Admin.menu';
 import type {AdminMenuItem} from './Admin.menu';
 import { hasPermission } from '@/config/permissions.config';
-import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store';
+import { useAdminAuthStore, getRoleCode } from '@/modules/admin/auth-admin/stores/admin-auth.store';
 
 export const useRoleBasedMenu = (): AdminMenuItem[] => {
-  const { roleCode } = useAdminAuthStore();
+  const store = useAdminAuthStore();
+  const roleCode = getRoleCode(store);
   
   if (!roleCode) return [];
   
@@ -24,7 +25,8 @@ export const getMenuByRole = (roleCode: string): AdminMenuItem[] => {
 
 // Hook to check specific permission
 export const usePermission = () => {
-  const { roleCode } = useAdminAuthStore();
+  const store = useAdminAuthStore();
+  const roleCode = getRoleCode(store);
   
   return {
     hasPermission: (module: string) => hasPermission(roleCode || '', module),

@@ -1,6 +1,6 @@
 import Loading from "@/layouts/LoadingLayout/LoadingLayout";
-import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { AuthProvider } from "@/modules/client/auth-client";
 import { setupApi } from "@/apis";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -18,50 +18,47 @@ import { ToasterComponent } from "@/components/ui/toast";
 setupApi();
 
 const App = () => {
-  const clientHydrate = useClientAuthStore((state) => state.hydrate);
   const adminHydrate = useAdminAuthStore((state) => state.hydrate);
+  const adminIsLoading = useAdminAuthStore((state) => state.isLoading);
 
-  // sync localStorage -> store when reload
+  // Admin hydrate từ API (cookie)
   useEffect(() => {
-    clientHydrate();
     adminHydrate();
-  }, [clientHydrate, adminHydrate]);
+  }, [adminHydrate]);
 
   return (
-    <BrowserRouter>
-      <Suspense fallback={<Loading />}>
-        <Routes>
-          {/* ========== ADMIN ROUTES ========== */}
-          {AdminAuthRoutes}
-          {AdminRoutes}
+    <AuthProvider>
+      <BrowserRouter>
+        {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
+        {adminIsLoading ? (
+          <Loading />
+        ) : (
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              {/* ========== ADMIN ROUTES ========== */}
+              {AdminAuthRoutes}
+              {AdminRoutes}
 
-          {/* ========== CLIENT AUTH ROUTES ========== */}
-          {/* Login, Register, Forgot Password */}
-          {ClientAuthRoutes}
+              {/* ========== CLIENT AUTH ROUTES ========== */}
+              {ClientAuthRoutes}
 
-          {/* ========== CLIENT PUBLIC ROUTES ========== */}
-          {/* Guest có thể truy cập: /, /menu, /about, /contact */}
-          {/* Layout: ClientLayout (header động: guest → ClientHeader, logged in → HomeHeader) */}
-          {ClientPublicRoutes}
+              {/* ========== CLIENT PUBLIC ROUTES ========== */}
+              {ClientPublicRoutes}
 
-          {/* ========== HOME PRIVATE ROUTES ========== */}
-          {/* Cần đăng nhập: /cart, /order-history, /profile, /change-password, /checkout */}
-          {/* Layout: ClientLayout (header động: HomeHeader + ClientFooter) */}
-          {/* Guard: ClientGuard (redirect to /client/login if not authenticated) */}
-          {HomePrivateRoutes}
+              {/* ========== HOME PRIVATE ROUTES ========== */}
+              {HomePrivateRoutes}
 
-          {/* ========== 404 NOT FOUND ========== */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </Suspense>
+              {/* ========== 404 NOT FOUND ========== */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        )}
 
-
-
-      {/* Toast notifications */}
-      <ToasterComponent />
-    </BrowserRouter>
+        {/* Toast notifications */}
+        <ToasterComponent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
-//test
 
 export default App;

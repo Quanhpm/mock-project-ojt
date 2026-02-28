@@ -7,6 +7,7 @@ import {
   UserCircle,
   ShoppingCart,
   Clock,
+  Building2,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -32,6 +33,13 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     isEnd: true,
   },
   {
+    label: "Chọn Chi Nhánh",
+    path: ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE,
+    icon: <Building2 size={18} />,
+    component: React.lazy(() => import("@/modules/admin/side-selection/pages/FranchiseSelectionPage")),
+    module: "select-franchise",
+  },
+  {
     label: "Users",
     path: ROUTER_URL.ADMIN_ROUTER.USER,
     icon: <Users size={18} />,
@@ -52,6 +60,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseCreatePage")),
     module: "franchise",
     hideFromSidebar: true, // ← Ẩn khỏi sidebar
+  },
+  {
+    label: "Edit Franchise",
+    path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/edit/:id`,
+    icon: <Store size={18} />,
+    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseEditPage")),
+    module: "franchise",
+    hideFromSidebar: true,
   },
   {
     label: "Products",
@@ -115,7 +131,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
-    label: "Orders",
+    label: "Order Pos",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER,
     icon: <ShoppingCart size={18} />,
     component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),
@@ -127,6 +143,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Clock size={18} />,
     component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftManagement")),
     module: "shifts",
+  },
+  {
+    label: "Create Shift",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/create`,
+    icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftCreatePage")),
+    module: "shifts",
+    hideFromSidebar: true,
   },
   {
     label: "Create Product",
