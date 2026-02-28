@@ -1,9 +1,9 @@
 import { useRef, useState, useEffect } from "react";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
-import franchises from '@/mockdata/location.json';
+import franchises from '@/mockdata/franchises.json';
 import categoryFranchises from '@/mockdata/category_franchise.json';
-import productCategoryFranchises from '@/mockdata/product_category_franchise.json'
+// import productCategoryFranchises from '@/mockdata/product_category_franchise.json'
 import productFranchises from '@/mockdata/product_franchise.json';
 import type { Product, Category, Franchise, CategoryFranchise, ProductFranchise, ProductCategoryFranchise } from "@/types/product.type";
 import ProductCard from "../components/ProductCard";
@@ -14,18 +14,17 @@ function MenuPage() {
     const [search, setSearch] = useState<string>('');
     const [franchiseId, setFranchiseId] = useState<number>(1);
 
+    // Lấy tất cả category và product của chi nhánh hiện tại thông qua bảng trung gian category_franchise và product_franchise
     const getAllCategoryInFranchise = (franchiseId: number): Category[] => {
         return (categoryFranchises as CategoryFranchise[]).filter((cf) => cf.franchise_id === franchiseId)
             .map((cf) => (categories as Category[]).find((cat) => cat.id === cf.category_id))
             .filter((cat): cat is Category => cat !== undefined);
     };
-
     const getAllProductInFranchise = (franchiseId: number): Product[] => {
         return (productFranchises as ProductFranchise[]).filter((pf) => pf.franchise_id === franchiseId)
             .map((pf) => (products as Product[]).find((p) => p.id === pf.product_id))
             .filter((p): p is Product => p !== undefined);
     };
-
     const [allProductsInFranchise, setAllProductsInFranchise] = useState<Product[]>(getAllProductInFranchise(franchiseId));
     const [allCategoriesInFranchise, setAllCategoriesInFranchise] = useState<Category[]>(getAllCategoryInFranchise(franchiseId));
 
@@ -55,7 +54,14 @@ function MenuPage() {
         }
     };
 
-    // fix lại hàm này để đảm bảo lọc sản phẩm đúng theo category và franchise (them franchise id vào điều kiện lọc)
+    // // Lọc thông qua bảng product_category_franchise
+    // const getProductsByCategory = (categoryId: number) => {
+    //     const productIdsInCategory = (productCategoryFranchises as ProductCategoryFranchise[]).filter((pcf) => pcf.category_franchise_id === categoryId)
+    //         .map((pcf) => pcf.product_franchise_id);
+    //     return (allProductsInFranchise as Product[]).filter((product) => productIdsInCategory.includes(product.id));
+    // };
+
+    // Lọc thông qua category_id trong bảng product
     const getProductsByCategory = (categoryId: number) => {
         return (allProductsInFranchise as Product[]).filter(
             (product: Product) =>
