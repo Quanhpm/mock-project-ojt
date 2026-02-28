@@ -14,7 +14,7 @@ const VerifyEmailPage = React.lazy(() => import("@/modules/client/auth-client/pa
 /**
  * ClientPublicRoutes - Các route PUBLIC cho GUEST
  * Layout: ClientLayout (header động: guest → ClientHeader, logged in → HomeHeader)
- * Routes: /, /menu, /about, /contact, /verify-customer-email/:token
+ * Routes: /, /menu, /about, /contact
  * KHÔNG cần đăng nhập
  */
 export const ClientPublicRoutes = (
@@ -24,6 +24,13 @@ export const ClientPublicRoutes = (
     <Route path={ROUTER_URL.MENU_ROUTER} element={<Item />} />
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
-    <Route path={ROUTER_URL.VERIFY_EMAIL} element={<VerifyEmailPage />} />
   </Route>
+);
+
+/**
+ * VerifyEmailRoute - Standalone route (no layout wrapper)
+ * Full-screen centered verification page
+ */
+export const VerifyEmailRoute = (
+  <Route path={ROUTER_URL.VERIFY_EMAIL} element={<VerifyEmailPage />} />
 );
