@@ -1,4 +1,5 @@
-import { UserTableRow, Pagination } from '../components'
+import { useState, useCallback } from 'react'
+import { UserTableRow, Pagination, CreateUserModal } from '../components'
 import { useUserList } from '../hooks'
 
 /** Skeleton row cho trạng thái loading */
@@ -36,6 +37,14 @@ function UserManagement() {
     setCurrentPage,
   } = useUserList()
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+  const handleCreateSuccess = useCallback(() => {
+    setIsCreateModalOpen(false)
+    // Refresh danh sách về trang 1
+    setCurrentPage(1)
+  }, [setCurrentPage])
+
   return (
     <div className="flex flex-col w-full">
       <main className="flex flex-col flex-1">
@@ -59,6 +68,13 @@ function UserManagement() {
                 Total Users: {isLoading ? '...' : totalItems}
               </p>
             </div>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              Create User
+            </button>
           </div>
         </header>
 
@@ -128,6 +144,13 @@ function UserManagement() {
           </div>
         </div>
       </main>
+
+      {/* Create User Modal */}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   )
 }
