@@ -21,18 +21,16 @@ export const useUpdateCustomer = () => {
     setError(null);
 
     try {
-      const response = await customerApi.updateCustomer(id, payload);
+      const updatedCustomer = await customerApi.updateCustomer(id, payload);
 
-      // Nếu Backend trả về cờ success: true
-      if (response.success) {
-        // toast.success("Cập nhật thông tin khách hàng thành công!");
+      // httpClient tự động throw error nếu thất bại, vào đây = thành công
+      // toast.success("Cập nhật thông tin khách hàng thành công!");
 
-        if (onSuccess) {
-          onSuccess(response.data);
-        }
-
-        return response.data;
+      if (onSuccess) {
+        onSuccess(updatedCustomer);
       }
+
+      return updatedCustomer;
     } catch (err: any) {
       console.error("Lỗi khi cập nhật khách hàng:", err);
 

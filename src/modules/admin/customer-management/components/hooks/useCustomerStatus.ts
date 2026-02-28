@@ -26,14 +26,13 @@ export const useCustomerStatus = () => {
     const newStatus = !currentStatus;
 
     try {
-      const response = await customerApi.toggleCustomerStatus(id, {
+      await customerApi.toggleCustomerStatus(id, {
         is_active: newStatus,
       });
 
-      if (response.success) {
-        // toast.success(`Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} khách hàng!`);
-        if (onSuccess) onSuccess();
-      }
+      // httpClient tự động throw error nếu thất bại, vào đây = thành công
+      // toast.success(`Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} khách hàng!`);
+      if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error("Lỗi cập nhật trạng thái:", err);
       // toast.error("Không thể thay đổi trạng thái lúc này!");

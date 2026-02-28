@@ -1,6 +1,5 @@
-import axiosClient from "./axiosClient"; // Sẽ setup file này ở bước sau nếu bạn chưa có
+import { httpClient } from "@/apis";
 import type {
-  ApiResponse,
   Customer,
   CustomerSearchPayload,
   CustomerSearchResponse,
@@ -22,34 +21,33 @@ export const customerApi = {
   searchCustomers: async (
     payload: CustomerSearchPayload,
   ): Promise<CustomerSearchResponse> => {
-    const response = await axiosClient.post<CustomerSearchResponse>(
-      "/api/customers/search",
-      payload,
-    );
-    return response.data; // Trả về thẳng data vì Axios bọc response trong object data của nó
+    const data = await httpClient.post<CustomerSearchResponse>({
+      url: "/customers/search",
+      data: payload,
+    });
+    // httpClient đã tự động unwrap response, trả về data trực tiếp
+    return data!; // Non-null assertion vì API này luôn trả về data
   },
 
   /**
    * CUSTOMER-04: Lấy thông tin chi tiết 1 khách hàng (Dùng để fill vào form Edit)
    */
-  getCustomerById: async (id: string): Promise<ApiResponse<Customer>> => {
-    const response = await axiosClient.get<ApiResponse<Customer>>(
-      `/api/customers/${id}`,
-    );
-    return response.data;
+  getCustomerById: async (id: string): Promise<Customer> => {
+    const data = await httpClient.get<Customer>({
+      url: `/customers/${id}`,
+    });
+    return data!; // Non-null assertion vì API này luôn trả về data
   },
 
   /**
    * CUSTOMER-02: Tạo mới khách hàng
    */
-  createCustomer: async (
-    payload: CustomerCreatePayload,
-  ): Promise<ApiResponse<Customer>> => {
-    const response = await axiosClient.post<ApiResponse<Customer>>(
-      "/api/customers",
-      payload,
-    );
-    return response.data;
+  createCustomer: async (payload: CustomerCreatePayload): Promise<Customer> => {
+    const data = await httpClient.post<Customer>({
+      url: "/customers",
+      data: payload,
+    });
+    return data!; // Non-null assertion vì API này luôn trả về data
   },
 
   /**
@@ -58,22 +56,22 @@ export const customerApi = {
   updateCustomer: async (
     id: string,
     payload: CustomerUpdatePayload,
-  ): Promise<ApiResponse<Customer>> => {
-    const response = await axiosClient.put<ApiResponse<Customer>>(
-      `/api/customers/${id}`,
-      payload,
-    );
-    return response.data;
+  ): Promise<Customer> => {
+    const data = await httpClient.put<Customer>({
+      url: `/customers/${id}`,
+      data: payload,
+    });
+    return data!; // Non-null assertion vì API này luôn trả về data
   },
 
   /**
    * CUSTOMER-06: Xóa khách hàng (Xóa mềm)
    */
-  deleteCustomer: async (id: string): Promise<ApiResponse<any>> => {
-    const response = await axiosClient.delete<ApiResponse<any>>(
-      `/api/customers/${id}`,
-    );
-    return response.data;
+  deleteCustomer: async (id: string): Promise<void> => {
+    await httpClient.delete({
+      url: `/customers/${id}`,
+    });
+    // Delete API thường không trả data, chỉ cần thành công
   },
 
   /**
@@ -82,12 +80,12 @@ export const customerApi = {
   toggleCustomerStatus: async (
     id: string,
     payload: CustomerStatusPayload,
-  ): Promise<ApiResponse<Customer>> => {
-    const response = await axiosClient.put<ApiResponse<Customer>>(
-      `/api/customers/${id}/status`,
-      payload,
-    );
-    return response.data;
+  ): Promise<Customer> => {
+    const data = await httpClient.put<Customer>({
+      url: `/customers/${id}/status`,
+      data: payload,
+    });
+    return data!; // Non-null assertion vì API này luôn trả về data
   },
 
   // ============================================================================
@@ -98,26 +96,22 @@ export const customerApi = {
   /**
    * AUTH-05: Quên mật khẩu (Gửi mật khẩu mới về email)
    */
-  forgotPassword: async (
-    payload: ForgotPasswordPayload,
-  ): Promise<ApiResponse<any>> => {
-    const response = await axiosClient.put<ApiResponse<any>>(
-      "/api/auth/forgot-password",
-      payload,
-    );
-    return response.data;
+  forgotPassword: async (payload: ForgotPasswordPayload): Promise<void> => {
+    await httpClient.put({
+      url: "/auth/forgot-password",
+      data: payload,
+    });
+    // Forgot password thường chỉ cần thành công, không cần data response
   },
 
   /**
    * AUTH-06: Đổi mật khẩu (Sau khi nhận được mật khẩu tự sinh từ email)
    */
-  changePassword: async (
-    payload: ChangePasswordPayload,
-  ): Promise<ApiResponse<any>> => {
-    const response = await axiosClient.put<ApiResponse<any>>(
-      "/api/auth/change-password",
-      payload,
-    );
-    return response.data;
+  changePassword: async (payload: ChangePasswordPayload): Promise<void> => {
+    await httpClient.put({
+      url: "/auth/change-password",
+      data: payload,
+    });
+    // Change password thường chỉ cần thành công, không cần data response
   },
 };

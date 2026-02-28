@@ -22,19 +22,17 @@ export const useCreateCustomer = () => {
     setError(null);
 
     try {
-      const response = await customerApi.createCustomer(payload);
+      const newCustomer = await customerApi.createCustomer(payload);
 
-      // Nếu Backend trả về cờ success: true
-      if (response.success) {
-        // toast.success("Thêm mới khách hàng thành công!");
+      // httpClient tự động throw error nếu thất bại, vào đây = thành công
+      // toast.success("Thêm mới khách hàng thành công!");
 
-        // Kích hoạt hành động tiếp theo sau khi thành công
-        if (onSuccess) {
-          onSuccess(response.data);
-        }
-
-        return response.data; // Trả về data nếu Component bên ngoài muốn dùng trực tiếp
+      // Kích hoạt hành động tiếp theo sau khi thành công
+      if (onSuccess) {
+        onSuccess(newCustomer);
       }
+
+      return newCustomer; // Trả về data nếu Component bên ngoài muốn dùng trực tiếp
     } catch (err: any) {
       console.error("Lỗi khi tạo khách hàng:", err);
 

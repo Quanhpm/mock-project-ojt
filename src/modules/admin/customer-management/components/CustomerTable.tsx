@@ -556,7 +556,7 @@ export default function CustomerTable() {
                 Customer Management
               </h1>
               <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
-                Total Customers: {pageData.totalItems}
+                Total Customers: {pageData?.totalItems || 0}
               </p>
             </div>
             <button
@@ -773,7 +773,7 @@ export default function CustomerTable() {
                 )}
 
                 {/* Data State */}
-                {!isLoading && !error && customers.length > 0 && (
+                {!isLoading && !error && customers?.length > 0 && (
                   <>
                     {customers.map((customer, index) =>
                       renderTableRow(customer, index),
@@ -782,7 +782,7 @@ export default function CustomerTable() {
                 )}
 
                 {/* Empty State */}
-                {!isLoading && !error && customers.length === 0 && (
+                {!isLoading && !error && customers?.length === 0 && (
                   <tr>
                     <td
                       colSpan={5}
@@ -819,7 +819,7 @@ export default function CustomerTable() {
           </div>
 
           {/* Pagination */}
-          {!isLoading && !error && pageData.totalPages > 1 && (
+          {!isLoading && !error && pageData && pageData.totalPages > 1 && (
             <div style={styles.paginationContainer}>
               <span style={{ color: "#6b7280", fontWeight: "600" }}>
                 Showing {(pageData.pageNum - 1) * pageData.pageSize + 1} to{" "}

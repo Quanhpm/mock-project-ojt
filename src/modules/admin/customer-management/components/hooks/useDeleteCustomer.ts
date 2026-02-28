@@ -20,12 +20,11 @@ export const useDeleteCustomer = () => {
     setError(null);
 
     try {
-      const response = await customerApi.deleteCustomer(id);
+      await customerApi.deleteCustomer(id);
 
-      if (response.success) {
-        // toast.success("Đã xóa khách hàng thành công!");
-        if (onSuccess) onSuccess();
-      }
+      // httpClient tự động throw error nếu thất bại, vào đây = thành công
+      // toast.success("Đã xóa khách hàng thành công!");
+      if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error("Lỗi khi xóa khách hàng:", err);
 
