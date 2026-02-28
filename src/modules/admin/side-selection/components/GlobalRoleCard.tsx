@@ -1,8 +1,9 @@
 interface GlobalRoleCardProps {
   onSelect: () => void
+  isLoading?: boolean
 }
 
-export const GlobalRoleCard = ({ onSelect }: GlobalRoleCardProps) => {
+export const GlobalRoleCard = ({ onSelect, isLoading }: GlobalRoleCardProps) => {
   return (
     <div className="group relative flex flex-col sm:flex-row items-center gap-6 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 hover:shadow-xl cursor-pointer rounded-2xl p-8 transition-all duration-300">
       <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-transparent group-hover:bg-amber-600 transition-colors rounded-l-2xl" />
@@ -34,10 +35,20 @@ export const GlobalRoleCard = ({ onSelect }: GlobalRoleCardProps) => {
       <div className="shrink-0 mt-4 sm:mt-0">
         <button
           onClick={onSelect}
-          className="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-base font-semibold transition-all shadow-md group-hover:translate-x-1"
+          disabled={isLoading}
+          className="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-base font-semibold transition-all shadow-md group-hover:translate-x-1 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Chọn quyền này
-          <span className="material-symbols-outlined text-xl ml-2">arrow_forward</span>
+          {isLoading ? (
+            <>
+              <span className="material-symbols-outlined text-xl animate-spin">progress_activity</span>
+              <span className="ml-2">Đang xử lý...</span>
+            </>
+          ) : (
+            <>
+              Chọn quyền này
+              <span className="material-symbols-outlined text-xl ml-2">arrow_forward</span>
+            </>
+          )}
         </button>
       </div>
     </div>

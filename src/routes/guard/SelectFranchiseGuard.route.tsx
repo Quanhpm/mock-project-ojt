@@ -33,8 +33,6 @@ const SelectFranchiseGuard = () => {
       replace
     />
   );
-
-  return <Outlet />;
 };
 
 export default SelectFranchiseGuard;
