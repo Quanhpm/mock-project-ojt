@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
-import franchises from '@/mockdata/franchises.json';
+import franchises from '@/mockdata/location.json';
 import categoryFranchises from '@/mockdata/category_franchise.json';
 import productCategoryFranchises from '@/mockdata/product_category_franchise.json'
 import productFranchises from '@/mockdata/product_franchise.json';
