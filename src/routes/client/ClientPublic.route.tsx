@@ -9,11 +9,12 @@ const AboutPage = React.lazy(() => import("@/modules/client/about"));
 const ContactPage = React.lazy(() => import("@/modules/client/contact"));
 const MenuPage = React.lazy(() => import("@/modules/client/menu/pages/MenuPage"));
 const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
+const VerifyEmailPage = React.lazy(() => import("@/modules/client/auth-client/pages/VerifyEmailPage"));
 
 /**
  * ClientPublicRoutes - Các route PUBLIC cho GUEST
  * Layout: ClientLayout (header động: guest → ClientHeader, logged in → HomeHeader)
- * Routes: /, /menu, /about, /contact
+ * Routes: /, /menu, /about, /contact, /verify-customer-email/:token
  * KHÔNG cần đăng nhập
  */
 export const ClientPublicRoutes = (
@@ -23,5 +24,6 @@ export const ClientPublicRoutes = (
     <Route path={ROUTER_URL.MENU_ROUTER} element={<Item />} />
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
+    <Route path={ROUTER_URL.VERIFY_EMAIL} element={<VerifyEmailPage />} />
   </Route>
 );

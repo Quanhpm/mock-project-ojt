@@ -1,22 +1,28 @@
 import { useState } from "react";
-import { registerCustomer } from "@/apis/endpointsCLIENT";
+import { verifyEmail } from "@/apis/endpointsCLIENT";
+import { useClientAuthStore } from "../stores/client-auth.store";
 import { HttpError } from "@/apis";
-import type { CustomerRegisterRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
 
-export const useClientRegister = () => {
+export const useClientVerifyEmail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { setUser } = useClientAuthStore();
 
-  const register = async (data: CustomerRegisterRequest) => {
+  const verify = async (token: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await registerCustomer(data);
+      const response = await verifyEmail(token);
       
       // Handle different response structures
-      const userData = response.data?.data?.user || response.data?.user || response.data;
-      const message = response.data?.message || "Đăng ký thành công";
+      const userData = response.data?.data?.user || response.data?.user;
+      const message = response.data?.message || "Email đã được xác thực thành công";
+      
+      if (userData) {
+        // Set user in store after successful verification
+        setUser(userData);
+      }
       
       return {
         success: true,
@@ -27,7 +33,7 @@ export const useClientRegister = () => {
       const errorMessage =
         err instanceof HttpError
           ? err.message
-          : "Đăng ký thất bại. Vui lòng thử lại.";
+          : "Xác thực email thất bại. Token có thể đã hết hạn.";
       
       setError(errorMessage);
       
@@ -42,7 +48,7 @@ export const useClientRegister = () => {
   };
 
   return {
-    register,
+    verify,
     isLoading,
     error,
     clearError: () => setError(null),
