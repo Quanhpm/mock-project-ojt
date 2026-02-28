@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import products from '@/mockdata/products.json';
-import worldMapImage from '@/assets/img/anh-home-page.png';
-import Logo from '@/assets/img/logobb.png';
 import ProductCard from '../components/ProductCard';
 
 interface Product {
@@ -18,6 +16,9 @@ interface Product {
     is_active: boolean;
     is_deleted: boolean;
 }
+
+const worldMapImage = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772263250/anh-home-page_mga9y7.png';
+const Logo = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772263251/logo_kmr23x.png';
 
 // Lấy 5 sản phẩm nổi bật cho menu (món ăn)
 const MENU_DATA = (products as Product[])
@@ -43,11 +44,11 @@ const SIGNATURE_DRINKS = (products as Product[])
   }));
 
 const BANNER_SLIDES = [
-  { id: 1, img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=1600&auto=format&fit=crop' },
-  { id: 2, img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1600&auto=format&fit=crop' },
-  { id: 3, img: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?q=80&w=1600&auto=format&fit=crop' },
-  { id: 4, img: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=1600&auto=format&fit=crop' },
-  { id: 5, img: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?q=80&w=1600&auto=format&fit=crop' },
+  { id: 1, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269580/photo-1495474472287-4d71bcdd2085_1_elryab.avif' },
+  { id: 2, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269581/photo-1509042239860-f550ce710b93_j1u6s8.avif' },
+  { id: 3, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269580/photo-1442512595331-e89e73853f31_f3bwro.avif' },
+  { id: 4, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269581/photo-1447933601403-0c6688de566e_r1jnc2.avif' },
+  { id: 5, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269581/photo-1511920170033-f8396924c348_yqlr9h.avif' },
 ];
 
 function HomePage() {
