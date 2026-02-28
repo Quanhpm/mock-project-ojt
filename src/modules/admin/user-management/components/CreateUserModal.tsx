@@ -1,15 +1,36 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { mockFranchises, mockRoles } from '@/mockdata'
 
 interface CreateUserModalProps {
   isOpen: boolean
   onClose: () => void
-  onSave: (userData: any) => void
+  onCreateUser: (userData: {
+    email: string
+    password: string
+    name: string
+    phone?: string
+    is_active?: boolean
+  }) => Promise<{ id: number } | null>
+  onAssignRole: (data: {
+    user_id: number
+    role_id: number
+    franchise_id: number | null
+  }) => Promise<void>
+}
+
+type FranchiseRoleItem = {
+  id: number
+  location: string
+  role: string
+  franchiseId: number | null
+  roleId: number
 }
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   isOpen,
   onClose,
-  onSave,
+  onCreateUser,
+  onAssignRole,
 }) => {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -18,25 +39,100 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [tempPassword, setTempPassword] = useState('CoffeeBeans123!')
   const [showPassword, setShowPassword] = useState(false)
   const [forcePasswordChange, setForcePasswordChange] = useState(true)
-  const [franchiseRoles, setFranchiseRoles] = useState([
-    { id: 1, location: 'HCM - Quận 1', role: 'FRANCHISE_MANAGER' },
-    { id: 2, location: 'HCM - Quận 7', role: 'STAFF' },
-  ])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const [franchiseRoles, setFranchiseRoles] = useState<FranchiseRoleItem[]>([])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const managerRole = mockRoles.find((role) => role.code === 'FRANCHISE_MANAGER')
+    const staffRole = mockRoles.find((role) => role.code === 'STAFF')
+    const activeFranchises = mockFranchises.filter((franchise) => franchise.is_active)
+
+    const defaults: FranchiseRoleItem[] = []
+
+    if (managerRole && activeFranchises[0]) {
+      defaults.push({
+        id: 1,
+        location: activeFranchises[0].name,
+        role: managerRole.code,
+        franchiseId: activeFranchises[0].id,
+        roleId: managerRole.id,
+      })
+    }
+
+    if (staffRole && activeFranchises[1]) {
+      defaults.push({
+        id: 2,
+        location: activeFranchises[1].name,
+        role: staffRole.code,
+        franchiseId: activeFranchises[1].id,
+        roleId: staffRole.id,
+      })
+    }
+
+    if (defaults.length === 0 && staffRole) {
+      defaults.push({
+        id: 1,
+        location: 'Global',
+        role: staffRole.code,
+        franchiseId: null,
+        roleId: staffRole.id,
+      })
+    }
+
+    setFranchiseRoles(defaults)
+    setErrorMessage('')
+    setIsSubmitting(false)
+  }, [isOpen])
 
   if (!isOpen) return null
 
-  const handleSave = () => {
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      tempPassword,
-      forcePasswordChange,
-      franchiseRoles,
+  const handleSave = async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !tempPassword.trim()) {
+      setErrorMessage('Vui lòng nhập đủ First Name, Last Name, Email và Temp Password.')
+      return
     }
-    onSave(userData)
-    onClose()
+
+    if (franchiseRoles.length === 0) {
+      setErrorMessage('Cần ít nhất 1 role assignment để tạo user.')
+      return
+    }
+
+    try {
+      setErrorMessage('')
+      setIsSubmitting(true)
+
+      const createdUser = await onCreateUser({
+        email: email.trim(),
+        password: tempPassword,
+        name: `${firstName.trim()} ${lastName.trim()}`.trim(),
+        phone: phone.trim() || undefined,
+        is_active: true,
+      })
+
+      if (!createdUser?.id) {
+        throw new Error('Không lấy được user id sau khi tạo user.')
+      }
+
+      await Promise.all(
+        franchiseRoles.map((assignment) =>
+          onAssignRole({
+            user_id: createdUser.id,
+            role_id: assignment.roleId,
+            franchise_id: assignment.franchiseId,
+          }),
+        ),
+      )
+
+      onClose()
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Tạo user thất bại.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleRemoveRole = (id: number) => {
@@ -46,7 +142,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100">
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white sticky top-0 z-10">
           <div>
             <h2 className="text-2xl font-bold text-primary tracking-tight">
@@ -64,12 +159,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </button>
         </div>
 
-        {/* Content */}
         <div className="overflow-y-auto p-6 md:p-8 bg-white space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Left Column */}
             <div className="lg:col-span-7 flex flex-col gap-8">
-              {/* Personal Details */}
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-primary text-[20px]">
@@ -79,10 +171,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor="create-first-name" className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       First Name
                     </label>
                     <input
+                      id="create-first-name"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -91,10 +184,11 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor="create-last-name" className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       Last Name
                     </label>
                     <input
+                      id="create-last-name"
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
@@ -103,7 +197,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     />
                   </div>
                   <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor="create-email" className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       Email Address
                     </label>
                     <div className="relative">
@@ -111,6 +205,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                         mail
                       </span>
                       <input
+                        id="create-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -120,11 +215,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5 md:col-span-2">
-                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor="create-phone" className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       Phone Number{' '}
                       <span className="text-gray-400 font-normal lowercase">(optional)</span>
                     </label>
                     <input
+                      id="create-phone"
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
@@ -137,7 +233,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
               <hr className="border-gray-100" />
 
-              {/* Franchise Assignment */}
               <section className="flex flex-col h-full">
                 <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
                   <div className="flex items-center gap-2">
@@ -148,7 +243,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                       Franchise Assignment
                     </h3>
                   </div>
-                  <button className="px-3 py-1.5 text-xs font-semibold bg-gray-50 border border-gray-200 text-primary rounded-md hover:bg-accent-light hover:text-white hover:border-accent-light transition-all flex items-center gap-1.5 group">
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 text-xs font-semibold bg-gray-50 border border-gray-200 text-primary rounded-md hover:bg-accent-light hover:text-white hover:border-accent-light transition-all flex items-center gap-1.5 group"
+                  >
                     <span className="material-symbols-outlined text-[16px]">add</span>
                     Add Role
                   </button>
@@ -186,6 +284,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                           </td>
                           <td className="px-4 py-3 text-right">
                             <button
+                              type="button"
                               onClick={() => handleRemoveRole(item.id)}
                               className="text-gray-400 hover:text-red-600 transition-colors"
                             >
@@ -202,9 +301,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </section>
             </div>
 
-            {/* Right Column */}
             <div className="lg:col-span-5 flex flex-col gap-6">
-              {/* Profile Picture */}
               <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
                 <div className="flex items-start gap-4">
                   <div className="size-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-300 flex-shrink-0">
@@ -213,10 +310,16 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                   <div className="flex flex-col gap-2">
                     <h4 className="text-sm font-bold text-gray-800">Profile Picture</h4>
                     <div className="flex gap-2">
-                      <button className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-700 transition-colors">
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-200 rounded hover:bg-gray-50 text-gray-700 transition-colors"
+                      >
                         Upload
                       </button>
-                      <button className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors">
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
                         Remove
                       </button>
                     </div>
@@ -225,7 +328,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </div>
               </section>
 
-              {/* Security */}
               <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="material-symbols-outlined text-primary text-[20px]">
@@ -235,11 +337,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </div>
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <label htmlFor="create-temp-password" className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                       Temp Password
                     </label>
                     <div className="relative group">
                       <input
+                        id="create-temp-password"
                         type={showPassword ? 'text' : 'password'}
                         value={tempPassword}
                         onChange={(e) => setTempPassword(e.target.value)}
@@ -277,22 +380,29 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </section>
             </div>
           </div>
+
+          {errorMessage ? (
+            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          ) : null}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
           <button
             onClick={onClose}
             className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
+            disabled={isSubmitting}
+            className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-60"
           >
             <span className="material-symbols-outlined text-[18px]">save</span>
-            Save User
+            {isSubmitting ? 'Saving...' : 'Save User'}
           </button>
         </div>
       </div>
