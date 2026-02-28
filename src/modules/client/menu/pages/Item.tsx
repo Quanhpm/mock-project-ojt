@@ -19,14 +19,13 @@ import {
     ICE_LEVELS,
 } from "@/types/product-option.type";
 import { ROUTER_URL } from "@/routes/router.const";
-import { error } from "console";
 import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 
 // --- COMPONENT ---
 function Item() {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
-    const { success } = useToast();
+    const { success, error } = useToast();
     const addItem = useCartStore((s) => s.addItem);
     const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
 
@@ -253,7 +252,7 @@ function Item() {
                                     <input
                                         type="number"
                                         value={qty}
-                                        onChange={(e) => setQty(Math.min(99, Math.max(1, parseInt(e.target.value) || 1)))}
+                                        onChange={(e) => setQty(Math.min(999, Math.max(1, parseInt(e.target.value) || 1)))}
                                         className="w-16 text-center font-black text-lg text-[var(--cf-primary)] focus:outline-none"
                                     />
                                     <button

@@ -11,6 +11,8 @@ export type {
   ApiErrorResponse,
   ApiErrorItem,
   HttpRequestConfig,
+  SearchResponse,
+  PageInfo,
 } from "./http.types";
 
 // API Endpoints

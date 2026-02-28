@@ -3,6 +3,7 @@ import type {
   ApiSuccessResponse,
   HttpClient,
   HttpRequestConfig,
+  SearchResponse,
 } from "./http.types";
 
 // ======================== Utility ========================
@@ -73,5 +74,14 @@ export const httpClient: HttpClient = {
       headers: config.headers,
     });
     return res.data.data;
+  },
+
+  async search<T, D>(config: HttpRequestConfig<D>): Promise<SearchResponse<T>> {
+    const res = await axiosClient.post<SearchResponse<T>>(
+      config.url,
+      config.data,
+      { headers: config.headers },
+    );
+    return res.data;
   },
 };
