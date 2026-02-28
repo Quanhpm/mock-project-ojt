@@ -1,16 +1,19 @@
 import { useFranchiseSelection } from '../hooks/use-franchise-selection.hook'
 import { FranchiseCard } from '../components/FranchiseCard'
+import { GlobalRoleCard } from '../components/GlobalRoleCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { ErrorScreen } from '../components/ErrorScreen'
 
 function FranchiseSelectionPage() {
   const {
-    profile,
+    userName,
     loading,
     switching,
     error,
     franchiseRoles,
+    hasGlobalRole,
     handleSelectFranchise,
+    handleSelectGlobal,
     handleLogout,
   } = useFranchiseSelection()
 
@@ -27,26 +30,32 @@ function FranchiseSelectionPage() {
               local_cafe
             </span>
             <h1 className="text-primary text-[32px] font-bold tracking-tight">
-              Chọn Chi Nhánh
+              Chọn Quyền Làm Việc
             </h1>
           </div>
           <h2 className="text-secondary text-2xl font-semibold mb-2">
-            Xin chào, {profile?.user.name} 👋
+            Xin chào, {userName} 👋
           </h2>
           <p className="text-primary/70 font-medium text-lg">
-            Chọn chi nhánh để bắt đầu ca làm việc
+            Chọn quyền hoặc chi nhánh để bắt đầu làm việc
           </p>
         </div>
 
-        {/* Franchise List */}
+        {/* Role Selection List */}
         <div className="w-full max-w-[800px] flex flex-col gap-6">
-          {franchiseRoles.length === 0 && (
+          {!hasGlobalRole && franchiseRoles.length === 0 && (
             <div className="text-center text-secondary/70 py-12">
               <span className="material-symbols-outlined text-5xl mb-3 block">store_off</span>
-              <p className="text-lg font-medium">Bạn chưa được gán vào chi nhánh nào</p>
+              <p className="text-lg font-medium">Bạn chưa được gán quyền nào</p>
             </div>
           )}
 
+          {/* Global Role Card */}
+          {hasGlobalRole && (
+            <GlobalRoleCard onSelect={handleSelectGlobal} />
+          )}
+
+          {/* Franchise Roles */}
           {franchiseRoles.map(userRole => (
             <FranchiseCard
               key={userRole.franchise_id}
