@@ -57,14 +57,17 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
 
         // Nếu chưa có → gọi API
         const data = await getProfile()
+        
         if (!data) {
+          console.error('[Hook] No profile data returned')
           setError('Không thể tải thông tin người dùng')
           return
         }
 
         // Lưu vào store
         setProfile(data)
-      } catch {
+      } catch (err) {
+        console.error('[Hook] fetchProfile error:', err)
         setError('Đã xảy ra lỗi khi tải thông tin')
       } finally {
         setLoading(false)
