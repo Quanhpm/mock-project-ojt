@@ -6,6 +6,7 @@ import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.
 import { ROUTER_URL } from '@/routes/router.const'
 
 const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
+const ITEMS_PER_PAGE = 6
 
 interface UseFranchiseSelectionReturn {
   profile: ProfileResponse | null
@@ -13,32 +14,33 @@ interface UseFranchiseSelectionReturn {
   switching: string | null
   error: string | null
   franchiseRoles: UserRoleItem[]
+  paginatedFranchiseRoles: UserRoleItem[]
+  hasGlobalRole: boolean
+  currentPage: number
+  totalPages: number
   handleSelectFranchise: (franchiseId: string) => Promise<void>
-  handleLogout: () => void
+  handleSelectGlobal: () => void
+  handleLogout: () => Promise<void>
+  handlePageChange: (page: number) => void
 }
 
 export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const navigate = useNavigate()
   const admin = useAdminAuthStore((s) => s.admin)
   const storeRoles = useAdminAuthStore((s) => s.roles)
-  const storeActiveContext = useAdminAuthStore((s) => s.activeContext)
   const setProfile = useAdminAuthStore((s) => s.setProfile)
   const logout = useAdminAuthStore((s) => s.logout)
   const [profile, setLocalProfile] = useState<ProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         // Nếu store đã có data (vừa login xong) → dùng luôn, không gọi API lại
         if (admin && storeRoles.length > 0) {
-          setLocalProfile({
-            user: admin,
-            roles: storeRoles,
-            active_context: storeActiveContext,
-          })
           setLoading(false)
           return
         }
@@ -60,17 +62,28 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     }
 
     fetchProfile()
-  }, [admin, storeRoles, storeActiveContext, setProfile])
+  }, [admin, storeRoles, setProfile])
 
   const handleSelectFranchise = async (franchiseId: string) => {
     setSwitching(franchiseId)
     try {
       const updatedProfile = await switchContext(franchiseId)
-      if (updatedProfile) {
-        setProfile(updatedProfile) // Cập nhật store với active_context mới
+      
+      // Validate: Đảm bảo backend đã set activeContext
+      if (!updatedProfile?.active_context) {
+        throw new Error('Backend không trả về active_context')
       }
-      navigate(DASHBOARD_PATH, { replace: true })
-    } catch {
+      
+      // Cập nhật store
+      setProfile(updatedProfile)
+      
+      // Đợi React render cycle tiếp theo để Guard check lại
+      setTimeout(() => {
+        navigate(DASHBOARD_PATH, { replace: true })
+        setSwitching(null)
+      }, 0)
+    } catch (error) {
+      console.error('handleSelectFranchise error:', error)
       setError('Không thể chọn chi nhánh, vui lòng thử lại')
       setSwitching(null)
     }
@@ -81,8 +94,52 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
   }
 
-  const franchiseRoles: UserRoleItem[] =
-    profile?.roles.filter(r => r.scope === 'FRANCHISE') ?? []
+  const handleSelectGlobal = async () => {
+    setSwitching('GLOBAL')
+    try {
+      // Gọi API với franchise_id = null để switch sang GLOBAL
+      await switchContext(null)
+      
+      // Lấy profile mới từ backend
+      const updatedProfile = await getProfile()
+      
+      // Validate response
+      if (!updatedProfile) {
+        throw new Error('Backend không trả về profile')
+      }
+      
+      // Cập nhật store
+      setProfile(updatedProfile)
+      
+      // Navigate sau khi store đã update
+      setTimeout(() => {
+        navigate(DASHBOARD_PATH, { replace: true })
+        setSwitching(null)
+      }, 0)
+    } catch (error) {
+      console.error('handleSelectGlobal error:', error)
+      setError('Không thể chuyển sang quyền toàn cục, vui lòng thử lại')
+      setSwitching(null)
+    }
+  }
+
+  // Lấy trực tiếp từ store → luôn sync, không cần local state
+  const franchiseRoles: UserRoleItem[] = storeRoles.filter(r => r.scope === 'FRANCHISE')
+  const hasGlobalRole = storeRoles.some(r => r.scope === 'GLOBAL')
+
+  // Pagination logic
+  const totalPages = Math.ceil(franchiseRoles.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  const paginatedFranchiseRoles = franchiseRoles.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+      // Scroll to top để user thấy franchise cards mới
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
 
   return {
     profile,
@@ -90,7 +147,12 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     switching,
     error,
     franchiseRoles,
+    paginatedFranchiseRoles,
+    hasGlobalRole,
+    currentPage,
+    totalPages,
     handleSelectFranchise,
     handleLogout,
+    handlePageChange,
   }
 }

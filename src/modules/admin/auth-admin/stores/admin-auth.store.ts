@@ -19,6 +19,9 @@ interface AdminAuthState {
   // Lưu profile từ API response vào store
   setProfile: (profile: ProfileResponse) => void;
 
+  // Clear activeContext khi chọn GLOBAL role
+  clearActiveContext: () => void;
+
   // Gọi API logout → clear store
   logout: () => Promise<void>;
 
@@ -58,6 +61,10 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
       activeContext: profile.active_context,
       isLoggedIn: true,
     });
+  },
+
+  clearActiveContext: () => {
+    set({ activeContext: null });
   },
 
   logout: async () => {
