@@ -66,3 +66,11 @@ export const switchContext = (franchise_id: string | null): Promise<ProfileRespo
     data: { franchise_id },
   });
 };
+
+/** POST /api/auth/verify-token - Xác thực email người dùng mới */
+export const verifyEmail = (token: string): Promise<null> => {
+  return httpClient.post<null, { token: string }>({
+    url: "/auth/verify-token",
+    data: { token },
+  });
+};
