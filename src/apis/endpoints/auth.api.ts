@@ -59,9 +59,9 @@ export const logout = (): Promise<null> => {
   });
 };
 
-/** POST /api/auth/switch-context - Chọn franchise context (null = GLOBAL) */
-export const switchContext = (franchise_id: string | null): Promise<ProfileResponse | null> => {
-  return httpClient.post<ProfileResponse, { franchise_id: string | null }>({
+/** POST /api/auth/switch-context - Chọn franchise context */
+export const switchContext = (franchise_id: string): Promise<ProfileResponse | null> => {
+  return httpClient.post<ProfileResponse, { franchise_id: string }>({
     url: "/auth/switch-context",
     data: { franchise_id },
   });

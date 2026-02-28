@@ -33,9 +33,9 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     isEnd: true,
   },
   {
-    label: "Đổi Chi Nhánh",
+    label: "Chọn Chi Nhánh",
     path: ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE,
-    icon: <RefreshCw size={18} />,
+    icon: <Building2 size={18} />,
     component: React.lazy(() => import("@/modules/admin/side-selection/pages/FranchiseSelectionPage")),
     module: "select-franchise",
   },

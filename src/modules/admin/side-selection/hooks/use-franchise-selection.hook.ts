@@ -6,7 +6,6 @@ import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.
 import { ROUTER_URL } from '@/routes/router.const'
 
 const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
-const ITEMS_PER_PAGE = 6
 
 interface UseFranchiseSelectionReturn {
   userName: string
@@ -14,10 +13,6 @@ interface UseFranchiseSelectionReturn {
   switching: string | null
   error: string | null
   franchiseRoles: UserRoleItem[]
-  paginatedFranchiseRoles: UserRoleItem[]
-  hasGlobalRole: boolean
-  currentPage: number
-  totalPages: number
   handleSelectFranchise: (franchiseId: string) => Promise<void>
   handleSelectGlobal: () => Promise<void>
   handleLogout: () => Promise<void>
@@ -28,6 +23,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const navigate = useNavigate()
   const admin = useAdminAuthStore((s) => s.admin)
   const storeRoles = useAdminAuthStore((s) => s.roles)
+  const storeActiveContext = useAdminAuthStore((s) => s.activeContext)
   const setProfile = useAdminAuthStore((s) => s.setProfile)
   const logout = useAdminAuthStore((s) => s.logout)
   const [loading, setLoading] = useState(true)
@@ -50,6 +46,11 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
       try {
         // Nếu store đã có data (vừa login xong) → dùng luôn, không gọi API lại
         if (admin && storeRoles.length > 0) {
+          setLocalProfile({
+            user: admin,
+            roles: storeRoles,
+            active_context: storeActiveContext,
+          })
           setLoading(false)
           return
         }
@@ -71,7 +72,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     }
 
     fetchProfile()
-  }, [admin, storeRoles, setProfile])
+  }, [admin, storeRoles, storeActiveContext, setProfile])
 
   const handleSelectFranchise = async (franchiseId: string) => {
     if (!isMountedRef.current) return
@@ -160,13 +161,8 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     switching,
     error,
     franchiseRoles,
-    paginatedFranchiseRoles,
-    hasGlobalRole,
-    currentPage,
-    totalPages,
     handleSelectFranchise,
     handleSelectGlobal,
     handleLogout,
-    handlePageChange,
   }
 }
