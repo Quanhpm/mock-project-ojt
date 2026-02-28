@@ -1,10 +1,14 @@
 import { useState, useMemo } from 'react'
-import type { UserWithRolesAndFranchises } from '@/mockdata'
+import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mockdata'
 import type { UserFilters } from './useUserFilters.hook'
 
 export type User = UserWithRolesAndFranchises
 
-export const useUserList = (filters: UserFilters, users: User[]) => {
+export const useUserList = (filters: UserFilters) => {
+  const [users, setUsers] = useState<User[]>(() => {
+    // Initialize with mock data directly
+    return getUsersWithRolesAndFranchises()
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
 
@@ -54,6 +58,14 @@ export const useUserList = (filters: UserFilters, users: User[]) => {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
 
+  const toggleUserStatus = (userId: number) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, is_active: !user.is_active } : user
+      )
+    )
+  }
+
   return {
     users: paginatedUsers,
     totalUsers: filteredUsers.length,
@@ -61,5 +73,6 @@ export const useUserList = (filters: UserFilters, users: User[]) => {
     totalPages,
     itemsPerPage,
     setCurrentPage,
+    toggleUserStatus,
   }
 }
