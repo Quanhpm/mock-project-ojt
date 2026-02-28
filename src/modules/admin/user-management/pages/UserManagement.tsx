@@ -1,10 +1,15 @@
 import { PageHeader, UserFilters, UserTableRow, Pagination, CreateUserModal, EditUserModal } from '../components'
-import { useUserFilters, useUserList } from '../hooks'
-import { useState } from 'react'
+import { useUserFilters, useUserList, type User } from '../hooks'
+import { useEffect, useState } from 'react'
+import { createUser, deleteUser, getUsers, updateUser } from '@/apis/endpoints/user.api'
+import { createUserFranchiseRole } from '@/apis/endpoints/user-franchise-role.api'
+import { getUsersWithRolesAndFranchises } from '@/mockdata'
 
 function UserManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [allUsers, setAllUsers] = useState<User[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const {
     filters,
@@ -15,6 +20,26 @@ function UserManagement() {
     handleClearFilters,
   } = useUserFilters()
 
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true)
+      const users = await getUsers()
+      if (users && users.length > 0) {
+        setAllUsers(users)
+        return
+      }
+      setAllUsers(getUsersWithRolesAndFranchises())
+    } catch {
+      setAllUsers(getUsersWithRolesAndFranchises())
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadUsers()
+  }, [])
+
   const {
     users,
     totalUsers,
@@ -22,16 +47,38 @@ function UserManagement() {
     totalPages,
     itemsPerPage,
     setCurrentPage,
-    toggleUserStatus,
-  } = useUserList(filters)
+  } = useUserList(filters, allUsers)
 
   const handleCreateUser = () => {
     setIsCreateModalOpen(true)
   }
 
-  const handleSaveUser = (userData: any) => {
-    console.log('New user data:', userData)
-    // TODO: Implement save user logic
+  const handleSubmitCreateUser = async (userData: {
+    email: string
+    password: string
+    name: string
+    phone?: string
+    is_active?: boolean
+  }) => {
+    const createdUser = await createUser(userData)
+    if (!createdUser) {
+      throw new Error('Create user failed')
+    }
+
+    return { id: createdUser.id }
+  }
+
+  const handleAssignRoleToUser = async (data: {
+    user_id: number
+    role_id: number
+    franchise_id: number | null
+  }) => {
+    const createdAssignment = await createUserFranchiseRole(data)
+    if (!createdAssignment) {
+      throw new Error('Assign role/franchise failed')
+    }
+
+    await loadUsers()
   }
 
   const handleEditUser = (userId: number) => {
@@ -41,14 +88,29 @@ function UserManagement() {
     }
   }
 
-  const handleSaveEditUser = (userId: number, userData: any) => {
-    console.log('Edit user:', userId, userData)
-    // TODO: Implement edit user logic
+  const handleSaveEditUser = async (userId: number, userData: any) => {
+    await updateUser(userId, {
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      is_active: userData.is_active,
+    })
+    await loadUsers()
   }
 
-  const handleDeleteUser = (userId: number) => {
-    console.log('Delete user:', userId)
-    // TODO: Implement delete user logic
+  const handleDeleteUser = async (userId: number) => {
+    await deleteUser(userId)
+    await loadUsers()
+  }
+
+  const handleToggleUserStatus = async (userId: number) => {
+    const targetUser = allUsers.find((user) => user.id === userId)
+    if (!targetUser) return
+
+    await updateUser(userId, {
+      is_active: !targetUser.is_active,
+    })
+    await loadUsers()
   }
 
   return (
@@ -95,11 +157,19 @@ function UserManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={5} className="p-6 text-center text-slate-500">
+                        Loading users...
+                      </td>
+                    </tr>
+                  ) : null}
+
                   {users.map((user) => (
                     <UserTableRow
                       key={user.id}
                       user={user}
-                      onToggleStatus={toggleUserStatus}
+                      onToggleStatus={handleToggleUserStatus}
                       onEdit={handleEditUser}
                       onDelete={handleDeleteUser}
                     />
@@ -122,7 +192,8 @@ function UserManagement() {
       <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleSaveUser}
+        onCreateUser={handleSubmitCreateUser}
+        onAssignRole={handleAssignRoleToUser}
       />
 
       <EditUserModal
