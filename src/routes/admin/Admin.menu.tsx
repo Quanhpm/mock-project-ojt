@@ -7,7 +7,6 @@ import {
   UserCircle,
   ShoppingCart,
   Clock,
-  Building2,
   RefreshCw,
 } from "lucide-react";
 import React from "react";

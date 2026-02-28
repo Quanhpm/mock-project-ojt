@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
 import type { UserRoleItem } from '@/apis/endpoints/auth.api'
@@ -19,7 +19,7 @@ interface UseFranchiseSelectionReturn {
   currentPage: number
   totalPages: number
   handleSelectFranchise: (franchiseId: string) => Promise<void>
-  handleSelectGlobal: () => void
+  handleSelectGlobal: () => Promise<void>
   handleLogout: () => Promise<void>
   handlePageChange: (page: number) => void
 }
@@ -34,6 +34,16 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  
+  // Track mounted state để tránh setState sau khi unmount
+  const isMountedRef = useRef(false)
+  
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -64,36 +74,36 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   }, [admin, storeRoles, setProfile])
 
   const handleSelectFranchise = async (franchiseId: string) => {
+    if (!isMountedRef.current) return
+    
     setSwitching(franchiseId)
     try {
-      const updatedProfile = await switchContext(franchiseId)
+      await switchContext(franchiseId)
       
-      // Validate: Đảm bảo backend đã set activeContext
-      if (!updatedProfile?.active_context) {
-        throw new Error('Backend không trả về active_context')
+      // Lấy profile mới sau khi switch
+      const updatedProfile = await getProfile()
+      
+      if (!updatedProfile) {
+        throw new Error('Không thể lấy thông tin sau khi chuyển chi nhánh')
       }
       
       // Cập nhật store
       setProfile(updatedProfile)
       
-      // Đợi React render cycle tiếp theo để Guard check lại
-      setTimeout(() => {
-        navigate(DASHBOARD_PATH, { replace: true })
-        setSwitching(null)
-      }, 0)
+      // Navigate ngay - component sẽ unmount
+      navigate(DASHBOARD_PATH, { replace: true })
     } catch (error) {
       console.error('handleSelectFranchise error:', error)
-      setError('Không thể chọn chi nhánh, vui lòng thử lại')
-      setSwitching(null)
+      if (isMountedRef.current) {
+        setError('Không thể chọn chi nhánh, vui lòng thử lại')
+        setSwitching(null)
+      }
     }
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
-  }
-
   const handleSelectGlobal = async () => {
+    if (!isMountedRef.current) return
+    
     setSwitching('GLOBAL')
     try {
       // Gọi API với franchise_id = null để switch sang GLOBAL
@@ -110,21 +120,25 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
       // Cập nhật store
       setProfile(updatedProfile)
       
-      // Navigate sau khi store đã update
-      setTimeout(() => {
-        navigate(DASHBOARD_PATH, { replace: true })
-        setSwitching(null)
-      }, 0)
+      // Navigate ngay - component sẽ unmount
+      navigate(DASHBOARD_PATH, { replace: true })
     } catch (error) {
       console.error('handleSelectGlobal error:', error)
-      setError('Không thể chuyển sang quyền toàn cục, vui lòng thử lại')
-      setSwitching(null)
+      if (isMountedRef.current) {
+        setError('Không thể chuyển sang quyền toàn cục, vui lòng thử lại')
+        setSwitching(null)
+      }
     }
   }
 
+  const handleLogout = async () => {
+    await logout()
+    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
+  }
+
   // Lấy trực tiếp từ store → luôn sync, không cần local state
-  const franchiseRoles: UserRoleItem[] = storeRoles.filter(r => r.scope === 'FRANCHISE')
-  const hasGlobalRole = storeRoles.some(r => r.scope === 'GLOBAL')
+  const franchiseRoles: UserRoleItem[] = storeRoles.filter((r) => r.scope === 'FRANCHISE')
+  const hasGlobalRole = storeRoles.some((r) => r.scope === 'GLOBAL')
 
   // Pagination logic
   const totalPages = Math.ceil(franchiseRoles.length / ITEMS_PER_PAGE)
