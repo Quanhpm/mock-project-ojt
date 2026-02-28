@@ -44,6 +44,9 @@ interface LabeledInputWithIconProps {
   error?: string;
   name?: string;
   inputRef?: React.Ref<HTMLInputElement>;
+  // Props for react-hook-form integration
+  onInputChange?: React.ChangeEventHandler<HTMLInputElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
@@ -62,6 +65,8 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
   error,
   name,
   inputRef,
+  onInputChange,
+  onBlur,
 }) => {
   return (
     <div className="space-y-2">
@@ -75,7 +80,11 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
           name={name}
           type={type}
           value={value}
-          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+          onChange={
+            onInputChange ||
+            (onChange ? (e) => onChange(e.target.value) : undefined)
+          }
+          onBlur={onBlur}
           disabled={disabled}
           placeholder={placeholder}
           required={required}
@@ -359,7 +368,9 @@ const AccountSettingsPage: React.FC = () => {
                     required
                     error={securityErrors.currentPassword?.message}
                     inputRef={register("currentPassword").ref}
-                    name="currentPassword"
+                    name={register("currentPassword").name}
+                    onInputChange={register("currentPassword").onChange}
+                    onBlur={register("currentPassword").onBlur}
                     rightIcon={
                       showCurrentPassword ? (
                         <EyeOff size={18} />
@@ -384,7 +395,9 @@ const AccountSettingsPage: React.FC = () => {
                       helperText="Phải có chữ hoa, thường, số, ký tự đặc biệt."
                       error={securityErrors.newPassword?.message}
                       inputRef={register("newPassword").ref}
-                      name="newPassword"
+                      name={register("newPassword").name}
+                      onInputChange={register("newPassword").onChange}
+                      onBlur={register("newPassword").onBlur}
                       rightIcon={
                         showNewPassword ? (
                           <EyeOff size={18} />
@@ -404,7 +417,9 @@ const AccountSettingsPage: React.FC = () => {
                       required
                       error={securityErrors.confirmPassword?.message}
                       inputRef={register("confirmPassword").ref}
-                      name="confirmPassword"
+                      name={register("confirmPassword").name}
+                      onInputChange={register("confirmPassword").onChange}
+                      onBlur={register("confirmPassword").onBlur}
                       rightIcon={
                         showConfirmPassword ? (
                           <EyeOff size={18} />
