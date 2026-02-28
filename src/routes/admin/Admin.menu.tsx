@@ -7,7 +7,7 @@ import {
   UserCircle,
   ShoppingCart,
   Clock,
-  RefreshCw,
+  Building2,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
