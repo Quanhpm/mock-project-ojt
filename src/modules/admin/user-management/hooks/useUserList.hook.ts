@@ -4,28 +4,23 @@ import type { PageInfo } from '@/apis'
 
 // ======================== Types ========================
 
-/** Dữ liệu trả về từ API search user-franchise-roles */
-export interface UserFranchiseRoleItem {
-  _id: string
-  user_id: string
-  user_name: string
-  user_email: string
-  franchise_id: string
-  franchise_name: string
-  role_id: string
-  role_name: string
+/** Dữ liệu trả về từ API search users */
+export interface UserItem {
+  id: string
+  email: string
+  name: string
+  phone: string
+  avatar_url: string
   is_active: boolean
   is_deleted: boolean
   created_at: string
   updated_at: string
 }
 
-/** Payload gửi lên API search */
+/** Payload gửi lên API search users */
 interface SearchPayload {
   searchCondition: {
-    user_id: string
-    franchise_id: string
-    role_id: string
+    keyword: string
     is_deleted: boolean
   }
   pageInfo: {
@@ -37,7 +32,7 @@ interface SearchPayload {
 // ======================== Hook ========================
 
 export const useUserList = () => {
-  const [users, setUsers] = useState<UserFranchiseRoleItem[]>([])
+  const [users, setUsers] = useState<UserItem[]>([])
   const [pageInfo, setPageInfo] = useState<PageInfo>({
     pageNum: 1,
     pageSize: 10,
@@ -51,9 +46,7 @@ export const useUserList = () => {
     try {
       const payload: SearchPayload = {
         searchCondition: {
-          user_id: '',
-          franchise_id: '',
-          role_id: '',
+          keyword: '',
           is_deleted: false,
         },
         pageInfo: {
@@ -62,8 +55,8 @@ export const useUserList = () => {
         },
       }
 
-      const res = await httpClient.search<UserFranchiseRoleItem, SearchPayload>({
-        url: '/user-franchise-roles/search',
+      const res = await httpClient.search<UserItem, SearchPayload>({
+        url: '/users/search',
         data: payload,
       })
 

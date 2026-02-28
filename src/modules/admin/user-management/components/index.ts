@@ -1,3 +1,6 @@
 export { UserTableRow } from './UserTableRow'
 export { Pagination } from './Pagination'
 export { CreateUserModal } from './CreateUserModal'
+export { EditUserModal } from './EditUserModal'
+export { DeleteUserDialog } from './DeleteUserDialog'
+export { ViewUserModal } from './ViewUserModal'

@@ -1,6 +1,14 @@
 import { useState, useCallback } from 'react'
-import { UserTableRow, Pagination, CreateUserModal } from '../components'
+import {
+  UserTableRow,
+  Pagination,
+  CreateUserModal,
+  EditUserModal,
+  DeleteUserDialog,
+  ViewUserModal,
+} from '../components'
 import { useUserList } from '../hooks'
+import type { UserItem } from '../hooks'
 
 /** Skeleton row cho trạng thái loading */
 const SkeletonRow = () => (
@@ -15,14 +23,12 @@ const SkeletonRow = () => (
       </div>
     </td>
     <td className="p-4">
-      <div className="h-6 w-20 bg-slate-200 rounded-md" />
-    </td>
-    <td className="p-4">
       <div className="h-4 w-28 bg-slate-200 rounded" />
     </td>
     <td className="p-4">
       <div className="h-6 w-11 bg-slate-200 rounded-full" />
     </td>
+    <td className="p-4" />
   </tr>
 )
 
@@ -37,12 +43,55 @@ function UserManagement() {
     setCurrentPage,
   } = useUserList()
 
+  // ──────── Create Modal ────────
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const handleCreateSuccess = useCallback(() => {
     setIsCreateModalOpen(false)
-    // Refresh danh sách về trang 1
     setCurrentPage(1)
+  }, [setCurrentPage])
+
+  // ──────── View Modal ────────
+  const [viewUser, setViewUser] = useState<UserItem | null>(null)
+
+  const handleViewClick = useCallback((user: UserItem) => {
+    setViewUser(user)
+  }, [])
+
+  const handleViewClose = useCallback(() => {
+    setViewUser(null)
+  }, [])
+
+  // ──────── Edit Modal ────────
+  const [editUser, setEditUser] = useState<UserItem | null>(null)
+
+  const handleEditClick = useCallback((user: UserItem) => {
+    setEditUser(user)
+  }, [])
+
+  const handleEditClose = useCallback(() => {
+    setEditUser(null)
+  }, [])
+
+  const handleEditSuccess = useCallback(() => {
+    setEditUser(null)
+    setCurrentPage(currentPage) // Refresh trang hiện tại
+  }, [setCurrentPage, currentPage])
+
+  // ──────── Delete Dialog ────────
+  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null)
+
+  const handleDeleteClick = useCallback((user: UserItem) => {
+    setDeleteTarget(user)
+  }, [])
+
+  const handleDeleteClose = useCallback(() => {
+    setDeleteTarget(null)
+  }, [])
+
+  const handleDeleteSuccess = useCallback(() => {
+    setDeleteTarget(null)
+    setCurrentPage(1) // Refresh về trang 1
   }, [setCurrentPage])
 
   return (
@@ -90,13 +139,13 @@ function UserManagement() {
                       User
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Roles
-                    </th>
-                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Franchise
+                      Phone
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Status
+                    </th>
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -108,7 +157,13 @@ function UserManagement() {
                   {/* Data rows */}
                   {!isLoading &&
                     users.map((user) => (
-                      <UserTableRow key={user._id} user={user} />
+                      <UserTableRow
+                        key={user.id}
+                        user={user}
+                        onView={handleViewClick}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                      />
                     ))}
 
                   {/* Empty state */}
@@ -131,7 +186,7 @@ function UserManagement() {
               </table>
             </div>
 
-            {/* Pagination — chỉ hiển thị khi có dữ liệu */}
+            {/* Pagination */}
             {!isLoading && users.length > 0 && (
               <Pagination
                 currentPage={currentPage}
@@ -145,11 +200,37 @@ function UserManagement() {
         </div>
       </main>
 
+      {/* ═══════════ Modals ═══════════ */}
+
       {/* Create User Modal */}
       <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
+      />
+
+      {/* View User Modal */}
+      <ViewUserModal
+        isOpen={!!viewUser}
+        user={viewUser}
+        onClose={handleViewClose}
+      />
+
+      {/* Edit User Modal */}
+      <EditUserModal
+        isOpen={!!editUser}
+        user={editUser}
+        onClose={handleEditClose}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Delete User Dialog */}
+      <DeleteUserDialog
+        isOpen={!!deleteTarget}
+        userId={deleteTarget?.id ?? ''}
+        userName={deleteTarget?.name ?? ''}
+        onClose={handleDeleteClose}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   )
