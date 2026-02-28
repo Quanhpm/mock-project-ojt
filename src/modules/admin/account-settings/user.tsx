@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   User,
   Mail,
@@ -9,6 +11,12 @@ import {
   EyeOff,
   Save,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast.hook";
+import { useChangePassword } from "./hooks/use-change-password.hook";
+import {
+  changePasswordSchema,
+  type ChangePasswordFormValues,
+} from "./schemas/change-password.schema";
 
 // ==================== INTERFACES ====================
 interface UserProfile {
@@ -18,19 +26,13 @@ interface UserProfile {
   role: string;
 }
 
-interface SecurityForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
 // ==================== REUSABLE COMPONENTS ====================
 
 interface LabeledInputWithIconProps {
   label: string;
   icon: React.ReactNode;
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   type?: string;
   disabled?: boolean;
   placeholder?: string;
@@ -39,6 +41,9 @@ interface LabeledInputWithIconProps {
   rightIcon?: React.ReactNode;
   onRightIconClick?: () => void;
   helperText?: string;
+  error?: string;
+  name?: string;
+  inputRef?: React.Ref<HTMLInputElement>;
 }
 
 const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
@@ -54,6 +59,9 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
   rightIcon,
   onRightIconClick,
   helperText,
+  error,
+  name,
+  inputRef,
 }) => {
   return (
     <div className="space-y-2">
@@ -63,9 +71,11 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
           {icon}
         </div>
         <input
+          ref={inputRef}
+          name={name}
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
           disabled={disabled}
           placeholder={placeholder}
           required={required}
@@ -75,7 +85,9 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
             ${
               disabled
                 ? "bg-stone-50 border-stone-200 text-gray-500 cursor-not-allowed"
-                : "bg-white border-stone-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+                : error
+                  ? "bg-white border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200"
+                  : "bg-white border-stone-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
             }
           `}
         />
@@ -89,7 +101,8 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
           </button>
         )}
       </div>
-      {helperText && (
+      {error && <p className="text-xs text-red-600 ml-1">{error}</p>}
+      {!error && helperText && (
         <p className="text-xs text-amber-700 ml-1">{helperText}</p>
       )}
     </div>
@@ -107,12 +120,24 @@ const AccountSettingsPage: React.FC = () => {
     role: "Super Admin",
   });
 
-  // Security state
-  const [securityForm, setSecurityForm] = useState<SecurityForm>({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+  // Security form with react-hook-form and Zod
+  const {
+    register,
+    handleSubmit: handleSecuritySubmit,
+    formState: { errors: securityErrors },
+    reset: resetSecurityForm,
+  } = useForm<ChangePasswordFormValues>({
+    resolver: zodResolver(changePasswordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
   });
+
+  // Hooks
+  const { success, error: showError } = useToast();
+  const { changePassword, isLoading: isChangingPassword } = useChangePassword();
 
   // UI state
   const [isEditing, setIsEditing] = useState(false);
@@ -134,32 +159,22 @@ const AccountSettingsPage: React.FC = () => {
     }, 1000);
   };
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePasswordUpdate = async (data: ChangePasswordFormValues) => {
+    // Gọi API changePassword với payload đúng cấu trúc
+    const result = await changePassword({
+      old_password: data.currentPassword,
+      new_password: data.newPassword,
+    });
 
-    // Validation
-    if (securityForm.newPassword !== securityForm.confirmPassword) {
-      alert("Passwords don't match!");
-      return;
+    if (result.success) {
+      success(result.message);
+      resetSecurityForm(); // Reset form về trạng thái ban đầu
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    } else {
+      showError(result.message, "Đổi mật khẩu thất bại");
     }
-
-    if (securityForm.newPassword.length < 8) {
-      alert("Password must be at least 8 characters!");
-      return;
-    }
-
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Password updated");
-      setSecurityForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-      setIsLoading(false);
-      // Add toast notification here
-    }, 1000);
   };
 
   const handleCancel = () => {
@@ -330,19 +345,21 @@ const AccountSettingsPage: React.FC = () => {
               </div>
 
               {/* Card Body - Form */}
-              <form onSubmit={handlePasswordUpdate} className="p-6">
+              <form
+                onSubmit={handleSecuritySubmit(handlePasswordUpdate)}
+                className="p-6"
+              >
                 <div className="space-y-5">
                   {/* Current Password */}
                   <LabeledInputWithIcon
                     label="Current Password"
                     icon={<Key size={18} />}
-                    value={securityForm.currentPassword}
-                    onChange={(val) =>
-                      setSecurityForm({ ...securityForm, currentPassword: val })
-                    }
                     type={showCurrentPassword ? "text" : "password"}
                     placeholder="••••••••••••"
                     required
+                    error={securityErrors.currentPassword?.message}
+                    inputRef={register("currentPassword").ref}
+                    name="currentPassword"
                     rightIcon={
                       showCurrentPassword ? (
                         <EyeOff size={18} />
@@ -360,15 +377,14 @@ const AccountSettingsPage: React.FC = () => {
                     <LabeledInputWithIcon
                       label="New Password"
                       icon={<Key size={18} />}
-                      value={securityForm.newPassword}
-                      onChange={(val) =>
-                        setSecurityForm({ ...securityForm, newPassword: val })
-                      }
                       type={showNewPassword ? "text" : "password"}
                       placeholder="New password"
                       required
                       minLength={8}
-                      helperText="Must be at least 8 characters."
+                      helperText="Phải có chữ hoa, thường, số, ký tự đặc biệt."
+                      error={securityErrors.newPassword?.message}
+                      inputRef={register("newPassword").ref}
+                      name="newPassword"
                       rightIcon={
                         showNewPassword ? (
                           <EyeOff size={18} />
@@ -383,16 +399,12 @@ const AccountSettingsPage: React.FC = () => {
                     <LabeledInputWithIcon
                       label="Confirm Password"
                       icon={<Key size={18} />}
-                      value={securityForm.confirmPassword}
-                      onChange={(val) =>
-                        setSecurityForm({
-                          ...securityForm,
-                          confirmPassword: val,
-                        })
-                      }
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm password"
                       required
+                      error={securityErrors.confirmPassword?.message}
+                      inputRef={register("confirmPassword").ref}
+                      name="confirmPassword"
                       rightIcon={
                         showConfirmPassword ? (
                           <EyeOff size={18} />
@@ -411,11 +423,11 @@ const AccountSettingsPage: React.FC = () => {
                 <div className="flex justify-end mt-6 pt-6 border-t border-stone-200">
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isChangingPassword}
                     className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save size={16} />
-                    {isLoading ? "Updating..." : "Update Password"}
+                    {isChangingPassword ? "Updating..." : "Update Password"}
                   </button>
                 </div>
               </form>

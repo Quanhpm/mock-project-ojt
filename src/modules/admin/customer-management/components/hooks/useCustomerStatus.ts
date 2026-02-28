@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { customerApi } from "../customer.api";
-
-// export { toast } from "react-toastify"; // Mở ra nếu bạn dùng thư viện thông báo
+import { useToast } from "@/hooks/use-toast.hook";
 
 export const useCustomerStatus = () => {
+  const { success, error: showErrorToast } = useToast();
   // Lưu lại ID của khách hàng đang bị gọi API đổi trạng thái
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -25,17 +25,39 @@ export const useCustomerStatus = () => {
     // 2. Đảo ngược trạng thái để gửi lên Server
     const newStatus = !currentStatus;
 
+    console.log(
+      `🔄 Toggling status for customer ${id}: ${currentStatus} → ${newStatus}`,
+    );
+
     try {
-      await customerApi.toggleCustomerStatus(id, {
+      const response = await customerApi.toggleCustomerStatus(id, {
         is_active: newStatus,
       });
 
-      // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      // toast.success(`Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} khách hàng!`);
+      console.log("✅ Toggle status success:", response);
+
+      // Thông báo thành công
+      success(
+        "Cập nhật trạng thái thành công",
+        `Khách hàng đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`,
+      );
+
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error("Lỗi cập nhật trạng thái:", err);
-      // toast.error("Không thể thay đổi trạng thái lúc này!");
+      console.error("❌ Lỗi cập nhật trạng thái:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+
+      // Hiển thị thông báo lỗi chi tiết
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Không thể thay đổi trạng thái lúc này!";
+
+      showErrorToast("Cập nhật trạng thái thất bại", errorMessage);
 
       // Nếu API lỗi, phải gọi onError để cái nút Toggle trên UI gạt ngược về chỗ cũ
       if (onError) onError();

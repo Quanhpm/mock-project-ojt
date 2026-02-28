@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { customerApi } from "../customer.api";
 import type { CustomerUpdatePayload, Customer } from "../customer.types";
+import { useToast } from "@/hooks/use-toast.hook";
 
 export const useUpdateCustomer = () => {
+  const { error: showErrorToast } = useToast();
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +26,6 @@ export const useUpdateCustomer = () => {
       const updatedCustomer = await customerApi.updateCustomer(id, payload);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      // toast.success("Cập nhật thông tin khách hàng thành công!");
 
       if (onSuccess) {
         onSuccess(updatedCustomer);
@@ -41,7 +42,7 @@ export const useUpdateCustomer = () => {
         "Có lỗi xảy ra khi cập nhật thông tin. Vui lòng thử lại!";
       setError(errorMessage);
 
-      // toast.error(errorMessage);
+      showErrorToast("Cập nhật thất bại", errorMessage);
     } finally {
       setIsUpdating(false);
     }

@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { customerApi } from "../customer.api";
 import type { CustomerCreatePayload, Customer } from "../customer.types";
-
-// LƯU Ý: Trong dự án thực tế, người ta thường dùng thư viện như react-toastify hoặc react-hot-toast để báo lỗi
-// import { toast } from "react-toastify";
+import { useToast } from "@/hooks/use-toast.hook";
 
 export const useCreateCustomer = () => {
+  const { error: showErrorToast } = useToast();
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,7 +24,6 @@ export const useCreateCustomer = () => {
       const newCustomer = await customerApi.createCustomer(payload);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      // toast.success("Thêm mới khách hàng thành công!");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
       if (onSuccess) {
@@ -43,7 +41,7 @@ export const useCreateCustomer = () => {
         "Có lỗi xảy ra khi tạo khách hàng mới. Vui lòng thử lại!";
       setError(errorMessage);
 
-      // toast.error(errorMessage);
+      showErrorToast("Tạo mới thất bại", errorMessage);
     } finally {
       // Tắt trạng thái loading dù thành công hay thất bại
       setIsCreating(false);

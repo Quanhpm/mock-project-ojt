@@ -1,4 +1,5 @@
 import { httpClient } from "@/apis";
+import { axiosClient } from "@/apis/axios.config";
 import type {
   Customer,
   CustomerSearchPayload,
@@ -21,12 +22,12 @@ export const customerApi = {
   searchCustomers: async (
     payload: CustomerSearchPayload,
   ): Promise<CustomerSearchResponse> => {
-    const data = await httpClient.post<CustomerSearchResponse>({
-      url: "/customers/search",
-      data: payload,
-    });
-    // httpClient đã tự động unwrap response, trả về data trực tiếp
-    return data!; // Non-null assertion vì API này luôn trả về data
+    // Sử dụng axiosClient trực tiếp vì response có cấu trúc đặc biệt với pageInfo
+    const response = await axiosClient.post<CustomerSearchResponse>(
+      "/customers/search",
+      payload,
+    );
+    return response.data;
   },
 
   /**
@@ -76,13 +77,14 @@ export const customerApi = {
 
   /**
    * CUSTOMER-08: Thay đổi trạng thái Active/Inactive
+   * Sử dụng PATCH để partial update (chỉ cập nhật is_active, không cần các field khác)
    */
   toggleCustomerStatus: async (
     id: string,
     payload: CustomerStatusPayload,
   ): Promise<Customer> => {
-    const data = await httpClient.put<Customer>({
-      url: `/customers/${id}/status`,
+    const data = await httpClient.patch<Customer>({
+      url: `/customers/${id}`,
       data: payload,
     });
     return data!; // Non-null assertion vì API này luôn trả về data

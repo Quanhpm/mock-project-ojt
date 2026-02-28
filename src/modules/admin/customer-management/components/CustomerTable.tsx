@@ -257,6 +257,10 @@ export default function CustomerTable() {
       customers.find((c) => c.id === customerId)?.is_active ??
       false;
 
+    console.log(
+      `🎯 Toggle status clicked for customer ${customerId}. Current status: ${currentStatus}`,
+    );
+
     // Optimistic UI update: Update state immediately
     setCustomerStatus((prev) => ({
       ...prev,
@@ -267,9 +271,30 @@ export default function CustomerTable() {
     toggleStatus(
       customerId,
       currentStatus,
-      undefined, // onSuccess - no additional action needed
+      () => {
+        // onSuccess - Refresh data để đồng bộ với server
+        console.log("✅ Toggle status success, refreshing data...");
+        const mapStatusFilter = (): boolean | null => {
+          if (statusFilter === "active") return true;
+          if (statusFilter === "inactive") return false;
+          return null;
+        };
+
+        fetchCustomers({
+          searchCondition: {
+            keyword: searchTerm.trim(),
+            is_active: mapStatusFilter(),
+            is_deleted: false,
+          },
+          pageInfo: {
+            pageNum: currentPage,
+            pageSize: itemsPerPage,
+          },
+        });
+      },
       () => {
         // onError - Rollback to previous state
+        console.log("❌ Toggle status failed, rolling back UI...");
         setCustomerStatus((prev) => ({
           ...prev,
           [customerId]: currentStatus,

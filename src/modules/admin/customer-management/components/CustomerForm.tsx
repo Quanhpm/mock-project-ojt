@@ -8,6 +8,7 @@ import { mockFranchises, customerFranchise } from "@/mockdata";
 import { useCreateCustomer } from "./hooks/useCreateCustomer";
 import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import type { Customer } from "./customer.types";
+import { useToast } from "@/hooks/use-toast.hook";
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -63,6 +64,7 @@ interface FormValues {
 
 export default function CustomerForm({ customer }: CustomerFormProps) {
   const navigate = useNavigate();
+  const { success, error } = useToast();
   const isEditMode = !!customer;
 
   const [selectedFranchises, setSelectedFranchises] = useState<number[]>(
@@ -150,8 +152,9 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         };
 
         await updateCustomer(customer.id, updatePayload, () => {
-          alert(
-            `✅ Cập nhật khách hàng "${data.name || data.email}" thành công!`,
+          success(
+            "Cập nhật thành công",
+            `Khách hàng "${data.name || data.email}" đã được cập nhật.`,
           );
           navigate("/admin/customers");
         });
@@ -167,14 +170,19 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         };
 
         await createCustomer(createPayload, () => {
-          alert(
-            `✅ Tạo mới khách hàng "${data.name || data.email}" thành công!`,
+          success(
+            "Tạo mới thành công",
+            `Khách hàng "${data.name || data.email}" đã được tạo.`,
           );
           navigate("/admin/customers");
         });
       }
-    } catch (error) {
-      console.error("Submit error:", error);
+    } catch (err) {
+      console.error("Submit error:", err);
+      error(
+        "Có lỗi xảy ra",
+        err instanceof Error ? err.message : "Vui lòng thử lại sau.",
+      );
     }
   };
 
