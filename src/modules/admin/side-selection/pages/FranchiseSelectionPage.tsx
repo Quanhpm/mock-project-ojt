@@ -1,16 +1,18 @@
 import { useFranchiseSelection } from '../hooks/use-franchise-selection.hook'
 import { FranchiseCard } from '../components/FranchiseCard'
+import { GlobalRoleCard } from '../components/GlobalRoleCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { ErrorScreen } from '../components/ErrorScreen'
 
 function FranchiseSelectionPage() {
   const {
-    profile,
+    userName,
     loading,
     switching,
     error,
     franchiseRoles,
     handleSelectFranchise,
+    handleSelectGlobal,
     handleLogout,
   } = useFranchiseSelection()
 
