@@ -35,6 +35,7 @@ export const ROUTER_URL = {
   ADMIN: "/admin",
   ADMIN_ROUTER: {
     LOGIN: `/admin/login`,
+    VERIFY_EMAIL: `/verify-email/:token`,
     FORGOT_PASSWORD: `/admin/forgot-password`,
     DASHBOARD: `dashboard`,
     USER: `users`,
