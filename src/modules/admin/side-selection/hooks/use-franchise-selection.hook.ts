@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
-import type { ProfileResponse, UserRoleItem } from '@/apis/endpoints/auth.api'
+import type { UserRoleItem } from '@/apis/endpoints/auth.api'
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
 import { ROUTER_URL } from '@/routes/router.const'
 
@@ -9,7 +9,7 @@ const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}
 const ITEMS_PER_PAGE = 6
 
 interface UseFranchiseSelectionReturn {
-  profile: ProfileResponse | null
+  userName: string
   loading: boolean
   switching: string | null
   error: string | null
@@ -30,7 +30,6 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const storeRoles = useAdminAuthStore((s) => s.roles)
   const setProfile = useAdminAuthStore((s) => s.setProfile)
   const logout = useAdminAuthStore((s) => s.logout)
-  const [profile, setLocalProfile] = useState<ProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +51,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
           return
         }
 
-        setLocalProfile(data)
+        // Lưu vào store
         setProfile(data)
       } catch {
         setError('Đã xảy ra lỗi khi tải thông tin')
@@ -142,7 +141,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   }
 
   return {
-    profile,
+    userName: admin?.name ?? '',
     loading,
     switching,
     error,
@@ -152,6 +151,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     currentPage,
     totalPages,
     handleSelectFranchise,
+    handleSelectGlobal,
     handleLogout,
     handlePageChange,
   }
