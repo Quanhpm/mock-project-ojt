@@ -5,13 +5,13 @@ import { setupApi } from "@/apis";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
-import { 
-  AdminAuthRoutes, 
-  AdminRoutes, 
-  ClientAuthRoutes, 
-  ClientPublicRoutes, 
+import {
+  AdminAuthRoutes,
+  AdminRoutes,
+  ClientAuthRoutes,
+  ClientPublicRoutes,
   HomePrivateRoutes,
-  VerifyEmailRoute 
+  VerifyEmailRoute
 } from "./routes";
 import { ToasterComponent } from "@/components/ui/toast";
 
