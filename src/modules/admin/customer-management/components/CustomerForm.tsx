@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Upload, User } from "lucide-react";
-import { mockFranchises, customerFranchise } from "@/mockdata";
 import { useCreateCustomer } from "./hooks/useCreateCustomer";
 import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import type { Customer } from "./customer.types";
@@ -67,17 +66,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const { success, error } = useToast();
   const isEditMode = !!customer;
 
-  const [selectedFranchises, setSelectedFranchises] = useState<number[]>(
-    customer
-      ? customerFranchise
-          .filter(
-            (cf) =>
-              String(cf.customer_id) === String(customer.id) && cf.is_active,
-          )
-          .map((cf) => cf.franchise_id)
-      : [],
-  );
-
   // ============================================================================
   // REACT HOOK FORM SETUP
   // ============================================================================
@@ -125,14 +113,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         confirmPassword: "",
         isActive: customer.is_active ?? true,
       });
-
-      const franchiseIds = customerFranchise
-        .filter(
-          (cf) =>
-            String(cf.customer_id) === String(customer.id) && cf.is_active,
-        )
-        .map((cf) => cf.franchise_id);
-      setSelectedFranchises(franchiseIds);
     }
   }, [customer, reset]);
 
@@ -186,14 +166,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     }
   };
 
-  const toggleFranchise = (franchiseId: number) => {
-    setSelectedFranchises((prev) =>
-      prev.includes(franchiseId)
-        ? prev.filter((id) => id !== franchiseId)
-        : [...prev, franchiseId],
-    );
-  };
-
   return (
     <div
       style={{
@@ -232,8 +204,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
             {isEditMode
-              ? "Update customer information and franchise assignments."
-              : "Add a new customer with contact information and franchise assignments."}
+              ? "Update customer information."
+              : "Add a new customer with contact information."}
           </p>
         </div>
         <div style={{ display: "flex", gap: "12px" }}>
@@ -625,89 +597,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   </p>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Franchise Assignment */}
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "24px",
-              borderRadius: "12px",
-              marginBottom: "24px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "18px",
-                fontWeight: "600",
-                color: "#212529",
-                marginBottom: "16px",
-              }}
-            >
-              Franchise Assignment
-            </h2>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                gap: "12px",
-              }}
-            >
-              {mockFranchises.map((franchise) => (
-                <div
-                  key={franchise.id}
-                  style={{
-                    padding: "12px",
-                    border: selectedFranchises.includes(franchise.id)
-                      ? "2px solid #8B4513"
-                      : "1px solid #dee2e6",
-                    borderRadius: "8px",
-                    backgroundColor: selectedFranchises.includes(franchise.id)
-                      ? "#fff8f5"
-                      : "white",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onClick={() => toggleFranchise(franchise.id)}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedFranchises.includes(franchise.id)}
-                      onChange={() => toggleFranchise(franchise.id)}
-                      style={{ cursor: "pointer" }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "500",
-                        color: "#212529",
-                      }}
-                    >
-                      {franchise.name}
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      color: "#6c757d",
-                      margin: "4px 8px 0",
-                      marginLeft: "28px",
-                    }}
-                  >
-                    {franchise.code}
-                  </p>
-                </div>
-              ))}
             </div>
           </div>
 

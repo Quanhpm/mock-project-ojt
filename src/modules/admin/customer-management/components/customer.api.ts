@@ -84,7 +84,7 @@ export const customerApi = {
     payload: CustomerStatusPayload,
   ): Promise<Customer> => {
     const data = await httpClient.patch<Customer>({
-      url: `/customers/${id}`,
+      url: `/customers/${id}/status`,
       data: payload,
     });
     return data!; // Non-null assertion vì API này luôn trả về data
