@@ -1,131 +1,132 @@
-import { useParams } from "react-router-dom";
-import { customers, customerFranchise, mockFranchises } from "@/mockdata";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useGetCustomer } from "../components/hooks/useGetCustomer";
+import CustomerDetail from "../components/CustomerDetail";
 
 export default function CustomerDetailPage() {
-  const { id } = useParams();
-  const customer = customers.find(c => c.id === parseInt(id || ""));
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { customer, isLoading, error, fetchCustomer } = useGetCustomer();
 
-  if (!customer) {
+  // Gọi API lấy data
+  useEffect(() => {
+    if (id) {
+      fetchCustomer(id);
+    }
+  }, [id, fetchCustomer]);
+
+  // Trạng thái Loading
+  if (isLoading) {
     return (
-      <div style={{ padding: "24px", textAlign: "center", color: "#6c757d" }}>
-        Customer not found
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-amber-700 mb-4"></div>
+          <p className="text-lg font-semibold text-amber-700">
+            Đang tải dữ liệu chi tiết...
+          </p>
+        </div>
       </div>
     );
   }
 
-  const customerFranchises = customerFranchise
-    .filter(cf => cf.customer_id === customer.id && cf.is_active)
-    .map(cf => mockFranchises.find(f => f.id === cf.franchise_id))
-    .filter(Boolean);
+  // Trạng thái Lỗi API
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">❌</div>
+          <h2 className="text-2xl font-bold text-red-600 mb-2">
+            Đã xảy ra lỗi
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button
+            onClick={() => navigate("/admin/customers")}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
 
+  // Trạng thái Không tìm thấy
+  if (!customer) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🔍</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Không tìm thấy khách hàng
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Khách hàng này không tồn tại hoặc đã bị xóa.
+          </p>
+          <button
+            onClick={() => navigate("/admin/customers")}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Trạng thái Thành công -> Render UI với CustomerDetail component
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        Customers › <span style={{ color: "#212529" }}>Customer Detail</span>
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Breadcrumb & Back Button */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <button
+          onClick={() => navigate("/admin/customers")}
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Quay lại danh sách khách hàng</span>
+        </button>
+
+        <nav className="text-sm text-gray-500">
+          <span
+            className="cursor-pointer hover:text-gray-900 transition-colors"
+            onClick={() => navigate("/admin/customers")}
+          >
+            Customers
+          </span>
+          <span className="mx-2">›</span>
+          <span className="text-gray-900 font-medium">Customer Detail</span>
+        </nav>
       </div>
 
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "32px" }}>
-        <img
-          src={customer.avatar_url}
-          alt={customer.name}
-          style={{
-            width: "80px",
-            height: "80px",
-            borderRadius: "8px",
-            objectFit: "cover"
-          }}
-        />
-        <div>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
-            {customer.name}
-          </h1>
-          <p style={{ color: "#6c757d", margin: 0 }}>ID: {customer.id}</p>
-        </div>
-      </div>
+      {/* Customer Detail Component */}
+      <CustomerDetail
+        customer={{
+          email: customer.email || "",
+          name: customer.name,
+          phone: customer.phone,
+          avatar_url: customer.avatar_url || "",
+          address: customer.address || "Chưa cập nhật địa chỉ",
+          is_verified: customer.is_active || false,
+        }}
+      />
 
-      {/* Info Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px", marginBottom: "24px" }}>
-        {/* Email */}
-        <div style={{
-          backgroundColor: "white",
-          padding: "16px",
-          borderRadius: "12px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-        }}>
-          <p style={{ fontSize: "12px", color: "#6c757d", margin: "0 0 8px" }}>Email</p>
-          <p style={{ fontSize: "16px", fontWeight: "500", color: "#212529", margin: 0 }}>
-            {customer.email || "—"}
-          </p>
-        </div>
-
-        {/* Phone */}
-        <div style={{
-          backgroundColor: "white",
-          padding: "16px",
-          borderRadius: "12px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-        }}>
-          <p style={{ fontSize: "12px", color: "#6c757d", margin: "0 0 8px" }}>Phone</p>
-          <p style={{ fontSize: "16px", fontWeight: "500", color: "#212529", margin: 0 }}>
-            {customer.phone}
-          </p>
-        </div>
-
-        {/* Status */}
-        <div style={{
-          backgroundColor: "white",
-          padding: "16px",
-          borderRadius: "12px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-        }}>
-          <p style={{ fontSize: "12px", color: "#6c757d", margin: "0 0 8px" }}>Status</p>
-          <p style={{
-            fontSize: "16px",
-            fontWeight: "500",
-            margin: 0,
-            color: customer.is_active ? "#155724" : "#721c24"
-          }}>
-            {customer.is_active ? "🟢 Active" : "🔴 Inactive"}
-          </p>
-        </div>
-      </div>
-
-      {/* Franchises */}
-      <div style={{
-        backgroundColor: "white",
-        padding: "24px",
-        borderRadius: "12px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
-      }}>
-        <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#212529", margin: "0 0 16px" }}>
-          Assigned Franchises
-        </h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "12px" }}>
-          {customerFranchises.length > 0 ? (
-            customerFranchises.map(franchise => (
-              <div
-                key={franchise?.id}
-                style={{
-                  padding: "12px",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "8px",
-                  backgroundColor: "#f8f9fa"
-                }}
-              >
-                <p style={{ fontSize: "14px", fontWeight: "500", color: "#212529", margin: "0 0 4px" }}>
-                  {franchise?.name}
-                </p>
-                <p style={{ fontSize: "12px", color: "#6c757d", margin: 0 }}>
-                  {franchise?.code}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p style={{ color: "#6c757d", fontSize: "14px" }}>No franchises assigned</p>
-          )}
-        </div>
+      {/* Action Buttons */}
+      <div className="max-w-4xl mx-auto mt-6 flex flex-wrap gap-4 justify-center">
+        <button
+          onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+          className="px-6 py-3 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors font-medium shadow-md"
+        >
+          Chỉnh sửa thông tin
+        </button>
+        <button
+          onClick={() => navigate("/admin/customers")}
+          className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+        >
+          Quay lại
+        </button>
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2 } from "lucide-react";
-import { customers, mockFranchises, customerFranchise } from "@/mockdata";
 import CustomerDelete from "./CustomerDelete";
+import { useCustomers } from "./hooks/useCustomers";
+import { useCustomerStatus } from "./hooks/useCustomerStatus";
+import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
+import type { Customer } from "./customer.types";
 
 // ============================================================================
 // TYPES
@@ -173,40 +176,28 @@ const getButtonStyles = {
 };
 
 // ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-const getCustomerFranchiseIds = (customerId: number): number[] => {
-  return customerFranchise
-    .filter((cf) => cf.customer_id === customerId && cf.is_active)
-    .map((cf) => cf.franchise_id);
-};
-
-const getCustomerFranchiseNames = (customerId: number): string[] => {
-  const franchiseIds = getCustomerFranchiseIds(customerId);
-  return franchiseIds
-    .map((id) => mockFranchises.find((f) => f.id === id)?.name)
-    .filter(Boolean) as string[];
-};
-
-// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export default function CustomerTable() {
   const navigate = useNavigate();
+
+  // ========================================================================
+  // CUSTOM HOOKS
+  // ========================================================================
+  const { toggleStatus, updatingId } = useCustomerStatus();
+  const { deleteCustomer, isDeleting } = useDeleteCustomer();
+
+  // ========================================================================
+  // LOCAL STATE
+  // ========================================================================
   const [searchTerm, setSearchTerm] = useState("");
-  const [franchiseFilter, setFranchiseFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [customerStatus, setCustomerStatus] = useState<Record<number, boolean>>(
-    customers.reduce(
-      (acc, customer) => ({
-        ...acc,
-        [customer.id]: customer.is_active,
-      }),
-      {}
-    )
+  const [customerStatus, setCustomerStatus] = useState<Record<string, boolean>>(
+    {},
   );
   const [deleteModal, setDeleteModal] = useState<DeleteModal>({
     isOpen: false,
@@ -214,12 +205,19 @@ export default function CustomerTable() {
     customerName: "",
   });
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
+
+  // ========================================================================
+  // CUSTOM HOOK - API INTEGRATION
+  // ========================================================================
+  const { customers, pageData, isLoading, error, fetchCustomers } =
+    useCustomers();
 
   // ========================================================================
   // EFFECTS
   // ========================================================================
 
+  // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
@@ -227,20 +225,86 @@ export default function CustomerTable() {
     };
   }, []);
 
+  // Fetch customers when filters change
+  useEffect(() => {
+    const mapStatusFilter = (): boolean | null => {
+      if (statusFilter === "active") return true;
+      if (statusFilter === "inactive") return false;
+      return null; // "all" case
+    };
+
+    fetchCustomers({
+      searchCondition: {
+        keyword: searchTerm.trim(),
+        is_active: mapStatusFilter(),
+        is_deleted: false,
+      },
+      pageInfo: {
+        pageNum: currentPage,
+        pageSize: itemsPerPage,
+      },
+    });
+  }, [searchTerm, statusFilter, currentPage, fetchCustomers]);
+
   // ========================================================================
   // EVENT HANDLERS
   // ========================================================================
 
-  const handleToggleCustomerStatus = (customerId: number) => {
+  const handleToggleCustomerStatus = (customerId: string) => {
+    // Get current status from state or customer data
+    const currentStatus =
+      customerStatus[customerId] ??
+      customers.find((c) => c.id === customerId)?.is_active ??
+      false;
+
+    console.log(
+      `🎯 Toggle status clicked for customer ${customerId}. Current status: ${currentStatus}`,
+    );
+
+    // Optimistic UI update: Update state immediately
     setCustomerStatus((prev) => ({
       ...prev,
-      [customerId]: !prev[customerId],
+      [customerId]: !currentStatus,
     }));
+
+    // Call API to update customer status
+    toggleStatus(
+      customerId,
+      currentStatus,
+      () => {
+        // onSuccess - Refresh data để đồng bộ với server
+        console.log("✅ Toggle status success, refreshing data...");
+        const mapStatusFilter = (): boolean | null => {
+          if (statusFilter === "active") return true;
+          if (statusFilter === "inactive") return false;
+          return null;
+        };
+
+        fetchCustomers({
+          searchCondition: {
+            keyword: searchTerm.trim(),
+            is_active: mapStatusFilter(),
+            is_deleted: false,
+          },
+          pageInfo: {
+            pageNum: currentPage,
+            pageSize: itemsPerPage,
+          },
+        });
+      },
+      () => {
+        // onError - Rollback to previous state
+        console.log("❌ Toggle status failed, rolling back UI...");
+        setCustomerStatus((prev) => ({
+          ...prev,
+          [customerId]: currentStatus,
+        }));
+      },
+    );
   };
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setFranchiseFilter("all");
     setStatusFilter("all");
     setCurrentPage(1);
   };
@@ -254,8 +318,33 @@ export default function CustomerTable() {
   };
 
   const handleDeleteConfirm = () => {
-    alert(`Customer "${deleteModal.customerName}" has been deleted successfully!`);
-    setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
+    // Prevent double clicks
+    if (isDeleting) return;
+
+    // Call API to delete customer
+    deleteCustomer(deleteModal.customerId, () => {
+      // onSuccess: Close modal and refresh data
+      setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
+
+      // Refresh customer list with current filters
+      const mapStatusFilter = (): boolean | null => {
+        if (statusFilter === "active") return true;
+        if (statusFilter === "inactive") return false;
+        return null;
+      };
+
+      fetchCustomers({
+        searchCondition: {
+          keyword: searchTerm.trim(),
+          is_active: mapStatusFilter(),
+          is_deleted: false,
+        },
+        pageInfo: {
+          pageNum: currentPage,
+          pageSize: itemsPerPage,
+        },
+      });
+    });
   };
 
   const handleCloseDeleteModal = () => {
@@ -263,43 +352,10 @@ export default function CustomerTable() {
   };
 
   // ========================================================================
-  // FILTERS & PAGINATION
-  // ========================================================================
-
-  const filteredCustomers = customers.filter((customer) => {
-    const currentStatus = customerStatus[customer.id] ?? customer.is_active;
-    const customerFranchiseIds = getCustomerFranchiseIds(customer.id);
-
-    const matchesSearch =
-      searchTerm === "" ||
-      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesFranchise =
-      franchiseFilter === "all" ||
-      customerFranchiseIds.includes(parseInt(franchiseFilter));
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "active" && currentStatus) ||
-      (statusFilter === "inactive" && !currentStatus);
-
-    return matchesSearch && matchesFranchise && matchesStatus;
-  });
-
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentCustomers = filteredCustomers.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // ========================================================================
   // RENDER - TABLE ROW
   // ========================================================================
 
-  const renderTableRow = (customer: typeof customers[0], index: number) => {
+  const renderTableRow = (customer: Customer, index: number) => {
     const isActive = customerStatus[customer.id] ?? customer.is_active;
 
     return (
@@ -348,27 +404,6 @@ export default function CustomerTable() {
           {customer.phone}
         </td>
 
-        {/* Franchises */}
-        <td style={{ padding: "16px 20px" }}>
-          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-            {getCustomerFranchiseNames(customer.id).map((franchiseName, idx) => (
-              <span
-                key={idx}
-                style={{
-                  backgroundColor: "#dbeafe",
-                  color: "#1e40af",
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                }}
-              >
-                {franchiseName}
-              </span>
-            ))}
-          </div>
-        </td>
-
         {/* Status Toggle */}
         <td style={{ padding: "16px 20px" }}>
           <label style={getButtonStyles.toggleSwitch as React.CSSProperties}>
@@ -376,6 +411,7 @@ export default function CustomerTable() {
               type="checkbox"
               checked={isActive}
               onChange={() => handleToggleCustomerStatus(customer.id)}
+              disabled={updatingId === customer.id}
               style={getButtonStyles.toggleInput as React.CSSProperties}
             />
             <div
@@ -386,6 +422,8 @@ export default function CustomerTable() {
                 borderRadius: "12px",
                 transition: "background-color 0.3s",
                 position: "relative",
+                opacity: updatingId === customer.id ? 0.5 : 1,
+                cursor: updatingId === customer.id ? "not-allowed" : "pointer",
               }}
             >
               <div
@@ -407,14 +445,18 @@ export default function CustomerTable() {
 
         {/* Actions */}
         <td style={{ padding: "16px 20px", textAlign: "right" }}>
-          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+          <div
+            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
+          >
             {/* View Button */}
             <button
               onClick={() => navigate(`/admin/customers/${customer.id}`)}
-              style={{
-                ...getButtonStyles.actionButton,
-                color: "#4b5563",
-              } as React.CSSProperties}
+              style={
+                {
+                  ...getButtonStyles.actionButton,
+                  color: "#4b5563",
+                } as React.CSSProperties
+              }
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#e0f2fe";
                 e.currentTarget.style.color = "#0066cc";
@@ -431,10 +473,12 @@ export default function CustomerTable() {
             {/* Edit Button */}
             <button
               onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
-              style={{
-                ...getButtonStyles.actionButton,
-                color: "#4b5563",
-              } as React.CSSProperties}
+              style={
+                {
+                  ...getButtonStyles.actionButton,
+                  color: "#4b5563",
+                } as React.CSSProperties
+              }
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#fef3c7";
                 e.currentTarget.style.color = "#92400e";
@@ -453,10 +497,12 @@ export default function CustomerTable() {
               onClick={() =>
                 handleDeleteClick(customer.id.toString(), customer.name)
               }
-              style={{
-                ...getButtonStyles.actionButton,
-                color: "#4b5563",
-              } as React.CSSProperties}
+              style={
+                {
+                  ...getButtonStyles.actionButton,
+                  color: "#4b5563",
+                } as React.CSSProperties
+              }
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#fee2e2";
                 e.currentTarget.style.color = "#dc2626";
@@ -486,12 +532,29 @@ export default function CustomerTable() {
         {/* Header */}
         <header style={styles.header}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <nav style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#6c757d" }}>
-              <a href="#" style={{ color: "#6c757d", textDecoration: "none", transition: "color 0.2s" }}>
+            <nav
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "14px",
+                color: "#6c757d",
+              }}
+            >
+              <a
+                href="#"
+                style={{
+                  color: "#6c757d",
+                  textDecoration: "none",
+                  transition: "color 0.2s",
+                }}
+              >
                 Home
               </a>
               <span style={{ fontSize: "16px" }}>›</span>
-              <span style={{ color: "#212529", fontWeight: "500" }}>Customers</span>
+              <span style={{ color: "#212529", fontWeight: "500" }}>
+                Customers
+              </span>
             </nav>
           </div>
           <div
@@ -503,7 +566,9 @@ export default function CustomerTable() {
               gap: "16px",
             }}
           >
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
               <h1
                 style={{
                   fontSize: "36px",
@@ -516,7 +581,7 @@ export default function CustomerTable() {
                 Customer Management
               </h1>
               <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
-                Total Customers: {customers.length}
+                Total Customers: {pageData?.totalItems || 0}
               </p>
             </div>
             <button
@@ -524,11 +589,13 @@ export default function CustomerTable() {
               style={getButtonStyles.primary as React.CSSProperties}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#6d4423";
-                e.currentTarget.style.boxShadow = "0 4px 8px rgba(139, 90, 43, 0.3)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 8px rgba(139, 90, 43, 0.3)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "#8B5A2B";
-                e.currentTarget.style.boxShadow = "0 2px 4px rgba(139, 90, 43, 0.2)";
+                e.currentTarget.style.boxShadow =
+                  "0 2px 4px rgba(139, 90, 43, 0.2)";
               }}
             >
               <span style={{ fontSize: "20px" }}>+</span>
@@ -562,29 +629,13 @@ export default function CustomerTable() {
               />
             </div>
 
-            <div style={{ minWidth: "180px" }}>
-              <select
-                value={franchiseFilter}
-                onChange={(e) => {
-                  setFranchiseFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                style={getButtonStyles.filterInput as React.CSSProperties}
-              >
-                <option value="all">All Franchises</option>
-                {mockFranchises.map((franchise) => (
-                  <option key={franchise.id} value={franchise.id}>
-                    {franchise.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div style={{ minWidth: "140px" }}>
               <select
                 value={statusFilter}
                 onChange={(e) => {
-                  setStatusFilter(e.target.value);
+                  setStatusFilter(
+                    e.target.value as "all" | "active" | "inactive",
+                  );
                   setCurrentPage(1);
                 }}
                 style={getButtonStyles.filterInput as React.CSSProperties}
@@ -595,7 +646,7 @@ export default function CustomerTable() {
               </select>
             </div>
 
-            {(searchTerm || franchiseFilter !== "all" || statusFilter !== "all") && (
+            {(searchTerm || statusFilter !== "all") && (
               <button
                 onClick={handleClearFilters}
                 style={getButtonStyles.clearFilter as React.CSSProperties}
@@ -616,35 +667,150 @@ export default function CustomerTable() {
             <table style={styles.table}>
               <thead style={styles.tableHead}>
                 <tr>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <th
+                    style={{
+                      padding: "16px 20px",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      fontSize: "13px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
                     Name
                   </th>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <th
+                    style={{
+                      padding: "16px 20px",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      fontSize: "13px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
                     Email
                   </th>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <th
+                    style={{
+                      padding: "16px 20px",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      fontSize: "13px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
                     Phone
                   </th>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                    Franchises
-                  </th>
-                  <th style={{ padding: "16px 20px", textAlign: "left", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <th
+                    style={{
+                      padding: "16px 20px",
+                      textAlign: "left",
+                      fontWeight: "700",
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      fontSize: "13px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
                     Status
                   </th>
-                  <th style={{ padding: "16px 20px", textAlign: "right", fontWeight: "700", color: "#6b7280", whiteSpace: "nowrap", fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <th
+                    style={{
+                      padding: "16px 20px",
+                      textAlign: "right",
+                      fontWeight: "700",
+                      color: "#6b7280",
+                      whiteSpace: "nowrap",
+                      fontSize: "13px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {currentCustomers.length > 0 ? (
-                  currentCustomers.map((customer, index) =>
-                    renderTableRow(customer, index)
-                  )
-                ) : (
+                {/* Loading State */}
+                {isLoading && (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
+                      style={{
+                        padding: "48px 20px",
+                        textAlign: "center",
+                        color: "#6b7280",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          color: "#8B5A2B",
+                        }}
+                      >
+                        Đang tải dữ liệu khách hàng...
+                      </div>
+                    </td>
+                  </tr>
+                )}
+
+                {/* Error State */}
+                {!isLoading && error && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        padding: "48px 20px",
+                        textAlign: "center",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: "600",
+                          marginBottom: "8px",
+                          color: "#dc2626",
+                        }}
+                      >
+                        ❌ Có lỗi xảy ra
+                      </div>
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          margin: "0",
+                          color: "#dc2626",
+                        }}
+                      >
+                        {error}
+                      </p>
+                    </td>
+                  </tr>
+                )}
+
+                {/* Data State */}
+                {!isLoading && !error && customers?.length > 0 && (
+                  <>
+                    {customers.map((customer, index) =>
+                      renderTableRow(customer, index),
+                    )}
+                  </>
+                )}
+
+                {/* Empty State */}
+                {!isLoading && !error && customers?.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
                       style={{
                         padding: "48px 20px",
                         textAlign: "center",
@@ -661,7 +827,13 @@ export default function CustomerTable() {
                       >
                         No customers found
                       </div>
-                      <p style={{ fontSize: "14px", margin: "0", color: "#6b7280" }}>
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          margin: "0",
+                          color: "#6b7280",
+                        }}
+                      >
                         Try adjusting your filters or create a new customer.
                       </p>
                     </td>
@@ -672,26 +844,32 @@ export default function CustomerTable() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {!isLoading && !error && pageData && pageData.totalPages > 1 && (
             <div style={styles.paginationContainer}>
               <span style={{ color: "#6b7280", fontWeight: "600" }}>
-                Showing {startIndex + 1} to{" "}
-                {Math.min(startIndex + itemsPerPage, filteredCustomers.length)} of{" "}
-                {filteredCustomers.length} customers
+                Showing {(pageData.pageNum - 1) * pageData.pageSize + 1} to{" "}
+                {Math.min(
+                  pageData.pageNum * pageData.pageSize,
+                  pageData.totalItems,
+                )}{" "}
+                of {pageData.totalItems} customers
               </span>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              <div
+                style={{ display: "flex", gap: "8px", alignItems: "center" }}
+              >
                 {/* Previous Button */}
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  style={{
-                    ...getButtonStyles.pagination,
-                    backgroundColor:
-                      currentPage === 1 ? "#f3f4f6" : "#ffffff",
-                    color: currentPage === 1 ? "#9ca3af" : "#374151",
-                    cursor:
-                      currentPage === 1 ? "not-allowed" : "pointer",
-                  } as React.CSSProperties}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === 1 ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === 1 ? "#9ca3af" : "#374151",
+                      cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    } as React.CSSProperties
+                  }
                   onMouseEnter={(e) => {
                     if (currentPage !== 1) {
                       e.currentTarget.style.backgroundColor = "#f9fafb";
@@ -709,62 +887,77 @@ export default function CustomerTable() {
                 </button>
 
                 {/* Page Numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={{
+                {Array.from(
+                  { length: pageData.totalPages },
+                  (_, i) => i + 1,
+                ).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    style={
+                      {
                         ...getButtonStyles.pagination,
                         backgroundColor:
                           currentPage === page ? "#8B5A2B" : "#ffffff",
                         color: currentPage === page ? "#ffffff" : "#374151",
                         fontWeight:
-                          currentPage === page ? ("700" as const) : ("600" as const),
+                          currentPage === page
+                            ? ("700" as const)
+                            : ("600" as const),
                         minWidth: "40px",
                         textAlign: "center" as const,
-                      } as React.CSSProperties}
-                      onMouseEnter={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#f9fafb";
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#ffffff";
-                          e.currentTarget.style.borderColor = "#e5e7eb";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
+                      } as React.CSSProperties
+                    }
+                    onMouseEnter={(e) => {
+                      if (currentPage !== page) {
+                        e.currentTarget.style.backgroundColor = "#f9fafb";
+                        e.currentTarget.style.borderColor = "#d1d5db";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== page) {
+                        e.currentTarget.style.backgroundColor = "#ffffff";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                      }
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
 
                 {/* Next Button */}
                 <button
                   onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    setCurrentPage(
+                      Math.min(pageData.totalPages, currentPage + 1),
+                    )
                   }
-                  disabled={currentPage === totalPages}
-                  style={{
-                    ...getButtonStyles.pagination,
-                    backgroundColor:
-                      currentPage === totalPages ? "#f3f4f6" : "#ffffff",
-                    color:
-                      currentPage === totalPages ? "#9ca3af" : "#374151",
-                    cursor:
-                      currentPage === totalPages ? "not-allowed" : "pointer",
-                  } as React.CSSProperties}
+                  disabled={currentPage === pageData.totalPages}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === pageData.totalPages
+                          ? "#f3f4f6"
+                          : "#ffffff",
+                      color:
+                        currentPage === pageData.totalPages
+                          ? "#9ca3af"
+                          : "#374151",
+                      cursor:
+                        currentPage === pageData.totalPages
+                          ? "not-allowed"
+                          : "pointer",
+                    } as React.CSSProperties
+                  }
                   onMouseEnter={(e) => {
-                    if (currentPage !== totalPages) {
+                    if (currentPage !== pageData.totalPages) {
                       e.currentTarget.style.backgroundColor = "#f9fafb";
                       e.currentTarget.style.borderColor = "#d1d5db";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (currentPage !== totalPages) {
+                    if (currentPage !== pageData.totalPages) {
                       e.currentTarget.style.backgroundColor = "#ffffff";
                       e.currentTarget.style.borderColor = "#e5e7eb";
                     }
@@ -785,6 +978,7 @@ export default function CustomerTable() {
         onConfirm={handleDeleteConfirm}
         customerName={deleteModal.customerName}
         customerId={deleteModal.customerId}
+        isDeleting={isDeleting}
       />
     </div>
   );
