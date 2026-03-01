@@ -2,6 +2,7 @@ import axios from "axios";
 import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/config";
 import { HttpError, type ApiErrorResponse } from "./http.types";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
 // ======================== Axios Instance ========================
 
@@ -53,6 +54,15 @@ const responseInterceptor = () => {
         _retry?: boolean;
       };
 
+      // ──────── Network error (no response) ────────
+      if (!error.response) {
+        throw new HttpError({
+          status: 0,
+          message: "Network error. Please check your connection.",
+          code: "NETWORK_ERROR",
+        });
+      }
+
       const status = error.response?.status ?? 0;
       const data = error.response?.data;
       const errorCode = data?.code ?? data?.message ?? "";
@@ -87,6 +97,19 @@ const responseInterceptor = () => {
 
           return axiosClient(originalRequest);
         } catch (refreshError) {
+          // ❌ Refresh token bị 401 → logout
+          if (originalRequest.url?.includes('/auth/refresh-token')) {
+            const { logout } = useAdminAuthStore.getState();
+            await logout();
+            window.location.href = '/admin/login';
+
+            throw new HttpError({
+              status: 401,
+              message: "Session expired. Please login again.",
+              code: "REFRESH_TOKEN_FAILED",
+            });
+          }
+
           // Refresh thất bại → reject tất cả queue
           processQueue(refreshError);
 

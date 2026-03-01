@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { verifyEmail } from '@/apis/endpoints/auth.api'
+import { HttpError } from '@/apis/http.types'
 import { ROUTER_URL } from '@/routes/router.const'
 import { showToast } from '@/components/ui/toast'
 
@@ -32,9 +33,13 @@ const VerifyUserEmailPage: React.FC = () => {
             setTimeout(() => {
                 navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
             }, 2000)
-        } catch (error: any) {
+        } catch (error) {
             setStatus('error')
-            const msg = error?.response?.data?.message || error?.message || 'Failed to verify email.'
+            const msg = error instanceof HttpError
+                ? error.message
+                : error instanceof Error
+                ? error.message
+                : 'Failed to verify email.'
             setErrorMessage(msg)
             showToast(msg, 'error', {
                 description: 'Verification Failed'

@@ -17,14 +17,9 @@ export const useClientLogin = () => {
     try {
       const response = await loginCustomer(data);
       
-      // Debug: Log response structure
-      console.log("🔍 Login Response:", response.data);
-      
       // Handle different response structures
       const userData = response.data?.data?.user || response.data?.user || response.data;
       const message = response.data?.message || "Đăng nhập thành công";
-      
-      console.log("✅ User Data:", userData);
       
       if (!userData) {
         throw new Error("Invalid response structure from server");
