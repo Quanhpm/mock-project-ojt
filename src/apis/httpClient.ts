@@ -75,7 +75,6 @@ export const httpClient: HttpClient = {
     });
     return res.data.data;
   },
-
   async search<T, D>(config: HttpRequestConfig<D>): Promise<SearchResponse<T>> {
     const res = await axiosClient.post<SearchResponse<T>>(
       config.url,
@@ -83,5 +82,5 @@ export const httpClient: HttpClient = {
       { headers: config.headers },
     );
     return res.data;
-  },
+  }
 };

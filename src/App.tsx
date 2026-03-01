@@ -2,6 +2,7 @@ import Loading from "@/layouts/LoadingLayout/LoadingLayout";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { AuthProvider } from "@/modules/client/auth-client";
 import { setupApi } from "@/apis";
+import { HttpError } from "@/apis/http.types";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
@@ -24,7 +25,12 @@ const App = () => {
 
   // Admin hydrate từ API (cookie)
   useEffect(() => {
-    adminHydrate();
+    adminHydrate().catch((error) => {
+      // Nếu lần đầu hydrate fail (refresh token expired) → redirect login
+      if (error instanceof HttpError && error.code === "REFRESH_TOKEN_FAILED") {
+        window.location.href = '/admin/login';
+      }
+    });
   }, [adminHydrate]);
 
   return (

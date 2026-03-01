@@ -16,7 +16,6 @@ export function CloudinaryUploadExample() {
     try {
       const url = await uploadImage(file, 'ojt-project/images');
       setPreviewUrl(url);
-      console.log('Upload successful:', url);
     } catch (err) {
       console.error('Upload failed:', err);
     }

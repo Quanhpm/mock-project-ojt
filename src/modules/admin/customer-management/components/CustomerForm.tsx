@@ -78,10 +78,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
       updated_at: new Date().toISOString(),
     };
     
-    // Log the data (in a real app, you would send this to an API)
-    console.log("Customer data:", customerData);
-    console.log("Selected franchises:", selectedFranchises);
-    
     const actionText = isEditMode ? "updated" : "created";
     alert(`Customer "${formData.name}" has been ${actionText} successfully!`);
     navigate("/admin/customers");
