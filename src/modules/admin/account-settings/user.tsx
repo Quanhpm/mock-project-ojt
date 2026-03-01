@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -10,9 +10,13 @@ import {
   Eye,
   EyeOff,
   Save,
+  Phone,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { useChangePassword } from "./hooks/use-change-password.hook";
+import { useUpdateProfile } from "./hooks/use-update-profile.hook";
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
@@ -20,9 +24,10 @@ import {
 
 // ==================== INTERFACES ====================
 interface UserProfile {
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
+  phone: string;
+  avatar_url: string;
   role: string;
 }
 
@@ -121,13 +126,36 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
 // ==================== MAIN COMPONENT ====================
 
 const AccountSettingsPage: React.FC = () => {
-  // Profile state
+  // ==================== Zustand Store ====================
+  const { admin, roles, hydrate } = useAdminAuthStore();
+
+  // ==================== Profile State ====================
   const [userProfile, setUserProfile] = useState<UserProfile>({
-    firstName: "Alex",
-    lastName: "Morgan",
-    email: "alex.morgan@brewadmin.com",
-    role: "Super Admin",
+    name: "",
+    email: "",
+    phone: "",
+    avatar_url: "",
+    role: "",
   });
+
+  // Đồng bộ state từ Zustand store khi admin thay đổi
+  useEffect(() => {
+    if (admin) {
+      const roleLabel = roles.length > 0 ? roles[0].role : "User";
+      setUserProfile({
+        name: admin.name || "",
+        email: admin.email || "",
+        phone: admin.phone || "",
+        avatar_url: admin.avatar_url || "",
+        role: roleLabel,
+      });
+    }
+  }, [admin, roles]);
+
+  // ==================== Avatar Upload State ====================
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   // Security form with react-hook-form and Zod
   const {
@@ -147,29 +175,73 @@ const AccountSettingsPage: React.FC = () => {
   // Hooks
   const { success, error: showError } = useToast();
   const { changePassword, isLoading: isChangingPassword } = useChangePassword();
+  const { updateProfile, isLoading: isUpdatingProfile, isUploading } =
+    useUpdateProfile();
 
   // UI state
   const [isEditing, setIsEditing] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Handlers
-  const handleProfileSave = (e: React.FormEvent) => {
+  // ==================== Handlers ====================
+
+  /** Xử lý chọn file ảnh */
+  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      showError("Vui lòng chọn file ảnh (jpg, png, webp...)");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showError("Ảnh không được vượt quá 5MB");
+      return;
+    }
+
+    setAvatarFile(file);
+    // Tạo preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+  };
+
+  /** Lưu profile: Upload ảnh lên Cloudinary + gọi API cập nhật */
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Profile saved:", userProfile);
-      setIsLoading(false);
+
+    if (!admin?.id) {
+      showError("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
+      return;
+    }
+
+    const result = await updateProfile(
+      admin.id,
+      {
+        email: userProfile.email,
+        name: userProfile.name,
+        phone: userProfile.phone,
+        avatar_url: userProfile.avatar_url,
+      },
+      avatarFile
+    );
+
+    if (result.success) {
+      success(result.message);
       setIsEditing(false);
-      // Add toast notification here
-    }, 1000);
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      // Re-hydrate store để cập nhật thông tin mới nhất
+      await hydrate();
+    } else {
+      showError(result.message, "Cập nhật thất bại");
+    }
   };
 
   const handlePasswordUpdate = async (data: ChangePasswordFormValues) => {
-    // Gọi API changePassword với payload đúng cấu trúc
     const result = await changePassword({
       old_password: data.currentPassword,
       new_password: data.newPassword,
@@ -177,7 +249,7 @@ const AccountSettingsPage: React.FC = () => {
 
     if (result.success) {
       success(result.message);
-      resetSecurityForm(); // Reset form về trạng thái ban đầu
+      resetSecurityForm();
       setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
@@ -188,12 +260,31 @@ const AccountSettingsPage: React.FC = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset to original values if needed
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    // Reset về dữ liệu gốc từ store
+    if (admin) {
+      const roleLabel = roles.length > 0 ? roles[0].role : "User";
+      setUserProfile({
+        name: admin.name || "",
+        email: admin.email || "",
+        phone: admin.phone || "",
+        avatar_url: admin.avatar_url || "",
+        role: roleLabel,
+      });
+    }
   };
 
   const getUserInitials = () => {
-    return `${userProfile.firstName[0]}${userProfile.lastName[0]}`.toUpperCase();
+    const parts = userProfile.name.trim().split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return userProfile.name ? userProfile.name[0].toUpperCase() : "?";
   };
+
+  /** URL hiển thị avatar: preview file mới > avatar_url từ API > null */
+  const displayAvatarUrl = avatarPreview || userProfile.avatar_url || null;
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] p-6 lg:p-8">
@@ -216,13 +307,30 @@ const AccountSettingsPage: React.FC = () => {
               <div className="flex flex-col items-center">
                 {/* Avatar with Camera Icon */}
                 <div className="relative group mb-6">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center shadow-md">
-                    <span className="text-white font-bold text-4xl">
-                      {getUserInitials()}
-                    </span>
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-amber-700 to-amber-900 flex items-center justify-center shadow-md overflow-hidden">
+                    {displayAvatarUrl ? (
+                      <img
+                        src={displayAvatarUrl}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-4xl">
+                        {getUserInitials()}
+                      </span>
+                    )}
                   </div>
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarSelect}
+                  />
                   <button
                     type="button"
+                    onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110"
                     aria-label="Upload photo"
                   >
@@ -232,7 +340,7 @@ const AccountSettingsPage: React.FC = () => {
 
                 {/* User Info */}
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {userProfile.firstName} {userProfile.lastName}
+                  {userProfile.name}
                 </h3>
                 <span className="inline-block px-4 py-1.5 bg-amber-100 text-amber-800 text-sm font-medium rounded-full">
                   {userProfile.role}
@@ -274,41 +382,47 @@ const AccountSettingsPage: React.FC = () => {
               {/* Card Body - Form */}
               <form onSubmit={handleProfileSave} className="p-6">
                 <div className="space-y-5">
-                  {/* First Name & Last Name */}
+                  {/* Name & Phone */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <LabeledInputWithIcon
-                      label="First Name"
+                      label="Họ và Tên"
                       icon={<User size={18} />}
-                      value={userProfile.firstName}
+                      value={userProfile.name}
                       onChange={(val) =>
-                        setUserProfile({ ...userProfile, firstName: val })
+                        setUserProfile({ ...userProfile, name: val })
                       }
                       disabled={!isEditing}
+                      placeholder="Nhập họ và tên"
                       required
                     />
                     <LabeledInputWithIcon
-                      label="Last Name"
-                      icon={<User size={18} />}
-                      value={userProfile.lastName}
+                      label="Số điện thoại"
+                      icon={<Phone size={18} />}
+                      value={userProfile.phone}
                       onChange={(val) =>
-                        setUserProfile({ ...userProfile, lastName: val })
+                        setUserProfile({ ...userProfile, phone: val })
                       }
                       disabled={!isEditing}
+                      placeholder="0123456789"
                       required
                     />
                   </div>
 
-                  {/* Email Address */}
+                  {/* Email Address (disabled) */}
                   <LabeledInputWithIcon
-                    label="Email Address"
+                    label="Email"
                     icon={<Mail size={18} />}
                     value={userProfile.email}
-                    onChange={(val) =>
-                      setUserProfile({ ...userProfile, email: val })
-                    }
                     type="email"
                     disabled={true}
                   />
+
+                  {/* Avatar file đã chọn */}
+                  {avatarFile && (
+                    <p className="text-sm text-amber-700">
+                      Ảnh đã chọn: <strong>{avatarFile.name}</strong>
+                    </p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
@@ -318,16 +432,23 @@ const AccountSettingsPage: React.FC = () => {
                       type="button"
                       onClick={handleCancel}
                       className="px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                      disabled={isLoading}
+                      disabled={isUpdatingProfile}
                     >
-                      Cancel
+                      Hủy
                     </button>
                     <button
                       type="submit"
-                      disabled={isLoading}
-                      className="px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isUpdatingProfile}
+                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "Saving..." : "Save Changes"}
+                      {isUpdatingProfile && (
+                        <Loader2 size={16} className="animate-spin" />
+                      )}
+                      {isUploading
+                        ? "Đang upload ảnh..."
+                        : isUpdatingProfile
+                          ? "Đang lưu..."
+                          : "Lưu thay đổi"}
                     </button>
                   </div>
                 )}
