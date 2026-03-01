@@ -84,6 +84,12 @@ const responseInterceptor = () => {
         });
       }
 
+      // ──────── Cancelled request (AbortController / component unmount) ────────
+      if (axios.isCancel(error)) {
+        // Request bị cancel chủ động — không throw error, chỉ reject với null
+        return Promise.reject(null);
+      }
+
       // ──────── Network error (no response) ────────
       if (!error.response) {
         throw new HttpError({

@@ -76,23 +76,30 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     }
   }, [user])
 
-  // Fetch franchises khi mở modal
+  // Fetch franchises khi mở tab role
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || activeTab !== 'role') return
+    let cancelled = false
     const fetchFranchises = async () => {
       setIsFranchisesLoading(true)
       try {
         const data = await getFranchisesForSelect()
-        setFranchises(data ?? [])
+        if (!cancelled) {
+          setFranchises(data ?? [])
+        }
       } catch (err) {
-        console.error('Failed to fetch franchises:', err)
-        setFranchises([])
+        if (err === null) return // bị cancel — bỏ qua
+        if (!cancelled) {
+          console.error('Failed to fetch franchises:', err)
+          setFranchises([])
+        }
       } finally {
-        setIsFranchisesLoading(false)
+        if (!cancelled) setIsFranchisesLoading(false)
       }
     }
     fetchFranchises()
-  }, [isOpen])
+    return () => { cancelled = true }
+  }, [isOpen, activeTab])
 
   if (!isOpen || !user) return null
 

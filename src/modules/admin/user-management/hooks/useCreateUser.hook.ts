@@ -41,22 +41,30 @@ export const useCreateUser = (onSuccess?: () => void): UseCreateUserReturn => {
     const [franchises, setFranchises] = useState<FranchiseSelectItem[]>([])
     const [isFranchisesLoading, setIsFranchisesLoading] = useState(false)
 
-    // ──────── Fetch franchises khi mount ────────
+    // ──────── Fetch franchises khi sang bước 2 ────────
     useEffect(() => {
+        if (currentStep !== 2) return
+        let cancelled = false
         const fetchFranchises = async () => {
             setIsFranchisesLoading(true)
             try {
                 const data = await getFranchisesForSelect()
-                setFranchises(data ?? [])
+                if (!cancelled) {
+                    setFranchises(data ?? [])
+                }
             } catch (err) {
-                console.error('Failed to fetch franchises:', err)
-                setFranchises([])
+                if (err === null) return // bị cancel — bỏ qua
+                if (!cancelled) {
+                    console.error('Failed to fetch franchises:', err)
+                    setFranchises([])
+                }
             } finally {
-                setIsFranchisesLoading(false)
+                if (!cancelled) setIsFranchisesLoading(false)
             }
         }
         fetchFranchises()
-    }, [])
+        return () => { cancelled = true }
+    }, [currentStep])
 
     // ──────── Step 1: Tạo user ────────
     const handleCreateUser = useCallback(async (payload: CreateUserRequest) => {
