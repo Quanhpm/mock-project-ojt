@@ -6,6 +6,16 @@ export interface ApiSuccessResponse<T> {
   data: T | null;
 }
 
+// ======================== API Error Constants ========================
+
+/** Constants cho các error codes từ backend */
+export const API_ERROR_CODES = {
+  ACCESS_TOKEN_EXPIRED: "ACCESS_TOKEN_EXPIRED",
+  REFRESH_TOKEN_FAILED: "REFRESH_TOKEN_FAILED",
+  NETWORK_ERROR: "NETWORK_ERROR",
+  NOT_AUTHENTICATED: "NOT_AUTHENTICATED",
+} as const;
+
 /** Thông tin phân trang trả về từ Search API */
 export interface PageInfo {
   pageNum: number;

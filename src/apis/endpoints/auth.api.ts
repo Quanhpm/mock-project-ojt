@@ -1,5 +1,6 @@
 // Auth API endpoints
 import { httpClient } from "@/apis/httpClient";
+import { HttpError } from "@/apis/http.types";
 
 // ======================== Types ========================
 
@@ -46,9 +47,18 @@ export const login = (data: LoginRequest): Promise<null> => {
 };
 
 /** GET /api/auth - Lấy thông tin user hiện tại */
-export const getProfile = (): Promise<ProfileResponse | null> => {
+export const getProfile = (): Promise<ProfileResponse> => {
   return httpClient.get<ProfileResponse>({
     url: "/auth",
+  }).then((profile) => {
+    if (!profile) {
+      throw new HttpError({
+        status: 401,
+        message: "Not authenticated",
+        code: "NOT_AUTHENTICATED",
+      });
+    }
+    return profile;
   });
 };
 

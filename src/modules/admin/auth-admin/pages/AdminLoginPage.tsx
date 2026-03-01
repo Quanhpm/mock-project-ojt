@@ -1,8 +1,34 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLoginForm } from "../components/AdminLoginForm";
 import { useAdminLogin } from "../hooks/use-admin-login.hook";
+import { useAdminAuthStore, getRoleCode } from "../stores/admin-auth.store";
+import { ROUTER_URL } from "@/routes/router.const";
 
 export default function AdminLoginPage() {
+  const navigate = useNavigate();
   const { handleLogin, loading, errorMessage } = useAdminLogin();
+  
+  // ✅ Check if user is already logged in
+  const store = useAdminAuthStore();
+  const roleCode = getRoleCode(store);
+  const isLoggedIn = !!(store.admin && roleCode);
+  
+  // ✅ Auto-redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      // User đã đăng nhập → redirect đến select-franchise hoặc dashboard
+      navigate(
+        `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
+        { replace: true }
+      );
+    }
+  }, [isLoggedIn, navigate]);
+
+  // ✅ Don't render login form if already logged in
+  if (isLoggedIn) {
+    return null; // hoặc có thể return loading spinner
+  }
 
   return (
     <>
