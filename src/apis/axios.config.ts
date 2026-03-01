@@ -43,6 +43,26 @@ export const setupApi = () => {
 
 // ======================== Response Interceptor ========================
 
+/**
+ * Tạo clean config mới từ originalRequest để retry.
+ * QUAN TRỌNG: KHÔNG reuse originalRequest trực tiếp vì Axios đã serialize
+ * headers cũ (bao gồm stale cookies) vào object đó. Khi tạo config mới,
+ * Axios sẽ build lại headers từ đầu và browser sẽ attach cookie mới
+ * (access_token vừa được refresh) vào retry request.
+ */
+const buildRetryConfig = (
+  originalRequest: InternalAxiosRequestConfig & { _retry?: boolean },
+) => {
+  return {
+    method: originalRequest.method,
+    url: originalRequest.url,
+    data: originalRequest.data,
+    params: originalRequest.params,
+    withCredentials: true, // Bắt buộc để browser gửi cookie mới
+    _retry: true,
+  };
+};
+
 const responseInterceptor = () => {
   axiosClient.interceptors.response.use(
     // ✅ Thành công → trả response bình thường
@@ -90,45 +110,43 @@ const responseInterceptor = () => {
 
         // Race condition protection: Double-check isRefreshing
         if (isRefreshing) {
-          console.log("[Interceptor] Already refreshing, adding to queue");
           return new Promise<void>((resolve, reject) => {
             refreshQueue.push({ resolve, reject });
-          }).then(() => {
-            // ✅ Clear old Authorization header trước retry
-            delete originalRequest.headers?.Authorization;
-            return axiosClient(originalRequest);
-          });
+          }).then(() => axiosClient(buildRetryConfig(originalRequest)));
         }
 
-        // Bắt đầu refresh - Set flag immediately
-        console.log("[Interceptor] Starting token refresh...");
         isRefreshing = true;
 
         try {
-          // Gọi API refresh (cookie refresh_token tự gửi) - GET method
-          console.log("[Interceptor] Calling GET /auth/refresh-token...");
-          await axios.get(`${ENV.API_URL}/auth/refresh-token`, {
-            withCredentials: true,
+          // Gọi API refresh bằng fetch
+          // ⚠️ cache: 'no-store' BẮT BUỘC — không có thì browser trả 304 (cached)
+          // và 304 KHÔNG xử lý Set-Cookie → access_token mới không được set
+          const refreshResponse = await fetch(`${ENV.API_URL}/auth/refresh-token`, {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",  // Tránh 304 — luôn lấy response mới từ server
           });
 
-          console.log("[Interceptor] Token refresh SUCCESS");
+          if (!refreshResponse.ok) {
+            throw new Error(`Refresh failed with status ${refreshResponse.status}`);
+          }
+
+          // ⏱️ Chờ browser xử lý Set-Cookie từ cross-origin response
+          await new Promise((resolve) => setTimeout(resolve, 100));
+
           // Refresh thành công → retry tất cả request đang chờ
           processQueue();
 
-          // ✅ Clear old Authorization header trước retry
-          if (originalRequest.headers) {
-            delete originalRequest.headers.Authorization;
-          }
-          return axiosClient(originalRequest);
+          return axiosClient(buildRetryConfig(originalRequest));
         } catch (refreshError) {
           console.error("[Interceptor] Token refresh FAILED:", refreshError);
-          
+
           // ❌ Refresh token fail → logout và redirect login
           processQueue(refreshError);
-          
+
           const { logout } = useAdminAuthStore.getState();
           await logout();
-          
+
           // Use replace to prevent back button issues
           window.location.replace('/admin/login');
 
@@ -138,13 +156,8 @@ const responseInterceptor = () => {
             code: "REFRESH_TOKEN_FAILED",
           });
         } finally {
-          console.log("[Interceptor] Refresh process completed, resetting flag");
           isRefreshing = false;
-          // Clear queue in case of any remaining items
-          if (refreshQueue.length > 0) {
-            console.warn("[Interceptor] Queue not empty after refresh, clearing...");
-            refreshQueue = [];
-          }
+          refreshQueue = [];
         }
       }
 
