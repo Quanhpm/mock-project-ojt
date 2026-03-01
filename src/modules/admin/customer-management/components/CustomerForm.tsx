@@ -122,13 +122,12 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const onSubmit = async (data: FormValues) => {
     try {
       if (isEditMode) {
-        // UPDATE MODE: Không gửi password
+        // UPDATE MODE: Không gửi password và is_active (API CUSTOMER-05 không yêu cầu)
         const updatePayload = {
           email: data.email,
           phone: data.phone,
           name: data.name,
           avatar_url: data.avatarUrl,
-          is_active: data.isActive,
         };
 
         await updateCustomer(customer.id, updatePayload, () => {
@@ -600,87 +599,89 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
             </div>
           </div>
 
-          {/* Status */}
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "24px",
-              borderRadius: "12px",
-              marginBottom: "24px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-            }}
-          >
+          {/* Status - CHỈ HIỂN THỊ KHI TẠO MỚI */}
+          {!isEditMode && (
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                backgroundColor: "white",
+                padding: "24px",
+                borderRadius: "12px",
+                marginBottom: "24px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               }}
             >
-              <div>
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    color: "#212529",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Active Status
-                </h3>
-                <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>
-                  Mark this customer as active or inactive
-                </p>
-              </div>
-              <label
+              <div
                 style={{
-                  position: "relative",
-                  display: "inline-block",
-                  width: "50px",
-                  height: "24px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                <input
-                  type="checkbox"
-                  {...register("isActive")}
+                <div>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      color: "#212529",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Active Status
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>
+                    Mark this customer as active or inactive
+                  </p>
+                </div>
+                <label
                   style={{
-                    opacity: 0,
-                    width: 0,
-                    height: 0,
+                    position: "relative",
+                    display: "inline-block",
+                    width: "50px",
+                    height: "24px",
                   }}
-                  onChange={(e) => setValue("isActive", e.target.checked)}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    cursor: "pointer",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: isActive ? "#28a745" : "#ccc",
-                    transition: ".3s",
-                    borderRadius: "24px",
-                  }}
-                  onClick={() => setValue("isActive", !isActive)}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    content: '""',
-                    height: "18px",
-                    width: "18px",
-                    left: isActive ? "26px" : "3px",
-                    bottom: "3px",
-                    backgroundColor: "white",
-                    transition: ".3s",
-                    borderRadius: "50%",
-                  }}
-                />
-              </label>
+                >
+                  <input
+                    type="checkbox"
+                    {...register("isActive")}
+                    style={{
+                      opacity: 0,
+                      width: 0,
+                      height: 0,
+                    }}
+                    onChange={(e) => setValue("isActive", e.target.checked)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      cursor: "pointer",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: isActive ? "#28a745" : "#ccc",
+                      transition: ".3s",
+                      borderRadius: "24px",
+                    }}
+                    onClick={() => setValue("isActive", !isActive)}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      content: '""',
+                      height: "18px",
+                      width: "18px",
+                      left: isActive ? "26px" : "3px",
+                      bottom: "3px",
+                      backgroundColor: "white",
+                      transition: ".3s",
+                      borderRadius: "50%",
+                    }}
+                  />
+                </label>
+              </div>
             </div>
-          </div>
+          )}
         </form>
       </div>
     </div>
