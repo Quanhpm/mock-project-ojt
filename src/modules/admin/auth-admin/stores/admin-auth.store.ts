@@ -5,6 +5,7 @@ import type {
   ActiveContext,
   ProfileResponse,
 } from "@/apis/endpoints/auth.api";
+import { HttpError } from "@/apis/http.types";
 import { getProfile, logout as logoutApi } from "@/apis/endpoints/auth.api";
 
 // ======================== State Interface ========================
@@ -79,16 +80,22 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     set({ isLoading: true });
     try {
       const profile = await getProfile();
-      if (profile) {
-        set({
-          admin: profile.user,
-          roles: profile.roles,
-          activeContext: profile.active_context,
-          isLoggedIn: true,
-        });
+      // ✅ getProfile() now always returns ProfileResponse or throws error
+      // No need to check if (profile)
+      set({
+        admin: profile.user,
+        roles: profile.roles,
+        activeContext: profile.active_context,
+        isLoggedIn: true,
+      });
+    } catch (error) {
+      // ✅ Nếu refresh token hết → throw error để App.tsx xử lý logout
+      if (error instanceof HttpError && error.code === "REFRESH_TOKEN_FAILED") {
+        throw error;
       }
-    } catch {
-      // Cookie hết hạn hoặc chưa login → giữ state mặc định
+      // ⚠️ Nếu error khác (network, server error, NOT_AUTHENTICATED) → log nhưng không throw
+      // để tránh stuck Loading screen. User sẽ redirect login page
+      console.error("[hydrate] Error fetching profile:", error);
     } finally {
       set({ isLoading: false });
     }
