@@ -67,16 +67,6 @@ function MenuPage() {
         }
     };
 
-    // Lọc thông qua category_id trong bảng product
-    // const getProductsByCategory = (categoryId: number) => {
-    //     return (allProductsInFranchise as Product[]).filter(
-    //         (product: Product) =>
-    //             product.category_id === categoryId &&
-    //             product.is_active &&
-    //             !product.is_deleted
-    //     );
-    // };
-
     // Thêm hiệu ứng active cho sidebar khi cuộn đến section tương ứng
     useEffect(() => {
         setActiveCategory('');
