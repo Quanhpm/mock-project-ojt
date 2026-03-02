@@ -3,6 +3,7 @@ import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/config";
 import { HttpError, type ApiErrorResponse, API_ERROR_CODES } from "./http.types";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
 
 // ======================== Axios Instance ========================
 
@@ -12,8 +13,6 @@ export const axiosClient = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
-    "Cache-Control": "no-cache",  // Tránh 304 — luôn validate với server
-    "Pragma": "no-cache",         // Fallback cho HTTP/1.0
   },
 });
 
@@ -152,15 +151,21 @@ const responseInterceptor = () => {
           // ❌ Refresh token fail → logout và redirect login
           processQueue(refreshError);
 
-          const { logout } = useAdminAuthStore.getState();
-          await logout();
+          const isAdminRoute = window.location.pathname.startsWith('/admin');
 
-          // Use replace to prevent back button issues
-          window.location.replace('/admin/login');
+          if (isAdminRoute) {
+            const { logout } = useAdminAuthStore.getState();
+            await logout();
+            window.location.replace('/admin/login');
+          } else {
+            const { clearAuth } = useClientAuthStore.getState();
+            clearAuth();
+            window.location.replace('/client/login');
+          }
 
           throw new HttpError({
             status: 401,
-            message: "Session expired. Please login again.",
+            message: "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
             code: "REFRESH_TOKEN_FAILED",
           });
         } finally {
