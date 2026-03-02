@@ -3,6 +3,7 @@ import { Route } from "react-router-dom";
 import ClientGuard from "../guard/ClientGuard.route";
 import { ROUTER_URL } from "../router.const";
 import ClientLayout from "@/layouts/ClientLayout/ClientLayout";
+import { ProfilePage } from "@/modules/client/auth-client";
 
 // Lazy load private pages
 const OrderHistoryPage = React.lazy(() => import("@/modules/client/order-history"));
@@ -23,7 +24,7 @@ export const HomePrivateRoutes = (
       <Route path={ROUTER_URL.HOME_ROUTER.FRANCHISE} element={<FranchisePage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.ORDER_HISTORY} element={<OrderHistoryPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.LOCATION} element={<LocationPage />} />
-      <Route path={ROUTER_URL.HOME_ROUTER.PROFILE} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Profile Page</h1></div>} />
+      <Route path={ROUTER_URL.HOME_ROUTER.PROFILE} element={<ProfilePage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.CHANGE_PASSWORD} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Change Password Page</h1></div>} />
       <Route path={ROUTER_URL.HOME_ROUTER.CHECKOUT} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Checkout Page</h1></div>} />
       <Route path={ROUTER_URL.HOME_ROUTER.SELECT_FRANCHISE} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Select Franchise Page</h1></div>} />
