@@ -5,6 +5,17 @@ import {
   type AdminLoginFormValues,
 } from "../schemas/admin-login.schema";
 
+// Fix autofill text color issue
+const autofillStyles = `
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #000 !important;
+  }
+`;
+
 interface AdminLoginFormProps {
   onSubmit: (data: AdminLoginFormValues) => Promise<void>;
   isLoading?: boolean;
@@ -17,7 +28,9 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
   });
 
   return (
-    <form
+    <>
+      <style>{autofillStyles}</style>
+      <form
       onSubmit={handleSubmit(onSubmit)}
       className="w-full max-w-md mx-auto p-6 rounded-2xl bg-[var(--cf-surface)] space-y-5"
     >
@@ -31,7 +44,7 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
         <label className="text-sm font-semibold text-[var(--cf-primary)] ml-1">Email</label>
         <input
           {...register("email")}
-          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
+          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white text-black focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
           placeholder="admin@example.com"
           disabled={isLoading}
         />
@@ -48,7 +61,7 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
         <input
           {...register("password")}
           type="password"
-          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
+          className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white text-black focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
           placeholder="••••••••"
           disabled={isLoading}
         />
@@ -63,5 +76,6 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
         {isLoading ? "Đang đăng nhập..." : "Login"}
       </button>
     </form>
+    </>
   );
 }
