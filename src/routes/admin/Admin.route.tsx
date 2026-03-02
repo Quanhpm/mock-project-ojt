@@ -12,11 +12,6 @@ const AccountSettingsPage = React.lazy(
   () => import("@/modules/admin/account-settings/user.tsx"),
 );
 
-// Lazy load Franchise Selection Page (không nằm trong SelectFranchiseGuard)
-const FranchiseSelectionPage = React.lazy(
-  () => import("@/modules/admin/side-selection/pages/FranchiseSelectionPage"),
-);
-
 export const AdminRoutes = (
   <Route element={<AdminGuard />}>
     <Route path={ROUTER_URL.ADMIN} element={<AdminLayout />}>
@@ -25,24 +20,18 @@ export const AdminRoutes = (
         element={<Navigate to={ROUTER_URL.ADMIN_ROUTER.DASHBOARD} replace />}
       />
 
-      {/* Trang chọn franchise - KHÔNG bọc trong SelectFranchiseGuard (tránh vòng lặp redirect) */}
-      <Route
-        path={ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}
-        element={<FranchiseSelectionPage />}
-      />
-
-      {/* Các route còn lại - FRANCHISE user bắt buộc phải chọn franchise trước */}
+      {/* SelectFranchiseGuard wraps all routes EXCEPT select-franchise */}
       <Route element={<SelectFranchiseGuard />}>
-        {ADMIN_MENU.filter((item) => item.module !== "select-franchise").map((item) => (
-          <Route
-            key={item.path}
-            path={item.path}
+        {ADMIN_MENU.filter(item => item.module !== 'select-franchise').map((item) => (
+          <Route 
+            key={item.path} 
+            path={item.path} 
             element={
-              <ProtectedRoute
+              <ProtectedRoute 
                 requiredModule={item.module}
                 element={<item.component />}
               />
-            }
+            } 
           />
         ))}
 
@@ -52,6 +41,20 @@ export const AdminRoutes = (
           element={<AccountSettingsPage />}
         />
       </Route>
+
+      {/* Select Franchise Route - OUTSIDE SelectFranchiseGuard */}
+      {ADMIN_MENU.filter(item => item.module === 'select-franchise').map((item) => (
+        <Route 
+          key={item.path} 
+          path={item.path} 
+          element={
+            <ProtectedRoute 
+              requiredModule={item.module}
+              element={<item.component />}
+            />
+          } 
+        />
+      ))}
     </Route>
   </Route>
 );

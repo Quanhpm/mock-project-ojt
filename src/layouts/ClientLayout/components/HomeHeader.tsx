@@ -7,7 +7,7 @@ import { ShoppingCart, ClipboardClock, User, KeyRound, LogOut } from 'lucide-rea
 import logo2 from '@/assets/img/logo2.png';
 
 const HomeHeader: React.FC = () => {
-  const { user, logout, isLoggedIn } = useAuth();
+  const { user, logout } = useAuth();
   const cartItems = useCartStore((state) => state.items);
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
@@ -137,7 +137,7 @@ const HomeHeader: React.FC = () => {
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
                   <Link
-                    to="/change-password"
+                    to="/client/change-password"
                     className="w-full flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                     onClick={() => setIsDropdownOpen(false)}
                   >

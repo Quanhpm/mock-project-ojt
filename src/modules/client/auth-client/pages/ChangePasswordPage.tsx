@@ -1,28 +1,31 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import AuthCard from '@/components/ui/auth-card';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
+import { useClientChangePassword } from '../hooks/use-client-change-password.hook';
 import type { ChangePasswordFormValues } from '../schemas/client-change-password.schema';
 
 function ChangePasswordPage() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const { success } = useToast();
+  const { updatePassword, isLoading, error } = useClientChangePassword();
+  const { success, error: showError } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = async (_data: ChangePasswordFormValues) => {
-    setIsLoading(true);
-    setErrorMessage('');
-    try {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      success('Đặt mật khẩu mới thành công!');
-      navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN);
-    } catch {
-      setErrorMessage('Có lỗi xảy ra, vui lòng thử lại.');
-    } finally {
-      setIsLoading(false);
+  const handleSubmit = async (data: ChangePasswordFormValues) => {
+    // Map form data to API request format (snake_case for backend)
+    const result = await updatePassword({
+      old_password: data.currentPassword,
+      new_password: data.newPassword,
+    });
+
+    if (result.success) {
+      success(result.message);
+      // Redirect to login after successful password change
+      setTimeout(() => {
+        navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN);
+      }, 1500);
+    } else {
+      showError(result.message);
     }
   };
 
@@ -41,7 +44,7 @@ function ChangePasswordPage() {
       description=""
       footer={footer}
     >
-      <ChangePasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage || ''} />
+      <ChangePasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={error || ''} />
     </AuthCard>
   );
 }

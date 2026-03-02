@@ -1,9 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { ROUTER_URL } from "../router.const";
-import {
-  useAdminAuthStore,
-  getRoleCode,
-} from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
 /**
  * Guard bắt buộc FRANCHISE user phải chọn franchise trước khi vào dashboard.
@@ -11,20 +8,21 @@ import {
  * - GLOBAL scope không cần chọn franchise → pass through
  */
 const SelectFranchiseGuard = () => {
-  const store = useAdminAuthStore();
-  const roleCode = getRoleCode(store);
+  const activeContext = useAdminAuthStore((s) => s.activeContext);
+  const roles = useAdminAuthStore((s) => s.roles);
 
-  // Chưa đăng nhập → AdminGuard đã xử lý, không cần check lại
-  if (!store.admin || !roleCode) return <Outlet />;
-
-  // Đã chọn context rồi → pass through
-  if (store.activeContext) return <Outlet />;
+  // Đã chọn context rồi (GLOBAL hoặc FRANCHISE) → pass through
+  if (activeContext) {
+    return <Outlet />;
+  }
 
   // Kiểm tra có franchise role không
-  const hasFranchiseRole = store.roles.some((r) => r.scope === "FRANCHISE");
+  const hasFranchiseRole = roles.some((r) => r.scope === "FRANCHISE");
 
   // Nếu KHÔNG có franchise role (chỉ có GLOBAL) → pass through
-  if (!hasFranchiseRole) return <Outlet />;
+  if (!hasFranchiseRole) {
+    return <Outlet />;
+  }
 
   // Có franchise role NHƯNG chưa chọn → redirect sang trang chọn
   return (
@@ -33,8 +31,6 @@ const SelectFranchiseGuard = () => {
       replace
     />
   );
-
-  return <Outlet />;
 };
 
 export default SelectFranchiseGuard;

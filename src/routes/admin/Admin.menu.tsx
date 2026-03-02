@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
+import FranchiseSelectionPage from "@/modules/admin/side-selection/pages/FranchiseSelectionPage";
 
 
 export type AdminMenuItem = {
@@ -36,7 +37,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Chọn Chi Nhánh",
     path: ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE,
     icon: <Building2 size={18} />,
-    component: React.lazy(() => import("@/modules/admin/side-selection/pages/FranchiseSelectionPage")),
+    component: React.lazy(() => Promise.resolve({ default: FranchiseSelectionPage })),
     module: "select-franchise",
   },
   {

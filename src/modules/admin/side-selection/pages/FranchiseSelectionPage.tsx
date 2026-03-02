@@ -3,6 +3,7 @@ import { FranchiseCard } from '../components/FranchiseCard'
 import { GlobalRoleCard } from '../components/GlobalRoleCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { ErrorScreen } from '../components/ErrorScreen'
+import { Pagination } from '../components/Pagination'
 
 function FranchiseSelectionPage() {
   const {
@@ -11,14 +12,23 @@ function FranchiseSelectionPage() {
     switching,
     error,
     franchiseRoles,
+    paginatedFranchiseRoles,
     hasGlobalRole,
+    currentPage,
+    totalPages,
     handleSelectFranchise,
     handleSelectGlobal,
     handleLogout,
+    handlePageChange,
   } = useFranchiseSelection()
 
-  if (loading) return <LoadingScreen />
-  if (error) return <ErrorScreen message={error} />
+  if (loading) {
+    return <LoadingScreen />
+  }
+  
+  if (error) {
+    return <ErrorScreen message={error} />
+  }
 
   return (
     <div className="min-h-screen flex flex-col text-slate-900 transition-colors duration-300">
@@ -30,33 +40,41 @@ function FranchiseSelectionPage() {
               local_cafe
             </span>
             <h1 className="text-primary text-[32px] font-bold tracking-tight">
-              Chọn Quyền Làm Việc
+              Chọn Chi Nhánh
             </h1>
           </div>
           <h2 className="text-secondary text-2xl font-semibold mb-2">
-            Xin chào, {userName} 👋
+            Xin chào, {userName}
           </h2>
           <p className="text-primary/70 font-medium text-lg">
-            Chọn quyền hoặc chi nhánh để bắt đầu làm việc
+            Chọn chi nhánh để bắt đầu ca làm việc
           </p>
+          {franchiseRoles.length > 0 && (
+            <p className="text-sm text-gray-500 mt-3">
+              Tổng số chi nhánh: <span className="font-semibold">{franchiseRoles.length}</span>
+            </p>
+          )}
         </div>
 
-        {/* Role Selection List */}
+        {/* Franchise List */}
         <div className="w-full max-w-[800px] flex flex-col gap-6">
-          {!hasGlobalRole && franchiseRoles.length === 0 && (
+          {franchiseRoles.length === 0 && (
             <div className="text-center text-secondary/70 py-12">
               <span className="material-symbols-outlined text-5xl mb-3 block">store_off</span>
-              <p className="text-lg font-medium">Bạn chưa được gán quyền nào</p>
+              <p className="text-lg font-medium">Bạn chưa được gán vào chi nhánh nào</p>
             </div>
           )}
 
           {/* Global Role Card */}
           {hasGlobalRole && (
-            <GlobalRoleCard onSelect={handleSelectGlobal} />
+            <GlobalRoleCard 
+              onSelect={handleSelectGlobal} 
+              isLoading={switching === 'GLOBAL'}
+            />
           )}
 
           {/* Franchise Roles */}
-          {franchiseRoles.map(userRole => (
+          {paginatedFranchiseRoles.map(userRole => (
             <FranchiseCard
               key={userRole.franchise_id}
               userRole={userRole}
@@ -65,6 +83,15 @@ function FranchiseSelectionPage() {
             />
           ))}
         </div>
+
+        {/* Pagination */}
+        {franchiseRoles.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
 
         {/* Footer */}
         <div className="mt-14 flex flex-col items-center gap-3">
