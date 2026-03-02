@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
+import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { useCartStore } from '@/stores/cart.store';
 import { useToast } from '@/hooks/use-toast.hook';
-import { ShoppingCart, ClipboardClock, User, KeyRound, LogOut } from 'lucide-react';
+import { ShoppingCart, ClipboardClock, User, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
 
 const HomeHeader: React.FC = () => {
-  const { user, logout } = useAuth();
-  const cartItems = useCartStore((state) => state.items);
-  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const { logout } = useAuth();
+  const profile = useClientAuthStore((state) => state.user);
+  const cartItems = useCartStore((state) => state.items);  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { success, error } = useToast();
@@ -111,11 +112,11 @@ const HomeHeader: React.FC = () => {
                 className="!cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
               >
                 <img
-                  src={user?.avatar_url || 'https://i.pravatar.cc/150'}
-                  alt={user?.name}
-                  className="w-8 h-8 rounded-full"
+                  src={profile?.avatar_url || 'https://i.pravatar.cc/150'}
+                  alt={profile?.name}
+                  className="w-8 h-8 rounded-full object-cover"
                 />
-                <span className="font-medium text-[var(--cf-primary)]">{user?.name}</span>
+                <span className="font-medium text-[var(--cf-primary)]">{profile?.name}</span>
                 <svg
                   className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                   fill="none"
@@ -136,13 +137,13 @@ const HomeHeader: React.FC = () => {
                   >
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
-                  <Link
+                  {/* <Link
                     to="/client/change-password"
                     className="w-full flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                     onClick={() => setIsDropdownOpen(false)}
                   >
                     <KeyRound className="w-4 h-4" /> Đổi mật khẩu
-                  </Link>
+                  </Link> */}
                   <hr className="my-2" />
                   <button
                     onClick={handleLogout}

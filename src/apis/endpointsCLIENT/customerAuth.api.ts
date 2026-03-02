@@ -4,13 +4,15 @@ import type { AxiosResponse } from "axios";
 // ======================== Types ========================
 
 export interface CustomerUser {
-  id: number;
+  id: string;
   email: string;
   name: string;
   phone: string;
   avatar_url: string;
+  address: string;
   is_active: boolean;
   is_deleted: boolean;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -41,43 +43,38 @@ export interface CustomerVerifyEmailRequest {
 }
 
 export interface CustomerLoginResponse {
-  message: string;
-  data: {
-    user: CustomerUser;
-  };
+  success: boolean;
+  data: CustomerUser;
 }
 
 export interface CustomerRegisterResponse {
-  message: string;
-  data: {
-    user: CustomerUser;
-  };
+  success: boolean;
+  data: CustomerUser;
 }
 
 export interface CustomerProfileResponse {
-  message: string;
-  data: {
-    user: CustomerUser;
-  };
+  success: boolean;
+  data: CustomerUser;
 }
 
 export interface CustomerLogoutResponse {
-  message: string;
+  success: boolean;
+  message?: string;
 }
 
 export interface CustomerForgotPasswordResponse {
-  message: string;
+  success: boolean;
+  message?: string;
 }
 
 export interface CustomerChangePasswordResponse {
-  message: string;
+  success: boolean;
+  message?: string;
 }
 
 export interface CustomerVerifyEmailResponse {
-  message: string;
-  data: {
-    user: CustomerUser;
-  };
+  success: boolean;
+  data: CustomerUser;
 }
 
 // ======================== API Functions ========================
@@ -96,11 +93,21 @@ export const registerCustomer = (
   return axiosClient.post<CustomerRegisterResponse>("/customers/register", data);
 };
 
-// PROFILE
+// GET PROFILE
 export const getCustomerProfile = (): Promise<
   AxiosResponse<CustomerProfileResponse>
 > => {
-  return axiosClient.get<CustomerProfileResponse>("/customer-auth");
+  return axiosClient.get<CustomerProfileResponse>("/customer-auth", {
+    params: { _t: Date.now() },
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+  });
+};
+
+// UPDATE PROFILE
+export const updateCustomerProfile = (
+  data: Partial<CustomerUser>
+): Promise<AxiosResponse<CustomerProfileResponse>> => {
+  return axiosClient.put<CustomerProfileResponse>(`/customers/${data.id}`, data);
 };
 
 // LOGOUT
