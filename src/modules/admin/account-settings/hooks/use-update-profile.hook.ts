@@ -4,8 +4,8 @@ import type { UpdateUserRequest } from "@/apis/endpoints/user.api";
 import { HttpError } from "@/apis";
 
 // ======================== Cloudinary Config ========================
-const CLOUDINARY_CLOUD_NAME = "doilydjut";
-const CLOUDINARY_UPLOAD_PRESET = "avatar_url_user_update";
+const CLOUDINARY_CLOUD_NAME = "de2dyvcb7";
+const CLOUDINARY_UPLOAD_PRESET = "OJT_MOCKPROJECT";
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
 // ======================== Types ========================
