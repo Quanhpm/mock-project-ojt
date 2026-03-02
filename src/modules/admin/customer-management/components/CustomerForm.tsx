@@ -9,6 +9,7 @@ import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import type { Customer } from "./customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
 import axios from "axios";
+import { ENV } from "@/config/env.config";
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -126,11 +127,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", "customer_avatars");
+      formData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
       formData.append("folder", "customers/avatars"); // Tổ chức file theo folder
 
       const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/dxckk8v0a/image/upload",
+        `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
         formData,
         {
           headers: {
