@@ -1,181 +1,92 @@
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, Mail, Phone} from "lucide-react";
+
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
 function ContactPage() {
+  const contactSection = useInView(0.1);
   return (
     <>
-      {/* HERO SECTION */}
-      <section className="w-full max-w-[1200px] mx-auto px-4 md:px-10 py-12">
-        <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
-          <div className="flex flex-col gap-6 flex-1">
-            <div className="flex flex-col gap-4">
-              <h1 className="text-4xl md:text-6xl font-black leading-tight tracking-tight text-primary dark:text-white">
-                Cùng Nhau Tạo Nên <span className="text-[#B08968]">Giá Trị Tuyệt Vời</span>
-              </h1>
-              <p className="text-lg text-[#7F5539]/80 dark:text-gray-400 max-w-lg leading-relaxed">
-                Bạn có câu hỏi, ý tưởng mới hoặc đang tìm kiếm một đối tác đáng tin cậy?
-                Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe và đồng hành cùng bạn
-                để biến ý tưởng thành những giải pháp hiệu quả và thực tế.
-              </p>
-            </div>
-            <div className="flex gap-4">
-              <button className="flex min-w-[140px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-primary text-white font-bold text-base shadow-lg hover:bg-[#9C6644] transition-all">
-                Gửi liên hệ
-              </button>
-              <button className="flex min-w-[140px] cursor-pointer items-center justify-center rounded-lg h-12 px-6 bg-surface-light text-primary font-bold text-base border border-[#B08968] hover:bg-accent-light transition-all">
-                Câu hỏi thường gặp
-              </button>
-            </div>
+      {/* CONTACT */}
+      <section id="contact" ref={contactSection.ref} className="py-24 px-4 bg-white/50">
+        <div className="max-w-screen-xl mx-auto">
+          <div className={`text-center mb-16 transition-all duration-1000 ${contactSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <span className="text-[var(--cf-secondary)] uppercase tracking-[0.2em] text-xs font-semibold block mb-3">Liên hệ</span>
+            <h2 className="text-4xl md:text-5xl font-black text-[var(--cf-primary)] mb-4">Cùng Nhau Tạo Nên <span className="text-[var(--cf-secondary)]">Giá Trị</span></h2>
+            <p className="text-[var(--cf-primary)]/70 max-w-xl mx-auto leading-relaxed">Bạn có câu hỏi, ý tưởng mới hoặc đang tìm kiếm một đối tác đáng tin cậy? Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe.</p>
           </div>
 
-          <div className="flex-1">
-            <div
-              className="w-full aspect-[4/3] bg-center bg-no-repeat bg-cover rounded-2xl shadow-2xl"
-              style={{
-                backgroundImage:
-                  'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuDWIzTC1-FygaBMtIMjuX_AdHVI_KAE1TIoRcTpUvCVUtaoBPSm22q_R3C3gvSRm679G-MwbXxfhDVCutaKwcZK9L3N8iFjU0f3KDR53q8Z8t60QsI9UoOGdUndBL3467SQBkxMN5JSPJ6uGAuPfng32mZLR5SDAeMqFhg2UvqWkndOk1GImtBWt1kjKPAarZ3PKkaYHinQwwwDr_NZRmu1aXhokrO9F0qaeAO4M05_Pi-MU--Q08-rQ7KMfXRjcGAphJD-5qskTU")',
-              }}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* INFO CARDS */}
-      <section className="w-full max-w-[1200px] mx-auto px-4 md:px-10 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="flex flex-col gap-4 rounded-2xl border border-[#B08968]/30 bg-surface-light p-8 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-center size-12 rounded-xl bg-accent-light text-primary">
-              <span className="material-icons-outlined">map</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-xl font-bold text-primary">Văn phòng làm việc</h3>
-              <p className="text-[#7F5539]/70">
-                123 Business Plaza, Tầng 5
-                <br />
-                New York, NY 10001
-              </p>
-            </div>
+          <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 transition-all duration-1000 delay-150 ${contactSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {[
+              { icon: <MapPin className="text-[var(--cf-primary)] w-6 h-6" />, title: 'Văn phòng làm việc', lines: ['123 Business Plaza, Tầng 5', 'New York, NY 10001'] },
+              { icon: <Mail className="text-[var(--cf-primary)] w-6 h-6" />, title: 'Email liên hệ', lines: ['hello@boutiquebrews.com', 'support@boutiquebrews.com'] },
+              { icon: <Phone className="text-[var(--cf-primary)] w-6 h-6" />, title: 'Hotline', lines: ['+1 (555) 123-4567', 'Thứ 2 – Thứ 6, 9:00 – 18:00'] },
+            ].map(card => (
+              <div key={card.title} className="flex flex-col gap-4 rounded-2xl border border-[var(--cf-secondary)]/25 bg-[var(--cf-bg)] p-8 shadow-sm hover:shadow-lg hover:border-[var(--cf-secondary)]/50 transition-all duration-300">
+                <div className="text-3xl">{card.icon}</div>
+                <div>
+                  <h3 className="text-lg font-bold text-[var(--cf-primary)] mb-2">{card.title}</h3>
+                  {card.lines.map(l => <p key={l} className="text-[var(--cf-primary)]/65 text-sm">{l}</p>)}
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-[#B08968]/30 bg-surface-light p-8 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-center size-12 rounded-xl bg-accent-light text-primary">
-              <span className="material-icons-outlined">mail</span>
+          <div className={`grid grid-cols-1 lg:grid-cols-2 gap-16 items-start transition-all duration-1000 delay-300 ${contactSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <div>
+              <h3 className="text-2xl font-bold text-[var(--cf-primary)] mb-2">Gửi tin nhắn cho chúng tôi</h3>
+              <p className="text-[var(--cf-primary)]/65 text-sm mb-8">Điền đầy đủ thông tin bên dưới, chúng tôi sẽ phản hồi trong vòng 24 giờ.</p>
+              <form className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-bold text-[var(--cf-primary)] uppercase tracking-wide">Họ và tên</span>
+                    <input type="text" placeholder="Nguyễn Văn A" className="w-full rounded-xl border border-[var(--cf-secondary)]/35 bg-white px-4 py-3 text-[var(--cf-primary)] text-sm focus:ring-2 focus:ring-[var(--cf-secondary)]/40 focus:border-[var(--cf-primary)] outline-none transition-all"/>
+                  </label>
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs font-bold text-[var(--cf-primary)] uppercase tracking-wide">Email</span>
+                    <input type="email" placeholder="email@example.com" className="w-full rounded-xl border border-[var(--cf-secondary)]/35 bg-white px-4 py-3 text-[var(--cf-primary)] text-sm focus:ring-2 focus:ring-[var(--cf-secondary)]/40 focus:border-[var(--cf-primary)] outline-none transition-all"/>
+                  </label>
+                </div>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-xs font-bold text-[var(--cf-primary)] uppercase tracking-wide">Chủ đề</span>
+                  <input type="text" placeholder="Tư vấn dự án / Hợp tác" className="w-full rounded-xl border border-[var(--cf-secondary)]/35 bg-white px-4 py-3 text-[var(--cf-primary)] text-sm focus:ring-2 focus:ring-[var(--cf-secondary)]/40 focus:border-[var(--cf-primary)] outline-none transition-all"/>
+                </label>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-xs font-bold text-[var(--cf-primary)] uppercase tracking-wide">Nội dung</span>
+                  <textarea rows={5} placeholder="Hãy chia sẻ chi tiết nhu cầu hoặc ý tưởng của bạn..." className="w-full rounded-xl border border-[var(--cf-secondary)]/35 bg-white px-4 py-3 text-[var(--cf-primary)] text-sm focus:ring-2 focus:ring-[var(--cf-secondary)]/40 focus:border-[var(--cf-primary)] outline-none transition-all resize-none"/>
+                </label>
+                <button type="submit" className="w-full py-4 bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white font-bold rounded-xl text-sm uppercase tracking-widest transition-all shadow-lg">
+                  Gửi tin nhắn
+                </button>
+              </form>
             </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-xl font-bold text-primary">Email liên hệ</h3>
-              <p className="text-[#7F5539]/70">
-                hello@corporatebrand.com
-                <br />
-                support@corporatebrand.com
-              </p>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-[#B08968]/30 bg-surface-light p-8 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-center size-12 rounded-xl bg-accent-light text-primary">
-              <span className="material-icons-outlined">call</span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h3 className="text-xl font-bold text-primary">Hotline</h3>
-              <p className="text-[#7F5539]/70">
-                +1 (555) 123-4567
-                <br />
-                Thứ 2 – Thứ 6, 9:00 – 18:00
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CONTACT FORM */}
-      <section className="w-full max-w-[800px] mx-auto px-4 py-20">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-primary mb-4">
-            Gửi tin nhắn cho chúng tôi
-          </h2>
-          <p className="text-[#7F5539]/70">
-            Vui lòng điền đầy đủ thông tin bên dưới, chúng tôi sẽ phản hồi trong vòng 24 giờ.
-          </p>
-        </div>
-
-        <form className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-primary">
-                Họ và tên
-              </span>
-              <input
-                type="text"
-                placeholder="Nguyễn Văn A"
-                className="w-full rounded-lg border border-[#B08968]/40 bg-white p-4 text-primary focus:ring-2 focus:ring-[#B08968]/50 focus:border-primary outline-none transition-all"
+            <div className="flex flex-col gap-6">
+              <div
+                className="w-full aspect-[4/3] rounded-2xl shadow-xl bg-center bg-no-repeat bg-cover"
+                style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuDWIzTC1-FygaBMtIMjuX_AdHVI_KAE1TIoRcTpUvCVUtaoBPSm22q_R3C3gvSRm679G-MwbXxfhDVCutaKwcZK9L3N8iFjU0f3KDR53q8Z8t60QsI9UoOGdUndBL3467SQBkxMN5JSPJ6uGAuPfng32mZLR5SDAeMqFhg2UvqWkndOk1GImtBWt1kjKPAarZ3PKkaYHinQwwwDr_NZRmu1aXhokrO9F0qaeAO4M05_Pi-MU--Q08-rQ7KMfXRjcGAphJD-5qskTU")' }}
               />
-            </label>
-
-            <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-primary">
-                Email
-              </span>
-              <input
-                type="email"
-                placeholder="emailcuaban@example.com"
-                className="w-full rounded-lg border border-[#B08968]/40 bg-white p-4 text-primary focus:ring-2 focus:ring-[#B08968]/50 focus:border-primary outline-none transition-all"
-              />
-            </label>
-          </div>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-primary">
-              Chủ đề
-            </span>
-            <input
-              type="text"
-              placeholder="Tư vấn dự án / Hợp tác"
-              className="w-full rounded-lg border border-[#B08968]/40 bg-white p-4 text-primary focus:ring-2 focus:ring-[#B08968]/50 focus:border-primary outline-none transition-all"
-            />
-          </label>
-
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold text-primary">
-              Nội dung
-            </span>
-            <textarea
-              rows={6}
-              placeholder="Hãy chia sẻ chi tiết nhu cầu hoặc ý tưởng của bạn..."
-              className="w-full rounded-lg border border-[#B08968]/40 bg-white p-4 text-primary focus:ring-2 focus:ring-[#B08968]/50 focus:border-primary outline-none transition-all resize-none"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="w-full py-4 bg-primary text-white font-bold rounded-lg text-lg hover:bg-[#9C6644] transition-all shadow-lg"
-          >
-            Gửi tin nhắn
-          </button>
-        </form>
-      </section>
-
-      {/* MAP SECTION */}
-      <section className="w-full max-w-[1200px] mx-auto px-4 md:px-10 pb-20">
-        <div className="relative w-full h-[400px] rounded-2xl overflow-hidden bg-background-light">
-          <div
-            className="absolute inset-0 grayscale opacity-70 dark:opacity-40"
-            style={{
-              backgroundImage:
-                'url("https://lh3.googleusercontent.com/aida-public/AB6AXuD4vjZtfe1x1DtHl4Q3_64bPrQuz7qxRtIl40YGEuIxXt6KpvLAUfIYkTPqGFQ6E9pR-4CczH1rgp1hEF6UykoOiJDIDZsDA0WyBgq5J5Eumvf4tJCZOWIB3LWJikTzRaqcsJG3l3nNtqfqqZWMb2UEULWNQ730z2xVjvLdoMEtY9wxwLXIxY7Uj6EAmQI4XgCNIfbtcu8d-03L2ftCFjRncUQt9lOp8SRvuv2beKTHKGqPAQn_5xEshMWhbDVk0NNYxdmE6GSoQoVj")',
-              backgroundSize: 'cover',
-            }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center gap-2 border border-[#B08968]">
-              <span className="material-icons-outlined text-primary text-4xl">
-                location_on
-              </span>
-              <p className="font-bold text-primary">
-                Ghé thăm trụ sở của chúng tôi
-              </p>
-              <a
-                href="#"
-                className="text-sm text-[#B08968] font-medium hover:underline"
-              >
-                Mở trên Google Maps
-              </a>
+              <div className="bg-[var(--cf-primary)] text-white p-8 rounded-2xl">
+                <p className="italic text-white/90 leading-relaxed mb-5">"Chưa từng trải nghiệm profile rang nào tinh tế đến vậy. Mỗi tách cà phê là một chuyến hành trình."</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm">J</div>
+                  <div>
+                    <p className="font-bold text-sm">James Dalton</p>
+                    <p className="text-[10px] uppercase tracking-wide text-white/60">Nhà phê bình cà phê</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

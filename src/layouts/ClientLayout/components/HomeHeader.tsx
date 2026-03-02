@@ -55,7 +55,7 @@ const HomeHeader: React.FC = () => {
             >
               Sản Phẩm
             </Link>
-            <Link
+            {/* <Link
               to="/about"
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
@@ -66,7 +66,7 @@ const HomeHeader: React.FC = () => {
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               Liên Hệ
-            </Link>
+            </Link> */}
             <Link
               to="/location"
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
