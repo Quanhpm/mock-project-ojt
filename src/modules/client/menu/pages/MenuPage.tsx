@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import categories from '@/mockdata/categories.json';
 import products from '@/mockdata/products.json';
 import franchises from '@/mockdata/franchises.json';
@@ -25,13 +25,26 @@ function MenuPage() {
             .map((pf) => (products as Product[]).find((p) => p.id === pf.product_id))
             .filter((p): p is Product => p !== undefined);
     };
-    const [allProductsInFranchise, setAllProductsInFranchise] = useState<Product[]>(getAllProductInFranchise(franchiseId));
-    const [allCategoriesInFranchise, setAllCategoriesInFranchise] = useState<Category[]>(getAllCategoryInFranchise(franchiseId));
-
-    useEffect(() => {
-        setAllProductsInFranchise(getAllProductInFranchise(franchiseId));
-        setAllCategoriesInFranchise(getAllCategoryInFranchise(franchiseId));
+    const allProductsInFranchise = useMemo(() => {
+        return getAllProductInFranchise(franchiseId);
     }, [franchiseId]);
+
+    const allCategoriesInFranchise = useMemo(() => {
+        return getAllCategoryInFranchise(franchiseId);
+    }, [franchiseId]);
+    
+    // Lọc thông qua bảng product_category_franchise
+    const getProductFranchiseByCategoryFranchise = (categoryFranchiseId: number): ProductFranchise[] => {
+        return (productCategoryFranchises as ProductCategoryFranchise[]).filter((pcf) => pcf.category_franchise_id === categoryFranchiseId)
+            .map((pcf) => (productFranchises as ProductFranchise[]).find((pf) => pf.id === pcf.product_franchise_id))
+            .filter((pf): pf is ProductFranchise => pf !== undefined);
+    }
+    const getProductsByCategory = (categoryId: number) => {
+        const categoryFranchiseId = (categoryFranchises as CategoryFranchise[]).find((cf) => cf.category_id === categoryId && cf.franchise_id === franchiseId)?.id;
+        if (!categoryFranchiseId) return [];
+        const productFranchises = getProductFranchiseByCategoryFranchise(categoryFranchiseId);
+        return productFranchises.map((pf) => (products as Product[]).find((p) => p.id === pf.product_id)).filter((p): p is Product => p !== undefined);
+    }
 
     const getCategoryIcon = (code: string): string => {
         const iconMap: { [key: string]: string } = {
@@ -54,25 +67,9 @@ function MenuPage() {
         }
     };
 
-    // // Lọc thông qua bảng product_category_franchise
-    // const getProductsByCategory = (categoryId: number) => {
-    //     const productIdsInCategory = (productCategoryFranchises as ProductCategoryFranchise[]).filter((pcf) => pcf.category_franchise_id === categoryId)
-    //         .map((pcf) => pcf.product_franchise_id);
-    //     return (allProductsInFranchise as Product[]).filter((product) => productIdsInCategory.includes(product.id));
-    // };
-
-    // Lọc thông qua category_id trong bảng product
-    const getProductsByCategory = (categoryId: number) => {
-        return (allProductsInFranchise as Product[]).filter(
-            (product: Product) =>
-                product.category_id === categoryId &&
-                product.is_active &&
-                !product.is_deleted
-        );
-    };
-
     // Thêm hiệu ứng active cho sidebar khi cuộn đến section tương ứng
     useEffect(() => {
+        setActiveCategory('');
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -92,7 +89,7 @@ function MenuPage() {
         });
 
         return () => observer.disconnect();
-    }, []);
+    }, [franchiseId]);
 
     // Filter search
     const filteredProducts = (allProductsInFranchise as Product[]).filter(
@@ -116,14 +113,14 @@ function MenuPage() {
                                 onClick={() => scrollToSection(item.code)}
                                 className={`group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
                                     ${activeCategory === item.code
-                                        ? 'bg-[var(--cf-primary)] text-white'
+                                        ? 'bg-[var(--cf-primary)] !text-white'
                                         : ''
                                     }
                                 `}
                             >
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors ${activeCategory === item.code ? 'text-white' : ''}`}>{getCategoryIcon(item.code)}</span>
+                                <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors`}>{getCategoryIcon(item.code)}</span>
                                 <span className="relative z-10 tracking-wide">{item.name}</span>
                             </button>
                         ))}
