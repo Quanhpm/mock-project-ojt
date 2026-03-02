@@ -5,6 +5,17 @@ import {
   type AdminForgotPasswordFormValues,
 } from "../schemas/admin-forgot-password.schema";
 
+// Fix autofill text color issue
+const autofillStyles = `
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #000 !important;
+  }
+`;
+
 interface AdminForgotPasswordFormProps {
   onSubmit: (data: AdminForgotPasswordFormValues) => Promise<void>;
   isLoading?: boolean;
@@ -25,7 +36,9 @@ export function AdminForgotPasswordForm({
   });
 
   return (
-    <form
+    <>
+      <style>{autofillStyles}</style>
+      <form
       onSubmit={handleSubmit(onSubmit)}
       className="w-full max-w-md mx-auto p-6 rounded-2xl bg-[var(--cf-surface)] space-y-5"
     >
@@ -61,5 +74,6 @@ export function AdminForgotPasswordForm({
         {isLoading ? "Đang gửi..." : "Gửi mật khẩu mới"}
       </button>
     </form>
+    </>
   );
 }

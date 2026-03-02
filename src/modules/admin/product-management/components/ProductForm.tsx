@@ -1,53 +1,88 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, Upload, AlertCircle, Package, Check } from "lucide-react";
+import { useCreateProduct } from "./hooks/useCreateProduct";
+import type { ProductCreatePayload } from "./product.types";
 
 export default function ProductForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    productId: "PRD-001",
+  const { createProduct, isCreating, error } = useCreateProduct();
+
+  const [formData, setFormData] = useState<ProductCreatePayload>({
+    SKU: "",
     name: "",
-    category: "",
-    basePrice: "",
-    stock: 100,
     description: "",
-    visibleOnMobile: true,
-    availableForDelivery: true,
-    flashSaleEligible: false,
+    content: "",
+    image_url: "",
+    images_url: [],
+    min_price: 0,
+    max_price: 0,
+    is_have_topping: false,
   });
 
-  const [franchises] = useState([
-    { id: 1, name: "Downtown - 5th Ave", code: "#LOC-001", basePrice: 5.50, specificPrice: 5.50, available: true },
-    { id: 2, name: "Westside Mall", code: "#LOC-015", basePrice: 5.50, specificPrice: 5.95, available: true },
-    { id: 3, name: "Airport Terminal B", code: "#LOC-022", basePrice: 5.50, specificPrice: 7.50, available: false },
-  ]);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form data:", formData);
-    alert("Product created successfully!");
-    navigate("/admin/products");
+    
+    // Validate required fields
+    const errors: Record<string, string> = {};
+    if (!formData.SKU.trim()) errors.SKU = "SKU is required";
+    if (!formData.name.trim()) errors.name = "Product name is required";
+    if (!formData.description.trim()) errors.description = "Description is required";
+    if (!formData.content.trim()) errors.content = "Content is required";
+    if (!formData.image_url.trim()) errors.image_url = "Main image is required";
+    if (formData.min_price <= 0) errors.min_price = "Min price must be greater than 0";
+    if (formData.max_price <= 0) errors.max_price = "Max price must be greater than 0";
+    if (formData.max_price < formData.min_price) errors.max_price = "Max price must be greater than min price";
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    // Call API
+    await createProduct(formData, (newProduct) => {
+      navigate("/admin/products");
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value, type } = e.target;
+    
+    // Clear error for this field
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+
+    let newValue: any = value;
+    if (type === "number") {
+      newValue = parseFloat(value) || 0;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: newValue,
+    }));
   };
 
-  const handleStockChange = (delta: number) => {
-    setFormData({
-      ...formData,
-      stock: Math.max(0, formData.stock + delta),
-    });
-  };
-
-  const toggleSwitch = (field: string) => {
-    setFormData({
-      ...formData,
-      [field]: !formData[field as keyof typeof formData],
-    });
+  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value.trim();
+    setFormData(prev => ({
+      ...prev,
+      image_url: url,
+    }));
+    if (formErrors.image_url) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.image_url;
+        return newErrors;
+      });
+    }
   };
 
   return (
@@ -64,44 +99,8 @@ export default function ProductForm() {
             Create New Product
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            Add a new product with identity, pricing, and inventory details.
+            Add a new product with details, pricing, and images.
           </p>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/admin/products")}
-            style={{
-              padding: "10px 20px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              backgroundColor: "white",
-              color: "#374151"
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: "pointer",
-              backgroundColor: "#8B4513",
-              color: "white",
-              transition: "background-color 0.2s"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
-          >
-            Create Product
-          </button>
         </div>
       </div>
 
@@ -116,121 +115,216 @@ export default function ProductForm() {
                 <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Product Identity</h2>
               </div>
 
-              {/* Product ID */}
+              {/* SKU and Product Name */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Product ID
+                    SKU <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <div style={{ position: "relative" }}>
-                    <input
-                      type="text"
-                      value={formData.productId}
-                      disabled
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "8px",
-                        fontSize: "14px",
-                        backgroundColor: "#f8f9fa",
-                        boxSizing: "border-box",
-                        paddingRight: "36px"
-                      }}
-                    />
-                    <RefreshCw size={16} color="#6c757d" style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", cursor: "pointer" }} />
-                  </div>
-                  <p style={{ fontSize: "11px", color: "#8B4513", margin: "4px 0 0 0" }}>AUTO-GENERATED</p>
+                  <input
+                    type="text"
+                    name="SKU"
+                    value={formData.SKU}
+                    onChange={handleChange}
+                    placeholder="COFFEE_5"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: formErrors.SKU ? "1px solid #ef4444" : "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                  {formErrors.SKU && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.SKU}</p>}
                 </div>
 
                 {/* Product Name */}
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Product Name
+                    Product Name <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Vanilla Bean Latte"
+                    placeholder="Coffee 5"
                     style={{
                       width: "100%",
                       padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
+                      border: formErrors.name ? "1px solid #ef4444" : "1px solid #e0e0e0",
                       borderRadius: "8px",
                       fontSize: "14px",
                       outline: "none",
                       boxSizing: "border-box"
                     }}
                   />
+                  {formErrors.name && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.name}</p>}
                 </div>
               </div>
 
-              {/* Category and Base Price */}
+              {/* Min and Max Price */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      backgroundColor: "white",
-                      cursor: "pointer"
-                    }}
-                  >
-                    <option value="">Hot Coffees</option>
-                    <option value="coffee">Coffee</option>
-                    <option value="pastry">Pastry</option>
-                    <option value="merchandise">Merchandise</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Base Price ($)
+                    Min Price (VND) <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="number"
-                    name="basePrice"
-                    value={formData.basePrice}
+                    name="min_price"
+                    value={formData.min_price || ''}
                     onChange={handleChange}
-                    placeholder="5.50"
-                    step="0.01"
+                    placeholder="30000"
+                    step="1000"
                     style={{
                       width: "100%",
                       padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
+                      border: formErrors.min_price ? "1px solid #ef4444" : "1px solid #e0e0e0",
                       borderRadius: "8px",
                       fontSize: "14px",
                       outline: "none",
                       boxSizing: "border-box"
                     }}
                   />
+                  {formErrors.min_price && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.min_price}</p>}
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                    Max Price (VND) <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="max_price"
+                    value={formData.max_price || ''}
+                    onChange={handleChange}
+                    placeholder="50000"
+                    step="1000"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      border: formErrors.max_price ? "1px solid #ef4444" : "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                  />
+                  {formErrors.max_price && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.max_price}</p>}
                 </div>
               </div>
 
               {/* Description */}
               <div style={{ marginBottom: "20px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Description
+                  Description <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Rich espresso combined with creamy steamed milk and Madagascar vanilla bean syrup."
+                  placeholder="Cà phê rang xay đậm vị truyền thống buổi sáng"
                   rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: formErrors.description ? "1px solid #ef4444" : "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                    fontFamily: "inherit"
+                  }}
+                />
+                {formErrors.description && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.description}</p>}
+              </div>
+
+              {/* Content (HTML) */}
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                  Content (HTML) <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <textarea
+                  name="content"
+                  value={formData.content}
+                  onChange={handleChange}
+                  placeholder='<h3><b>Product Details</b></h3><p>Your content here...</p>'
+                  rows={6}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: formErrors.content ? "1px solid #ef4444" : "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                    fontFamily: "monospace"
+                  }}
+                />
+                {formErrors.content && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.content}</p>}
+              </div>
+
+              {/* Main Image URL */}
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                  Main Image URL <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  type="url"
+                  value={formData.image_url}
+                  onChange={handleImageUrlChange}
+                  placeholder="https://example.com/image.jpg"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    border: formErrors.image_url ? "1px solid #ef4444" : "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    marginBottom: "8px"
+                  }}
+                />
+                {formErrors.image_url && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.image_url}</p>}
+                {formData.image_url && (
+                  <div style={{ marginTop: "12px", borderRadius: "8px", overflow: "hidden", border: "1px solid #e0e0e0" }}>
+                    <img 
+                      src={formData.image_url} 
+                      alt="Preview" 
+                      style={{ width: "100%", height: "auto", maxHeight: "200px", objectFit: "cover" }} 
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            {/* Additional Images Section */}
+            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                <Upload size={18} color="#8B4513" />
+                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Additional Info</h2>
+              </div>
+
+              {/* Additional Image URLs */}
+              <div style={{ marginBottom: "20px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                  Additional Image URLs (one per line)
+                </label>
+                <textarea
+                  value={formData.images_url?.join("\n") || ""}
+                  onChange={(e) => {
+                    const urls = e.target.value.split("\n").filter(url => url.trim());
+                    setFormData(prev => ({ ...prev, images_url: urls }));
+                  }}
+                  placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+                  rows={6}
                   style={{
                     width: "100%",
                     padding: "10px 12px",
@@ -240,269 +334,150 @@ export default function ProductForm() {
                     outline: "none",
                     resize: "vertical",
                     boxSizing: "border-box",
-                    fontFamily: "inherit"
+                    fontFamily: "monospace"
                   }}
                 />
               </div>
 
-              {/* Product Images */}
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Product Images
-                </label>
-                <div style={{
-                  border: "2px dashed #e0e0e0",
-                  borderRadius: "8px",
-                  padding: "40px",
-                  textAlign: "center",
-                  backgroundColor: "#fafafa",
-                  cursor: "pointer"
-                }}>
-                  <Upload size={32} color="#9ca3af" style={{ margin: "0 auto 12px" }} />
-                  <p style={{ margin: 0, fontSize: "14px", color: "#6c757d", fontWeight: "500" }}>
-                    Update product visuals
-                  </p>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#9ca3af" }}>
-                    PNG, JPG or WebP (max. 5MB)
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Franchise Mapping Section */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Package size={18} color="#8B4513" />
-                  <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Franchise Mapping</h2>
-                </div>
-                <button
-                  type="button"
-                  style={{
-                    fontSize: "13px",
-                    color: "#8B4513",
-                    backgroundColor: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: "500"
-                  }}
-                >
-                  Select All Locations
-                </button>
-              </div>
-
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #e0e0e0" }}>
-                    <th style={{ padding: "12px 8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>
-                      Franchise Location
-                    </th>
-                    <th style={{ padding: "12px 8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>
-                      Base Price
-                    </th>
-                    <th style={{ padding: "12px 8px", textAlign: "left", fontSize: "12px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>
-                      Specific Price
-                    </th>
-                    <th style={{ padding: "12px 8px", textAlign: "center", fontSize: "12px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase" }}>
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {franchises.map((franchise) => (
-                    <tr key={franchise.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                      <td style={{ padding: "12px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <input type="checkbox" defaultChecked={franchise.available} style={{ width: "16px", height: "16px", cursor: "pointer" }} />
-                          <div>
-                            <p style={{ margin: 0, fontSize: "14px", fontWeight: "500" }}>{franchise.name}</p>
-                            <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>ID: {franchise.code}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 8px", fontSize: "14px" }}>${franchise.basePrice.toFixed(2)}</td>
-                      <td style={{ padding: "12px 8px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <span style={{ fontSize: "14px" }}>$</span>
-                          <input
-                            type="number"
-                            defaultValue={franchise.specificPrice.toFixed(2)}
-                            step="0.01"
-                            style={{
-                              width: "80px",
-                              padding: "6px 8px",
-                              border: "1px solid #e0e0e0",
-                              borderRadius: "6px",
-                              fontSize: "14px",
-                              outline: "none"
-                            }}
-                          />
-                        </div>
-                      </td>
-                      <td style={{ padding: "12px 8px", textAlign: "center" }}>
-                        <span style={{
-                          padding: "4px 12px",
-                          borderRadius: "12px",
-                          fontSize: "12px",
-                          fontWeight: "500",
-                          backgroundColor: franchise.available ? "#e8f5e9" : "#f5f5f5",
-                          color: franchise.available ? "#4caf50" : "#9e9e9e"
-                        }}>
-                          {franchise.available ? "Available" : "Not Listed"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Right Column */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Inventory Status Section */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Inventory Status</h2>
-              </div>
-
-              {/* Stock Level */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Initial Stock Level
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleStockChange(-1)}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                    style={{
-                      flex: 1,
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      textAlign: "center",
-                      outline: "none"
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleStockChange(1)}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Warning */}
+              {/* Has Topping */}
               <div style={{
-                backgroundColor: "#fff3e0",
-                border: "1px solid #ffb74d",
+                backgroundColor: "#f8f9fa",
+                border: "1px solid #e0e0e0",
+                borderRadius: "8px",
+                padding: "16px"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "500", color: "#374151", marginBottom: "4px" }}>
+                      Product Has Topping
+                    </label>
+                    <p style={{ fontSize: "12px", color: "#6c757d", margin: 0 }}>
+                      Check if this product can have additional toppings
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, is_have_topping: !prev.is_have_topping }))}
+                    style={{
+                      width: "44px",
+                      height: "24px",
+                      borderRadius: "12px",
+                      backgroundColor: formData.is_have_topping ? "#8B4513" : "#e0e0e0",
+                      position: "relative",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s"
+                    }}
+                  >
+                    <div style={{
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "50%",
+                      backgroundColor: "white",
+                      position: "absolute",
+                      top: "2px",
+                      left: formData.is_have_topping ? "22px" : "2px",
+                      transition: "left 0.2s"
+                    }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Error Alert */}
+            {error && (
+              <div style={{
+                backgroundColor: "#fee",
+                border: "1px solid #fca",
                 borderRadius: "8px",
                 padding: "12px",
                 display: "flex",
-                gap: "8px",
-                marginBottom: "20px"
+                gap: "8px"
               }}>
-                <AlertCircle size={16} color="#8B4513" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <p style={{ margin: 0, fontSize: "12px", color: "#6d3610" }}>
-                  Provide is now managed within the core identity and franchise map for better consistency.
+                <AlertCircle size={16} color="#ef4444" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p style={{ margin: 0, fontSize: "12px", color: "#991b1b" }}>
+                  {error}
                 </p>
               </div>
-
-              {/* Product Visibility */}
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "12px", color: "#374151" }}>
-                  Product Visibility
-                </label>
-                
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {[
-                    { label: "Visible on Mobile App", field: "visibleOnMobile" },
-                    { label: "Available for Delivery", field: "availableForDelivery" },
-                    { label: "Flash Sale eligible", field: "flashSaleEligible" }
-                  ].map((item) => (
-                    <div key={item.field} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "14px", color: "#374151" }}>{item.label}</span>
-                      <div
-                        onClick={() => toggleSwitch(item.field)}
-                        style={{
-                          width: "44px",
-                          height: "24px",
-                          borderRadius: "12px",
-                          backgroundColor: formData[item.field as keyof typeof formData] ? "#8B4513" : "#e0e0e0",
-                          position: "relative",
-                          cursor: "pointer",
-                          transition: "background-color 0.2s"
-                        }}
-                      >
-                        <div style={{
-                          width: "20px",
-                          height: "20px",
-                          borderRadius: "50%",
-                          backgroundColor: "white",
-                          position: "absolute",
-                          top: "2px",
-                          left: formData[item.field as keyof typeof formData] ? "22px" : "2px",
-                          transition: "left 0.2s"
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
-      </form>
 
-      {/* Sync Status */}
-      <div style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        backgroundColor: "#212529",
-        color: "white",
-        padding: "12px 20px",
-        borderRadius: "24px",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-        fontSize: "14px",
-        fontWeight: "500"
-      }}>
-        <Check size={18} color="#4caf50" />
-        All changes synced to ID System
-      </div>
+        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end", marginTop: "24px" }}>
+          <button
+            type="button"
+            onClick={() => navigate("/admin/products")}
+            style={{
+              padding: "10px 20px",
+              border: "1px solid #e0e0e0",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+              backgroundColor: "white",
+              color: "#374151",
+              transition: "all 0.2s"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#f9fafb";
+              e.currentTarget.style.borderColor = "#d1d5db";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "white";
+              e.currentTarget.style.borderColor = "#e0e0e0";
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isCreating}
+            style={{
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: isCreating ? "not-allowed" : "pointer",
+              backgroundColor: "#8B4513",
+              color: "white",
+              transition: "all 0.2s",
+              opacity: isCreating ? 0.7 : 1,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px"
+            }}
+            onMouseEnter={(e) => {
+              if (!isCreating) {
+                e.currentTarget.style.backgroundColor = "#6d3610";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isCreating) {
+                e.currentTarget.style.backgroundColor = "#8B4513";
+              }
+            }}
+          >
+            {isCreating && (
+              <div
+                style={{
+                  width: "14px",
+                  height: "14px",
+                  border: "2px solid transparent",
+                  borderTopColor: "white",
+                  borderRadius: "50%",
+                  animation: "spin 0.6s linear infinite"
+                }}
+              />
+            )}
+            {isCreating ? "Creating..." : "Create Product"}
+          </button>
+        </div>
+
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </form>
     </div>
   );
 }
