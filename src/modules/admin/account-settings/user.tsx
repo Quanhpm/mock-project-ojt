@@ -328,14 +328,17 @@ const AccountSettingsPage: React.FC = () => {
                     className="hidden"
                     onChange={handleAvatarSelect}
                   />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110"
-                    aria-label="Upload photo"
-                  >
-                    <Camera className="text-white" size={18} />
-                  </button>
+                  {/* Camera button - chỉ hiện khi đang edit */}
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110"
+                      aria-label="Upload photo"
+                    >
+                      <Camera className="text-white" size={18} />
+                    </button>
+                  )}
                 </div>
 
                 {/* User Info */}
