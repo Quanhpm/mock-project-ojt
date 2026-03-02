@@ -1,13 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Upload, User } from "lucide-react";
+import { Upload, User, X } from "lucide-react";
 import { useCreateCustomer } from "./hooks/useCreateCustomer";
 import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import type { Customer } from "./customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
+import axios from "axios";
+import { ENV } from "@/config/env.config";
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -24,18 +26,7 @@ const createValidationSchema = (isEditMode: boolean) =>
       .email("Email không đúng định dạng"),
     phone: yup.string().required("Số điện thoại là bắt buộc"),
     name: yup.string().default(""),
-    avatarUrl: yup
-      .string()
-      .default("")
-      .test("is-url", "Avatar URL phải đúng định dạng URL", (value) => {
-        if (!value || value === "") return true;
-        try {
-          new URL(value);
-          return true;
-        } catch {
-          return false;
-        }
-      }),
+    avatarUrl: yup.string().default(""),
     password: isEditMode
       ? yup.string().default("")
       : yup
@@ -67,6 +58,13 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const isEditMode = !!customer;
 
   // ============================================================================
+  // FILE UPLOAD STATE
+  // ============================================================================
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ============================================================================
   // REACT HOOK FORM SETUP
   // ============================================================================
   const {
@@ -90,6 +88,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   });
 
   const isActive = watch("isActive");
+  const avatarUrl = watch("avatarUrl");
 
   // ============================================================================
   // CUSTOM HOOKS (API)
@@ -97,7 +96,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const { createCustomer, isCreating } = useCreateCustomer();
   const { updateCustomer, isUpdating } = useUpdateCustomer();
 
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isCreating || isUpdating || isUploading;
 
   // ============================================================================
   // USE EFFECT - FILL FORM WITH EXISTING DATA (EDIT MODE)
@@ -113,8 +112,91 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         confirmPassword: "",
         isActive: customer.is_active ?? true,
       });
+      // Set preview if avatar exists
+      if (customer.avatar_url) {
+        setPreviewUrl(customer.avatar_url);
+      }
     }
   }, [customer, reset]);
+
+  // ============================================================================
+  // CLOUDINARY UPLOAD HANDLER
+  // ============================================================================
+  const handleUploadImage = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
+      formData.append("folder", "customers/avatars"); // Tổ chức file theo folder
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        },
+      );
+
+      const { secure_url } = response.data;
+      setValue("avatarUrl", secure_url);
+      setPreviewUrl(secure_url);
+      success("Upload thành công", "Ảnh đại diện đã được tải lên.");
+    } catch (err) {
+      console.error("Upload error:", err);
+      error(
+        "Upload thất bại",
+        err instanceof Error
+          ? err.message
+          : "Không thể tải ảnh lên. Vui lòng thử lại.",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ============================================================================
+  // FILE INPUT CHANGE HANDLER
+  // ============================================================================
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        error("File không hợp lệ", "Vui lòng chọn file ảnh.");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        error("File quá lớn", "Kích thước file không được vượt quá 5MB.");
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+
+      // Upload to Cloudinary
+      handleUploadImage(file);
+    }
+  };
+
+  // ============================================================================
+  // REMOVE IMAGE HANDLER
+  // ============================================================================
+  const handleRemoveImage = () => {
+    setPreviewUrl("");
+    setValue("avatarUrl", "");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
 
   // ============================================================================
   // SUBMIT HANDLER
@@ -546,56 +628,157 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   marginBottom: "12px",
                 }}
               >
-                Avatar URL
+                Avatar Image
               </label>
-              <div
-                style={{
-                  border: "2px dashed #dee2e6",
-                  borderRadius: "8px",
-                  padding: "24px",
-                  textAlign: "center",
-                  backgroundColor: "#f8f9fa",
-                }}
-              >
-                <Upload
-                  size={32}
-                  style={{ color: "#6c757d", margin: "0 auto 8px" }}
-                />
-                <p
+
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={isUploading}
+                style={{ display: "none" }}
+              />
+
+              {/* Upload Area / Preview */}
+              {previewUrl ? (
+                // Preview Mode
+                <div
                   style={{
-                    margin: "8px 0",
-                    fontSize: "14px",
-                    color: "#495057",
+                    position: "relative",
+                    border: "2px solid #dee2e6",
+                    borderRadius: "8px",
+                    padding: "16px",
+                    backgroundColor: "#f8f9fa",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
                   }}
                 >
-                  Enter avatar image URL below
-                </p>
-                <input
-                  type="text"
-                  {...register("avatarUrl")}
-                  placeholder="https://example.com/avatar.jpg"
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    border: `1px solid ${errors.avatarUrl ? "#dc3545" : "#dee2e6"}`,
-                    borderRadius: "6px",
-                    fontSize: "13px",
-                    marginTop: "12px",
-                  }}
-                />
-                {errors.avatarUrl && (
-                  <p
+                  <img
+                    src={previewUrl}
+                    alt="Avatar preview"
                     style={{
-                      color: "#dc3545",
-                      fontSize: "12px",
-                      marginTop: "4px",
-                      marginBottom: 0,
+                      width: "120px",
+                      height: "120px",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      border: "2px solid #dee2e6",
+                    }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <p
+                      style={{
+                        margin: "0 0 8px 0",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "#212529",
+                      }}
+                    >
+                      Avatar đã được tải lên
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "12px",
+                        color: "#6c757d",
+                        wordBreak: "break-all",
+                      }}
+                    >
+                      {avatarUrl}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={isUploading}
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      right: "12px",
+                      padding: "6px",
+                      border: "none",
+                      borderRadius: "50%",
+                      backgroundColor: "#dc3545",
+                      color: "white",
+                      cursor: isUploading ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      opacity: isUploading ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isUploading)
+                        e.currentTarget.style.backgroundColor = "#c82333";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isUploading)
+                        e.currentTarget.style.backgroundColor = "#dc3545";
                     }}
                   >
-                    {errors.avatarUrl.message}
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                // Upload Mode
+                <div
+                  onClick={() => !isUploading && fileInputRef.current?.click()}
+                  style={{
+                    border: "2px dashed #dee2e6",
+                    borderRadius: "8px",
+                    padding: "32px 24px",
+                    textAlign: "center",
+                    backgroundColor: "#f8f9fa",
+                    cursor: isUploading ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                    opacity: isUploading ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUploading) {
+                      e.currentTarget.style.borderColor = "#8B4513";
+                      e.currentTarget.style.backgroundColor = "#fff";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUploading) {
+                      e.currentTarget.style.borderColor = "#dee2e6";
+                      e.currentTarget.style.backgroundColor = "#f8f9fa";
+                    }
+                  }}
+                >
+                  <Upload
+                    size={40}
+                    style={{
+                      color: isUploading ? "#6c757d" : "#8B4513",
+                      margin: "0 auto 12px",
+                    }}
+                  />
+                  <p
+                    style={{
+                      margin: "0 0 4px 0",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: isUploading ? "#6c757d" : "#212529",
+                    }}
+                  >
+                    {isUploading
+                      ? "Đang tải lên..."
+                      : "Click để chọn ảnh đại diện"}
                   </p>
-                )}
-              </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "12px",
+                      color: "#6c757d",
+                    }}
+                  >
+                    {isUploading
+                      ? "Vui lòng đợi..."
+                      : "Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
