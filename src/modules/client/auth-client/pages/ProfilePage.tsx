@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
@@ -10,7 +10,28 @@ import {
   type CustomerUser,
 } from '@/apis/endpointsCLIENT/customerAuth.api';
 
-// ─────────────────────────── Edit Profile Modal ───────────────────────────
+// ─────────────────────────── Cloudinary Upload ───────────────────────────
+
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
+
+async function uploadToCloudinary(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+    { method: 'POST', body: formData }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Cloudinary upload failed: ${res.status}`);
+  }
+
+  const data = await res.json() as { secure_url: string };
+  return data.secure_url;
+}
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -31,6 +52,11 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url ?? '');
   const [address, setAddress] = useState(profile.address ?? '');
 
+  // ── Avatar upload state ──
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // ── Change password state ──
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -40,6 +66,41 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
   const [passwordError, setPasswordError] = useState('');
 
   const { success, error: showError } = useToast();
+
+  // ── Handle avatar file upload ──
+  const handleAvatarFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showError('Vui lòng chọn file ảnh hợp lệ.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Ảnh phải nhỏ hơn 5MB.');
+      return;
+    }
+    setIsUploadingAvatar(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      setAvatarUrl(url);
+    } catch {
+      showError('Tải ảnh lên thất bại, vui lòng thử lại.');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleAvatarFile(file);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!isEditMode) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleAvatarFile(file);
+  };
 
   // Sync fields when profile prop changes
   useEffect(() => {
@@ -149,7 +210,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
           </div>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
+            className="cursor-pointer text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-colors"
           >
             <span className="material-symbols-outlined text-[24px]">close</span>
           </button>
@@ -288,32 +349,69 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
             <div className="lg:col-span-5 flex flex-col gap-6">
 
               {/* Profile Picture */}
-              <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                <div className="flex items-start gap-4">
-                  <div className="size-16 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-300 flex-shrink-0 overflow-hidden">
-                    {avatarUrl ? (
-                      <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="material-symbols-outlined text-[32px]">person</span>
+              <section className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                <h4 className="text-sm font-bold text-gray-800 mb-4">Ảnh đại diện</h4>
+                <div className="flex flex-col items-center gap-4">
+
+                  {/* Preview */}
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden shadow-sm">
+                      {isUploadingAvatar ? (
+                        <span className="material-symbols-outlined text-primary text-[32px] animate-spin">progress_activity</span>
+                      ) : avatarUrl ? (
+                        <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="material-symbols-outlined text-[32px] text-gray-300">person</span>
+                      )}
+                    </div>
+                    {isEditMode && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingAvatar}
+                        className="cursor-pointer absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-[#6c4830] transition-colors disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">edit</span>
+                      </button>
                     )}
                   </div>
-                  <div className="flex flex-col gap-2 flex-1">
-                    <h4 className="text-sm font-bold text-gray-800">Ảnh đại diện</h4>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                        Đường dẫn ảnh đại diện
-                      </label>
-                      <input
-                        type="url"
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        disabled={!isEditMode}
-                        className="w-full h-9 px-3 rounded-md bg-white border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary transition-all text-xs disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-                        placeholder="https://example.com/avatar.png"
-                      />
+
+                  {/* Drop zone */}
+                  {isEditMode && (
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`cursor-pointer w-full rounded-xl border-2 border-dashed px-4 py-5 flex flex-col items-center gap-2 transition-all ${
+                        isDragging
+                          ? 'border-primary bg-primary/5'
+                          : 'border-gray-200 hover:border-primary hover:bg-primary/5'
+                      } ${isUploadingAvatar ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                      <span className="material-symbols-outlined text-[28px] text-gray-400">cloud_upload</span>
+                      <p className="text-xs text-gray-500 text-center">
+                        Kéo thả hoặc <span className="text-primary font-semibold">chọn file</span>
+                      </p>
+                      <p className="text-[10px] text-gray-400">PNG, JPG, WEBP • Tối đa 5MB</p>
                     </div>
-                    <p className="text-xs text-gray-400">Dán URL hình ảnh công khai ở trên.</p>
-                  </div>
+                  )}
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+
+                  {/* Current URL display when not in edit mode */}
+                  {!isEditMode && avatarUrl && (
+                    <p className="text-[10px] text-gray-400 text-center truncate max-w-full px-2">
+                      {avatarUrl}
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -349,7 +447,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
                       <button
                         type="button"
                         onClick={() => setShowOldPassword(!showOldPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary"
+                        className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary"
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           {showOldPassword ? 'visibility_off' : 'visibility'}
@@ -374,7 +472,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary"
+                        className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary"
                       >
                         <span className="material-symbols-outlined text-[18px]">
                           {showNewPassword ? 'visibility_off' : 'visibility'}
@@ -386,7 +484,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
                   <button
                     type="submit"
                     disabled={isChangingPassword || !oldPassword || !newPassword}
-                    className="w-full py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-[#6c4830] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="cursor-pointer w-full py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-[#6c4830] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isChangingPassword ? (
                       <>
@@ -411,7 +509,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
           <button
             type="button"
             onClick={handleClose}
-            className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+            className="cursor-pointer px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
           >
             Hủy
           </button>
@@ -420,7 +518,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
             <button
               type="button"
               onClick={() => setIsEditMode(true)}
-              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
+              className="cursor-pointer px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
             >
               <span className="material-symbols-outlined text-[18px]">edit</span>
               Bật chỉnh sửa
@@ -430,7 +528,7 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
               type="button"
               disabled={isSubmitting}
               onClick={() => document.getElementById('profile-form-submit')?.click()}
-              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="cursor-pointer px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <>
@@ -537,7 +635,7 @@ function ProfilePage() {
                 <button
                   onClick={() => setIsModalOpen(true)}
                   title="Thay đổi ảnh"
-                  className="absolute bottom-1 right-1 p-2 bg-primary text-white rounded-full shadow-lg hover:opacity-90 transition-opacity"
+                  className="cursor-pointer absolute bottom-1 right-1 p-2 bg-primary text-white rounded-full shadow-lg hover:opacity-90 transition-opacity"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -630,7 +728,7 @@ function ProfilePage() {
                 </a>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-[#6c4830] shadow-sm transition-all active:scale-95 text-sm"
+                  className="cursor-pointer inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-[#6c4830] shadow-sm transition-all active:scale-95 text-sm"
                 >
                   <span className="material-symbols-outlined text-[16px]">edit</span>
                   Chỉnh sửa hồ sơ
@@ -684,7 +782,7 @@ function ProfilePage() {
                 <div className="space-y-3">
                   <button
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 group"
+                    className="cursor-pointer w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 group"
                   >
                     <span className="text-sm font-medium text-gray-700">Đổi mật khẩu</span>
                     <span className="material-symbols-outlined text-[18px] text-gray-400 group-hover:translate-x-1 transition-transform">
@@ -694,7 +792,7 @@ function ProfilePage() {
                   <div className="pt-1">
                     <button
                       onClick={handleLogout}
-                      className="w-full px-4 py-2.5 border border-red-400 text-red-500 font-semibold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
+                      className="cursor-pointer w-full px-4 py-2.5 border border-red-400 text-red-500 font-semibold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
                     >
                       <span className="material-symbols-outlined text-[18px]">logout</span>
                       Đăng xuất
