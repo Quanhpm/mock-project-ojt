@@ -9,6 +9,7 @@ const AboutPage = React.lazy(() => import("@/modules/client/about"));
 const ContactPage = React.lazy(() => import("@/modules/client/contact"));
 const MenuPage = React.lazy(() => import("@/modules/client/menu/pages/MenuPage"));
 const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
+const VerifyEmailPage = React.lazy(() => import("@/modules/client/auth-client/pages/VerifyEmailPage"));
 
 /**
  * ClientPublicRoutes - Các route PUBLIC cho GUEST
@@ -24,4 +25,12 @@ export const ClientPublicRoutes = (
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
   </Route>
+);
+
+/**
+ * VerifyEmailRoute - Standalone route (no layout wrapper)
+ * Full-screen centered verification page
+ */
+export const VerifyEmailRoute = (
+  <Route path={ROUTER_URL.VERIFY_EMAIL} element={<VerifyEmailPage />} />
 );

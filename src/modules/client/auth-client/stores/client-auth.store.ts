@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export interface ClientUser {
   id: number;
@@ -19,49 +18,50 @@ interface ClientAuthState {
   isInitialized: boolean;
   authLoading: boolean;
 
-  login: (user: ClientUser) => void;
-  logout: () => void;
-  hydrate: () => void;
-  updateUser: (user: Partial<ClientUser>) => void;
+  setUser: (user: ClientUser | null) => void;
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
+  setIsInitialized: (isInitialized: boolean) => void;
   setAuthLoading: (loading: boolean) => void;
+  updateUser: (user: Partial<ClientUser>) => void;
+  clearAuth: () => void;
 }
 
-export const useClientAuthStore = create<ClientAuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      isLoggedIn: false,
-      isInitialized: false,
-      authLoading: false,
+/**
+ * Client Authentication Store (Cookie-based, NO localStorage)
+ * 
+ * This store manages the client-side authentication state using cookies.
+ * Authentication tokens are stored in httpOnly cookies by the backend,
+ * so we don't persist any sensitive data in localStorage.
+ */
+export const useClientAuthStore = create<ClientAuthState>((set) => ({
+  user: null,
+  isLoggedIn: false,
+  isInitialized: false,
+  authLoading: false,
 
-      login: (user) => {
-        set({ user, isLoggedIn: true });
-      },
+  setUser: (user) => {
+    set({ user, isLoggedIn: !!user });
+  },
 
-      logout: () => {
-        set({ user: null, isLoggedIn: false });
-      },
+  setIsLoggedIn: (isLoggedIn) => {
+    set({ isLoggedIn });
+  },
 
-      hydrate: () => {
-        set({ isInitialized: true });
-      },
+  setIsInitialized: (isInitialized) => {
+    set({ isInitialized });
+  },
 
-      updateUser: (updates) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...updates } : null,
-        }));
-      },
+  setAuthLoading: (loading) => {
+    set({ authLoading: loading });
+  },
 
-      setAuthLoading: (loading) => {
-        set({ authLoading: loading });
-      },
-    }),
-    {
-      name: 'client-auth-storage',
-      partialize: (state) => ({
-        user: state.user,
-        isLoggedIn: state.isLoggedIn,
-      }),
-    }
-  )
-);
+  updateUser: (updates) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updates } : null,
+    }));
+  },
+
+  clearAuth: () => {
+    set({ user: null, isLoggedIn: false });
+  },
+}));

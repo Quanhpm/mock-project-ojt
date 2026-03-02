@@ -30,8 +30,6 @@ function FranchisePage() {
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      console.log('Franchise inquiry submitted:', data);
-      
       // TODO: Implement actual API call to submit franchise inquiry
       // await franchiseApi.submitInquiry(data);
       

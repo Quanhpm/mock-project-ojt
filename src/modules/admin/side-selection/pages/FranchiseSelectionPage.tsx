@@ -1,21 +1,34 @@
 import { useFranchiseSelection } from '../hooks/use-franchise-selection.hook'
 import { FranchiseCard } from '../components/FranchiseCard'
+import { GlobalRoleCard } from '../components/GlobalRoleCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { ErrorScreen } from '../components/ErrorScreen'
+import { Pagination } from '../components/Pagination'
 
 function FranchiseSelectionPage() {
   const {
-    profile,
+    userName,
     loading,
     switching,
     error,
     franchiseRoles,
+    paginatedFranchiseRoles,
+    hasGlobalRole,
+    currentPage,
+    totalPages,
     handleSelectFranchise,
+    handleSelectGlobal,
     handleLogout,
+    handlePageChange,
   } = useFranchiseSelection()
 
-  if (loading) return <LoadingScreen />
-  if (error) return <ErrorScreen message={error} />
+  if (loading) {
+    return <LoadingScreen />
+  }
+  
+  if (error) {
+    return <ErrorScreen message={error} />
+  }
 
   return (
     <div className="min-h-screen flex flex-col text-slate-900 transition-colors duration-300">
@@ -31,11 +44,16 @@ function FranchiseSelectionPage() {
             </h1>
           </div>
           <h2 className="text-secondary text-2xl font-semibold mb-2">
-            Xin chào, {profile?.user.name} 👋
+            Xin chào, {userName}
           </h2>
           <p className="text-primary/70 font-medium text-lg">
             Chọn chi nhánh để bắt đầu ca làm việc
           </p>
+          {franchiseRoles.length > 0 && (
+            <p className="text-sm text-gray-500 mt-3">
+              Tổng số chi nhánh: <span className="font-semibold">{franchiseRoles.length}</span>
+            </p>
+          )}
         </div>
 
         {/* Franchise List */}
@@ -47,7 +65,16 @@ function FranchiseSelectionPage() {
             </div>
           )}
 
-          {franchiseRoles.map(userRole => (
+          {/* Global Role Card */}
+          {hasGlobalRole && (
+            <GlobalRoleCard 
+              onSelect={handleSelectGlobal} 
+              isLoading={switching === 'GLOBAL'}
+            />
+          )}
+
+          {/* Franchise Roles */}
+          {paginatedFranchiseRoles.map(userRole => (
             <FranchiseCard
               key={userRole.franchise_id}
               userRole={userRole}
@@ -56,6 +83,15 @@ function FranchiseSelectionPage() {
             />
           ))}
         </div>
+
+        {/* Pagination */}
+        {franchiseRoles.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
 
         {/* Footer */}
         <div className="mt-14 flex flex-col items-center gap-3">

@@ -1,102 +1,134 @@
 import React from 'react'
-import type { User } from '../hooks/useUserList.hook'
+import type { UserItem } from '../hooks/useUserList.hook'
 
 interface UserTableRowProps {
-  user: User
-  onToggleStatus: (userId: number) => void
-  onEdit: (userId: number) => void
-  onDelete: (userId: number) => void
+  user: UserItem
+  onView: (user: UserItem) => void
+  onEdit: (user: UserItem) => void
+  onDelete: (user: UserItem) => void
 }
 
-export const UserTableRow: React.FC<UserTableRowProps> = ({
-  user,
-  onToggleStatus,
-  onEdit,
-  onDelete,
-}) => {
-  // Get primary role (first role)
-  const primaryRole = user.roles[0] || null
-  
-  // Get unique franchises
-  const franchises = Array.from(
-    new Set(user.roles.map(role => role.franchiseName || 'Global'))
-  )
+
+
+export const UserTableRow: React.FC<UserTableRowProps> = ({ user, onView, onEdit, onDelete }) => {
+  const initial = user.name?.charAt(0)?.toUpperCase() || '?'
 
   return (
     <tr className="group hover:bg-slate-50 transition-colors">
+      {/* USER */}
       <td className="p-4">
-        <div className="flex items-center gap-4">
-          <div
-            className="h-10 w-10 rounded-full bg-cover bg-center shrink-0 border border-slate-200"
-            style={{
-              backgroundImage: `url('${user.avatar_url}')`,
-            }}
-          />
-          <div className="flex flex-col">
-            <span className="font-semibold text-slate-900">{user.name}</span>
-            <span className="text-sm text-slate-500">{user.email}</span>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
+            {initial}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-slate-900 truncate">{user.name}</span>
+            <span className="text-sm text-slate-500 truncate">{user.email}</span>
           </div>
         </div>
       </td>
-      <td className="p-4">
-        {primaryRole ? (
-          <span
-            className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
-              primaryRole.roleCode === 'SUPER_ADMIN'
-                ? 'bg-purple-50 text-purple-700 ring-purple-700/10'
-                : primaryRole.roleCode === 'FRANCHISE_MANAGER'
-                  ? 'bg-blue-50 text-blue-700 ring-blue-700/10'
-                  : 'bg-green-50 text-green-700 ring-green-700/10'
-            }`}
-          >
-            {primaryRole.roleName}
-          </span>
-        ) : (
-          <span className="text-sm text-slate-400">No role</span>
-        )}
+
+      {/* PHONE */}
+      <td className="p-4 text-slate-600">
+        {user.phone || '—'}
       </td>
-      <td className="p-4">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-slate-400 text-[18px]">
-            storefront
-          </span>
-          <div className="flex flex-col">
-            <span className="text-slate-700 font-medium">
-              {franchises.length === 1 
-                ? franchises[0]
-                : `${franchises.length} franchises`
-              }
-            </span>
-            {franchises.length > 1 && (
-              <span className="text-xs text-slate-500">
-                {franchises.join(', ')}
-              </span>
-            )}
-          </div>
-        </div>
-      </td>
+
+      {/* STATUS */}
       <td className="p-4">
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
             checked={user.is_active}
-            onChange={() => onToggleStatus(user.id)}
+            readOnly
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
         </label>
       </td>
-      <td className="p-4 text-right">
-        <div className="flex justify-end gap-2">
+
+      {/* ACTIONS */}
+      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          {/* View Button */}
           <button
-            onClick={() => onEdit(user.id)}
-            className="text-slate-600 hover:text-primary hover:bg-slate-100 p-2 rounded-lg transition-colors"
+            onClick={() => onView(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e0f2fe'
+              e.currentTarget.style.color = '#0066cc'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="View Details"
+          >
+            <span className="material-symbols-outlined text-[20px]">visibility</span>
+          </button>
+
+          {/* Edit Button */}
+          <button
+            onClick={() => onEdit(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fef3c7'
+              e.currentTarget.style.color = '#92400e'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="Edit"
           >
             <span className="material-symbols-outlined text-[20px]">edit</span>
           </button>
+
+          {/* Delete Button */}
           <button
-            onClick={() => onDelete(user.id)}
-            className="text-slate-600 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+            onClick={() => onDelete(user)}
+            style={{
+              padding: '8px',
+              backgroundColor: 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#4b5563',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#fee2e2'
+              e.currentTarget.style.color = '#dc2626'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent'
+              e.currentTarget.style.color = '#4b5563'
+            }}
+            title="Delete"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
           </button>

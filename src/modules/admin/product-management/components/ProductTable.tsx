@@ -1,69 +1,48 @@
-import { 
-  mockProducts, 
-  mockCategories, 
-  mockFranchises,
-  productFranchise,
-  inventory,
-  categoryFranchise,
-  productCategoryFranchise
-} from "@/mockdata";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGetProducts } from "./hooks/useGetProducts";
+import { useDeleteProduct } from "./hooks/useDeleteProduct";
+import { useRestoreProduct } from "./hooks/useRestoreProduct";
+import { useToggleProductStatus } from "./hooks/useToggleProductStatus";
+import { useGetProductById } from "./hooks/useGetProductById";
 import ProductDelete from "./ProductDelete";
-import FranchiseViewModal from "./FranchiseViewModal";
+import ProductRestore from "./ProductRestore";
+import ProductDetailsModal from "./ProductDetailsModal";
 
-// Helper functions to work with normalized data
-const getProductStock = (productId: number) => {
-  const productFranchises = productFranchise.filter(pf => pf.product_id === productId);
-  let totalStock = 0;
-  
-  productFranchises.forEach(pf => {
-    const inv = inventory.find(i => i.product_franchise_id === pf.id);
-    if (inv && inv.is_active) {
-      totalStock += inv.quantity;
-    }
-  });
-  
-  return totalStock;
-};
-
-const getProductFranchiseIds = (productId: number) => {
-  return productFranchise
-    .filter(pf => pf.product_id === productId && pf.is_active)
-    .map(pf => pf.franchise_id);
-};
-
-const getProductCategoryId = (productId: number, franchiseId: number = 1) => {
-  // Find product_franchise first
-  const pf = productFranchise.find(pf => pf.product_id === productId && pf.franchise_id === franchiseId);
-  if (!pf) return null;
-  
-  // Find category through product_category_franchise
-  const pcf = productCategoryFranchise.find(pcf => pcf.product_franchise_id === pf.id);
-  if (!pcf) return null;
-  
-  // Find category_franchise to get category_id
-  const cf = categoryFranchise.find(cf => cf.id === pcf.category_franchise_id);
-  return cf?.category_id || null;
-};
-
-const getProductPrice = (productId: number, franchiseId: number = 1) => {
-  const pf = productFranchise.find(pf => pf.product_id === productId && pf.franchise_id === franchiseId);
-  return pf?.price_base || 0;
-};
-
-const getProductCategory = (productId: number, franchiseId: number = 1) => {
-  const categoryId = getProductCategoryId(productId, franchiseId);
-  return categoryId ? mockCategories.find(c => c.id === categoryId) : null;
+// Helper to format price
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(price);
 };
 
 export default function ProductTable() {
   const navigate = useNavigate();
+  const { products, isLoading, refetch } = useGetProducts();
+  const { deleteProduct: deleteProductAPI, isDeleting } = useDeleteProduct();
+  const { restoreProduct: restoreProductAPI, isRestoring } = useRestoreProduct();
+  const { toggleStatus } = useToggleProductStatus();
+  const { product: selectedProduct, isLoading: isLoadingProduct, fetchProduct } = useGetProductById();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [franchiseFilter, setFranchiseFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string; productName: string }>({
+    isOpen: false,
+    productId: "",
+    productName: ""
+  });
+  const [restoreModal, setRestoreModal] = useState<{ isOpen: boolean; productId: string; productName: string }>({
+    isOpen: false,
+    productId: "",
+    productName: ""
+  });
+  const [detailsModal, setDetailsModal] = useState<{ isOpen: boolean; productId: string }>({
+    isOpen: false,
+    productId: ""
+  });
 
   // Remove page scroll
   React.useEffect(() => {
@@ -72,67 +51,25 @@ export default function ProductTable() {
       document.body.style.overflow = 'auto';
     };
   }, []);
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: string; productName: string }>({
-    isOpen: false,
-    productId: "",
-    productName: ""
-  });
-  const [franchiseModal, setFranchiseModal] = useState<{ isOpen: boolean; productId: number; productName: string }>({
-    isOpen: false,
-    productId: 0,
-    productName: ""
-  });
-  const [productStatus, setProductStatus] = useState<Record<string, boolean>>(
-    mockProducts.reduce((acc, product) => ({
-      ...acc,
-      [product.id]: getProductStock(product.id) > 0
-    }), {})
-  );
+
   const itemsPerPage = 5;
 
-  const filteredProducts = mockProducts.filter(product => {
-    // Filter by search term (name or SKU)
-    const matchesSearch = searchTerm === "" || 
+  const filteredProducts = products.filter(product => {
+    const matchesSearch =
+      searchTerm === "" ||
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.SKU.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Filter by category
-    const productCategoryId = getProductCategoryId(product.id);
-    const matchesCategory = categoryFilter === "all" || productCategoryId?.toString() === categoryFilter;
-    
-    // Filter by franchise
-    const productFranchiseIds = getProductFranchiseIds(product.id);
-    const matchesFranchise = franchiseFilter === "all" || 
-      productFranchiseIds.includes(parseInt(franchiseFilter));
-    
-    // Filter by status (stock)
-    const productStock = getProductStock(product.id);
-    const matchesStatus = statusFilter === "all" || 
-      (statusFilter === "in-stock" && productStock > 0) ||
-      (statusFilter === "out-of-stock" && productStock === 0);
-    
-    return matchesSearch && matchesCategory && matchesFranchise && matchesStatus;
+    const matchesDeleteStatus = showDeleted ? product.is_deleted : !product.is_deleted;
+    const matchesStatus = 
+      statusFilter === "all" || 
+      (statusFilter === "active" && product.is_active) || 
+      (statusFilter === "inactive" && !product.is_active);
+    return matchesSearch && matchesDeleteStatus && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-
-  const getCategoryColor = (categoryName: string) => {
-    const colors: Record<string, string> = {
-      "Điện thoại": "#ff9800",
-      "Laptop": "#2196f3",
-      "Phụ kiện": "#9c27b0",
-    };
-    return colors[categoryName] || "#757575";
-  };
-
-  const handleClearFilters = () => {
-    setSearchTerm("");
-    setCategoryFilter("all");
-    setFranchiseFilter("all");
-    setStatusFilter("all");
-  };
 
   const handleDeleteClick = (productId: string, productName: string) => {
     setDeleteModal({
@@ -143,16 +80,59 @@ export default function ProductTable() {
   };
 
   const handleDeleteConfirm = () => {
-    console.log("Delete product:", deleteModal.productId);
-    alert(`Product "${deleteModal.productName}" has been deleted successfully!`);
-    // Here you would typically call an API to delete the product
+    // Prevent double clicks
+    if (isDeleting) return;
+
+    // Call API to delete product
+    deleteProductAPI(deleteModal.productId, async () => {
+      // onSuccess: Close modal and refresh data
+      setDeleteModal({ isOpen: false, productId: "", productName: "" });
+
+      // Refresh product list
+      await refetch({
+        searchCondition: { is_deleted: false },
+        pageInfo: { pageNum: currentPage, pageSize: itemsPerPage },
+      });
+    });
   };
 
-  const handleViewFranchises = (productId: number, productName: string) => {
-    setFranchiseModal({
+  const handleToggleStatus = async (productId: string, currentStatus: boolean) => {
+    await toggleStatus(productId, currentStatus, async () => {
+      await refetch({
+        searchCondition: { is_deleted: false },
+        pageInfo: { pageNum: currentPage, pageSize: itemsPerPage },
+      });
+    }, async () => {
+      // onError: Refetch lại để lấy trạng thái cũ từ server
+      await refetch({
+        searchCondition: { is_deleted: false },
+        pageInfo: { pageNum: currentPage, pageSize: itemsPerPage },
+      });
+    });
+  };
+
+  const handleRestoreClick = (productId: string, productName: string) => {
+    setRestoreModal({
       isOpen: true,
       productId,
       productName
+    });
+  };
+
+  const handleRestoreConfirm = () => {
+    // Prevent double clicks
+    if (isRestoring) return;
+
+    // Call API to restore product
+    restoreProductAPI(restoreModal.productId, async () => {
+      // onSuccess: Close modal and refresh data
+      setRestoreModal({ isOpen: false, productId: "", productName: "" });
+
+      // Refresh product list to show restored products
+      await refetch({
+        searchCondition: { is_deleted: true },
+        pageInfo: { pageNum: currentPage, pageSize: itemsPerPage },
+      });
     });
   };
 
@@ -176,7 +156,9 @@ export default function ProductTable() {
               <h2 style={{ fontSize: "32px", fontWeight: "900", letterSpacing: "-0.025em", color: "#212529", margin: 0 }}>
                 Product Management
               </h2>
-              <p style={{ color: "#6c757d", margin: 0 }}>Total Products: {mockProducts.length}</p>
+              <p style={{ color: "#6c757d", margin: 0 }}>
+                Total Products: {isLoading ? "..." : products.length}
+              </p>
             </div>
             <button
               onClick={() => navigate('/admin/products/create')}
@@ -216,179 +198,129 @@ export default function ProductTable() {
             marginBottom: "24px",
             flexShrink: 0
           }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              {/* Search */}
-              <div style={{ flex: 1, position: "relative" }}>
-                <div style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "12px",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                  color: "#6c757d"
-                }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search by name or product ID..."
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", gap: "12px", alignItems: "center", flex: 1 }}>
+                {/* Show Deleted Toggle */}
+                {/* <button
+                  onClick={() => setShowDeleted(!showDeleted)}
                   style={{
-                    display: "block",
-                    width: "100%",
+                    padding: "8px 16px",
                     borderRadius: "8px",
-                    border: "0",
-                    padding: "10px 16px 10px 40px",
-                    color: "#212529",
-                    backgroundColor: "#f8f9fa",
-                    outline: "none",
+                    border: "1px solid #e0e0e0",
+                    backgroundColor: showDeleted ? "#fff3e0" : "white",
+                    color: showDeleted ? "#f57c00" : "#6c757d",
+                    fontWeight: "500",
                     fontSize: "14px",
-                    boxSizing: "border-box"
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    whiteSpace: "nowrap"
                   }}
-                />
-              </div>
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = showDeleted ? "#f57c00" : "#bdbdbd";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px", marginRight: "4px", verticalAlign: "middle" }}>delete_outline</span>
+                  {showDeleted ? "Xem sản phẩm đã xóa" : "Xem tất cả"}
+                </button> */}
 
-              {/* Filters Group */}
-              <div style={{ display: "flex", gap: "12px", flexShrink: 0 }}>
-                {/* Category Filter */}
-                <div style={{ position: "relative", minWidth: "140px" }}>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
+                {/* Search */}
+                <div style={{ flex: 1, position: "relative" }}>
+                  <div style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "12px",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                    color: "#6c757d"
+                  }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"/>
+                      <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search by name or product ID..."
                     style={{
                       display: "block",
                       width: "100%",
-                      appearance: "none",
                       borderRadius: "8px",
                       border: "0",
-                      padding: "10px 40px 10px 12px",
+                      padding: "10px 16px 10px 40px",
                       color: "#212529",
                       backgroundColor: "#f8f9fa",
                       outline: "none",
                       fontSize: "14px",
-                      cursor: "pointer",
                       boxSizing: "border-box"
                     }}
-                  >
-                    <option value="all">All Categories</option>
-                    {mockCategories.map((category) => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </select>
-                  <div style={{
-                    pointerEvents: "none",
-                    position: "absolute",
-                    top: "50%",
-                    right: "12px",
-                    transform: "translateY(-50%)",
-                    color: "#6c757d"
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </div>
+                  />
                 </div>
 
-                {/* Franchise Filter */}
-                <div style={{ position: "relative", minWidth: "140px" }}>
-                  <select
-                    value={franchiseFilter}
-                    onChange={(e) => setFranchiseFilter(e.target.value)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      appearance: "none",
-                      borderRadius: "8px",
-                      border: "0",
-                      padding: "10px 40px 10px 12px",
-                      color: "#212529",
-                      backgroundColor: "#f8f9fa",
-                      outline: "none",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      boxSizing: "border-box"
-                    }}
-                  >
-                    <option value="all">All Franchises</option>
-                    {mockFranchises.filter(f => f.is_active && !f.is_deleted).map((franchise) => (
-                      <option key={franchise.id} value={franchise.id}>{franchise.name}</option>
-                    ))}
-                  </select>
-                  <div style={{
-                    pointerEvents: "none",
-                    position: "absolute",
-                    top: "50%",
-                    right: "12px",
-                    transform: "translateY(-50%)",
-                    color: "#6c757d"
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div style={{ position: "relative", minWidth: "140px" }}>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      appearance: "none",
-                      borderRadius: "8px",
-                      border: "0",
-                      padding: "10px 40px 10px 12px",
-                      color: "#212529",
-                      backgroundColor: "#f8f9fa",
-                      outline: "none",
-                      fontSize: "14px",
-                      cursor: "pointer",
-                      boxSizing: "border-box"
-                    }}
-                  >
-                    <option value="all">All Status</option>
-                    <option value="in-stock">In Stock</option>
-                    <option value="out-of-stock">Out of Stock</option>
-                  </select>
-                  <div style={{
-                    pointerEvents: "none",
-                    position: "absolute",
-                    top: "50%",
-                    right: "12px",
-                    transform: "translateY(-50%)",
-                    color: "#6c757d"
-                  }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleClearFilters}
+                {/* Status Filter Dropdown */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
                   style={{
+                    padding: "10px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
+                    backgroundColor: "white",
+                    color: "#212529",
                     fontSize: "14px",
                     fontWeight: "500",
-                    color: "#8B4513",
-                    padding: "0 8px",
-                    whiteSpace: "nowrap",
                     cursor: "pointer",
-                    border: "none",
-                    backgroundColor: "transparent",
-                    transition: "color 0.2s"
+                    outline: "none",
+                    transition: "all 0.2s"
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = "#6d3610"}
-                  onMouseLeave={(e) => e.currentTarget.style.color = "#8B4513"}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#bdbdbd";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#e0e0e0";
+                  }}
                 >
-                  Clear Filters
-                </button>
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
               </div>
+
+              {/* Clear Filters */}
+              <button
+                onClick={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                  setShowDeleted(false);
+                  setCurrentPage(1);
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e0e0e0",
+                  backgroundColor: "white",
+                  color: "#6c757d",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#212529";
+                  e.currentTarget.style.borderColor = "#bdbdbd";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#6c757d";
+                  e.currentTarget.style.borderColor = "#e0e0e0";
+                }}
+              >
+                Clear Filters
+              </button>
             </div>
           </div>
 
@@ -457,16 +389,7 @@ export default function ProductTable() {
                     }}>
                       Stock Status
                     </th>
-                    <th style={{
-                      padding: "12px 16px",
-                      fontSize: "11px",
-                      fontWeight: "600",
-                      color: "#6c757d",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px"
-                    }}>
-                      Franchises
-                    </th>
+
                     <th style={{
                       padding: "12px 16px",
                       fontSize: "11px",
@@ -481,15 +404,20 @@ export default function ProductTable() {
                   </tr>
                 </thead>
                 <tbody style={{ borderTop: "1px solid #e9ecef" }}>
-                  {currentProducts.map((product) => {
-                    const productFranchiseIds = getProductFranchiseIds(product.id);
-                    const productFranchises = mockFranchises.filter(f => 
-                      productFranchiseIds.includes(f.id) && f.is_active && !f.is_deleted
-                    );
-                    const productCategory = getProductCategory(product.id);
-                    const productPrice = getProductPrice(product.id);
-                    
-                    return (
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "#6c757d" }}>
+                        <span>Đang tải...</span>
+                      </td>
+                    </tr>
+                  ) : currentProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "#6c757d" }}>
+                        <span>Không tìm thấy sản phẩm</span>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentProducts.map((product) => (
                       <tr
                         key={product.id}
                         style={{
@@ -510,7 +438,7 @@ export default function ProductTable() {
                         <td style={{ padding: "16px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                             <img
-                              src={`https://picsum.photos/seed/product${product.id}/400`}
+                              src={product.image_url}
                               alt={product.name}
                               style={{
                                 width: "40px",
@@ -537,10 +465,10 @@ export default function ProductTable() {
                             borderRadius: "9999px",
                             fontSize: "12px",
                             fontWeight: "500",
-                            backgroundColor: getCategoryColor(productCategory?.name || "Default") + "15",
-                            color: getCategoryColor(productCategory?.name || "Default")
+                            backgroundColor: "#f5e6d3",
+                            color: "#8B4513"
                           }}>
-                            {productCategory?.name || "No Category"}
+                            {product.SKU}
                           </span>
                         </td>
                         <td style={{
@@ -549,7 +477,7 @@ export default function ProductTable() {
                           fontWeight: "600",
                           color: "#212529"
                         }}>
-                          ${(productPrice / 1000).toFixed(2)}
+                          {formatPrice(product.min_price)}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <label style={{
@@ -561,11 +489,8 @@ export default function ProductTable() {
                           }}>
                             <input
                               type="checkbox"
-                              checked={productStatus[product.id]}
-                              onChange={() => setProductStatus(prev => ({
-                                ...prev,
-                                [product.id]: !prev[product.id]
-                              }))}
+                              checked={product.is_active}
+                              onChange={() => handleToggleStatus(product.id, product.is_active)}
                               style={{
                                 opacity: 0,
                                 width: 0,
@@ -578,7 +503,7 @@ export default function ProductTable() {
                               left: 0,
                               right: 0,
                               bottom: 0,
-                              backgroundColor: productStatus[product.id] ? "#8B4513" : "#ccc",
+                              backgroundColor: product.is_active ? "#8B4513" : "#ccc",
                               borderRadius: "24px",
                               transition: "background-color 0.3s"
                             }}>
@@ -587,7 +512,7 @@ export default function ProductTable() {
                                 content: "",
                                 height: "18px",
                                 width: "18px",
-                                left: productStatus[product.id] ? "23px" : "3px",
+                                left: product.is_active ? "23px" : "3px",
                                 bottom: "3px",
                                 backgroundColor: "white",
                                 borderRadius: "50%",
@@ -597,55 +522,18 @@ export default function ProductTable() {
                           </label>
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                            <span style={{
-                              fontSize: "14px",
-                              fontWeight: "600",
-                              color: "#212529"
-                            }}>
-                              {productFranchises.length} chi nhánh
-                            </span>
-                            {productFranchises.length > 0 && (
-                              <button
-                                onClick={() => handleViewFranchises(product.id, product.name)}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "4px",
-                                  padding: "6px 12px",
-                                  fontSize: "13px",
-                                  fontWeight: "500",
-                                  color: "#0066cc",
-                                  backgroundColor: "#e7f3ff",
-                                  border: "1px solid #b3d9ff",
-                                  borderRadius: "6px",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s"
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = "#cce6ff";
-                                  e.currentTarget.style.borderColor = "#80c1ff";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = "#e7f3ff";
-                                  e.currentTarget.style.borderColor = "#b3d9ff";
-                                }}
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>visibility</span>
-                                Xem
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                        <td style={{ padding: "16px" }}>
                           <div style={{
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             gap: "8px"
                           }}>
+                            {/* View Details Button */}
                             <button
-                              onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                              onClick={async () => {
+                                setDetailsModal({ isOpen: true, productId: product.id });
+                                await fetchProduct(product.id);
+                              }}
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -660,47 +548,87 @@ export default function ProductTable() {
                                 transition: "all 0.2s"
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(25, 127, 230, 0.05)";
-                                e.currentTarget.style.color = "#197fe6";
+                                e.currentTarget.style.backgroundColor = "rgba(51, 102, 204, 0.05)";
+                                e.currentTarget.style.color = "#3366cc";
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.backgroundColor = "transparent";
                                 e.currentTarget.style.color = "#94a3b8";
                               }}
+                              title="View Details"
                             >
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>edit_square</span>
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>visibility</span>
                             </button>
-                            <button
-                              onClick={() => handleDeleteClick(product.id.toString(), product.name)}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "32px",
-                                height: "32px",
-                                border: "none",
-                                borderRadius: "6px",
-                                backgroundColor: "transparent",
-                                color: "#94a3b8",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "#fee";
-                                e.currentTarget.style.color = "#ef4444";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = "#94a3b8";
-                              }}
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
-                            </button>
+
+                            {/* Edit Button */}
+                            {showDeleted ? (
+                              <button
+                                onClick={() => handleRestoreClick(product.id, product.name)}
+                                disabled={isRestoring}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "32px",
+                                  height: "32px",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  backgroundColor: "transparent",
+                                  color: "#94a3b8",
+                                  cursor: isRestoring ? "not-allowed" : "pointer",
+                                  transition: "all 0.2s",
+                                  opacity: isRestoring ? 0.6 : 1
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isRestoring) {
+                                    e.currentTarget.style.backgroundColor = "rgba(76, 175, 80, 0.05)";
+                                    e.currentTarget.style.color = "#4caf50";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>restore</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleDeleteClick(product.id, product.name)}
+                                disabled={isDeleting}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "32px",
+                                  height: "32px",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  backgroundColor: "transparent",
+                                  color: "#94a3b8",
+                                  cursor: isDeleting ? "not-allowed" : "pointer",
+                                  transition: "all 0.2s",
+                                  opacity: isDeleting ? 0.6 : 1
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isDeleting) {
+                                    e.currentTarget.style.backgroundColor = "#fee";
+                                    e.currentTarget.style.color = "#ef4444";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
-                    );
-                  })}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -861,14 +789,21 @@ export default function ProductTable() {
         productId={deleteModal.productId}
       />
 
-      {/* Franchise View Modal */}
-      <FranchiseViewModal
-        isOpen={franchiseModal.isOpen}
-        onClose={() => setFranchiseModal({ isOpen: false, productId: 0, productName: "" })}
-        franchises={mockFranchises.filter(f => 
-          getProductFranchiseIds(franchiseModal.productId).includes(f.id) && f.is_active && !f.is_deleted
-        )}
-        productName={franchiseModal.productName}
+      {/* Restore Modal */}
+      <ProductRestore
+        isOpen={restoreModal.isOpen}
+        onClose={() => setRestoreModal({ isOpen: false, productId: "", productName: "" })}
+        onConfirm={handleRestoreConfirm}
+        productName={restoreModal.productName}
+        productId={restoreModal.productId}
+      />
+
+      {/* Product Details Modal */}
+      <ProductDetailsModal
+        isOpen={detailsModal.isOpen}
+        onClose={() => setDetailsModal({ isOpen: false, productId: "" })}
+        product={selectedProduct}
+        isLoading={isLoadingProduct}
       />
     </div>
   );

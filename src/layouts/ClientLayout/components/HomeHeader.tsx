@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
+import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useCartStore } from '@/stores/cart.store';
+import { useToast } from '@/hooks/use-toast.hook';
 import { ShoppingCart, ClipboardClock, User, KeyRound, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
-/**
- * HomeHeader - Header cho USER ĐÃ ĐĂNG NHẬP
- * Hiển thị: Cart, Profile, Change Password, Logout
- * Có avatar và dropdown menu
- */
+
 const HomeHeader: React.FC = () => {
-  const { user, logout, isLoggedIn } = useClientAuthStore();
+  const { user, logout } = useAuth();
   const cartItems = useCartStore((state) => state.items);
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { success, error } = useToast();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
-    // Navigate trước, logout sau để tránh ClientGuard redirect về login
-    navigate('/', { replace: true });
-    // Delay logout một chút để navigate hoàn thành trước
-    setTimeout(() => {
-      logout();
-    }, 50);
+    
+    const result = await logout();
+    
+    if (result.success) {
+      success(result.message || 'Đăng xuất thành công');
+      // Chuyển về trang chủ sau khi logout thành công
+      navigate('/', { replace: true });
+    } else {
+      error(result.message || 'Đăng xuất thất bại');
+    }
   };
 
   return (
@@ -135,7 +137,7 @@ const HomeHeader: React.FC = () => {
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
                   <Link
-                    to="/change-password"
+                    to="/client/change-password"
                     className="w-full flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
                     onClick={() => setIsDropdownOpen(false)}
                   >

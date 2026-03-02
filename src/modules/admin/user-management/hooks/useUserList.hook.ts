@@ -1,78 +1,95 @@
-import { useState, useMemo } from 'react'
-import { getUsersWithRolesAndFranchises, type UserWithRolesAndFranchises } from '@/mockdata'
-import type { UserFilters } from './useUserFilters.hook'
+import { useState, useEffect, useCallback } from 'react'
+import { httpClient } from '@/apis'
+import type { PageInfo } from '@/apis'
 
-export type User = UserWithRolesAndFranchises
+// ======================== Types ========================
 
-export const useUserList = (filters: UserFilters) => {
-  const [users, setUsers] = useState<User[]>(() => {
-    // Initialize with mock data directly
-    return getUsersWithRolesAndFranchises()
-  })
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
+/** Dữ liệu trả về từ API search users */
+export interface UserItem {
+  id: string
+  email: string
+  name: string
+  phone: string
+  avatar_url: string
+  is_active: boolean
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+}
 
-  // Filter users based on search and filters
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      // Search filter
-      const matchesSearch =
-        filters.searchTerm === '' ||
-        user.name.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(filters.searchTerm.toLowerCase())
-
-      // Status filter
-      const matchesStatus =
-        filters.statusFilter === 'all' ||
-        (filters.statusFilter === 'active' && user.is_active) ||
-        (filters.statusFilter === 'inactive' && !user.is_active)
-
-      // Role filter
-      const matchesRole =
-        filters.roleFilter === 'all' ||
-        user.roles.some((role) => {
-          if (filters.roleFilter === 'manager') return role.roleCode === 'FRANCHISE_MANAGER'
-          if (filters.roleFilter === 'barista') return role.roleCode === 'STAFF'
-          if (filters.roleFilter === 'admin') return role.roleCode === 'SUPER_ADMIN'
-          return false
-        })
-
-      // Franchise filter
-      const matchesFranchise =
-        filters.franchiseFilter === 'all' ||
-        user.roles.some((role) => {
-          if (!role.franchiseId) return filters.franchiseFilter === 'global'
-          return role.franchiseId.toString() === filters.franchiseFilter
-        })
-
-      return matchesSearch && matchesStatus && matchesRole && matchesFranchise
-    })
-  }, [users, filters])
-
-  // Paginate filtered users
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return filteredUsers.slice(startIndex, endIndex)
-  }, [filteredUsers, currentPage])
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
-
-  const toggleUserStatus = (userId: number) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === userId ? { ...user, is_active: !user.is_active } : user
-      )
-    )
+/** Payload gửi lên API search users */
+interface SearchPayload {
+  searchCondition: {
+    keyword: string
+    is_deleted: boolean
   }
+  pageInfo: {
+    pageNum: number
+    pageSize: number
+  }
+}
+
+// ======================== Hook ========================
+
+export const useUserList = () => {
+  const [users, setUsers] = useState<UserItem[]>([])
+  const [pageInfo, setPageInfo] = useState<PageInfo>({
+    pageNum: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  })
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchUsers = useCallback(async (pageNum: number, pageSize: number = 10) => {
+    setIsLoading(true)
+    try {
+      const payload: SearchPayload = {
+        searchCondition: {
+          keyword: '',
+          is_deleted: false,
+        },
+        pageInfo: {
+          pageNum,
+          pageSize,
+        },
+      }
+
+      const res = await httpClient.search<UserItem, SearchPayload>({
+        url: '/users/search',
+        data: payload,
+      })
+
+      setUsers(res.data)
+      setPageInfo(res.pageInfo)
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+      setUsers([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Gọi API lần đầu khi mount
+  useEffect(() => {
+    fetchUsers(1)
+  }, [fetchUsers])
+
+  const setCurrentPage = useCallback(
+    (page: number) => {
+      fetchUsers(page, pageInfo.pageSize)
+    },
+    [fetchUsers, pageInfo.pageSize],
+  )
 
   return {
-    users: paginatedUsers,
-    totalUsers: filteredUsers.length,
-    currentPage,
-    totalPages,
-    itemsPerPage,
+    users,
+    isLoading,
+    pageInfo,
+    currentPage: pageInfo.pageNum,
+    totalPages: pageInfo.totalPages,
+    totalItems: pageInfo.totalItems,
+    itemsPerPage: pageInfo.pageSize,
     setCurrentPage,
-    toggleUserStatus,
   }
 }
