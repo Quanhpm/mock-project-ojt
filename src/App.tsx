@@ -1,16 +1,18 @@
 import Loading from "@/layouts/LoadingLayout/LoadingLayout";
-import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { AuthProvider } from "@/modules/client/auth-client";
 import { setupApi } from "@/apis";
+import { HttpError } from "@/apis/http.types";
 import { Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
-import { 
-  AdminAuthRoutes, 
-  AdminRoutes, 
-  ClientAuthRoutes, 
-  ClientPublicRoutes, 
-  HomePrivateRoutes 
+import {
+  AdminAuthRoutes,
+  AdminRoutes,
+  ClientAuthRoutes,
+  ClientPublicRoutes,
+  HomePrivateRoutes,
+  VerifyEmailRoute
 } from "./routes";
 import { ToasterComponent } from "@/components/ui/toast";
 
@@ -18,48 +20,55 @@ import { ToasterComponent } from "@/components/ui/toast";
 setupApi();
 
 const App = () => {
-  const clientHydrate = useClientAuthStore((state) => state.hydrate);
   const adminHydrate = useAdminAuthStore((state) => state.hydrate);
   const adminIsLoading = useAdminAuthStore((state) => state.isLoading);
 
-  // Khi reload: client hydrate từ localStorage, admin hydrate từ API (cookie)
+  // Admin hydrate từ API (cookie)
   useEffect(() => {
-    clientHydrate();
-    adminHydrate();
-  }, [clientHydrate, adminHydrate]);
+    adminHydrate().catch((error) => {
+      // Nếu lần đầu hydrate fail (refresh token expired) → redirect login
+      if (error instanceof HttpError && error.code === "REFRESH_TOKEN_FAILED") {
+        window.location.href = '/admin/login';
+      }
+    });
+  }, [adminHydrate]);
 
   return (
-    <BrowserRouter>
-      {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
-      {adminIsLoading ? (
-        <Loading />
-      ) : (
-        <Suspense fallback={<Loading />}>
-          <Routes>
-            {/* ========== ADMIN ROUTES ========== */}
-            {AdminAuthRoutes}
-            {AdminRoutes}
+    <AuthProvider>
+      <BrowserRouter>
+        {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
+        {adminIsLoading ? (
+          <Loading />
+        ) : (
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              {/* ========== ADMIN ROUTES ========== */}
+              {AdminAuthRoutes}
+              {AdminRoutes}
 
-            {/* ========== CLIENT AUTH ROUTES ========== */}
-            {ClientAuthRoutes}
+              {/* ========== CLIENT AUTH ROUTES ========== */}
+              {ClientAuthRoutes}
 
-            {/* ========== CLIENT PUBLIC ROUTES ========== */}
-            {ClientPublicRoutes}
+              {/* ========== CLIENT PUBLIC ROUTES ========== */}
+              {ClientPublicRoutes}
 
-            {/* ========== HOME PRIVATE ROUTES ========== */}
-            {HomePrivateRoutes}
+              {/* ========== VERIFY EMAIL (standalone, no layout) ========== */}
+              {VerifyEmailRoute}
 
-            {/* ========== 404 NOT FOUND ========== */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-      )}
+              {/* ========== HOME PRIVATE ROUTES ========== */}
+              {HomePrivateRoutes}
 
-      {/* Toast notifications */}
-      <ToasterComponent />
-    </BrowserRouter>
+              {/* ========== 404 NOT FOUND ========== */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        )}
+
+        {/* Toast notifications */}
+        <ToasterComponent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
-//test
 
 export default App;

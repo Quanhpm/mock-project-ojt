@@ -1,5 +1,6 @@
 // Auth API endpoints
 import { httpClient } from "@/apis/httpClient";
+import { HttpError } from "@/apis/http.types";
 
 // ======================== Types ========================
 
@@ -46,9 +47,18 @@ export const login = (data: LoginRequest): Promise<null> => {
 };
 
 /** GET /api/auth - Lấy thông tin user hiện tại */
-export const getProfile = (): Promise<ProfileResponse | null> => {
+export const getProfile = (): Promise<ProfileResponse> => {
   return httpClient.get<ProfileResponse>({
     url: "/auth",
+  }).then((profile) => {
+    if (!profile) {
+      throw new HttpError({
+        status: 401,
+        message: "Not authenticated",
+        code: "NOT_AUTHENTICATED",
+      });
+    }
+    return profile;
   });
 };
 
@@ -59,10 +69,18 @@ export const logout = (): Promise<null> => {
   });
 };
 
-/** POST /api/auth/switch-context - Chọn franchise context */
-export const switchContext = (franchise_id: string): Promise<ProfileResponse | null> => {
-  return httpClient.post<ProfileResponse, { franchise_id: string }>({
+/** POST /api/auth/switch-context - Chọn franchise context (null = GLOBAL) */
+export const switchContext = (franchise_id: string | null): Promise<ProfileResponse | null> => {
+  return httpClient.post<ProfileResponse, { franchise_id: string | null }>({
     url: "/auth/switch-context",
     data: { franchise_id },
+  });
+};
+
+/** POST /api/auth/verify-token - Xác thực email người dùng mới */
+export const verifyEmail = (token: string): Promise<null> => {
+  return httpClient.post<null, { token: string }>({
+    url: "/auth/verify-token",
+    data: { token },
   });
 };

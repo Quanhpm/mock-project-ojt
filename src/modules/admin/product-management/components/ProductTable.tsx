@@ -143,7 +143,6 @@ export default function ProductTable() {
   };
 
   const handleDeleteConfirm = () => {
-    console.log("Delete product:", deleteModal.productId);
     alert(`Product "${deleteModal.productName}" has been deleted successfully!`);
     // Here you would typically call an API to delete the product
   };

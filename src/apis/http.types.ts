@@ -6,6 +6,31 @@ export interface ApiSuccessResponse<T> {
   data: T | null;
 }
 
+// ======================== API Error Constants ========================
+
+/** Constants cho các error codes từ backend */
+export const API_ERROR_CODES = {
+  ACCESS_TOKEN_EXPIRED: "ACCESS_TOKEN_EXPIRED",
+  REFRESH_TOKEN_FAILED: "REFRESH_TOKEN_FAILED",
+  NETWORK_ERROR: "NETWORK_ERROR",
+  NOT_AUTHENTICATED: "NOT_AUTHENTICATED",
+} as const;
+
+/** Thông tin phân trang trả về từ Search API */
+export interface PageInfo {
+  pageNum: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+/** Response wrapper cho Search API — bao gồm data + pageInfo */
+export interface SearchResponse<T> {
+  success: true;
+  data: T[];
+  pageInfo: PageInfo;
+}
+
 /** Response wrapper khi API trả về lỗi */
 export interface ApiErrorResponse {
   success: false;
@@ -48,6 +73,11 @@ export interface HttpClient {
   delete<T, P extends Record<string, unknown> = Record<string, unknown>>(
     config: HttpRequestConfig<never, P>,
   ): Promise<T | null>;
+
+  /** Search API — trả về toàn bộ body (data + pageInfo) thay vì chỉ data */
+  search<T, D = unknown>(
+    config: HttpRequestConfig<D>,
+  ): Promise<SearchResponse<T>>;
 }
 
 // ======================== Custom Error Class ========================

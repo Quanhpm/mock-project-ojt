@@ -1,76 +1,134 @@
-import { PageHeader, UserFilters, UserTableRow, Pagination, CreateUserModal, EditUserModal } from '../components'
-import { useUserFilters, useUserList } from '../hooks'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import {
+  UserTableRow,
+  Pagination,
+  CreateUserModal,
+  EditUserModal,
+  DeleteUserDialog,
+  ViewUserModal,
+} from '../components'
+import { useUserList } from '../hooks'
+import type { UserItem } from '../hooks'
+
+/** Skeleton row cho trạng thái loading */
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    <td className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-slate-200 shrink-0" />
+        <div className="flex flex-col gap-2">
+          <div className="h-4 w-32 bg-slate-200 rounded" />
+          <div className="h-3 w-44 bg-slate-100 rounded" />
+        </div>
+      </div>
+    </td>
+    <td className="p-4">
+      <div className="h-4 w-28 bg-slate-200 rounded" />
+    </td>
+    <td className="p-4">
+      <div className="h-6 w-11 bg-slate-200 rounded-full" />
+    </td>
+    <td className="p-4" />
+  </tr>
+)
 
 function UserManagement() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [editingUser, setEditingUser] = useState<any>(null)
-
-  const {
-    filters,
-    setSearchTerm,
-    setRoleFilter,
-    setFranchiseFilter,
-    setStatusFilter,
-    handleClearFilters,
-  } = useUserFilters()
-
   const {
     users,
-    totalUsers,
+    isLoading,
     currentPage,
     totalPages,
+    totalItems,
     itemsPerPage,
     setCurrentPage,
-    toggleUserStatus,
-  } = useUserList(filters)
+  } = useUserList()
 
-  const handleCreateUser = () => {
-    setIsCreateModalOpen(true)
-  }
+  // ──────── Create Modal ────────
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  const handleSaveUser = (userData: any) => {
-    console.log('New user data:', userData)
-    // TODO: Implement save user logic
-  }
+  const handleCreateSuccess = useCallback(() => {
+    setIsCreateModalOpen(false)
+    setCurrentPage(1)
+  }, [setCurrentPage])
 
-  const handleEditUser = (userId: number) => {
-    const user = users.find((u) => u.id === userId)
-    if (user) {
-      setEditingUser(user)
-    }
-  }
+  // ──────── View Modal ────────
+  const [viewUser, setViewUser] = useState<UserItem | null>(null)
 
-  const handleSaveEditUser = (userId: number, userData: any) => {
-    console.log('Edit user:', userId, userData)
-    // TODO: Implement edit user logic
-  }
+  const handleViewClick = useCallback((user: UserItem) => {
+    setViewUser(user)
+  }, [])
 
-  const handleDeleteUser = (userId: number) => {
-    console.log('Delete user:', userId)
-    // TODO: Implement delete user logic
-  }
+  const handleViewClose = useCallback(() => {
+    setViewUser(null)
+  }, [])
+
+  // ──────── Edit Modal ────────
+  const [editUser, setEditUser] = useState<UserItem | null>(null)
+
+  const handleEditClick = useCallback((user: UserItem) => {
+    setEditUser(user)
+  }, [])
+
+  const handleEditClose = useCallback(() => {
+    setEditUser(null)
+  }, [])
+
+  const handleEditSuccess = useCallback(() => {
+    setEditUser(null)
+    setCurrentPage(currentPage) // Refresh trang hiện tại
+  }, [setCurrentPage, currentPage])
+
+  // ──────── Delete Dialog ────────
+  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null)
+
+  const handleDeleteClick = useCallback((user: UserItem) => {
+    setDeleteTarget(user)
+  }, [])
+
+  const handleDeleteClose = useCallback(() => {
+    setDeleteTarget(null)
+  }, [])
+
+  const handleDeleteSuccess = useCallback(() => {
+    setDeleteTarget(null)
+    setCurrentPage(1) // Refresh về trang 1
+  }, [setCurrentPage])
 
   return (
     <div className="flex flex-col w-full">
-      {/* Main Content */}
       <main className="flex flex-col flex-1">
-        <PageHeader totalUsers={totalUsers} onCreateUser={handleCreateUser} />
+        {/* Page Header */}
+        <header className="w-full px-8 py-6 flex flex-col gap-6 shrink-0 z-10">
+          <div className="flex flex-col gap-1">
+            <nav className="flex items-center gap-2 text-sm text-slate-500">
+              <a className="hover:text-primary transition-colors" href="#">
+                Home
+              </a>
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+              <span className="text-slate-900 font-medium">Users</span>
+            </nav>
+          </div>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-3xl font-black tracking-tight text-slate-900">
+                User Management
+              </h2>
+              <p className="text-slate-500">
+                Total Users: {isLoading ? '...' : totalItems}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              Create User
+            </button>
+          </div>
+        </header>
 
         {/* Content Area */}
         <div className="px-8 pb-8">
-          <UserFilters
-            searchTerm={filters.searchTerm}
-            roleFilter={filters.roleFilter}
-            franchiseFilter={filters.franchiseFilter}
-            statusFilter={filters.statusFilter}
-            onSearchChange={setSearchTerm}
-            onRoleChange={setRoleFilter}
-            onFranchiseChange={setFranchiseFilter}
-            onStatusChange={setStatusFilter}
-            onClearFilters={handleClearFilters}
-          />
-
           {/* Table Container */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div>
@@ -81,10 +139,7 @@ function UserManagement() {
                       User
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Roles
-                    </th>
-                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Franchise
+                      Phone
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Status
@@ -95,41 +150,87 @@ function UserManagement() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {users.map((user) => (
-                    <UserTableRow
-                      key={user.id}
-                      user={user}
-                      onToggleStatus={toggleUserStatus}
-                      onEdit={handleEditUser}
-                      onDelete={handleDeleteUser}
-                    />
-                  ))}
+                  {/* Loading state */}
+                  {isLoading &&
+                    Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
+
+                  {/* Data rows */}
+                  {!isLoading &&
+                    users.map((user) => (
+                      <UserTableRow
+                        key={user.id}
+                        user={user}
+                        onView={handleViewClick}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                      />
+                    ))}
+
+                  {/* Empty state */}
+                  {!isLoading && users.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <span className="material-symbols-outlined text-[48px] text-slate-300">
+                            group_off
+                          </span>
+                          <p className="text-slate-500 font-medium">No users found</p>
+                          <p className="text-sm text-slate-400">
+                            There are no user records to display.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalUsers}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-            />
+            {/* Pagination */}
+            {!isLoading && users.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </div>
         </div>
       </main>
 
+      {/* ═══════════ Modals ═══════════ */}
+
+      {/* Create User Modal */}
       <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onSave={handleSaveUser}
+        onSuccess={handleCreateSuccess}
       />
 
+      {/* View User Modal */}
+      <ViewUserModal
+        isOpen={!!viewUser}
+        user={viewUser}
+        onClose={handleViewClose}
+      />
+
+      {/* Edit User Modal */}
       <EditUserModal
-        isOpen={!!editingUser}
-        user={editingUser}
-        onClose={() => setEditingUser(null)}
-        onSave={handleSaveEditUser}
+        isOpen={!!editUser}
+        user={editUser}
+        onClose={handleEditClose}
+        onSuccess={handleEditSuccess}
+      />
+
+      {/* Delete User Dialog */}
+      <DeleteUserDialog
+        isOpen={!!deleteTarget}
+        userId={deleteTarget?.id ?? ''}
+        userName={deleteTarget?.name ?? ''}
+        onClose={handleDeleteClose}
+        onSuccess={handleDeleteSuccess}
       />
     </div>
   )
