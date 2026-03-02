@@ -17,7 +17,7 @@ export const useClientAuth = () => {
 
     try {
       const response = await getCustomerProfile();
-      const userData = response.data?.data?.user || response.data?.user || response.data;
+      const userData = response.data?.data;
       setUser(userData);
       return true;
     } catch {
@@ -70,7 +70,7 @@ export const useClientAuth = () => {
 
     try {
       const response = await getCustomerProfile();
-      const userData = response.data?.data?.user || response.data?.user || response.data;
+      const userData = response.data?.data;
       setUser(userData);
       return {
         success: true,

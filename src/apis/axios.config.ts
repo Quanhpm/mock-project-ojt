@@ -12,6 +12,8 @@ export const axiosClient = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache",  // Tránh 304 — luôn validate với server
+    "Pragma": "no-cache",         // Fallback cho HTTP/1.0
   },
 });
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginCustomer } from "@/apis/endpointsCLIENT";
+import { loginCustomer, getCustomerProfile } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { HttpError } from "@/apis";
 import type { CustomerLoginRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
@@ -16,22 +16,27 @@ export const useClientLogin = () => {
 
     try {
       const response = await loginCustomer(data);
-      
-      // Handle different response structures
-      const userData = response.data?.data?.user || response.data?.user || response.data;
-      const message = response.data?.message || "Đăng nhập thành công";
-      
-      if (!userData) {
-        throw new Error("Invalid response structure from server");
+
+      // Backend trả { success: true, data: null } — token set qua cookie
+      // Gọi getCustomerProfile để lấy thông tin user sau khi cookie được set
+      if (!response.data?.success) {
+        throw new Error("Đăng nhập thất bại");
       }
-      
+
+      const profileRes = await getCustomerProfile();
+      const userData = profileRes.data?.data;
+
+      if (!userData) {
+        throw new Error("Không thể tải thông tin người dùng");
+      }
+
       // Set user in store
       setUser(userData);
-      
+
       return {
         success: true,
         user: userData,
-        message: message,
+        message: "Đăng nhập thành công",
       };
     } catch (err) {
       console.error("❌ Login Error:", err);

@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 
 export interface ClientUser {
-  id: number;
+  id: string;
   email: string;
   name: string;
   phone: string;
   avatar_url: string;
+  address: string;
   is_active: boolean;
   is_deleted: boolean;
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
