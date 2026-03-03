@@ -14,16 +14,26 @@ export default function AdminLoginPage() {
   const roleCode = getRoleCode(store);
   const isLoggedIn = !!(store.admin && roleCode);
   
+  const activeContext = store.activeContext;
+
   // ✅ Auto-redirect if already logged in
   useEffect(() => {
     if (isLoggedIn) {
-      // User đã đăng nhập → redirect đến select-franchise hoặc dashboard
-      navigate(
-        `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
-        { replace: true }
-      );
+      // Nếu đã có active_context (session cũ còn sống) → vào dashboard thẳng
+      // Nếu chưa có context → bắt buộc chọn franchise
+      if (activeContext) {
+        navigate(
+          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`,
+          { replace: true }
+        );
+      } else {
+        navigate(
+          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
+          { replace: true }
+        );
+      }
     }
-  }, [isLoggedIn, navigate]);
+  }, [isLoggedIn, activeContext, navigate]);
 
   // ✅ Don't render login form if already logged in
   if (isLoggedIn) {
