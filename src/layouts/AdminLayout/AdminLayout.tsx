@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./components/sidebar";
 import { Menu } from "lucide-react";
 import { useRoleBasedMenu } from '@/routes/admin/AdminRoleMenu';
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 
 function AdminLayout() {
   const allowedMenuItems = useRoleBasedMenu();
@@ -48,6 +49,9 @@ function AdminLayout() {
           </div>
         </main>
       </div>
+
+      {/* Global loading overlay — bật khi bất kỳ API nào đang chạy */}
+      <GlobalLoadingOverlay />
     </div>
   );
 }

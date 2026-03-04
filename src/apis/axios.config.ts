@@ -3,6 +3,8 @@ import type { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { ENV } from "@/config";
 import { HttpError, type ApiErrorResponse, API_ERROR_CODES } from "./http.types";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useClientAuthStore } from "@/modules/client/auth-client/stores/client-auth.store";
+import { useLoadingStore } from "@/stores/loading.store";
 
 // ======================== Axios Instance ========================
 
@@ -12,8 +14,6 @@ export const axiosClient = axios.create({
   timeout: 30000,
   headers: {
     "Content-Type": "application/json",
-    "Cache-Control": "no-cache",  // Tránh 304 — luôn validate với server
-    "Pragma": "no-cache",         // Fallback cho HTTP/1.0
   },
 });
 
@@ -40,7 +40,35 @@ const processQueue = (error: unknown = null) => {
 // ======================== Setup Interceptors ========================
 
 export const setupApi = () => {
+  requestInterceptor();
   responseInterceptor();
+};
+
+// ======================== Request Interceptor ========================
+
+/**
+ * Mỗi khi có request bắt đầu → tăng counter → hiển thị loading overlay.
+ * Các URL ngoại lệ (auth/refresh-token, auth/logout) được bỏ qua
+ * để tránh flash loading không cần thiết trong background.
+ */
+const SKIP_LOADING_URLS = ['/auth/refresh-token', '/auth/logout'];
+
+const requestInterceptor = () => {
+  axiosClient.interceptors.request.use(
+    (config) => {
+      const shouldSkip = SKIP_LOADING_URLS.some((url) =>
+        config.url?.includes(url),
+      );
+      if (!shouldSkip) {
+        useLoadingStore.getState().increment();
+      }
+      return config;
+    },
+    (error) => {
+      useLoadingStore.getState().decrement();
+      return Promise.reject(error);
+    },
+  );
 };
 
 // ======================== Response Interceptor ========================
@@ -67,8 +95,16 @@ const buildRetryConfig = (
 
 const responseInterceptor = () => {
   axiosClient.interceptors.response.use(
-    // ✅ Thành công → trả response bình thường
-    (response) => response,
+    // ✅ Thành công → trả response bình thường, giảm counter
+    (response) => {
+      const shouldSkip = SKIP_LOADING_URLS.some((url) =>
+        response.config?.url?.includes(url),
+      );
+      if (!shouldSkip) {
+        useLoadingStore.getState().decrement();
+      }
+      return response;
+    },
 
     // ❌ Lỗi → xử lý 401/refresh hoặc throw HttpError
     async (error: AxiosError<ApiErrorResponse>) => {
@@ -78,6 +114,7 @@ const responseInterceptor = () => {
 
       // ──────── Validate originalRequest ────────
       if (!originalRequest) {
+        useLoadingStore.getState().decrement();
         console.error("[Interceptor] No request config found");
         throw new HttpError({
           status: 0,
@@ -89,11 +126,19 @@ const responseInterceptor = () => {
       // ──────── Cancelled request (AbortController / component unmount) ────────
       if (axios.isCancel(error)) {
         // Request bị cancel chủ động — không throw error, chỉ reject với null
+        const shouldSkip = SKIP_LOADING_URLS.some((url) =>
+          originalRequest.url?.includes(url),
+        );
+        if (!shouldSkip) useLoadingStore.getState().decrement();
         return Promise.reject(null);
       }
 
       // ──────── Network error (no response) ────────
       if (!error.response) {
+        const shouldSkip = SKIP_LOADING_URLS.some((url) =>
+          originalRequest.url?.includes(url),
+        );
+        if (!shouldSkip) useLoadingStore.getState().decrement();
         throw new HttpError({
           status: 0,
           message: "Network error. Please check your connection.",
@@ -115,6 +160,14 @@ const responseInterceptor = () => {
       ) {
         // Đánh dấu request này đã retry (tránh loop vô hạn)
         originalRequest._retry = true;
+
+        // ⚠️ Decrement cho request GỐC ngay tại đây.
+        // Khi retry, request mới sẽ tự increment/decrement riêng.
+        // Không decrement → counter bị stuck → loading vĩnh viễn.
+        const shouldSkipOriginal = SKIP_LOADING_URLS.some((url) =>
+          originalRequest.url?.includes(url),
+        );
+        if (!shouldSkipOriginal) useLoadingStore.getState().decrement();
 
         // Race condition protection: Double-check isRefreshing
         if (isRefreshing) {
@@ -152,15 +205,21 @@ const responseInterceptor = () => {
           // ❌ Refresh token fail → logout và redirect login
           processQueue(refreshError);
 
-          const { logout } = useAdminAuthStore.getState();
-          await logout();
+          const isAdminRoute = window.location.pathname.startsWith('/admin');
 
-          // Use replace to prevent back button issues
-          window.location.replace('/admin/login');
+          if (isAdminRoute) {
+            const { logout } = useAdminAuthStore.getState();
+            await logout();
+            window.location.replace('/admin/login');
+          } else {
+            const { clearAuth } = useClientAuthStore.getState();
+            clearAuth();
+            window.location.replace('/client/login');
+          }
 
           throw new HttpError({
             status: 401,
-            message: "Session expired. Please login again.",
+            message: "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.",
             code: "REFRESH_TOKEN_FAILED",
           });
         } finally {
@@ -170,6 +229,11 @@ const responseInterceptor = () => {
       }
 
       // ──────── Các lỗi khác → throw HttpError ────────
+      const shouldSkip = SKIP_LOADING_URLS.some((url) =>
+        originalRequest.url?.includes(url),
+      );
+      if (!shouldSkip) useLoadingStore.getState().decrement();
+
       const message =
         data?.message ??
         data?.errors?.[0]?.message ??
