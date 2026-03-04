@@ -39,6 +39,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Building2 size={18} />,
     component: React.lazy(() => Promise.resolve({ default: FranchiseSelectionPage })),
     module: "select-franchise",
+    hideFromSidebar: true, // Replaced by FranchiseSwitcherDropdown in sidebar
   },
   {
     label: "Users",

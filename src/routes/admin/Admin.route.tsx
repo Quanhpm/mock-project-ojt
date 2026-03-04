@@ -14,13 +14,14 @@ const AccountSettingsPage = React.lazy(
 
 export const AdminRoutes = (
   <Route element={<AdminGuard />}>
+    {/* Main Admin Layout with Sidebar */}
     <Route path={ROUTER_URL.ADMIN} element={<AdminLayout />}>
       <Route
         index
         element={<Navigate to={ROUTER_URL.ADMIN_ROUTER.DASHBOARD} replace />}
       />
 
-      {/* SelectFranchiseGuard wraps all routes EXCEPT select-franchise */}
+      {/* SelectFranchiseGuard wraps all routes that require franchise context */}
       <Route element={<SelectFranchiseGuard />}>
         {ADMIN_MENU.filter(item => item.module !== 'select-franchise').map((item) => (
           <Route 
@@ -41,20 +42,20 @@ export const AdminRoutes = (
           element={<AccountSettingsPage />}
         />
       </Route>
-
-      {/* Select Franchise Route - OUTSIDE SelectFranchiseGuard */}
-      {ADMIN_MENU.filter(item => item.module === 'select-franchise').map((item) => (
-        <Route 
-          key={item.path} 
-          path={item.path} 
-          element={
-            <ProtectedRoute 
-              requiredModule={item.module}
-              element={<item.component />}
-            />
-          } 
-        />
-      ))}
     </Route>
+
+    {/* Franchise Selection - Standalone (no layout, no sidebar) */}
+    {ADMIN_MENU.filter(item => item.module === 'select-franchise').map((item) => (
+      <Route 
+        key={item.path} 
+        path={`${ROUTER_URL.ADMIN}/${item.path}`}
+        element={
+          <ProtectedRoute 
+            requiredModule={item.module}
+            element={<item.component />}
+          />
+        } 
+      />
+    ))}
   </Route>
 );
