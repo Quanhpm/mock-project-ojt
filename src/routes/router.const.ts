@@ -51,7 +51,6 @@ export const ROUTER_URL = {
     INVENTORY: `inventory`,
     SHIFT: `shifts`,
     ACCOUNT: `account`,
-    SECURITY: `account/security`,
     SELECT_FRANCHISE: `select-franchise`,
   },
 };

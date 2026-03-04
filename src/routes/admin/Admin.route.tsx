@@ -11,9 +11,6 @@ import { ADMIN_MENU } from "./Admin.menu.tsx";
 const AccountSettingsPage = React.lazy(
   () => import("@/modules/admin/account-settings/user.tsx"),
 );
-const SecurityPage = React.lazy(
-  () => import("@/modules/admin/account-settings/pages/SecurityPage.tsx"),
-);
 
 export const AdminRoutes = (
   <Route element={<AdminGuard />}>
@@ -43,10 +40,6 @@ export const AdminRoutes = (
         <Route
           path={ROUTER_URL.ADMIN_ROUTER.ACCOUNT}
           element={<AccountSettingsPage />}
-        />
-        <Route
-          path={ROUTER_URL.ADMIN_ROUTER.SECURITY}
-          element={<SecurityPage />}
         />
       </Route>
     </Route>

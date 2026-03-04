@@ -191,8 +191,7 @@ export default function CustomerTable() {
   // ========================================================================
   // LOCAL STATE
   // ========================================================================
-  const [searchInput, setSearchInput] = useState("");
-  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("all");
@@ -226,7 +225,7 @@ export default function CustomerTable() {
     };
   }, []);
 
-  // Fetch customers when filters/paging/search-submit change
+  // Fetch customers when filters change
   useEffect(() => {
     const mapStatusFilter = (): boolean | null => {
       if (statusFilter === "active") return true;
@@ -236,7 +235,7 @@ export default function CustomerTable() {
 
     fetchCustomers({
       searchCondition: {
-        keyword: searchKeyword.trim(),
+        keyword: searchTerm.trim(),
         is_active: mapStatusFilter(),
         is_deleted: false,
       },
@@ -245,16 +244,11 @@ export default function CustomerTable() {
         pageSize: itemsPerPage,
       },
     });
-  }, [searchKeyword, statusFilter, currentPage, fetchCustomers]);
+  }, [searchTerm, statusFilter, currentPage, fetchCustomers]);
 
   // ========================================================================
   // EVENT HANDLERS
   // ========================================================================
-
-  const handleSearch = () => {
-    setCurrentPage(1);
-    setSearchKeyword(searchInput);
-  };
 
   const handleToggleCustomerStatus = (customerId: string) => {
     // Get current status from state or customer data
@@ -288,7 +282,7 @@ export default function CustomerTable() {
 
         fetchCustomers({
           searchCondition: {
-            keyword: searchKeyword.trim(),
+            keyword: searchTerm.trim(),
             is_active: mapStatusFilter(),
             is_deleted: false,
           },
@@ -310,8 +304,7 @@ export default function CustomerTable() {
   };
 
   const handleClearFilters = () => {
-    setSearchInput("");
-    setSearchKeyword("");
+    setSearchTerm("");
     setStatusFilter("all");
     setCurrentPage(1);
   };
@@ -342,7 +335,7 @@ export default function CustomerTable() {
 
       fetchCustomers({
         searchCondition: {
-          keyword: searchKeyword.trim(),
+          keyword: searchTerm.trim(),
           is_active: mapStatusFilter(),
           is_deleted: false,
         },
@@ -616,45 +609,24 @@ export default function CustomerTable() {
           {/* Filters */}
           <div style={styles.filterContainer}>
             <div style={{ flex: 1, minWidth: "250px" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or phone..."
-                  value={searchInput}
-                  onChange={(e) => {
-                    setSearchInput(e.target.value);
-                  }}
-                  style={{
-                    ...(getButtonStyles.filterInput as React.CSSProperties),
-                    flex: 1,
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#8B5A2B";
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  style={{
-                    ...getButtonStyles.primary,
-                    minWidth: "42px",
-                    width: "42px",
-                    height: "42px",
-                    padding: 0,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  aria-label="Search customers"
-                >
-                  <span className="material-symbols-outlined">search</span>
-                </button>
-              </div>
+              <input
+                type="text"
+                placeholder="Search by name, email, or phone..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                style={getButtonStyles.filterInput as React.CSSProperties}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#8B5A2B";
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                  e.currentTarget.style.backgroundColor = "#f9fafb";
+                }}
+              />
             </div>
 
             <div style={{ minWidth: "140px" }}>
@@ -674,7 +646,7 @@ export default function CustomerTable() {
               </select>
             </div>
 
-            {(searchInput || statusFilter !== "all") && (
+            {(searchTerm || statusFilter !== "all") && (
               <button
                 onClick={handleClearFilters}
                 style={getButtonStyles.clearFilter as React.CSSProperties}
