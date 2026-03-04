@@ -1,14 +1,10 @@
 import { Outlet } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
-import LoadingLayout from '@/layouts/LoadingLayout';
+import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 import { Coffee } from "lucide-react";
 
 const AuthClientLayout = () => {
   const authLoading = useClientAuthStore((state) => state.authLoading);
-
-  if (authLoading) {
-    return <LoadingLayout />;
-  }
 
   return (
     <div
@@ -37,6 +33,9 @@ const AuthClientLayout = () => {
       <div className="relative z-10 w-full max-w-md mt-10">
         <Outlet />
       </div>
+
+      {/* Loading overlay — đè lên layout thay vì thay thế layout */}
+      {authLoading && <GlobalLoadingOverlay forceShow />}
     </div>
   );
 };

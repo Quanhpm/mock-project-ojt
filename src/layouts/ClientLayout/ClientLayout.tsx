@@ -3,6 +3,7 @@ import ClientHeader from './components/ClientHeader';
 import HomeHeader from './components/HomeHeader';
 import ClientFooter from './components/ClientFooter';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
+import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 
 /**
  * ClientLayout - Layout động
@@ -19,6 +20,9 @@ function ClientLayout() {
         <Outlet />
       </main>
       <ClientFooter />
+
+      {/* Global loading overlay — dùng chung store với Admin, tự động bật/tắt theo interceptor */}
+      <GlobalLoadingOverlay />
     </div>
   );
 }
