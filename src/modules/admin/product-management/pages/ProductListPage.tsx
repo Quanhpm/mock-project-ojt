@@ -1,11 +1,12 @@
-import ProductTable from "../components/ProductTable";
-
+import React from 'react'
+import ProductTable from '../components/ProductTable'
+    
 function ProductListPage() {
   return (
     <div>
-      <ProductTable />
+      <ProductTable /> 
     </div>
-  );
+  )
 }
 
-export default ProductListPage;
+export default ProductListPage
