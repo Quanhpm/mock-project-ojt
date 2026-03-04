@@ -16,9 +16,8 @@ export const useClientAuth = () => {
     setIsLoading(true);
 
     try {
-      const response = await getCustomerProfile();
-      const userData = response.data?.data;
-      setUser(userData);
+      const user = await getCustomerProfile();
+      setUser(user);
       return true;
     } catch {
       // If profile fetch fails, user is not authenticated
@@ -69,12 +68,11 @@ export const useClientAuth = () => {
     setIsLoading(true);
 
     try {
-      const response = await getCustomerProfile();
-      const userData = response.data?.data;
-      setUser(userData);
+      const user = await getCustomerProfile();
+      setUser(user);
       return {
         success: true,
-        user: userData,
+        user,
       };
     } catch {
       return {
