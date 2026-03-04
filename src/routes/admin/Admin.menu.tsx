@@ -39,6 +39,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Building2 size={18} />,
     component: React.lazy(() => Promise.resolve({ default: FranchiseSelectionPage })),
     module: "select-franchise",
+    hideFromSidebar: true, // Replaced by FranchiseSwitcherDropdown in sidebar
   },
   {
     label: "Users",
@@ -46,6 +47,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Users size={18} />,
     component: React.lazy(() => import("@/modules/admin/user-management/pages/UserManagement")),
     module: "users", 
+  },
+  {
+    label: "Create User",
+    path: `${ROUTER_URL.ADMIN_ROUTER.USER}/create`,
+    icon: <Users size={18} />,
+    component: React.lazy(() => import("@/modules/admin/user-management/pages/UserCreatePage")),
+    module: "users",
+    hideFromSidebar: true,
   },
   {
     label: "Franchise",

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientForgotPassword } from '../hooks/use-client-forgot-password.hook';
 import type { ForgotPasswordFormValues } from '../schemas/client-forgot-password.schema';
+import { Link } from "react-router-dom";
 
 function ForgotPasswordPage() {
   const { success, error: showError } = useToast();
@@ -26,9 +27,9 @@ function ForgotPasswordPage() {
   const footer = (
     <>
       Nhớ mật khẩu rồi?{' '}
-      <a href="/client/login" className="text-[var(--cf-accent-light)] hover:text-white font-semibold transition-colors">
+      <Link to="/client/login" className="text-[var(--cf-accent-light)] hover:text-white font-semibold transition-colors">
         Quay lại đăng nhập
-      </a>
+      </Link>
     </>
   );
 

@@ -5,7 +5,6 @@ import { searchUsers } from "@/apis/endpoints/user.api";
 import {
   UserTableRow,
   Pagination,
-  CreateUserModal,
   EditUserModal,
   DeleteUserDialog,
   ViewUserModal,
@@ -191,7 +190,7 @@ function UserManagement() {
               </p>
             </div>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateClick}
               className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
             >
               <span className="material-symbols-outlined text-[18px]">
@@ -342,13 +341,6 @@ function UserManagement() {
       </main>
 
       {/* ═══════════ Modals ═══════════ */}
-
-      {/* Create User Modal */}
-      <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
 
       {/* View User Modal */}
       <ViewUserModal
