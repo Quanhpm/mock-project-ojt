@@ -11,13 +11,11 @@ export const useClientForgotPassword = () => {
     setError(null);
 
     try {
-      const response = await forgotPassword(email);
+      await forgotPassword(email);
       
       return {
         success: true,
-        message:
-          response.data.message ||
-          "Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.",
+        message: "Email khôi phục mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.",
       };
     } catch (err) {
       const errorMessage =

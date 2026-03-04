@@ -17,9 +17,11 @@ function RegisterPage() {
     }) => {
         const result = await register(data);
 
-        if (result.success && result.user) {
+        if (result.success) {
             showToast("Đăng ký thành công!", "success", {
-                description: `Chào mừng ${result.user.name} đến với hệ thống. Vui lòng kiểm tra email để xác thực tài khoản.`
+                description: result.user?.name
+                    ? `Chào mừng ${result.user.name} đến với hệ thống. Vui lòng kiểm tra email để xác thực tài khoản.`
+                    : "Vui lòng kiểm tra email để xác thực tài khoản."
             });
             // Redirect to login page after successful registration
             navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || "/client/login");

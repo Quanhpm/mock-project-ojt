@@ -13,21 +13,16 @@ export const useClientVerifyEmail = () => {
     setError(null);
 
     try {
-      const response = await verifyEmail(token);
-      
-      // Handle different response structures
-      const userData = response.data?.data?.user || response.data?.user;
-      const message = response.data?.message || "Email đã được xác thực thành công";
+      const userData = await verifyEmail(token);
       
       if (userData) {
-        // Set user in store after successful verification
         setUser(userData);
       }
       
       return {
         success: true,
         user: userData,
-        message: message,
+        message: "Email đã được xác thực thành công",
       };
     } catch (err) {
       const errorMessage =

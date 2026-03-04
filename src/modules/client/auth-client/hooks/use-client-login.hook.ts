@@ -15,20 +15,10 @@ export const useClientLogin = () => {
     setError(null);
 
     try {
-      const response = await loginCustomer(data);
+      // httpClient throw error nếu thất bại — không cần check success
+      await loginCustomer(data);
 
-      // Backend trả { success: true, data: null } — token set qua cookie
-      // Gọi getCustomerProfile để lấy thông tin user sau khi cookie được set
-      if (!response.data?.success) {
-        throw new Error("Đăng nhập thất bại");
-      }
-
-      const profileRes = await getCustomerProfile();
-      const userData = profileRes.data?.data;
-
-      if (!userData) {
-        throw new Error("Không thể tải thông tin người dùng");
-      }
+      const userData = await getCustomerProfile();
 
       // Set user in store
       setUser(userData);
