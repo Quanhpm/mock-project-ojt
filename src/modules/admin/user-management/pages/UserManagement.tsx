@@ -1,7 +1,5 @@
-import React, { useState, useCallback } from "react";
-import SearchBar from "@/components/ui/search-bar";
-import { useUserSearch } from "../hooks";
-import { searchUsers } from "@/apis/endpoints/user.api";
+import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   UserTableRow,
   Pagination,
@@ -9,7 +7,7 @@ import {
   DeleteUserDialog,
   ViewUserModal,
 } from "../components";
-import { useUserStatus } from "../hooks";
+import { useUserList } from "../hooks";
 import type { UserItem } from "../hooks";
 
 /** Skeleton row cho trạng thái loading */
@@ -28,9 +26,6 @@ const SkeletonRow = () => (
       <div className="h-4 w-28 bg-slate-200 rounded" />
     </td>
     <td className="p-4">
-      <div className="h-6 w-20 bg-slate-200 rounded-full" />
-    </td>
-    <td className="p-4">
       <div className="h-6 w-11 bg-slate-200 rounded-full" />
     </td>
     <td className="p-4" />
@@ -38,10 +33,7 @@ const SkeletonRow = () => (
 );
 
 function UserManagement() {
-  // Role filter state
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-
-  // Use the professional search hook
+  const navigate = useNavigate();
   const {
     searchTerm,
     setSearchTerm,
@@ -52,7 +44,6 @@ function UserManagement() {
     removeFromHistory,
     handleManualSearch,
     currentPage,
-    setCurrentPage,
     totalPages,
     totalItems,
     pageSize,
@@ -73,53 +64,10 @@ function UserManagement() {
 
   const isLoading = isSearching;
 
-  // ──────── Status Toggle ────────
-  const { toggleStatus, updatingId } = useUserStatus();
-  const [userStatus, setUserStatus] = useState<Record<string, boolean>>({});
-
-  const handleToggleUserStatus = useCallback(
-    (userId: string) => {
-      // Get current status from state or user data
-      const currentStatus =
-        userStatus[userId] ??
-        users.find((u) => u.id === userId)?.is_active ??
-        false;
-
-      // Optimistic UI update: Update state immediately
-      setUserStatus((prev) => ({
-        ...prev,
-        [userId]: !currentStatus,
-      }));
-
-      // Call API to update user status
-      toggleStatus(
-        userId,
-        currentStatus,
-        () => {
-          // onSuccess - Refresh data to sync with server
-
-          setCurrentPage(currentPage);
-        },
-        () => {
-          // onError - Rollback to previous state
-
-          setUserStatus((prev) => ({
-            ...prev,
-            [userId]: currentStatus,
-          }));
-        },
-      );
-    },
-    [userStatus, users, toggleStatus, currentPage, setCurrentPage],
-  );
-
-  // ──────── Create Modal ────────
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const handleCreateSuccess = useCallback(() => {
-    setIsCreateModalOpen(false);
-    setCurrentPage(1);
-  }, [setCurrentPage]);
+  // ──────── Create redirect ────────
+  const handleCreateClick = useCallback(() => {
+    navigate("/admin/users/create");
+  }, [navigate]);
 
   // ──────── View Modal ────────
   const [viewUser, setViewUser] = useState<UserItem | null>(null);
@@ -272,9 +220,6 @@ function UserManagement() {
                       Phone
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Verify
-                    </th>
-                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Status
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
@@ -295,9 +240,6 @@ function UserManagement() {
                       <UserTableRow
                         key={user.id}
                         user={user}
-                        isActive={userStatus[user.id] ?? user.is_active}
-                        isUpdating={updatingId === user.id}
-                        onToggleStatus={handleToggleUserStatus}
                         onView={handleViewClick}
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
@@ -307,7 +249,7 @@ function UserManagement() {
                   {/* Empty state */}
                   {!isLoading && users.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-12 text-center">
+                      <td colSpan={4} className="p-12 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <span className="material-symbols-outlined text-[48px] text-slate-300">
                             group_off
@@ -332,7 +274,7 @@ function UserManagement() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalItems}
-                itemsPerPage={pageSize}
+                itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
               />
             )}

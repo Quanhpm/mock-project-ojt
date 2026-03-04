@@ -1,17 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import SearchBar from "@/components/ui/search-bar";
-import { useProductSearch } from "../components/hooks/useProductSearch";
-import { searchProducts } from "../components/product.api";
-import type { Product } from "../components/product.types";
-
-// Helper to format price
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(price);
-};
+import React from "react";
+import ProductTable from "../components/ProductTable";
 
 function ProductListPage() {
   const navigate = useNavigate();
