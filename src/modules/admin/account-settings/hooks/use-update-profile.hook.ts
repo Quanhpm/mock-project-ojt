@@ -48,35 +48,44 @@ export const useUpdateProfile = () => {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Cập nhật profile:
-   * 1. Nếu có avatarFile → upload lên Cloudinary trước
-   * 2. Gọi API PUT /api/users/:id với body đúng cấu trúc
+   * Bước 1: Upload ảnh lên Cloudinary ngay khi người dùng chọn file.
+   * Trả về secure_url nếu thành công.
+   */
+  const uploadAvatar = async (
+    file: File
+  ): Promise<{ success: boolean; url?: string; message: string }> => {
+    setIsUploading(true);
+    setError(null);
+    try {
+      const url = await uploadAvatarToCloudinary(file);
+      return { success: true, url, message: "Upload ảnh thành công!" };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Upload ảnh thất bại.";
+      setError(errorMessage);
+      return { success: false, message: errorMessage };
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  /**
+   * Bước 2: Gọi API PUT /api/users/:id để cập nhật profile.
+   * avatar_url đã được upload sẵn từ bước 1.
    */
   const updateProfile = async (
     userId: string,
-    profileData: UpdateProfilePayload,
-    avatarFile?: File | null
+    profileData: UpdateProfilePayload
   ): Promise<UploadResult> => {
     setIsLoading(true);
-    setIsUploading(false);
     setError(null);
 
     try {
-      let avatarUrl = profileData.avatar_url;
-
-      // Bước 1: Upload ảnh lên Cloudinary nếu có file mới
-      if (avatarFile) {
-        setIsUploading(true);
-        avatarUrl = await uploadAvatarToCloudinary(avatarFile);
-        setIsUploading(false);
-      }
-
-      // Bước 2: Gọi API backend cập nhật profile
       const requestBody: UpdateUserRequest = {
         email: profileData.email,
         name: profileData.name,
         phone: profileData.phone,
-        avatar_url: avatarUrl,
+        avatar_url: profileData.avatar_url,
       };
 
       await updateUser(userId, requestBody);
@@ -100,11 +109,11 @@ export const useUpdateProfile = () => {
       };
     } finally {
       setIsLoading(false);
-      setIsUploading(false);
     }
   };
 
   return {
+    uploadAvatar,
     updateProfile,
     isLoading,
     isUploading,

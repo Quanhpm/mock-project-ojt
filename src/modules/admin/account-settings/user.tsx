@@ -148,10 +148,12 @@ const AccountSettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
 
   // Hooks
   const { success, error: showError } = useToast();
-  const { updateProfile, isLoading: isUpdatingProfile, isUploading } =
+  const { changePassword, isLoading: isChangingPassword } = useChangePassword();
+  const { updateProfile, isLoading: isUpdatingProfile, isUploading, uploadAvatar } =
     useUpdateProfile();
 
   // UI state
@@ -159,8 +161,8 @@ const AccountSettingsPage: React.FC = () => {
 
   // ==================== Handlers ====================
 
-  /** Xử lý chọn file ảnh */
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Xử lý chọn file ảnh → tự động upload Cloudinary ngay */
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -177,12 +179,24 @@ const AccountSettingsPage: React.FC = () => {
     }
 
     setAvatarFile(file);
-    // Tạo preview URL
+    // Hiển thị preview ngay lập tức
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
+
+    // Tự động upload lên Cloudinary
+    const result = await uploadAvatar(file);
+    if (result.success && result.url) {
+      setUploadedAvatarUrl(result.url);
+    } else {
+      showError(result.message, "Upload ảnh thất bại");
+      // Reset nếu upload thất bại
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setUploadedAvatarUrl(null);
+    }
   };
 
-  /** Lưu profile: Upload ảnh lên Cloudinary + gọi API cập nhật */
+  /** Lưu profile: Dùng URL đã upload sẵn → chỉ gọi API PUT */
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -197,9 +211,8 @@ const AccountSettingsPage: React.FC = () => {
         email: userProfile.email,
         name: userProfile.name,
         phone: userProfile.phone,
-        avatar_url: userProfile.avatar_url,
-      },
-      avatarFile
+        avatar_url: uploadedAvatarUrl || userProfile.avatar_url,
+      }
     );
 
     if (result.success) {
@@ -207,6 +220,7 @@ const AccountSettingsPage: React.FC = () => {
       setIsEditing(false);
       setAvatarFile(null);
       setAvatarPreview(null);
+      setUploadedAvatarUrl(null);
       // Re-hydrate store để cập nhật thông tin mới nhất
       await hydrate();
     } else {
@@ -218,6 +232,7 @@ const AccountSettingsPage: React.FC = () => {
     setIsEditing(false);
     setAvatarFile(null);
     setAvatarPreview(null);
+    setUploadedAvatarUrl(null);
     // Reset về dữ liệu gốc từ store
     if (admin) {
       const roleLabel = roles.length > 0 ? roles[0].role : "User";
@@ -299,12 +314,23 @@ const AccountSettingsPage: React.FC = () => {
                   {isEditing && (
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110"
+                      onClick={() => !isUploading && fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110 disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label="Upload photo"
                     >
-                      <Camera className="text-white" size={18} />
+                      {isUploading ? (
+                        <Loader2 className="text-white animate-spin" size={18} />
+                      ) : (
+                        <Camera className="text-white" size={18} />
+                      )}
                     </button>
+                  )}
+                  {/* Overlay khi đang upload */}
+                  {isUploading && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <Loader2 className="text-white animate-spin" size={24} />
+                    </div>
                   )}
                 </div>
 
@@ -387,10 +413,17 @@ const AccountSettingsPage: React.FC = () => {
                     disabled={true}
                   />
 
-                  {/* Avatar file đã chọn */}
+                  {/* Trạng thái upload avatar */}
                   {avatarFile && (
                     <p className="text-sm text-amber-700">
-                      Ảnh đã chọn: <strong>{avatarFile.name}</strong>
+                      {isUploading ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 size={13} className="animate-spin" />
+                          Đang upload ảnh...
+                        </span>
+                      ) : uploadedAvatarUrl ? (
+                        <span className="text-green-600">✓ Upload thành công: <strong>{avatarFile.name}</strong></span>
+                      ) : null}
                     </p>
                   )}
                 </div>
@@ -408,17 +441,13 @@ const AccountSettingsPage: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isUpdatingProfile}
+                      disabled={isUpdatingProfile || isUploading}
                       className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isUpdatingProfile && (
                         <Loader2 size={16} className="animate-spin" />
                       )}
-                      {isUploading
-                        ? "Đang upload ảnh..."
-                        : isUpdatingProfile
-                          ? "Đang lưu..."
-                          : "Lưu thay đổi"}
+                      {isUpdatingProfile ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
                 )}
