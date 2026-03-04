@@ -35,14 +35,35 @@ const SkeletonRow = () => (
 function UserManagement() {
   const navigate = useNavigate()
   const {
+<<<<<<< HEAD
+    searchTerm,
+    setSearchTerm,
+    results: users,
+    isSearching,
+    searchHistory,
+    clearSearch,
+    removeFromHistory,
+    handleManualSearch,
+=======
     users,
     isLoading,
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
     currentPage,
     totalPages,
     totalItems,
+<<<<<<< HEAD
+    pageSize,
+    setFilters,
+  } = useUserSearch(searchUsers, {
+    enableHistory: true,
+    maxHistoryItems: 10,
+    initialPageSize: 20,
+  });
+=======
     itemsPerPage,
     setCurrentPage,
   } = useUserList()
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
 
   // ──────── Create redirect ────────
   const handleCreateClick = useCallback(() => {
@@ -125,6 +146,65 @@ function UserManagement() {
           </div>
         </header>
 
+<<<<<<< HEAD
+        {/* Search Bar & Filters */}
+        <div className="px-8 pb-4">
+          <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div className="flex flex-col gap-3">
+              {/* Search Bar with Button - Full Width */}
+              <div className="flex gap-3 w-full">
+                <div className="flex-1">
+                  <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    onClear={clearSearch}
+                    onSearch={handleManualSearch}
+                    isLoading={isSearching}
+                    placeholder="Tìm kiếm user theo tên, email, số điện thoại..."
+                    suggestions={searchHistory}
+                    onSuggestionClick={setSearchTerm}
+                    onRemoveSuggestion={removeFromHistory}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleManualSearch}
+                  disabled={isSearching}
+                  className="px-6 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    search
+                  </span>
+                  Tìm kiếm
+                </button>
+              </div>
+
+              {/* Filters Row */}
+              <div className="flex gap-3 items-center flex-wrap">
+                {/* Role Filter */}
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm font-medium cursor-pointer outline-none transition-all hover:border-slate-400 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">Tất cả vai trò</option>
+                  <option value="1">Admin</option>
+                  <option value="3">Staff</option>
+                  <option value="4">Customer</option>
+                </select>
+
+                {/* Info Text */}
+                <div className="ml-auto text-slate-500 text-sm">
+                  Tìm thấy{" "}
+                  <strong className="text-slate-900">{totalItems}</strong> users
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+=======
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
         {/* Content Area */}
         <div className="px-8 pb-8">
           {/* Table Container */}
