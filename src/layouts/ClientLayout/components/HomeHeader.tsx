@@ -6,7 +6,6 @@ import { useCartStore } from '@/stores/cart.store';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ShoppingCart, ClipboardClock, User, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
-import LoadingLayout from '@/layouts/LoadingLayout';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
@@ -31,7 +30,7 @@ const HomeHeader: React.FC = () => {
   };
 
   if (isLoggingOut) {
-    return <LoadingLayout />;
+    return null;
   }
 
   return (
