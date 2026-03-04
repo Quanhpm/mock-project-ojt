@@ -1,2 +1,2 @@
 // Hooks exports
-export { useCloudinaryUpload } from './use-cloudinary.hook';
+export { useCloudinaryUpload } from "./use-cloudinary.hook";
