@@ -12,6 +12,7 @@ import {
 import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
 import { useAdminAuthStore, getRoleCode, getFranchiseId } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { ROUTER_URL } from "@/routes/router.const";
+import FranchiseSwitcherDropdown from "./FranchiseSwitcherDropdown";
 
 // Theme colors
 const THEME_COLORS = {
@@ -118,7 +119,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Bottom Section - User Info */}
-      <div className="border-t border-gray-200 px-4 py-4">
+      <div className="border-t border-gray-200 px-4 py-4 space-y-2">
+        {/* Franchise Switcher Dropdown */}
+        <FranchiseSwitcherDropdown />
+
         {/* User Profile - Clickable */}
         <button
           onClick={handleProfileClick}

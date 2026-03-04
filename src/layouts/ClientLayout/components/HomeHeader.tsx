@@ -13,21 +13,25 @@ const HomeHeader: React.FC = () => {
   const cartItems = useCartStore((state) => state.items);  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { success, error } = useToast();
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
-    
+    setIsLoggingOut(true);
     const result = await logout();
-    
     if (result.success) {
       success(result.message || 'Đăng xuất thành công');
-      // Chuyển về trang chủ sau khi logout thành công
       navigate('/', { replace: true });
     } else {
+      setIsLoggingOut(false);
       error(result.message || 'Đăng xuất thất bại');
     }
   };
+
+  if (isLoggingOut) {
+    return null;
+  }
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">

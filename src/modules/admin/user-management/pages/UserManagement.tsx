@@ -1,17 +1,14 @@
-import React, { useState, useCallback } from "react";
-import SearchBar from "@/components/ui/search-bar";
-import { useUserSearch } from "../hooks";
-import { searchUsers } from "@/apis/endpoints/user.api";
+import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   UserTableRow,
   Pagination,
-  CreateUserModal,
   EditUserModal,
   DeleteUserDialog,
   ViewUserModal,
-} from "../components";
-import { useUserStatus } from "../hooks";
-import type { UserItem } from "../hooks";
+} from '../components'
+import { useUserList } from '../hooks'
+import type { UserItem } from '../hooks'
 
 /** Skeleton row cho trạng thái loading */
 const SkeletonRow = () => (
@@ -29,21 +26,16 @@ const SkeletonRow = () => (
       <div className="h-4 w-28 bg-slate-200 rounded" />
     </td>
     <td className="p-4">
-      <div className="h-6 w-20 bg-slate-200 rounded-full" />
-    </td>
-    <td className="p-4">
       <div className="h-6 w-11 bg-slate-200 rounded-full" />
     </td>
     <td className="p-4" />
   </tr>
-);
+)
 
 function UserManagement() {
-  // Role filter state
-  const [roleFilter, setRoleFilter] = useState<string>("all");
-
-  // Use the professional search hook
+  const navigate = useNavigate()
   const {
+<<<<<<< HEAD
     searchTerm,
     setSearchTerm,
     results: users,
@@ -52,10 +44,14 @@ function UserManagement() {
     clearSearch,
     removeFromHistory,
     handleManualSearch,
+=======
+    users,
+    isLoading,
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
     currentPage,
-    setCurrentPage,
     totalPages,
     totalItems,
+<<<<<<< HEAD
     pageSize,
     setFilters,
   } = useUserSearch(searchUsers, {
@@ -63,107 +59,59 @@ function UserManagement() {
     maxHistoryItems: 10,
     initialPageSize: 20,
   });
+=======
+    itemsPerPage,
+    setCurrentPage,
+  } = useUserList()
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
 
-  // Update filters when role filter changes
-  React.useEffect(() => {
-    setFilters({
-      is_deleted: false,
-      ...(roleFilter !== "all" && { role_id: roleFilter }),
-    });
-  }, [roleFilter, setFilters]);
-
-  const isLoading = isSearching;
-
-  // ──────── Status Toggle ────────
-  const { toggleStatus, updatingId } = useUserStatus();
-  const [userStatus, setUserStatus] = useState<Record<string, boolean>>({});
-
-  const handleToggleUserStatus = useCallback(
-    (userId: string) => {
-      // Get current status from state or user data
-      const currentStatus =
-        userStatus[userId] ??
-        users.find((u) => u.id === userId)?.is_active ??
-        false;
-
-      // Optimistic UI update: Update state immediately
-      setUserStatus((prev) => ({
-        ...prev,
-        [userId]: !currentStatus,
-      }));
-
-      // Call API to update user status
-      toggleStatus(
-        userId,
-        currentStatus,
-        () => {
-          // onSuccess - Refresh data to sync with server
-
-          setCurrentPage(currentPage);
-        },
-        () => {
-          // onError - Rollback to previous state
-
-          setUserStatus((prev) => ({
-            ...prev,
-            [userId]: currentStatus,
-          }));
-        },
-      );
-    },
-    [userStatus, users, toggleStatus, currentPage, setCurrentPage],
-  );
-
-  // ──────── Create Modal ────────
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-
-  const handleCreateSuccess = useCallback(() => {
-    setIsCreateModalOpen(false);
-    setCurrentPage(1);
-  }, [setCurrentPage]);
+  // ──────── Create redirect ────────
+  const handleCreateClick = useCallback(() => {
+    navigate('/admin/users/create')
+  }, [navigate])
 
   // ──────── View Modal ────────
-  const [viewUser, setViewUser] = useState<UserItem | null>(null);
+  const [viewUser, setViewUser] = useState<UserItem | null>(null)
 
   const handleViewClick = useCallback((user: UserItem) => {
-    setViewUser(user);
-  }, []);
+    setViewUser(user)
+  }, [])
 
   const handleViewClose = useCallback(() => {
-    setViewUser(null);
-  }, []);
+    setViewUser(null)
+  }, [])
 
   // ──────── Edit Modal ────────
-  const [editUser, setEditUser] = useState<UserItem | null>(null);
+  const [editUser, setEditUser] = useState<UserItem | null>(null)
 
   const handleEditClick = useCallback((user: UserItem) => {
-    setEditUser(user);
-  }, []);
+    setEditUser(user)
+  }, [])
 
   const handleEditClose = useCallback(() => {
-    setEditUser(null);
-  }, []);
+    setEditUser(null)
+  }, [])
 
   const handleEditSuccess = useCallback(() => {
-    setEditUser(null);
-    setCurrentPage(currentPage); // Refresh trang hiện tại
-  }, [setCurrentPage, currentPage]);
+    setEditUser(null)
+    setCurrentPage(currentPage) // Refresh trang hiện tại
+  }, [setCurrentPage, currentPage])
 
   // ──────── Delete Dialog ────────
-  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null)
 
   const handleDeleteClick = useCallback((user: UserItem) => {
-    setDeleteTarget(user);
-  }, []);
+    setDeleteTarget(user)
+  }, [])
 
   const handleDeleteClose = useCallback(() => {
-    setDeleteTarget(null);
-  }, []);
+    setDeleteTarget(null)
+  }, [])
 
   const handleDeleteSuccess = useCallback(() => {
-    setDeleteTarget(null);
-    setCurrentPage(1); // Refresh về trang 1
-  }, [setCurrentPage]);
+    setDeleteTarget(null)
+    setCurrentPage(1) // Refresh về trang 1
+  }, [setCurrentPage])
 
   return (
     <div className="flex flex-col w-full">
@@ -175,9 +123,7 @@ function UserManagement() {
               <a className="hover:text-primary transition-colors" href="#">
                 Home
               </a>
-              <span className="material-symbols-outlined text-[16px]">
-                chevron_right
-              </span>
+              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
               <span className="text-slate-900 font-medium">Users</span>
             </nav>
           </div>
@@ -187,21 +133,20 @@ function UserManagement() {
                 User Management
               </h2>
               <p className="text-slate-500">
-                Total Users: {isLoading ? "..." : totalItems}
+                Total Users: {isLoading ? '...' : totalItems}
               </p>
             </div>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateClick}
               className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
             >
-              <span className="material-symbols-outlined text-[18px]">
-                person_add
-              </span>
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
               Create User
             </button>
           </div>
         </header>
 
+<<<<<<< HEAD
         {/* Search Bar & Filters */}
         <div className="px-8 pb-4">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -258,6 +203,8 @@ function UserManagement() {
           </div>
         </div>
 
+=======
+>>>>>>> 29139e8d7dd0458b314198d5adfa2ec41dc73f38
         {/* Content Area */}
         <div className="px-8 pb-8">
           {/* Table Container */}
@@ -273,9 +220,6 @@ function UserManagement() {
                       Phone
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      Verify
-                    </th>
-                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
                       Status
                     </th>
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
@@ -286,9 +230,7 @@ function UserManagement() {
                 <tbody className="divide-y divide-slate-100">
                   {/* Loading state */}
                   {isLoading &&
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <SkeletonRow key={i} />
-                    ))}
+                    Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
 
                   {/* Data rows */}
                   {!isLoading &&
@@ -296,9 +238,6 @@ function UserManagement() {
                       <UserTableRow
                         key={user.id}
                         user={user}
-                        isActive={userStatus[user.id] ?? user.is_active}
-                        isUpdating={updatingId === user.id}
-                        onToggleStatus={handleToggleUserStatus}
                         onView={handleViewClick}
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
@@ -308,14 +247,12 @@ function UserManagement() {
                   {/* Empty state */}
                   {!isLoading && users.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-12 text-center">
+                      <td colSpan={4} className="p-12 text-center">
                         <div className="flex flex-col items-center gap-3">
                           <span className="material-symbols-outlined text-[48px] text-slate-300">
                             group_off
                           </span>
-                          <p className="text-slate-500 font-medium">
-                            No users found
-                          </p>
+                          <p className="text-slate-500 font-medium">No users found</p>
                           <p className="text-sm text-slate-400">
                             There are no user records to display.
                           </p>
@@ -333,7 +270,7 @@ function UserManagement() {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 totalItems={totalItems}
-                itemsPerPage={pageSize}
+                itemsPerPage={itemsPerPage}
                 onPageChange={setCurrentPage}
               />
             )}
@@ -342,13 +279,6 @@ function UserManagement() {
       </main>
 
       {/* ═══════════ Modals ═══════════ */}
-
-      {/* Create User Modal */}
-      <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
 
       {/* View User Modal */}
       <ViewUserModal
@@ -368,13 +298,13 @@ function UserManagement() {
       {/* Delete User Dialog */}
       <DeleteUserDialog
         isOpen={!!deleteTarget}
-        userId={deleteTarget?.id ?? ""}
-        userName={deleteTarget?.name ?? ""}
+        userId={deleteTarget?.id ?? ''}
+        userName={deleteTarget?.name ?? ''}
         onClose={handleDeleteClose}
         onSuccess={handleDeleteSuccess}
       />
     </div>
-  );
+  )
 }
 
-export default UserManagement;
+export default UserManagement

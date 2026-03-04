@@ -559,6 +559,7 @@ function ProfilePage() {
   const { user: storeUser, setUser } = useClientAuthStore();
   const [profile, setProfile] = useState<CustomerUser | null>(storeUser as CustomerUser | null);
   const [isFetching] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Sync local state when store updates
@@ -574,14 +575,20 @@ function ProfilePage() {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     const result = await logout();
     if (result.success) {
       success(result.message);
       navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || '/client/login');
     } else {
+      setIsLoggingOut(false);
       showError(result.message, 'Đăng xuất thất bại');
     }
   };
+
+  if (isLoggingOut) {
+    return null;
+  }
 
   if (isFetching) {
     return (
