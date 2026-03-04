@@ -5,6 +5,7 @@ interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onClear: () => void;
+  onSearch?: () => void; // Manual search trigger
   isLoading?: boolean;
   placeholder?: string;
   suggestions?: string[];
@@ -29,6 +30,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChange,
   onClear,
+  onSearch,
   isLoading = false,
   placeholder = "Tìm kiếm sản phẩm, SKU...",
   suggestions = [],
@@ -89,6 +91,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // Handle Enter key when no dropdown or when dropdown is not shown
+      if (e.key === "Enter" && (!showDropdown || suggestions.length === 0)) {
+        e.preventDefault();
+        onSearch?.();
+        setShowDropdown(false);
+        return;
+      }
+
       if (!showDropdown || suggestions.length === 0) {
         if (e.key === "Escape") {
           inputRef.current?.blur();
@@ -130,7 +140,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           break;
       }
     },
-    [showDropdown, suggestions, selectedIndex, onSuggestionClick],
+    [showDropdown, suggestions, selectedIndex, onSuggestionClick, onSearch],
   );
 
   // Handle input change

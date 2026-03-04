@@ -31,7 +31,6 @@ interface UserSearchResponse {
 }
 
 interface UseUserSearchOptions {
-  debounceDelay?: number; // Default 500ms
   enableHistory?: boolean; // Default true
   maxHistoryItems?: number; // Default 10
   initialPageSize?: number; // Default 20
@@ -64,14 +63,16 @@ interface UseUserSearchReturn {
 
   // Actions
   search: (term?: string, page?: number) => Promise<void>;
+  handleManualSearch: () => void; // Manual search trigger
   clearSearch: () => void;
 }
 
 const SEARCH_HISTORY_KEY = "user_search_history";
 
 /**
- * Custom hook for user search with debounce, pagination, and search history
+ * Custom hook for user search with manual trigger, pagination, and search history
  * Search fields: username, email, full_name, phone
+ * Manual search mode: User must click search button or press Enter
  *
  * @example
  * ```tsx
@@ -81,9 +82,9 @@ const SEARCH_HISTORY_KEY = "user_search_history";
  *   results,
  *   isSearching,
  *   searchHistory,
+ *   handleManualSearch,
  *   clearSearch
  * } = useUserSearch({
- *   debounceDelay: 500,
  *   enableHistory: true,
  *   initialPageSize: 20
  * });
@@ -94,7 +95,6 @@ export const useUserSearch = (
   options: UseUserSearchOptions = {},
 ): UseUserSearchReturn => {
   const {
-    debounceDelay = 500,
     enableHistory = true,
     maxHistoryItems = 10,
     initialPageSize = 20,
@@ -104,10 +104,10 @@ export const useUserSearch = (
 
   // Search state
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedTerm, setDebouncedTerm] = useState("");
   const [results, setResults] = useState<User[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastSearchTerm, setLastSearchTerm] = useState(""); // Track last searched term
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -132,29 +132,8 @@ export const useUserSearch = (
   });
 
   // Refs
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Debounce search term
-  useEffect(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      setDebouncedTerm(searchTerm);
-      // Reset to page 1 when search term changes
-      if (searchTerm !== debouncedTerm) {
-        setCurrentPage(1);
-      }
-    }, debounceDelay);
-
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [searchTerm, debounceDelay]);
+  const isInitialMount = useRef(true);
 
   // Save search history to localStorage
   useEffect(() => {
@@ -193,7 +172,7 @@ export const useUserSearch = (
 
       abortControllerRef.current = new AbortController();
 
-      const searchKeyword = term ?? debouncedTerm;
+      const searchKeyword = term ?? lastSearchTerm;
       const searchPage = page ?? currentPage;
 
       setIsSearching(true);
@@ -217,6 +196,7 @@ export const useUserSearch = (
           setResults(response.data);
           setTotalPages(response.pageInfo?.totalPages || 0);
           setTotalItems(response.pageInfo?.totalItems || 0);
+          setLastSearchTerm(searchKeyword); // Update last search term
 
           // Add to history only for non-empty searches
           if (searchKeyword.trim()) {
@@ -242,7 +222,7 @@ export const useUserSearch = (
       }
     },
     [
-      debouncedTerm,
+      lastSearchTerm,
       currentPage,
       pageSize,
       filters,
@@ -252,19 +232,40 @@ export const useUserSearch = (
     ],
   );
 
-  // Auto search when debounced term or filters change
+  // Manual search trigger
+  const handleManualSearch = useCallback(() => {
+    setLastSearchTerm(searchTerm);
+    setCurrentPage(1); // Reset to page 1 on new search
+    search(searchTerm, 1);
+  }, [searchTerm, search]);
+
+  // Auto search when filters or pagination change (but not search term)
   useEffect(() => {
-    search();
-  }, [debouncedTerm, filters, currentPage, pageSize]);
+    // Skip on initial mount - let the initial load effect handle it
+    if (isInitialMount.current) {
+      return;
+    }
+    // Always search when filters or pagination changes
+    // This ensures role filter and page changes work automatically
+    search(lastSearchTerm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, currentPage, pageSize]);
+
+  // Initial load - search with empty term
+  useEffect(() => {
+    search("", 1);
+    isInitialMount.current = false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clear search
   const clearSearch = useCallback(() => {
     setSearchTerm("");
-    setDebouncedTerm("");
+    setLastSearchTerm("");
     setCurrentPage(1);
-    setResults([]);
-    setError(null);
-  }, []);
+    // Trigger search with empty term
+    search("", 1);
+  }, [search]);
 
   // Clear history
   const clearHistory = useCallback(() => {
@@ -310,6 +311,7 @@ export const useUserSearch = (
 
     // Actions
     search,
+    handleManualSearch,
     clearSearch,
   };
 };

@@ -29,13 +29,13 @@ function ProductListPage() {
     searchHistory,
     clearSearch,
     removeFromHistory,
+    handleManualSearch,
     currentPage,
     setCurrentPage,
     totalPages,
     totalItems,
     setFilters,
   } = useProductSearch<Product>(searchProducts, {
-    debounceDelay: 500,
     enableHistory: true,
     maxHistoryItems: 10,
     initialPageSize: 10,
@@ -198,19 +198,67 @@ function ProductListPage() {
                 flexDirection: "column",
               }}
             >
-              {/* Search Bar - Full Width */}
-              <div style={{ width: "100%" }}>
-                <SearchBar
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                  onClear={clearSearch}
-                  isLoading={isSearching}
-                  placeholder="Tìm kiếm sản phẩm theo tên, SKU..."
-                  suggestions={searchHistory}
-                  onSuggestionClick={setSearchTerm}
-                  onRemoveSuggestion={removeFromHistory}
-                  autoFocus
-                />
+              {/* Search Bar with Button - Full Width */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  width: "100%",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    onClear={clearSearch}
+                    onSearch={handleManualSearch}
+                    isLoading={isSearching}
+                    placeholder="Tìm kiếm sản phẩm theo tên, SKU..."
+                    suggestions={searchHistory}
+                    onSuggestionClick={setSearchTerm}
+                    onRemoveSuggestion={removeFromHistory}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleManualSearch}
+                  disabled={isSearching}
+                  style={{
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    backgroundColor: isSearching ? "#ccc" : "#8B4513",
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: "700",
+                    cursor: isSearching ? "not-allowed" : "pointer",
+                    border: "none",
+                    transition: "all 0.2s",
+                    whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    opacity: isSearching ? 0.5 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSearching) {
+                      e.currentTarget.style.backgroundColor = "#6d3610";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSearching) {
+                      e.currentTarget.style.backgroundColor = "#8B4513";
+                    }
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "18px" }}
+                  >
+                    search
+                  </span>
+                  <span>Tìm kiếm</span>
+                </button>
               </div>
 
               {/* Filters Row */}

@@ -51,6 +51,7 @@ function UserManagement() {
     searchHistory,
     clearSearch,
     removeFromHistory,
+    handleManualSearch,
     currentPage,
     setCurrentPage,
     totalPages,
@@ -58,7 +59,6 @@ function UserManagement() {
     pageSize,
     setFilters,
   } = useUserSearch(searchUsers, {
-    debounceDelay: 500,
     enableHistory: true,
     maxHistoryItems: 10,
     initialPageSize: 20,
@@ -206,19 +206,32 @@ function UserManagement() {
         <div className="px-8 pb-4">
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
             <div className="flex flex-col gap-3">
-              {/* Search Bar - Full Width */}
-              <div className="w-full">
-                <SearchBar
-                  value={searchTerm}
-                  onChange={setSearchTerm}
-                  onClear={clearSearch}
-                  isLoading={isSearching}
-                  placeholder="Tìm kiếm user theo tên, email, số điện thoại..."
-                  suggestions={searchHistory}
-                  onSuggestionClick={setSearchTerm}
-                  onRemoveSuggestion={removeFromHistory}
-                  autoFocus
-                />
+              {/* Search Bar with Button - Full Width */}
+              <div className="flex gap-3 w-full">
+                <div className="flex-1">
+                  <SearchBar
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    onClear={clearSearch}
+                    onSearch={handleManualSearch}
+                    isLoading={isSearching}
+                    placeholder="Tìm kiếm user theo tên, email, số điện thoại..."
+                    suggestions={searchHistory}
+                    onSuggestionClick={setSearchTerm}
+                    onRemoveSuggestion={removeFromHistory}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  onClick={handleManualSearch}
+                  disabled={isSearching}
+                  className="px-6 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    search
+                  </span>
+                  Tìm kiếm
+                </button>
               </div>
 
               {/* Filters Row */}
