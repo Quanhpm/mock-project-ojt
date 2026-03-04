@@ -34,12 +34,20 @@ export function useAdminLogin() {
         // 3. Lưu vào zustand store
         setProfile(profile);
 
-        // 4. Luôn redirect → select-franchise để chọn chi nhánh
+        // 4. Nếu server đã có active_context (session cũ) → vào dashboard thẳng
+        //    Nếu chưa có context → bắt buộc chọn franchise
         success("Đăng nhập thành công!");
-        navigate(
-          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
-          { replace: true },
-        );
+        if (profile.active_context) {
+          navigate(
+            `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`,
+            { replace: true },
+          );
+        } else {
+          navigate(
+            `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`,
+            { replace: true },
+          );
+        }
       } catch (err) {
         const message =
           err instanceof HttpError

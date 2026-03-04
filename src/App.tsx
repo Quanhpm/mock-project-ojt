@@ -1,4 +1,4 @@
-import Loading from "@/layouts/LoadingLayout/LoadingLayout";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { AuthProvider } from "@/modules/client/auth-client";
 import { setupApi } from "@/apis";
@@ -36,33 +36,31 @@ const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
-        {adminIsLoading ? (
-          <Loading />
-        ) : (
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              {/* ========== ADMIN ROUTES ========== */}
-              {AdminAuthRoutes}
-              {AdminRoutes}
+        <Suspense fallback={<GlobalLoadingOverlay forceShow />}>
+          <Routes>
+            {/* ========== ADMIN ROUTES ========== */}
+            {AdminAuthRoutes}
+            {AdminRoutes}
 
-              {/* ========== CLIENT AUTH ROUTES ========== */}
-              {ClientAuthRoutes}
+            {/* ========== CLIENT AUTH ROUTES ========== */}
+            {ClientAuthRoutes}
 
-              {/* ========== CLIENT PUBLIC ROUTES ========== */}
-              {ClientPublicRoutes}
+            {/* ========== CLIENT PUBLIC ROUTES ========== */}
+            {ClientPublicRoutes}
 
-              {/* ========== VERIFY EMAIL (standalone, no layout) ========== */}
-              {VerifyEmailRoute}
+            {/* ========== VERIFY EMAIL (standalone, no layout) ========== */}
+            {VerifyEmailRoute}
 
-              {/* ========== HOME PRIVATE ROUTES ========== */}
-              {HomePrivateRoutes}
+            {/* ========== HOME PRIVATE ROUTES ========== */}
+            {HomePrivateRoutes}
 
-              {/* ========== 404 NOT FOUND ========== */}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-        )}
+            {/* ========== 404 NOT FOUND ========== */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
+
+        {/* Hydrate loading — overlay mờ đè lên thay vì trang trắng */}
+        {adminIsLoading && <GlobalLoadingOverlay forceShow />}
 
         {/* Toast notifications */}
         <ToasterComponent />
