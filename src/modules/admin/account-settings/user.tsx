@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useChangePassword } from "./hooks/use-change-password.hook";
 import { useUpdateProfile } from "./hooks/use-update-profile.hook";
 import { ROUTER_URL } from "@/routes/router.const";
 
