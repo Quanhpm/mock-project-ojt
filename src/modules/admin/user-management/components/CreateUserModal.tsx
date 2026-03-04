@@ -31,7 +31,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   // ──────── Step 2 fields ────────
   const [selectedRoleId, setSelectedRoleId] = useState('')
@@ -56,7 +56,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     setEmail('')
     setPassword('')
     setPhone('')
-    setShowPassword(false)
+    setConfirmPassword('')
     setSelectedRoleId('')
     setSelectedFranchiseId('')
     resetFlow()
@@ -82,7 +82,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   }
 
   // ──────── Validate ────────
-  const isStep1Valid = name.trim() && email.trim() && password.trim()
+  const isStep1Valid =
+  name.trim() &&
+  email.trim() &&
+  password.trim() &&
+  confirmPassword.trim() &&
+  password === confirmPassword
   const isStep2Valid =
     selectedRoleId && (isAdmin || selectedFranchiseId)
 
@@ -226,24 +231,41 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     lock
                   </span>
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type='text'
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-10 pl-9 pr-10 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                     placeholder="Enter password"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      {showPassword ? 'visibility_off' : 'visibility'}
-                    </span>
-                  </button>
                 </div>
               </div>
+
+              {/* Confirm Password */}
+<div className="flex flex-col gap-1.5">
+  <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+    Confirm Password <span className="text-red-500">*</span>
+  </label>
+  <div className="relative">
+    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
+      lock
+    </span>
+    <input
+      type="text"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+      placeholder="Re-enter password"
+      required
+    />
+  </div>
+
+  {confirmPassword && confirmPassword !== password && (
+    <p className="text-xs text-red-500">
+      Passwords do not match
+    </p>
+  )}
+</div>
 
               {/* Phone */}
               <div className="flex flex-col gap-1.5">
