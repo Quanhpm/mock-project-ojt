@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useCreateUser } from '../hooks/useCreateUser.hook'
-import { ROLES } from '@/consts/roles.const'
-import type { RoleOption } from '@/consts/roles.const'
+import type { RoleSelectItem } from '@/apis'
 
 interface CreateUserModalProps {
   isOpen: boolean
@@ -19,7 +18,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     isSubmitting,
     error,
     franchises,
+    roles,
     isFranchisesLoading,
+    isRolesLoading,
     handleCreateUser,
     handleAssignRole,
     goBackToStep1,
@@ -38,7 +39,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   const [selectedFranchiseId, setSelectedFranchiseId] = useState('')
 
   // Tìm role hiện tại để check scope
-  const selectedRole: RoleOption | undefined = ROLES.find(
+  const selectedRole: RoleSelectItem | undefined = roles.find(
     (r) => r.value === selectedRoleId,
   )
   const isAdmin = selectedRole?.code === 'ADMIN'
@@ -353,8 +354,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     className="w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
                     required
                   >
-                    <option value="">— Select a role —</option>
-                    {ROLES.map((role) => (
+                    <option value="">
+                      {isRolesLoading ? 'Loading roles...' : '— Select a role —'}
+                    </option>
+                    {roles.map((role) => (
                       <option key={role.value} value={role.value}>
                         {role.name} ({role.scope})
                       </option>

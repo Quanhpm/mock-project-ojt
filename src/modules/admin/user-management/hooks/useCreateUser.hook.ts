@@ -3,10 +3,12 @@ import {
     createUser,
     assignUserFranchiseRole,
     getFranchisesForSelect,
+    getRolesForSelect,
 } from '@/apis'
 import type {
     CreateUserRequest,
     FranchiseSelectItem,
+    RoleSelectItem,
 } from '@/apis'
 
 // ======================== Types ========================
@@ -20,7 +22,9 @@ export interface UseCreateUserReturn {
     isSubmitting: boolean
     error: string | null
     franchises: FranchiseSelectItem[]
+    roles: RoleSelectItem[]
     isFranchisesLoading: boolean
+    isRolesLoading: boolean
 
     // Actions
     handleCreateUser: (payload: CreateUserRequest) => Promise<void>
@@ -39,30 +43,41 @@ export const useCreateUser = (onSuccess?: () => void): UseCreateUserReturn => {
 
     // Franchise dropdown data
     const [franchises, setFranchises] = useState<FranchiseSelectItem[]>([])
+    const [roles, setRoles] = useState<RoleSelectItem[]>([])
     const [isFranchisesLoading, setIsFranchisesLoading] = useState(false)
+    const [isRolesLoading, setIsRolesLoading] = useState(false)
 
-    // ──────── Fetch franchises khi sang bước 2 ────────
+    // ──────── Fetch franchise + role options khi sang bước 2 ────────
     useEffect(() => {
         if (currentStep !== 2) return
         let cancelled = false
-        const fetchFranchises = async () => {
+        const fetchFranchiseAndRoleOptions = async () => {
             setIsFranchisesLoading(true)
+            setIsRolesLoading(true)
             try {
-                const data = await getFranchisesForSelect()
+                const [franchiseData, roleData] = await Promise.all([
+                    getFranchisesForSelect(),
+                    getRolesForSelect(),
+                ])
                 if (!cancelled) {
-                    setFranchises(data ?? [])
+                    setFranchises(franchiseData ?? [])
+                    setRoles(roleData ?? [])
                 }
             } catch (err) {
                 if (err === null) return // bị cancel — bỏ qua
                 if (!cancelled) {
-                    console.error('Failed to fetch franchises:', err)
+                    console.error('Failed to fetch franchise and role options:', err)
                     setFranchises([])
+                    setRoles([])
                 }
             } finally {
-                if (!cancelled) setIsFranchisesLoading(false)
+                if (!cancelled) {
+                    setIsFranchisesLoading(false)
+                    setIsRolesLoading(false)
+                }
             }
         }
-        fetchFranchises()
+        fetchFranchiseAndRoleOptions()
         return () => { cancelled = true }
     }, [currentStep])
 
@@ -134,7 +149,9 @@ export const useCreateUser = (onSuccess?: () => void): UseCreateUserReturn => {
         isSubmitting,
         error,
         franchises,
+        roles,
         isFranchisesLoading,
+        isRolesLoading,
         handleCreateUser,
         handleAssignRole,
         goBackToStep1,
