@@ -23,6 +23,19 @@ interface Product {
 const worldMapImage = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772263250/anh-home-page_mga9y7.png';
 const Logo = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772263251/logo_kmr23x.png';
 
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, inView };
+}
+
 // Lấy 5 sản phẩm nổi bật cho menu (món ăn)
 const MENU_DATA = (products as Product[])
   .filter(p => p.is_active && !p.is_deleted && p.category_id === 3)
@@ -43,19 +56,6 @@ const BANNER_SLIDES = [
   { id: 5, img: 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772269581/photo-1511920170033-f8396924c348_yqlr9h.avif' },
 ];
 
-function useInView(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, inView };
-}
-
 function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const heroSection = useInView(0.1);
@@ -68,7 +68,7 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="bg-[var(--cf-bg)] overflow-x-hidden">
+    <div className="bg-[var(--cf-bg)] overflow-x-hidden mt-[20px]">
 
       {/* ═══════════════════════════════════════════
           1. HERO BANNER
@@ -77,11 +77,11 @@ function HomePage() {
         <div className="relative overflow-hidden shadow-2xl aspect-video md:aspect-[22/9]">
           {BANNER_SLIDES.map((slide, index) => (
             <div key={slide.id} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}>
-              <img src={slide.img} alt={`Banner ${slide.id}`} className="w-full h-full object-cover rounded-b-3xl" />
+              <img src={slide.img} alt={`Banner ${slide.id}`} className="w-full h-full object-cover" />
             </div>
           ))}
           {/* Overlay text */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex items-center rounded-b-3xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex items-center">
             <div className={`text-white px-10 md:px-20 transition-all duration-1000 delay-300 ${heroSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}>
               <p className="text-[var(--cf-accent-light)] uppercase tracking-[0.25em] text-xs md:text-sm font-semibold mb-3">Tinh hoa cà phê từ năm 2016</p>
               <h1 className="text-3xl md:text-6xl font-black leading-tight mb-4">Boutique<br />Brews</h1>

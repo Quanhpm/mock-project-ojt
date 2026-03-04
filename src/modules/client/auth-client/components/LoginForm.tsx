@@ -3,6 +3,7 @@ import { loginSchema, type LoginFormValues } from "../schemas/client-login.schem
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 import AuthInput from "@/components/ui/auth-input";
 import AuthButton from "@/components/ui/auth-button";
 
@@ -54,12 +55,12 @@ function LoginForm({ onSubmit, isLoading = false, error = '' }: LoginFormProps) 
             </button>
           }
         />
-        <a
-          href="/client/forgot-password"
+        <Link
+          to="/client/forgot-password"
           className="text-xs text-white/55 hover:text-white font-medium ml-auto mt-1 transition-colors"
         >
           Quên mật khẩu?
-        </a>
+        </Link>
       </div>
 
       <AuthButton type="submit" isLoading={isLoading} loadingText="Đang đăng nhập..." className="mt-2">
