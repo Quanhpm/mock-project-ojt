@@ -49,6 +49,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     module: "users", 
   },
   {
+    label: "Create User",
+    path: `${ROUTER_URL.ADMIN_ROUTER.USER}/create`,
+    icon: <Users size={18} />,
+    component: React.lazy(() => import("@/modules/admin/user-management/pages/UserCreatePage")),
+    module: "users",
+    hideFromSidebar: true,
+  },
+  {
     label: "Franchise",
     path: ROUTER_URL.ADMIN_ROUTER.FRANCHISE,
     icon: <Store size={18} />,
