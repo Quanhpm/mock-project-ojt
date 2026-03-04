@@ -1,4 +1,4 @@
-import Loading from "@/layouts/LoadingLayout/LoadingLayout";
+import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { AuthProvider } from "@/modules/client/auth-client";
 import { setupApi } from "@/apis";
@@ -38,9 +38,9 @@ const App = () => {
       <BrowserRouter>
         {/* Chờ admin hydrate xong (gọi GET /auth) trước khi render routes */}
         {adminIsLoading ? (
-          <Loading />
+          <GlobalLoadingOverlay forceShow />
         ) : (
-          <Suspense fallback={<Loading />}>
+          <Suspense fallback={<GlobalLoadingOverlay forceShow />}>
             <Routes>
               {/* ========== ADMIN ROUTES ========== */}
               {AdminAuthRoutes}
