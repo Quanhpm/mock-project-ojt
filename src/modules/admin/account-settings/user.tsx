@@ -153,7 +153,6 @@ const AccountSettingsPage: React.FC = () => {
 
   // Hooks
   const { success, error: showError } = useToast();
-  const { changePassword, isLoading: isChangingPassword } = useChangePassword();
   const { updateProfile, isLoading: isUpdatingProfile, isUploading, uploadAvatar } =
     useUpdateProfile();
 
