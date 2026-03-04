@@ -6,10 +6,6 @@ import { Coffee } from "lucide-react";
 const AuthClientLayout = () => {
   const authLoading = useClientAuthStore((state) => state.authLoading);
 
-  if (authLoading) {
-    return <GlobalLoadingOverlay forceShow />;
-  }
-
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
@@ -37,6 +33,9 @@ const AuthClientLayout = () => {
       <div className="relative z-10 w-full max-w-md mt-10">
         <Outlet />
       </div>
+
+      {/* Loading overlay — đè lên layout thay vì thay thế layout */}
+      {authLoading && <GlobalLoadingOverlay forceShow />}
     </div>
   );
 };

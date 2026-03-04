@@ -5,10 +5,6 @@ import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 const AuthAdminLayout = () => {
   const authLoading = useAdminAuthStore((state) => state.isLoading);
 
-  if (authLoading) {
-    return <GlobalLoadingOverlay forceShow />;
-  }
-
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Banner */}
@@ -51,6 +47,9 @@ const AuthAdminLayout = () => {
           </div>
         </div>
       </div>
+
+      {/* Loading overlay — đè lên layout thay vì thay thế layout */}
+      {authLoading && <GlobalLoadingOverlay forceShow />}
     </div>
   );
 };
