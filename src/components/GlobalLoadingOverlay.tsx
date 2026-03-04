@@ -3,11 +3,13 @@ import { Coffee } from "lucide-react";
 
 /**
  * Overlay loading toàn màn hình, hiển thị khi có bất kỳ API call nào đang chạy.
- * Đặt trong AdminLayout để chỉ bao phủ vùng admin content.
- * Dùng pointer-events-none khi ẩn để không chặn tương tác UI.
+ * - Dùng trong AdminLayout / ClientLayout để bao phủ toàn màn hình.
+ * - Truyền `forceShow` để hiển thị ngay (dùng cho Suspense fallback / hydrate loading).
+ * - Dùng pointer-events-none khi ẩn để không chặn tương tác UI.
  */
-export function GlobalLoadingOverlay() {
+export function GlobalLoadingOverlay({ forceShow = false }: { forceShow?: boolean }) {
   const isLoading = useLoadingStore((state) => state.isLoading);
+  const visible = forceShow || isLoading;
 
   return (
     <div
@@ -16,7 +18,7 @@ export function GlobalLoadingOverlay() {
         flex items-center justify-center
         bg-white/40 backdrop-blur-[2px]
         transition-opacity duration-200
-        ${isLoading ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
+        ${visible ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}
       `}
     >
       <div className="flex flex-col items-center gap-3">
@@ -34,3 +36,4 @@ export function GlobalLoadingOverlay() {
     </div>
   );
 }
+//

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   UserTableRow,
   Pagination,
-  CreateUserModal,
   EditUserModal,
   DeleteUserDialog,
   ViewUserModal,
@@ -33,6 +33,7 @@ const SkeletonRow = () => (
 )
 
 function UserManagement() {
+  const navigate = useNavigate()
   const {
     users,
     isLoading,
@@ -43,13 +44,10 @@ function UserManagement() {
     setCurrentPage,
   } = useUserList()
 
-  // ──────── Create Modal ────────
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-
-  const handleCreateSuccess = useCallback(() => {
-    setIsCreateModalOpen(false)
-    setCurrentPage(1)
-  }, [setCurrentPage])
+  // ──────── Create redirect ────────
+  const handleCreateClick = useCallback(() => {
+    navigate('/admin/users/create')
+  }, [navigate])
 
   // ──────── View Modal ────────
   const [viewUser, setViewUser] = useState<UserItem | null>(null)
@@ -118,7 +116,7 @@ function UserManagement() {
               </p>
             </div>
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateClick}
               className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
             >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
@@ -201,13 +199,6 @@ function UserManagement() {
       </main>
 
       {/* ═══════════ Modals ═══════════ */}
-
-      {/* Create User Modal */}
-      <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
 
       {/* View User Modal */}
       <ViewUserModal
