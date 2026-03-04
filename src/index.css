@@ -95,3 +95,8 @@
     caret-color: auto;
   }
 }
+
+/* Sonner toast - click to dismiss */
+[data-sonner-toast] {
+  cursor: pointer !important;
+}
