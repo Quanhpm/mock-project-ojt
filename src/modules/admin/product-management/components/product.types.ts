@@ -36,11 +36,10 @@ export interface ProductUpdatePayload extends Partial<ProductCreatePayload> {}
 export interface ProductSearchPayload {
   searchCondition?: {
     keyword?: string;
-    franchise_id?: string;
-    min_price?: string | number;
-    max_price?: string | number;
-    is_active?: string | boolean;
-    is_deleted?: string | boolean;
+    min_price?: number;
+    max_price?: number;
+    is_active?: boolean;
+    is_deleted?: boolean;
   };
   pageInfo?: {
     pageNum: number;

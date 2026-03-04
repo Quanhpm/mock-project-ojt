@@ -4,7 +4,6 @@ import { useToast } from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useAuth } from '../context/useAuth';
 import { useClientAuthStore } from '../stores/client-auth.store';
-import LoadingLayout from '@/layouts/LoadingLayout';
 import {
   updateCustomerProfile,
   changePassword,
@@ -588,7 +587,7 @@ function ProfilePage() {
   };
 
   if (isLoggingOut) {
-    return <LoadingLayout />;
+    return null;
   }
 
   if (isFetching) {
