@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2 } from "lucide-react";
 import CustomerDelete from "./CustomerDelete";
-import { useCustomers } from "./hooks/useCustomers";
+import { useCustomerSearch } from "../hooks";
 import { useCustomerStatus } from "./hooks/useCustomerStatus";
 import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
 import type { Customer } from "./customer.types";
@@ -183,7 +183,33 @@ export default function CustomerTable() {
   const navigate = useNavigate();
 
   // ========================================================================
-  // CUSTOM HOOKS
+  // SEARCH HOOK
+  // ========================================================================
+  const {
+    data: customers,
+    isLoading,
+    error,
+    filters,
+    setFilters,
+    executeSearch,
+    clearFilters,
+    searchHistory,
+    clearHistory,
+    isSearchDropdownOpen,
+    setIsSearchDropdownOpen,
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+  } = useCustomerSearch();
+
+  // Refs for search functionality
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
+
+  // ========================================================================
+  // OTHER CUSTOM HOOKS
   // ========================================================================
   const { toggleStatus, updatingId } = useCustomerStatus();
   const { deleteCustomer, isDeleting } = useDeleteCustomer();
@@ -191,12 +217,6 @@ export default function CustomerTable() {
   // ========================================================================
   // LOCAL STATE
   // ========================================================================
-  const [searchInput, setSearchInput] = useState("");
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "inactive"
-  >("all");
-  const [currentPage, setCurrentPage] = useState(1);
   const [customerStatus, setCustomerStatus] = useState<Record<string, boolean>>(
     {},
   );
@@ -205,14 +225,6 @@ export default function CustomerTable() {
     customerId: "",
     customerName: "",
   });
-
-  const itemsPerPage = 10;
-
-  // ========================================================================
-  // CUSTOM HOOK - API INTEGRATION
-  // ========================================================================
-  const { customers, pageData, isLoading, error, fetchCustomers } =
-    useCustomers();
 
   // ========================================================================
   // EFFECTS
@@ -226,34 +238,98 @@ export default function CustomerTable() {
     };
   }, []);
 
-  // Fetch customers when filters/paging/search-submit change
+  // Keyboard shortcuts (Ctrl+K)
   useEffect(() => {
-    const mapStatusFilter = (): boolean | null => {
-      if (statusFilter === "active") return true;
-      if (statusFilter === "inactive") return false;
-      return null; // "all" case
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchDropdownOpen(true);
+      }
     };
 
-    fetchCustomers({
-      searchCondition: {
-        keyword: searchKeyword.trim(),
-        is_active: mapStatusFilter(),
-        is_deleted: false,
-      },
-      pageInfo: {
-        pageNum: currentPage,
-        pageSize: itemsPerPage,
-      },
-    });
-  }, [searchKeyword, statusFilter, currentPage, fetchCustomers]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setIsSearchDropdownOpen]);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchDropdownOpen(false);
+        setSelectedHistoryIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setIsSearchDropdownOpen]);
 
   // ========================================================================
   // EVENT HANDLERS
   // ========================================================================
 
   const handleSearch = () => {
-    setCurrentPage(1);
-    setSearchKeyword(searchInput);
+    setIsSearchDropdownOpen(false);
+    setSelectedHistoryIndex(-1);
+    executeSearch();
+  };
+
+  const handleClearSearch = () => {
+    setFilters((prev) => ({ ...prev, keyword: "" }));
+    searchInputRef.current?.focus();
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isSearchDropdownOpen || searchHistory.length === 0) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearch();
+      }
+      return;
+    }
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedHistoryIndex((prev) =>
+          prev < searchHistory.length - 1 ? prev + 1 : prev,
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedHistoryIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (selectedHistoryIndex >= 0) {
+          setFilters((prev) => ({
+            ...prev,
+            keyword: searchHistory[selectedHistoryIndex],
+          }));
+          setIsSearchDropdownOpen(false);
+          setSelectedHistoryIndex(-1);
+        } else {
+          handleSearch();
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsSearchDropdownOpen(false);
+        setSelectedHistoryIndex(-1);
+        break;
+    }
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, is_active: value }));
+  };
+
+  const handleDeletedFilterChange = (value: boolean) => {
+    setFilters((prev) => ({ ...prev, is_deleted: value }));
   };
 
   const handleToggleCustomerStatus = (customerId: string) => {
@@ -278,25 +354,9 @@ export default function CustomerTable() {
       customerId,
       currentStatus,
       () => {
-        // onSuccess - Refresh data để đồng bộ với server
+        // onSuccess - Refresh data
         console.log("✅ Toggle status success, refreshing data...");
-        const mapStatusFilter = (): boolean | null => {
-          if (statusFilter === "active") return true;
-          if (statusFilter === "inactive") return false;
-          return null;
-        };
-
-        fetchCustomers({
-          searchCondition: {
-            keyword: searchKeyword.trim(),
-            is_active: mapStatusFilter(),
-            is_deleted: false,
-          },
-          pageInfo: {
-            pageNum: currentPage,
-            pageSize: itemsPerPage,
-          },
-        });
+        executeSearch();
       },
       () => {
         // onError - Rollback to previous state
@@ -307,13 +367,6 @@ export default function CustomerTable() {
         }));
       },
     );
-  };
-
-  const handleClearFilters = () => {
-    setSearchInput("");
-    setSearchKeyword("");
-    setStatusFilter("all");
-    setCurrentPage(1);
   };
 
   const handleDeleteClick = (customerId: string, customerName: string) => {
@@ -333,24 +386,8 @@ export default function CustomerTable() {
       // onSuccess: Close modal and refresh data
       setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
 
-      // Refresh customer list with current filters
-      const mapStatusFilter = (): boolean | null => {
-        if (statusFilter === "active") return true;
-        if (statusFilter === "inactive") return false;
-        return null;
-      };
-
-      fetchCustomers({
-        searchCondition: {
-          keyword: searchKeyword.trim(),
-          is_active: mapStatusFilter(),
-          is_deleted: false,
-        },
-        pageInfo: {
-          pageNum: currentPage,
-          pageSize: itemsPerPage,
-        },
-      });
+      // Refresh customer list by executing search again
+      executeSearch();
     });
   };
 
@@ -588,7 +625,7 @@ export default function CustomerTable() {
                 Customer Management
               </h1>
               <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
-                Total Customers: {pageData?.totalItems || 0}
+                Total Customers: {totalItems || 0}
               </p>
             </div>
             <button
@@ -615,79 +652,291 @@ export default function CustomerTable() {
         <div style={styles.contentArea}>
           {/* Filters */}
           <div style={styles.filterContainer}>
-            <div style={{ flex: 1, minWidth: "250px" }}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or phone..."
-                  value={searchInput}
-                  onChange={(e) => {
-                    setSearchInput(e.target.value);
-                  }}
+            {/* Search Bar with History */}
+            <div
+              style={{ flex: 1, minWidth: "300px", position: "relative" }}
+              ref={dropdownRef}
+            >
+              <div style={{ position: "relative" }}>
+                {/* Search Icon */}
+                <div
                   style={{
-                    ...(getButtonStyles.filterInput as React.CSSProperties),
-                    flex: 1,
+                    position: "absolute",
+                    top: "50%",
+                    left: "12px",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                    color: "#9ca3af",
                   }}
-                  onFocus={(e) => {
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </div>
+
+                {/* Search Input */}
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Tìm kiếm theo tên, email, số điện thoại... (Ctrl+K)"
+                  value={filters.keyword}
+                  onChange={(e) => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      keyword: e.target.value,
+                    }));
+                    if (e.target.value.trim()) {
+                      setIsSearchDropdownOpen(false);
+                    }
+                  }}
+                  onFocus={() => {
+                    if (!filters.keyword.trim() && searchHistory.length > 0) {
+                      setIsSearchDropdownOpen(true);
+                    }
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                  style={
+                    {
+                      ...getButtonStyles.filterInput,
+                      paddingLeft: "40px",
+                      paddingRight: filters.keyword ? "40px" : "14px",
+                      flex: 1,
+                    } as React.CSSProperties
+                  }
+                  onFocusCapture={(e) => {
                     e.currentTarget.style.borderColor = "#8B5A2B";
                     e.currentTarget.style.backgroundColor = "#ffffff";
                   }}
-                  onBlur={(e) => {
+                  onBlurCapture={(e) => {
                     e.currentTarget.style.borderColor = "#e5e7eb";
                     e.currentTarget.style.backgroundColor = "#f9fafb";
                   }}
                 />
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  style={{
-                    ...getButtonStyles.primary,
-                    minWidth: "42px",
-                    width: "42px",
-                    height: "42px",
-                    padding: 0,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  aria-label="Search customers"
-                >
-                  <span className="material-symbols-outlined">search</span>
-                </button>
+
+                {/* Clear Button */}
+                {filters.keyword && (
+                  <button
+                    onClick={handleClearSearch}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      right: "12px",
+                      transform: "translateY(-50%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "20px",
+                      height: "20px",
+                      border: "none",
+                      borderRadius: "50%",
+                      backgroundColor: "#e0e0e0",
+                      color: "#6c757d",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#bdbdbd";
+                      e.currentTarget.style.color = "#212529";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#e0e0e0";
+                      e.currentTarget.style.color = "#6c757d";
+                    }}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
               </div>
+
+              {/* Search Dropdown - History */}
+              {isSearchDropdownOpen &&
+                searchHistory.length > 0 &&
+                !filters.keyword && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 4px)",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                      zIndex: 50,
+                      maxHeight: "250px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: "8px 12px",
+                        borderBottom: "1px solid #f0f0f0",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          color: "#6c757d",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        Tìm kiếm gần đây
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          clearHistory();
+                          setIsSearchDropdownOpen(false);
+                        }}
+                        style={{
+                          fontSize: "11px",
+                          color: "#ef4444",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#fee")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                    {searchHistory.map((item, index) => (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          setFilters((prev) => ({ ...prev, keyword: item }));
+                          setIsSearchDropdownOpen(false);
+                          setSelectedHistoryIndex(-1);
+                        }}
+                        style={{
+                          padding: "10px 12px",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          backgroundColor:
+                            selectedHistoryIndex === index
+                              ? "#f3f4f6"
+                              : "transparent",
+                          transition: "background-color 0.2s",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#f9fafb")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            selectedHistoryIndex === index
+                              ? "#f3f4f6"
+                              : "transparent")
+                        }
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          style={{ color: "#9ca3af" }}
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span style={{ fontSize: "14px", color: "#374151" }}>
+                          {item}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
 
+            {/* Status Filter */}
             <div style={{ minWidth: "140px" }}>
               <select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(
-                    e.target.value as "all" | "active" | "inactive",
-                  );
-                  setCurrentPage(1);
-                }}
+                value={filters.is_active}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 style={getButtonStyles.filterInput as React.CSSProperties}
               >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="">Tất cả trạng thái</option>
+                <option value="true">Đang hoạt động</option>
+                <option value="false">Ngừng hoạt động</option>
               </select>
             </div>
 
-            {(searchInput || statusFilter !== "all") && (
-              <button
-                onClick={handleClearFilters}
-                style={getButtonStyles.clearFilter as React.CSSProperties}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e5e7eb";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f3f4f6";
-                }}
+            {/* Deleted Filter */}
+            <div style={{ minWidth: "140px" }}>
+              <select
+                value={filters.is_deleted ? "true" : "false"}
+                onChange={(e) =>
+                  handleDeletedFilterChange(e.target.value === "true")
+                }
+                style={getButtonStyles.filterInput as React.CSSProperties}
               >
-                Clear Filters
-              </button>
-            )}
+                <option value="false">Chưa xóa</option>
+                <option value="true">Đã xóa</option>
+              </select>
+            </div>
+
+            {/* Search Button */}
+            <button
+              type="button"
+              onClick={handleSearch}
+              style={{
+                ...getButtonStyles.primary,
+                minWidth: "110px",
+                height: "42px",
+              }}
+              aria-label="Search customers"
+            >
+              <span className="material-symbols-outlined">search</span>
+              <span>Tìm kiếm</span>
+            </button>
+
+            {/* Clear Filters Button */}
+            <button
+              onClick={clearFilters}
+              style={getButtonStyles.clearFilter as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#e5e7eb";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#f3f4f6";
+              }}
+            >
+              Xóa bộ lọc
+            </button>
           </div>
 
           {/* Table */}
@@ -872,15 +1121,12 @@ export default function CustomerTable() {
           </div>
 
           {/* Pagination */}
-          {!isLoading && !error && pageData && pageData.totalPages > 1 && (
+          {!isLoading && customers.length > 0 && totalPages > 1 && (
             <div style={styles.paginationContainer}>
               <span style={{ color: "#6b7280", fontWeight: "600" }}>
-                Showing {(pageData.pageNum - 1) * pageData.pageSize + 1} to{" "}
-                {Math.min(
-                  pageData.pageNum * pageData.pageSize,
-                  pageData.totalItems,
-                )}{" "}
-                of {pageData.totalItems} customers
+                Showing {(currentPage - 1) * 10 + 1} to{" "}
+                {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
+                customers
               </span>
               <div
                 style={{ display: "flex", gap: "8px", alignItems: "center" }}
@@ -915,77 +1161,67 @@ export default function CustomerTable() {
                 </button>
 
                 {/* Page Numbers */}
-                {Array.from(
-                  { length: pageData.totalPages },
-                  (_, i) => i + 1,
-                ).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    style={
-                      {
-                        ...getButtonStyles.pagination,
-                        backgroundColor:
-                          currentPage === page ? "#8B5A2B" : "#ffffff",
-                        color: currentPage === page ? "#ffffff" : "#374151",
-                        fontWeight:
-                          currentPage === page
-                            ? ("700" as const)
-                            : ("600" as const),
-                        minWidth: "40px",
-                        textAlign: "center" as const,
-                      } as React.CSSProperties
-                    }
-                    onMouseEnter={(e) => {
-                      if (currentPage !== page) {
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#d1d5db";
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      style={
+                        {
+                          ...getButtonStyles.pagination,
+                          backgroundColor:
+                            currentPage === page ? "#8B5A2B" : "#ffffff",
+                          color: currentPage === page ? "#ffffff" : "#374151",
+                          fontWeight:
+                            currentPage === page
+                              ? ("700" as const)
+                              : ("600" as const),
+                          minWidth: "40px",
+                          textAlign: "center" as const,
+                        } as React.CSSProperties
                       }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currentPage !== page) {
-                        e.currentTarget.style.backgroundColor = "#ffffff";
-                        e.currentTarget.style.borderColor = "#e5e7eb";
-                      }
-                    }}
-                  >
-                    {page}
-                  </button>
-                ))}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== page) {
+                          e.currentTarget.style.backgroundColor = "#f9fafb";
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (currentPage !== page) {
+                          e.currentTarget.style.backgroundColor = "#ffffff";
+                          e.currentTarget.style.borderColor = "#e5e7eb";
+                        }
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
 
                 {/* Next Button */}
                 <button
                   onClick={() =>
-                    setCurrentPage(
-                      Math.min(pageData.totalPages, currentPage + 1),
-                    )
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
                   }
-                  disabled={currentPage === pageData.totalPages}
+                  disabled={currentPage === totalPages}
                   style={
                     {
                       ...getButtonStyles.pagination,
                       backgroundColor:
-                        currentPage === pageData.totalPages
-                          ? "#f3f4f6"
-                          : "#ffffff",
-                      color:
-                        currentPage === pageData.totalPages
-                          ? "#9ca3af"
-                          : "#374151",
+                        currentPage === totalPages ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === totalPages ? "#9ca3af" : "#374151",
                       cursor:
-                        currentPage === pageData.totalPages
-                          ? "not-allowed"
-                          : "pointer",
+                        currentPage === totalPages ? "not-allowed" : "pointer",
                     } as React.CSSProperties
                   }
                   onMouseEnter={(e) => {
-                    if (currentPage !== pageData.totalPages) {
+                    if (currentPage !== totalPages) {
                       e.currentTarget.style.backgroundColor = "#f9fafb";
                       e.currentTarget.style.borderColor = "#d1d5db";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (currentPage !== pageData.totalPages) {
+                    if (currentPage !== totalPages) {
                       e.currentTarget.style.backgroundColor = "#ffffff";
                       e.currentTarget.style.borderColor = "#e5e7eb";
                     }
