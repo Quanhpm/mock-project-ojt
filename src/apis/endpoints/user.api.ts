@@ -74,6 +74,13 @@ export interface FranchiseSelectItem {
     name: string
 }
 
+export interface RoleSelectItem {
+    value: string
+    code: string
+    name: string
+    scope: 'GLOBAL' | 'FRANCHISE'
+}
+
 // ======================== API Functions ========================
 
 /** POST /api/users — Tạo user mới */
@@ -132,5 +139,12 @@ export const getFranchisesForSelect = (): Promise<
 > => {
     return httpClient.get<FranchiseSelectItem[]>({
         url: '/franchises/select',
+    })
+}
+
+/** GET /api/roles/select — Lấy danh sách role cho dropdown */
+export const getRolesForSelect = (): Promise<RoleSelectItem[] | null> => {
+    return httpClient.get<RoleSelectItem[]>({
+        url: '/roles/select',
     })
 }
