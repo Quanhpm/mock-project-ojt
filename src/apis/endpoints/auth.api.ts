@@ -27,7 +27,7 @@ export interface UserRoleItem {
 export interface ActiveContext {
   role: string;
   scope: string;
-  franchiseId: string;
+  franchise_id: string;
 }
 
 export interface ProfileResponse {

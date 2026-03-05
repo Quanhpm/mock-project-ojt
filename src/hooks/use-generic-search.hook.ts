@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useToast } from "@/hooks/use-toast.hook";
 
 // ============================================================================
@@ -175,6 +175,12 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
 
   const { error: showError } = useToast();
 
+  // Track if component has mounted (to avoid double fetch on mount)
+  const isMounted = useRef(false);
+  
+  // Track if currently fetching (to prevent concurrent requests)
+  const isFetching = useRef(false);
+
   // ──────── Search History Management ────────
 
   // Load search history from localStorage
@@ -224,6 +230,12 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
 
   // Execute search with current filters and pagination
   const executeSearch = useCallback(async () => {
+    // Prevent concurrent requests
+    if (isFetching.current) {
+      return;
+    }
+    
+    isFetching.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -267,6 +279,7 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
       setTotalItems(0);
     } finally {
       setIsLoading(false);
+      isFetching.current = false;
     }
   }, [
     filters,
@@ -297,8 +310,18 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
     if (executeOnMount) {
       executeSearch();
     }
+    isMounted.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-execute search when currentPage or pageSize changes (after mount)
+  useEffect(() => {
+    if (!isMounted.current) {
+      return; // Skip on initial mount
+    }
+    executeSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, pageSize]); // Only depend on pagination values, not the function
 
   // ──────── Return ────────
 
