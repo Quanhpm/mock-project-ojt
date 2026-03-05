@@ -1,61 +1,72 @@
 import { useRef, useState, useEffect, useMemo } from "react";
-import categories from '@/mockdata/categories.json';
-import products from '@/mockdata/products.json';
-import franchises from '@/mockdata/franchises.json';
-import categoryFranchises from '@/mockdata/category_franchise.json';
-import productCategoryFranchises from '@/mockdata/product_category_franchise.json'
-import productFranchises from '@/mockdata/product_franchise.json';
-import type { Product, Category, Franchise, CategoryFranchise, ProductFranchise, ProductCategoryFranchise } from "@/types/product.type";
+import { getAllFranchises, getAllCategoriesByFranchise, getMenuByFranchise } from "@/apis/endpointsCLIENT/client.api";
+import type { FranchiseResponse, CategoryResponse, MenuByFranchise, MenuProduct, ProductSize } from "@/apis/endpointsCLIENT/client.api";
 import ProductCard from "../components/ProductCard";
 
 function MenuPage() {
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const [activeCategory, setActiveCategory] = useState<string>('');
     const [search, setSearch] = useState<string>('');
-    const [franchiseId, setFranchiseId] = useState<number>(1);
+    const [franchiseId, setFranchiseId] = useState<string>('');
 
-    // Lấy tất cả category và product của chi nhánh hiện tại thông qua bảng trung gian category_franchise và product_franchise
-    const getAllCategoryInFranchise = (franchiseId: number): Category[] => {
-        return (categoryFranchises as CategoryFranchise[]).filter((cf) => cf.franchise_id === franchiseId)
-            .map((cf) => (categories as Category[]).find((cat) => cat.id === cf.category_id))
-            .filter((cat): cat is Category => cat !== undefined);
+    const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+    const fetchFranchises = async () => {
+        try {
+            const response = await getAllFranchises();
+            setFranchises(response || []);
+            setFranchiseId(response && response.length > 0 ? response[0].id : '');
+        } catch (error) {
+            console.error("Failed to fetch franchises:", error);
+        }
     };
-    const getAllProductInFranchise = (franchiseId: number): Product[] => {
-        return (productFranchises as ProductFranchise[]).filter((pf) => pf.franchise_id === franchiseId)
-            .map((pf) => (products as Product[]).find((p) => p.id === pf.product_id))
-            .filter((p): p is Product => p !== undefined);
-    };
-    const allProductsInFranchise = useMemo(() => {
-        return getAllProductInFranchise(franchiseId);
-    }, [franchiseId]);
 
-    const allCategoriesInFranchise = useMemo(() => {
-        return getAllCategoryInFranchise(franchiseId);
-    }, [franchiseId]);
-    
-    // Lọc thông qua bảng product_category_franchise
-    const getProductFranchiseByCategoryFranchise = (categoryFranchiseId: number): ProductFranchise[] => {
-        return (productCategoryFranchises as ProductCategoryFranchise[]).filter((pcf) => pcf.category_franchise_id === categoryFranchiseId)
-            .map((pcf) => (productFranchises as ProductFranchise[]).find((pf) => pf.id === pcf.product_franchise_id))
-            .filter((pf): pf is ProductFranchise => pf !== undefined);
-    }
-    const getProductsByCategory = (categoryId: number) => {
-        const categoryFranchiseId = (categoryFranchises as CategoryFranchise[]).find((cf) => cf.category_id === categoryId && cf.franchise_id === franchiseId)?.id;
-        if (!categoryFranchiseId) return [];
-        const productFranchises = getProductFranchiseByCategoryFranchise(categoryFranchiseId);
-        return productFranchises.map((pf) => (products as Product[]).find((p) => p.id === pf.product_id)).filter((p): p is Product => p !== undefined);
+    const [categories, setCategories] = useState<CategoryResponse[]>([]);
+    const fetchCategories = async (franchiseId: string) => {
+        try {
+            const response = await getAllCategoriesByFranchise(franchiseId);
+            setCategories(response || []);
+        }
+        catch (error) {
+            console.error("Failed to fetch categories:", error);
+        }
     }
 
-    const getCategoryIcon = (code: string): string => {
-        const iconMap: { [key: string]: string } = {
-            'COFFEE': 'local_cafe',
-            'TEA': 'emoji_food_beverage',
-            'BAKERY': 'bakery_dining',
-            'SMOOTHIE': 'blender',
-            'JUICE': 'local_bar',
+    const [products, setProducts] = useState<MenuByFranchise[]>([]);
+    const fetchAllProducts = async (franchiseId: string) => {
+        try {
+            const response = await getMenuByFranchise(franchiseId, "");
+            setProducts(response || []);
+        }
+        catch (error) {
+            console.error("Failed to fetch products:", error);
+        }
+    }
+    const getProductByCategory = (categoryId: string): MenuProduct[] => {
+        const category = products.find(item => item.category_id === categoryId);
+        return category ? category.products : [];
+    };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            await fetchFranchises();
+            await fetchCategories(franchiseId);
+            await fetchAllProducts(franchiseId);
+            console.log("Fetched products:", products);
+            console.log("Categories:", categories);
         };
-        return iconMap[code] || 'restaurant_menu';
-    };
+        fetchData();
+    }, [franchiseId]);
+
+    // const getCategoryIcon = (code: string): string => {
+    //     const iconMap: { [key: string]: string } = {
+    //         'COFFEE': 'local_cafe',
+    //         'TEA': 'emoji_food_beverage',
+    //         'BAKERY': 'bakery_dining',
+    //         'SMOOTHIE': 'blender',
+    //         'JUICE': 'local_bar',
+    //     };
+    //     return iconMap[code] || 'restaurant_menu';
+    // };
 
     const scrollToSection = (code: string) => {
         const element = sectionRefs.current[code];
@@ -92,10 +103,13 @@ function MenuPage() {
     }, [franchiseId]);
 
     // Filter search
-    const filteredProducts = (allProductsInFranchise as Product[]).filter(
-        (product: Product) =>
-            product.name.toLowerCase().includes(search.toLowerCase())
-    );
+    const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
+        return products.flatMap((category) =>
+            category.products.filter((product) =>
+                product.name.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        );
+    };
 
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
@@ -107,12 +121,12 @@ function MenuPage() {
                             <h3 className="text-3xl font-black uppercase tracking-wide text-[var(--cf-dark)] mb-3">Danh mục</h3>
                             <div className="h-1.5 w-20 bg-gradient-to-r from-[var(--cf-primary)] to-[var(--cf-accent-light)] rounded-full"></div>
                         </div>
-                        {(allCategoriesInFranchise as Category[]).map((item: Category) => (
+                        {(categories as CategoryResponse[]).map((item: CategoryResponse) => (
                             <button
-                                key={item.code}
-                                onClick={() => scrollToSection(item.code)}
+                                key={item.category_code}
+                                onClick={() => scrollToSection(item.category_code)}
                                 className={`group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
-                                    ${activeCategory === item.code
+                                    ${activeCategory === item.category_code
                                         ? 'bg-[var(--cf-primary)] !text-white'
                                         : ''
                                     }
@@ -120,8 +134,8 @@ function MenuPage() {
                             >
                                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors`}>{getCategoryIcon(item.code)}</span>
-                                <span className="relative z-10 tracking-wide">{item.name}</span>
+                                {/* <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors`}>{getCategoryIcon(item.franchise_code)}</span> */}
+                                <span className="relative z-10 tracking-wide">{item.category_name}</span>
                             </button>
                         ))}
                     </div>
@@ -167,16 +181,16 @@ function MenuPage() {
                         </h3>
                         <select
                             value={franchiseId}
-                            onChange={(e) => setFranchiseId(parseInt(e.target.value))}
+                            onChange={(e) => setFranchiseId(e.target.value)}
                             className="h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
                        text-[var(--cf-dark)] 
                        focus:outline-none focus:border-[var(--cf-primary)] 
                        focus:ring-2 focus:ring-[var(--cf-primary)]/20 
                        shadow-sm transition-all cursor-pointer"
                         >
-                            {franchises.map((franchise: Franchise) => (
+                            {franchises.map((franchise: FranchiseResponse) => (
                                 <option key={franchise.id} value={franchise.id}>
-                                    {franchise.name} - {franchise.address}
+                                    {franchise.name}
                                 </option>
                             ))}
                         </select>
@@ -184,54 +198,57 @@ function MenuPage() {
                 </div>
 
                 {/* Product Sections */}
-                {search.length > 0 && (
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
-                            Kết quả tìm kiếm cho "{search}"
-                        </h2>
+                {search.length > 0 && (() => {
+                    const searching = filterProductsBySearch(search);
+                    return (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
+                                Kết quả tìm kiếm cho "{search}"
+                            </h2>
 
-                        {filteredProducts.length === 0 ? (
-                            <p className="text-[var(--cf-secondary)] text-base">
-                                Không tìm thấy sản phẩm phù hợp
-                            </p>
-                        ) : (
-                            <div className="grid grid-cols-1 gap-4">
-                                {filteredProducts.map((product: Product) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
+                            {searching.length === 0 ? (
+                                <p className="text-[var(--cf-secondary)] text-base">
+                                    Không tìm thấy sản phẩm phù hợp
+                                </p>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4"> {/* Đã sửa gaep-4 thành gap-4 */}
+                                    {searching.map((product: MenuProduct) => (
+                                        <ProductCard
+                                            key={product.product_id}
+                                            product={product}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Category Sections */}
                 {search.length === 0 &&
-                    (allCategoriesInFranchise as Category[]).map((category: Category) => {
-                        const categoryProducts = getProductsByCategory(category.id);
+                    (categories as CategoryResponse[]).map((category: CategoryResponse) => {
+                        const categoryProducts = getProductByCategory(category.category_id);
                         return (
                             <div
-                                key={category.code}
-                                id={category.code}
+                                key={category.category_code}
+                                id={category.category_code}
                                 ref={(el) => {
-                                    if (el) sectionRefs.current[category.code] = el;
+                                    if (el) sectionRefs.current[category.category_code] = el;
                                 }}
                                 className="flex flex-col gap-6 scroll-mt-20"
                             >
                                 {/* Category Header */}
                                 <div className="border-b border-[var(--cf-secondary)]/20 pb-4">
-                                    <h2 className="text-2xl font-bold text-[var(--cf-dark)]">{category.name}</h2>
-                                    <p className="text-[var(--cf-secondary)] text-sm">{category.description}</p>
+                                    <h2 className="text-2xl font-bold text-[var(--cf-dark)]">{category.category_name}</h2>
+                                    {/* <p className="text-[var(--cf-secondary)] text-sm">{category.description}</p> */}
                                 </div>
 
                                 {/* Product List */}
                                 <div className="grid grid-cols-1 gap-4">
                                     {categoryProducts.length > 0 ? (
-                                        categoryProducts.map((product: Product) => (
+                                        categoryProducts.map((product: MenuProduct) => (
                                             <ProductCard
-                                                key={product.id}
+                                                key={product.product_id}
                                                 product={product}
                                             />
                                         ))

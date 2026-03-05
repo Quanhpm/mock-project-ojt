@@ -43,13 +43,13 @@ export const isSameConfiguration = (a?: ItemOptions, b?: ItemOptions): boolean =
 export interface CartItem {
   /** Unique UUID for every cart line — never shared between items. */
   id: string;
-  productId: number;
+  productId: string;
   name: string;
   /** Base price (snapshot at time of add). */
   price: number;
   quantity: number;
   image_url: string;
-  SKU: string;
+  SKU?: string;
   options?: ItemOptions;
   /** Pre-computed extras (size bonus + toppings). */
   extras_total?: number;

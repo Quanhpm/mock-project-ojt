@@ -91,7 +91,7 @@ export const getAllCategoriesByFranchise = (franchiseId: string): Promise<Catego
 // Truyền categoryId -> lấy product theo category
 export const getMenuByFranchise = (franchiseId: string, categoryId?: string): Promise<MenuByFranchise[] | null> => {
     return httpClient.get<MenuByFranchise[]>({
-        url: `clients/franchises/menu?franchise_id=${franchiseId}&category_id=${categoryId}`,
+        url: `clients/menu?franchiseId=${franchiseId}&categoryId=${categoryId}`,
     });
 }
 
