@@ -12,16 +12,12 @@ export const useClientRegister = () => {
     setError(null);
 
     try {
-      const response = await registerCustomer(data);
-      
-      // Handle different response structures
-      const userData = response.data?.data?.user || response.data?.user || response.data;
-      const message = response.data?.message || "Đăng ký thành công";
+      const userData = await registerCustomer(data);
       
       return {
         success: true,
         user: userData,
-        message: message,
+        message: "Đăng ký thành công",
       };
     } catch (err) {
       const errorMessage =

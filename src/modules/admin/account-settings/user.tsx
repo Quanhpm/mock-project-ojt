@@ -1,15 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import {
   User,
   Mail,
   Camera,
-  Shield,
   Key,
-  Eye,
-  EyeOff,
-  Save,
   Phone,
   Loader2,
 } from "lucide-react";
@@ -17,10 +12,7 @@ import { useToast } from "@/hooks/use-toast.hook";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { useChangePassword } from "./hooks/use-change-password.hook";
 import { useUpdateProfile } from "./hooks/use-update-profile.hook";
-import {
-  changePasswordSchema,
-  type ChangePasswordFormValues,
-} from "./schemas/change-password.schema";
+import { ROUTER_URL } from "@/routes/router.const";
 
 // ==================== INTERFACES ====================
 interface UserProfile {
@@ -126,6 +118,7 @@ const LabeledInputWithIcon: React.FC<LabeledInputWithIconProps> = ({
 // ==================== MAIN COMPONENT ====================
 
 const AccountSettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   // ==================== Zustand Store ====================
   const { admin, roles, hydrate } = useAdminAuthStore();
 
@@ -156,38 +149,20 @@ const AccountSettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
-  // Security form with react-hook-form and Zod
-  const {
-    register,
-    handleSubmit: handleSecuritySubmit,
-    formState: { errors: securityErrors },
-    reset: resetSecurityForm,
-  } = useForm<ChangePasswordFormValues>({
-    resolver: zodResolver(changePasswordSchema),
-    defaultValues: {
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    },
-  });
+  const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
 
   // Hooks
   const { success, error: showError } = useToast();
-  const { changePassword, isLoading: isChangingPassword } = useChangePassword();
-  const { updateProfile, isLoading: isUpdatingProfile, isUploading } =
+  const { updateProfile, isLoading: isUpdatingProfile, isUploading, uploadAvatar } =
     useUpdateProfile();
 
   // UI state
   const [isEditing, setIsEditing] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // ==================== Handlers ====================
 
-  /** Xử lý chọn file ảnh */
-  const handleAvatarSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /** Xử lý chọn file ảnh → tự động upload Cloudinary ngay */
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -204,12 +179,24 @@ const AccountSettingsPage: React.FC = () => {
     }
 
     setAvatarFile(file);
-    // Tạo preview URL
+    // Hiển thị preview ngay lập tức
     const previewUrl = URL.createObjectURL(file);
     setAvatarPreview(previewUrl);
+
+    // Tự động upload lên Cloudinary
+    const result = await uploadAvatar(file);
+    if (result.success && result.url) {
+      setUploadedAvatarUrl(result.url);
+    } else {
+      showError(result.message, "Upload ảnh thất bại");
+      // Reset nếu upload thất bại
+      setAvatarFile(null);
+      setAvatarPreview(null);
+      setUploadedAvatarUrl(null);
+    }
   };
 
-  /** Lưu profile: Upload ảnh lên Cloudinary + gọi API cập nhật */
+  /** Lưu profile: Dùng URL đã upload sẵn → chỉ gọi API PUT */
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -224,9 +211,8 @@ const AccountSettingsPage: React.FC = () => {
         email: userProfile.email,
         name: userProfile.name,
         phone: userProfile.phone,
-        avatar_url: userProfile.avatar_url,
-      },
-      avatarFile
+        avatar_url: uploadedAvatarUrl || userProfile.avatar_url,
+      }
     );
 
     if (result.success) {
@@ -234,6 +220,7 @@ const AccountSettingsPage: React.FC = () => {
       setIsEditing(false);
       setAvatarFile(null);
       setAvatarPreview(null);
+      setUploadedAvatarUrl(null);
       // Re-hydrate store để cập nhật thông tin mới nhất
       await hydrate();
     } else {
@@ -241,27 +228,11 @@ const AccountSettingsPage: React.FC = () => {
     }
   };
 
-  const handlePasswordUpdate = async (data: ChangePasswordFormValues) => {
-    const result = await changePassword({
-      old_password: data.currentPassword,
-      new_password: data.newPassword,
-    });
-
-    if (result.success) {
-      success(result.message);
-      resetSecurityForm();
-      setShowCurrentPassword(false);
-      setShowNewPassword(false);
-      setShowConfirmPassword(false);
-    } else {
-      showError(result.message, "Đổi mật khẩu thất bại");
-    }
-  };
-
   const handleCancel = () => {
     setIsEditing(false);
     setAvatarFile(null);
     setAvatarPreview(null);
+    setUploadedAvatarUrl(null);
     // Reset về dữ liệu gốc từ store
     if (admin) {
       const roleLabel = roles.length > 0 ? roles[0].role : "User";
@@ -290,20 +261,31 @@ const AccountSettingsPage: React.FC = () => {
     <div className="min-h-screen bg-[#FDFCFB] p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Account Settings
-          </h1>
-          <p className="text-gray-600">
-            Manage your profile details and security preferences.
-          </p>
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Account Settings
+            </h1>
+            <p className="text-gray-600">
+              Manage your profile details and security preferences.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SECURITY}`)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            <Key size={16} />
+            Change Password
+          </button>
         </div>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8">
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 h-full">
               <div className="flex flex-col items-center">
                 {/* Avatar with Camera Icon */}
                 <div className="relative group mb-6">
@@ -332,12 +314,23 @@ const AccountSettingsPage: React.FC = () => {
                   {isEditing && (
                     <button
                       type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110"
+                      onClick={() => !isUploading && fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className="absolute bottom-0 right-0 w-10 h-10 bg-amber-800 hover:bg-amber-900 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 group-hover:scale-110 disabled:opacity-70 disabled:cursor-not-allowed"
                       aria-label="Upload photo"
                     >
-                      <Camera className="text-white" size={18} />
+                      {isUploading ? (
+                        <Loader2 className="text-white animate-spin" size={18} />
+                      ) : (
+                        <Camera className="text-white" size={18} />
+                      )}
                     </button>
+                  )}
+                  {/* Overlay khi đang upload */}
+                  {isUploading && (
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center">
+                      <Loader2 className="text-white animate-spin" size={24} />
+                    </div>
                   )}
                 </div>
 
@@ -355,7 +348,7 @@ const AccountSettingsPage: React.FC = () => {
           {/* Right Column - Forms */}
           <div className="lg:col-span-2 space-y-6">
             {/* Personal Information Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden h-full">
               {/* Card Header */}
               <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -420,10 +413,17 @@ const AccountSettingsPage: React.FC = () => {
                     disabled={true}
                   />
 
-                  {/* Avatar file đã chọn */}
+                  {/* Trạng thái upload avatar */}
                   {avatarFile && (
                     <p className="text-sm text-amber-700">
-                      Ảnh đã chọn: <strong>{avatarFile.name}</strong>
+                      {isUploading ? (
+                        <span className="flex items-center gap-1.5">
+                          <Loader2 size={13} className="animate-spin" />
+                          Đang upload ảnh...
+                        </span>
+                      ) : uploadedAvatarUrl ? (
+                        <span className="text-green-600">✓ Upload thành công: <strong>{avatarFile.name}</strong></span>
+                      ) : null}
                     </p>
                   )}
                 </div>
@@ -441,134 +441,16 @@ const AccountSettingsPage: React.FC = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isUpdatingProfile}
+                      disabled={isUpdatingProfile || isUploading}
                       className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isUpdatingProfile && (
                         <Loader2 size={16} className="animate-spin" />
                       )}
-                      {isUploading
-                        ? "Đang upload ảnh..."
-                        : isUpdatingProfile
-                          ? "Đang lưu..."
-                          : "Lưu thay đổi"}
+                      {isUpdatingProfile ? "Đang lưu..." : "Lưu thay đổi"}
                     </button>
                   </div>
                 )}
-              </form>
-            </div>
-
-            {/* Security Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-              {/* Card Header */}
-              <div className="px-6 py-5 border-b border-stone-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                    <Shield className="text-red-700" size={20} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      Security
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                      Manage your password and security settings.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Body - Form */}
-              <form
-                onSubmit={handleSecuritySubmit(handlePasswordUpdate)}
-                className="p-6"
-              >
-                <div className="space-y-5">
-                  {/* Current Password */}
-                  <LabeledInputWithIcon
-                    label="Current Password"
-                    icon={<Key size={18} />}
-                    type={showCurrentPassword ? "text" : "password"}
-                    placeholder="••••••••••••"
-                    required
-                    error={securityErrors.currentPassword?.message}
-                    inputRef={register("currentPassword").ref}
-                    name={register("currentPassword").name}
-                    onInputChange={register("currentPassword").onChange}
-                    onBlur={register("currentPassword").onBlur}
-                    rightIcon={
-                      showCurrentPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )
-                    }
-                    onRightIconClick={() =>
-                      setShowCurrentPassword(!showCurrentPassword)
-                    }
-                  />
-
-                  {/* New Password & Confirm Password */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <LabeledInputWithIcon
-                      label="New Password"
-                      icon={<Key size={18} />}
-                      type={showNewPassword ? "text" : "password"}
-                      placeholder="New password"
-                      required
-                      minLength={8}
-                      helperText="Phải có chữ hoa, thường, số, ký tự đặc biệt."
-                      error={securityErrors.newPassword?.message}
-                      inputRef={register("newPassword").ref}
-                      name={register("newPassword").name}
-                      onInputChange={register("newPassword").onChange}
-                      onBlur={register("newPassword").onBlur}
-                      rightIcon={
-                        showNewPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )
-                      }
-                      onRightIconClick={() =>
-                        setShowNewPassword(!showNewPassword)
-                      }
-                    />
-                    <LabeledInputWithIcon
-                      label="Confirm Password"
-                      icon={<Key size={18} />}
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm password"
-                      required
-                      error={securityErrors.confirmPassword?.message}
-                      inputRef={register("confirmPassword").ref}
-                      name={register("confirmPassword").name}
-                      onInputChange={register("confirmPassword").onChange}
-                      onBlur={register("confirmPassword").onBlur}
-                      rightIcon={
-                        showConfirmPassword ? (
-                          <EyeOff size={18} />
-                        ) : (
-                          <Eye size={18} />
-                        )
-                      }
-                      onRightIconClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                    />
-                  </div>
-                </div>
-
-                {/* Update Button */}
-                <div className="flex justify-end mt-6 pt-6 border-t border-stone-200">
-                  <button
-                    type="submit"
-                    disabled={isChangingPassword}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Save size={16} />
-                    {isChangingPassword ? "Updating..." : "Update Password"}
-                  </button>
-                </div>
               </form>
             </div>
           </div>

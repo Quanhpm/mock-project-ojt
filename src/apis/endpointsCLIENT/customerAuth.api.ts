@@ -1,5 +1,4 @@
-import { axiosClient } from "../axios.config";
-import type { AxiosResponse } from "axios";
+import { httpClient } from "../httpClient";
 
 // ======================== Types ========================
 
@@ -42,105 +41,78 @@ export interface CustomerVerifyEmailRequest {
   token: string;
 }
 
-export interface CustomerLoginResponse {
-  success: boolean;
-  data: CustomerUser;
-}
-
-export interface CustomerRegisterResponse {
-  success: boolean;
-  data: CustomerUser;
-}
-
-export interface CustomerProfileResponse {
-  success: boolean;
-  data: CustomerUser;
-}
-
-export interface CustomerLogoutResponse {
-  success: boolean;
-  message?: string;
-}
-
-export interface CustomerForgotPasswordResponse {
-  success: boolean;
-  message?: string;
-}
-
-export interface CustomerChangePasswordResponse {
-  success: boolean;
-  message?: string;
-}
-
-export interface CustomerVerifyEmailResponse {
-  success: boolean;
-  data: CustomerUser;
-}
-
 // ======================== API Functions ========================
 
 // LOGIN
 export const loginCustomer = (
-  data: CustomerLoginRequest
-): Promise<AxiosResponse<CustomerLoginResponse>> => {
-  return axiosClient.post<CustomerLoginResponse>("/customer-auth", data);
+  data: CustomerLoginRequest,
+): Promise<null> => {
+  return httpClient.post<null, CustomerLoginRequest>({
+    url: '/customer-auth',
+    data,
+  });
 };
 
 // REGISTER
 export const registerCustomer = (
-  data: CustomerRegisterRequest
-): Promise<AxiosResponse<CustomerRegisterResponse>> => {
-  return axiosClient.post<CustomerRegisterResponse>("/customers/register", data);
+  data: CustomerRegisterRequest,
+): Promise<CustomerUser | null> => {
+  return httpClient.post<CustomerUser, CustomerRegisterRequest>({
+    url: '/customers/register',
+    data,
+  });
 };
 
 // GET PROFILE
-export const getCustomerProfile = (): Promise<
-  AxiosResponse<CustomerProfileResponse>
-> => {
-  return axiosClient.get<CustomerProfileResponse>("/customer-auth", {
-    params: { _t: Date.now() },
-    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
+export const getCustomerProfile = (): Promise<CustomerUser | null> => {
+  return httpClient.get<CustomerUser>({
+    url: '/customer-auth',
   });
 };
 
 // UPDATE PROFILE
 export const updateCustomerProfile = (
-  data: Partial<CustomerUser>
-): Promise<AxiosResponse<CustomerProfileResponse>> => {
-  return axiosClient.put<CustomerProfileResponse>(`/customers/${data.id}`, data);
+  data: Partial<CustomerUser>,
+): Promise<CustomerUser | null> => {
+  return httpClient.put<CustomerUser, Partial<CustomerUser>>({
+    url: `/customers/${data.id}`,
+    data,
+  });
 };
 
 // LOGOUT
-export const logoutCustomer = (): Promise<AxiosResponse<CustomerLogoutResponse>> => {
-  return axiosClient.post<CustomerLogoutResponse>("/customer-auth/logout");
+export const logoutCustomer = (): Promise<null> => {
+  return httpClient.post<null, never>({
+    url: '/customer-auth/logout',
+  });
 };
 
 // FORGOT PASSWORD
 export const forgotPassword = (
-  email: string
-): Promise<AxiosResponse<CustomerForgotPasswordResponse>> => {
-  return axiosClient.put<CustomerForgotPasswordResponse>(
-    "/customer-auth/forgot-password",
-    { email }
-  );
+  email: string,
+): Promise<null> => {
+  return httpClient.put<null, { email: string }>({
+    url: '/customer-auth/forgot-password',
+    data: { email },
+  });
 };
 
 // CHANGE PASSWORD
 export const changePassword = (
-  data: CustomerChangePasswordRequest
-): Promise<AxiosResponse<CustomerChangePasswordResponse>> => {
-  return axiosClient.put<CustomerChangePasswordResponse>(
-    "/customer-auth/change-password",
-    data
-  );
+  data: CustomerChangePasswordRequest,
+): Promise<null> => {
+  return httpClient.put<null, CustomerChangePasswordRequest>({
+    url: '/customer-auth/change-password',
+    data,
+  });
 };
 
 // VERIFY EMAIL
 export const verifyEmail = (
-  token: string
-): Promise<AxiosResponse<CustomerVerifyEmailResponse>> => {
-  return axiosClient.post<CustomerVerifyEmailResponse>(
-    "/customer-auth/verify-token",
-    { token }
-  );
+  token: string,
+): Promise<CustomerUser | null> => {
+  return httpClient.post<CustomerUser, { token: string }>({
+    url: '/customer-auth/verify-token',
+    data: { token },
+  });
 };

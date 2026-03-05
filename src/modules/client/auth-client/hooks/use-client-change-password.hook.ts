@@ -12,11 +12,11 @@ export const useClientChangePassword = () => {
     setError(null);
 
     try {
-      const response = await changePassword(data);
+      await changePassword(data);
       
       return {
         success: true,
-        message: response.data.message || "Đổi mật khẩu thành công",
+        message: "Đổi mật khẩu thành công",
       };
     } catch (err) {
       const errorMessage =
