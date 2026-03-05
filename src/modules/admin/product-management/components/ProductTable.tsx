@@ -661,7 +661,7 @@ export default function ProductTable() {
                     padding: "10px 20px",
                     borderRadius: "8px",
                     border: "none",
-                    backgroundColor: "#3b82f6",
+                    backgroundColor: "#8b5a2b",
                     color: "white",
                     fontWeight: "600",
                     fontSize: "14px",
@@ -675,10 +675,10 @@ export default function ProductTable() {
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading)
-                      e.currentTarget.style.backgroundColor = "#2563eb";
+                      e.currentTarget.style.backgroundColor = "#6d4522";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#3b82f6";
+                    e.currentTarget.style.backgroundColor = "#8b5a2b";
                   }}
                 >
                   {isLoading ? (
