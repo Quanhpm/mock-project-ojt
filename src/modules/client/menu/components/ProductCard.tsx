@@ -1,4 +1,4 @@
-import type { Product } from "@/types/product.type";
+import type { MenuProduct } from "@/apis/endpointsCLIENT/client.api";
 import { useCartStore } from '@/stores/cart.store';
 import { slugify } from "@/utils/slugify.util";
 import { useNavigate } from "react-router-dom";
@@ -6,13 +6,13 @@ import { useToast } from '@/hooks/use-toast.hook';
 import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 import { ROUTER_URL } from '@/routes/router.const';
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product }: { product: MenuProduct }) {
     const navigate = useNavigate();
     const addItem = useCartStore((state) => state.addItem);
     const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
     const { success, error } = useToast();
 
-    const handleAddToCart = (product: Product, e: React.MouseEvent) => {
+    const handleAddToCart = (product: MenuProduct, e: React.MouseEvent) => {
         e.stopPropagation();
 
         // Kiểm tra đăng nhập
@@ -27,11 +27,10 @@ function ProductCard({ product }: { product: Product }) {
         }
 
         addItem({
-            productId: product.id,
+            productId: product.product_id,
             name: product.name,
-            price: product.min_price,
-            image_url: product.image_url,
-            SKU: product.SKU
+            price: product.sizes[0].price,
+            image_url: product.image_url
         });
 
         success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
@@ -39,7 +38,7 @@ function ProductCard({ product }: { product: Product }) {
 
     return (
         <div
-            key={product.id}
+            key={product.product_id}
             onClick={() => navigate(`/product/${slugify(product.name)}`)}
             className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
         >
@@ -67,7 +66,7 @@ function ProductCard({ product }: { product: Product }) {
                 {/* Details */}
                 <div className="flex flex-col">
                     <h3 className="text-lg font-bold text-[var(--cf-primary)]">{product.name}</h3>
-                    <span className="text-xs font-mono text-[var(--cf-secondary)] mb-1">#{product.SKU}</span>
+                    {/* <span className="text-xs font-mono text-[var(--cf-secondary)] mb-1">#{product.SKU}</span> */}
                     <p className="text-sm text-[var(--cf-secondary)] line-clamp-2 max-w-md">
                         {product.description}
                     </p>
@@ -78,16 +77,16 @@ function ProductCard({ product }: { product: Product }) {
             <div className="flex flex-col items-end gap-3 min-w-[120px]">
                 <div className="text-right">
                     <span className="text-xl font-bold text-[var(--cf-dark)]">
-                        {product.min_price.toLocaleString('vi-VN')} ₫
+                        {product.sizes[0].price.toLocaleString('vi-VN')} ₫
                     </span>
-                    {product.min_price !== product.max_price && (
+                    {/* {product.sizes[0].price !== product.max_price && (
                         <div className="text-xs text-[var(--cf-secondary)] mt-0.5">
                             đến {product.max_price.toLocaleString('vi-VN')} ₫
                         </div>
-                    )}
+                    )} */}
                 </div>
                 <button
-                    onClick={(e) => handleAddToCart(product, e)}
+                    // onClick={(e) => handleAddToCart(product, e)}
                     className="bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2"
                 >
                     <span className="material-icons-outlined text-[18px]">add</span>
