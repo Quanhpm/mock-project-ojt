@@ -28,8 +28,8 @@ export interface UserSearchFilters {
 export interface UserSearchPayload {
   searchCondition: {
     keyword?: string;
-    is_active?: boolean;
-    is_deleted?: boolean;
+    is_active?: string | boolean;
+    is_deleted?: string | boolean;
   };
   pageInfo: {
     pageNum: number;
