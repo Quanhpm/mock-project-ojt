@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Package, Edit, Trash2, Plus, RotateCcw } from "lucide-react";
 import { searchProductCategoryFranchises, type ProductCategoryFranchise } from "../api/product-category-franchise.api";
 import { useProductCategoryActions } from "../hooks/useProductCategoryActions.hook";
+import { AddProductToFranchiseDrawer } from "@/modules/admin/product-management";
+import EditProductCategoryDrawer from "../components/EditProductCategoryDrawer";
 import { ROUTER_URL } from "@/routes/router.const";
 
 interface DeleteModal {
@@ -27,6 +29,9 @@ export default function ProductsByCategoryPage() {
   const [keyword, setKeyword] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [deleteModal, setDeleteModal] = useState<DeleteModal>({ isOpen: false, productId: "", productName: "" });
+  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductCategoryFranchise | null>(null);
 
   const { deleteProduct, toggleStatus, restoreProduct, isDeleting, isToggling, isRestoring } = useProductCategoryActions(() => {
     fetchProducts();
@@ -86,6 +91,11 @@ export default function ProductsByCategoryPage() {
 
   const handleRestore = async (id: string, name: string) => {
     await restoreProduct(id, name);
+  };
+
+  const handleEditClick = (product: ProductCategoryFranchise) => {
+    setSelectedProduct(product);
+    setIsEditDrawerOpen(true);
   };
 
   const filteredProducts = products.filter((item) =>
@@ -188,8 +198,8 @@ export default function ProductsByCategoryPage() {
                     <span>{showDeleted ? "Hide Deleted" : "Show Deleted"}</span>
                   </button>
                   <button
+                    onClick={() => setIsAddDrawerOpen(true)}
                     className="flex h-10 items-center gap-2 rounded-lg bg-[#8B5A2B] text-white px-6 hover:bg-[#6d4622] transition-colors shadow-sm font-semibold text-sm ml-2"
-                    onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/create`)}
                   >
                     <Plus size={18} />
                     Add Product
@@ -212,7 +222,7 @@ export default function ProductsByCategoryPage() {
                 </p>
                 <button
                   className="px-6 py-2.5 bg-[#8B5A2B] text-white rounded-lg hover:bg-[#6d4622] transition-colors font-medium"
-                  onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/create`)}
+                  onClick={() => setIsAddDrawerOpen(true)}
                 >
                   Add First Product
                 </button>
@@ -241,25 +251,15 @@ export default function ProductsByCategoryPage() {
                         )}
                         {/* Status Toggle */}
                         {!item.is_deleted && (
-                          <label className="absolute top-4 right-4 cursor-pointer">
+                          <label className="absolute top-4 right-4 inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               checked={item.is_active}
                               onChange={() => handleToggleStatus(item.id, item.is_active)}
                               disabled={isToggling}
-                              className="sr-only"
+                              className="sr-only peer"
                             />
-                            <div
-                              className={`w-11 h-6 rounded-full transition-colors ${
-                                item.is_active ? "bg-green-500" : "bg-slate-300"
-                              } ${isToggling ? "opacity-50" : ""}`}
-                            >
-                              <div
-                                className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${
-                                  item.is_active ? "translate-x-5" : "translate-x-0.5"
-                                } mt-0.5`}
-                              ></div>
-                            </div>
+                            <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#8B5A2B]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#8B5A2B]"></div>
                           </label>
                         )}
                       </div>
@@ -308,7 +308,7 @@ export default function ProductsByCategoryPage() {
                             ) : (
                               <>
                                 <button
-                                  onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.PRODUCT}/${item.product_id}/edit`)}
+                                  onClick={() => handleEditClick(item)}
                                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-slate-700 text-sm font-bold transition-colors"
                                 >
                                   <Edit size={18} />
@@ -377,6 +377,32 @@ export default function ProductsByCategoryPage() {
           </div>
         </div>
       )}
+
+      {/* Add Product to Franchise Drawer */}
+      <AddProductToFranchiseDrawer
+        isOpen={isAddDrawerOpen}
+        onClose={() => setIsAddDrawerOpen(false)}
+        onSuccess={() => {
+          setIsAddDrawerOpen(false);
+          fetchProducts();
+        }}
+        categoryFranchiseId={state?.categoryFranchiseId}
+      />
+
+      {/* Edit Product Category Drawer */}
+      <EditProductCategoryDrawer
+        isOpen={isEditDrawerOpen}
+        onClose={() => {
+          setIsEditDrawerOpen(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => {
+          setIsEditDrawerOpen(false);
+          setSelectedProduct(null);
+          fetchProducts();
+        }}
+        productCategory={selectedProduct}
+      />
     </div>
   );
 }
