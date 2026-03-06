@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { RefreshCw, Upload, AlertCircle, Package, Check } from "lucide-react";
 import { useCreateProduct } from "./hooks/useCreateProduct";
 import type { ProductCreatePayload } from "./product.types";
+import { CKEditorField } from "@/components/ui";
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -242,28 +243,25 @@ export default function ProductForm() {
                 {formErrors.description && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.description}</p>}
               </div>
 
-              {/* Content (HTML) */}
+              {/* Content */}
               <div style={{ marginBottom: "20px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Content (HTML) <span style={{ color: "#ef4444" }}>*</span>
+                  Content <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <textarea
-                  name="content"
+                <CKEditorField
                   value={formData.content}
-                  onChange={handleChange}
-                  placeholder='<h3><b>Product Details</b></h3><p>Your content here...</p>'
-                  rows={6}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: formErrors.content ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    resize: "vertical",
-                    boxSizing: "border-box",
-                    fontFamily: "monospace"
+                  onChange={(data) => {
+                    setFormData(prev => ({ ...prev, content: data }));
+                    if (formErrors.content) {
+                      setFormErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.content;
+                        return newErrors;
+                      });
+                    }
                   }}
+                  placeholder="Enter product content here..."
+                  hasError={!!formErrors.content}
                 />
                 {formErrors.content && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.content}</p>}
               </div>
