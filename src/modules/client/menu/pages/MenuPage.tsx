@@ -216,6 +216,7 @@ function MenuPage() {
                                         <ProductCard
                                             key={product.product_id}
                                             product={product}
+                                            franchiseId={franchiseId}
                                         />
                                     ))}
                                 </div>
@@ -250,6 +251,7 @@ function MenuPage() {
                                             <ProductCard
                                                 key={product.product_id}
                                                 product={product}
+                                                franchiseId={franchiseId}
                                             />
                                         ))
                                     ) : (
