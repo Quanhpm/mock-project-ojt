@@ -1,5 +1,7 @@
 // User API endpoints
 import { httpClient } from "@/apis/httpClient";
+import type { SearchResponse } from "@/apis/http.types";
+import { getAllRolesByUserId } from "./user-franchise-role.api";
 
 // ======================== Types ========================
 
@@ -8,6 +10,7 @@ export interface CreateUserRequest {
   password: string;
   name: string;
   phone: string;
+  avatar_url?: string;
 }
 
 export interface CreateUserResponse {
@@ -15,6 +18,19 @@ export interface CreateUserResponse {
   email: string;
   name: string;
   phone: string;
+  avatar_url?: string;
+}
+
+export interface UserItem {
+  id: string;
+  email: string;
+  name: string;
+  phone: string;
+  avatar_url?: string;
+  is_active?: boolean;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UpdateUserRequest {
@@ -37,6 +53,23 @@ export interface AssignUserFranchiseRoleRequest {
   role_id: string;
   franchise_id: string | null;
   note: string;
+}
+
+export interface SearchUsersRequest {
+  searchCondition: {
+    keyword?: string;
+    is_active?: boolean;
+    is_deleted?: boolean;
+  };
+  pageInfo: {
+    pageNum: number;
+    pageSize: number;
+  };
+}
+
+export interface RestoreUserResponse {
+  id: string;
+  restored: boolean;
 }
 
 export interface AssignUserFranchiseRoleResponse {
@@ -97,6 +130,23 @@ export const createUser = (
   });
 };
 
+/** POST /api/users/search — Tìm kiếm user theo điều kiện */
+export const searchUsers = (
+  data: SearchUsersRequest,
+): Promise<SearchResponse<UserItem>> => {
+  return httpClient.search<UserItem, SearchUsersRequest>({
+    url: "/users/search",
+    data,
+  });
+};
+
+/** GET /api/users/:id — Lấy chi tiết user */
+export const getUserById = (userId: string): Promise<UserItem | null> => {
+  return httpClient.get<UserItem>({
+    url: `/users/${userId}`,
+  });
+};
+
 /** PUT /api/users/:id — Cập nhật thông tin user */
 export const updateUser = (
   userId: string,
@@ -115,6 +165,15 @@ export const deleteUser = (userId: string): Promise<null> => {
   });
 };
 
+/** PATCH /api/users/:id/restore — Khôi phục user */
+export const restoreUser = (
+  userId: string,
+): Promise<RestoreUserResponse | null> => {
+  return httpClient.patch<RestoreUserResponse>({
+    url: `/users/${userId}/restore`,
+  });
+};
+
 /** PATCH /api/users/:id/status — Thay đổi trạng thái Active/Inactive của user (USER-07) */
 export const changeUserStatus = (
   userId: string,
@@ -130,8 +189,15 @@ export const changeUserStatus = (
 export const getUserFranchiseRoles = (
   userId: string,
 ): Promise<UserFranchiseRoleDetail[] | null> => {
-  return httpClient.get<UserFranchiseRoleDetail[]>({
-    url: `/user-franchise-roles/user/${userId}`,
+  return getAllRolesByUserId(userId) as Promise<UserFranchiseRoleDetail[] | null>;
+};
+
+/** GET /api/user-franchise-roles/:id — Lấy chi tiết mapping user-role-franchise */
+export const getUserFranchiseRoleById = (
+  itemId: string,
+): Promise<UserFranchiseRoleDetail | null> => {
+  return httpClient.get<UserFranchiseRoleDetail>({
+    url: `/user-franchise-roles/${itemId}`,
   });
 };
 
