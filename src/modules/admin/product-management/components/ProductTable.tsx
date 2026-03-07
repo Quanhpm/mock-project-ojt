@@ -8,6 +8,7 @@ import { useGetProductById } from "./hooks/useGetProductById";
 import ProductDelete from "./ProductDelete";
 import ProductRestore from "./ProductRestore";
 import ProductDetailsModal from "./ProductDetailsModal";
+import AssignFranchiseModal from "./AssignFranchiseModal";
 
 // Add CSS keyframes for animations
 const styleSheet = document.createElement("style");
@@ -104,6 +105,16 @@ export default function ProductTable() {
   }>({
     isOpen: false,
     productId: "",
+  });
+
+  const [franchiseModal, setFranchiseModal] = useState<{
+    isOpen: boolean;
+    productId: string;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: "",
+    productName: "",
   });
 
   // Remove page scroll
@@ -1253,6 +1264,50 @@ export default function ProductTable() {
                               </span>
                             </button>
 
+                            {/* Assign Franchise Button */}
+                            {!filters.is_deleted && (
+                              <button
+                                onClick={() =>
+                                  setFranchiseModal({
+                                    isOpen: true,
+                                    productId: product.id,
+                                    productName: product.name,
+                                  })
+                                }
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "32px",
+                                  height: "32px",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  backgroundColor: "transparent",
+                                  color: "#94a3b8",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "rgba(139, 69, 19, 0.05)";
+                                  e.currentTarget.style.color = "#8B4513";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }}
+                                title="Assign Franchise"
+                              >
+                                <span
+                                  className="material-symbols-outlined"
+                                  style={{ fontSize: "20px" }}
+                                >
+                                  storefront
+                                </span>
+                              </button>
+                            )}
+
                             {/* Delete or Restore Button */}
                             {filters.is_deleted ? (
                               <button
@@ -1563,6 +1618,28 @@ export default function ProductTable() {
         onClose={() => setDetailsModal({ isOpen: false, productId: "" })}
         product={selectedProduct}
         isLoading={isLoadingProduct}
+      />
+
+      {/* Assign Franchise Modal (Flow 2: from table action) */}
+      <AssignFranchiseModal
+        isOpen={franchiseModal.isOpen}
+        onClose={() =>
+          setFranchiseModal({
+            isOpen: false,
+            productId: "",
+            productName: "",
+          })
+        }
+        onSuccess={() => {
+          setFranchiseModal({
+            isOpen: false,
+            productId: "",
+            productName: "",
+          });
+          executeSearch();
+        }}
+        productId={franchiseModal.productId}
+        productName={franchiseModal.productName}
       />
     </div>
   );
