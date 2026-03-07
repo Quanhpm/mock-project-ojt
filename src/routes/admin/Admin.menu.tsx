@@ -8,6 +8,7 @@ import {
   ShoppingCart,
   Clock,
   Building2,
+  Folder,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -84,7 +85,30 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT,
     icon: <Package size={18} />,
     component: React.lazy(() => import("@/modules/admin/product-management/pages/ProductListPage")),
-    module: "products",     // ✨ ADD
+    module: "products",
+  },
+  {
+    label: "Categories",
+    path: ROUTER_URL.ADMIN_ROUTER.CATEGORY,
+    icon: <Folder size={18} />,
+    component: React.lazy(() => import("@/modules/admin/category-management/pages/CategoryListPage")),
+    module: "categories",
+  },
+  {
+    label: "Edit Category",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/:id/edit`,
+    icon: <Folder size={18} />,
+    component: React.lazy(() => import("@/modules/admin/category-management/pages/CategoryEditPage")),
+    module: "categories",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Products by Category",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/:categoryId/products`,
+    icon: <Folder size={18} />,
+    component: React.lazy(() => import("@/modules/admin/category-management/pages/ProductsByCategoryPage")),
+    module: "categories",
+    hideFromSidebar: true,
   },
   {
     label: "Inventory",

@@ -71,3 +71,12 @@ export interface ProductResponse {
   data: Product;
   message?: string;
 }
+
+// Product select item (for dropdowns)
+export interface ProductSelectItem {
+  value: string;
+  label: string;
+  SKU: string;
+  min_price: number;
+  max_price: number;
+}

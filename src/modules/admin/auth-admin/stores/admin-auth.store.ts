@@ -39,7 +39,7 @@ export const getRoleCode = (state: AdminAuthState): string | null => {
 
 /** Lấy franchiseId hiện tại */
 export const getFranchiseId = (state: AdminAuthState): string | null => {
-  if (state.activeContext?.franchiseId) return state.activeContext.franchiseId;
+  if (state.activeContext?.franchise_id) return state.activeContext.franchise_id;
   if (state.roles.length > 0) return state.roles[0].franchise_id;
   return null;
 };

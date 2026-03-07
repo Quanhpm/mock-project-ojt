@@ -6,6 +6,7 @@ import type {
   ProductSearchPayload,
   ProductSearchResponse,
   ProductStatusPayload,
+  ProductSelectItem,
 } from "./product.types";
 
 // Search products with pagination
@@ -70,4 +71,33 @@ export const toggleProductStatus = (
     url: `/products/${id}/status`,
     data: payload,
   });
+};
+
+// Get products for dropdown selection (using search API as workaround)
+export const getProductSelectItems = async (): Promise<ProductSelectItem[]> => {
+  try {
+    // Use search API to get all active master products
+    const response = await searchProducts({
+      searchCondition: {
+        is_active: true,
+        is_deleted: false,
+      },
+      pageInfo: {
+        pageNum: 1,
+        pageSize: 1000, // Large size to get all products
+      },
+    });
+
+    // Map Product[] to ProductSelectItem[] with correct field names
+    return response.data.map((product) => ({
+      value: product.id,
+      label: product.name,
+      SKU: product.SKU,
+      min_price: product.min_price,
+      max_price: product.max_price,
+    }));
+  } catch (error) {
+    console.error("Failed to load products via search API:", error);
+    throw error;
+  }
 };
