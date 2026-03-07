@@ -1,7 +1,11 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useGenericSearch } from "@/hooks/use-generic-search.hook";
 import { searchCategoryFranchises } from "../api/category-franchise.api";
-import { getFranchiseId } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import {
+  getFranchiseId,
+  getTableScope,
+  type TableScope,
+} from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import type {
   CategoryFranchise,
@@ -11,8 +15,14 @@ import type {
 
 const STORAGE_KEY = "category-franchise-search";
 
-export const useCategorySearch = () => {
-  const franchiseId = getFranchiseId(useAdminAuthStore.getState());
+interface UseCategorySearchOptions {
+  tableScope?: TableScope;
+}
+
+export const useCategorySearch = (options?: UseCategorySearchOptions) => {
+  const franchiseId = useAdminAuthStore((state) => getFranchiseId(state));
+  const authTableScope = useAdminAuthStore((state) => getTableScope(state));
+  const tableScope = options?.tableScope ?? authTableScope;
 
   const buildSearchCondition = useCallback(
     (filters: CategoryFranchiseSearchFilters) => {
@@ -20,9 +30,10 @@ export const useCategorySearch = () => {
         is_deleted: false,
       };
 
-      // IMPORTANT: Category Franchise API requires explicit franchise_id
-      if (franchiseId) {
+      if (tableScope === "FRANCHISE_TABLE_SCOPE" && franchiseId) {
         searchCondition.franchise_id = franchiseId;
+      } else if (tableScope === "GLOBAL_TABLE_SCOPE" && filters.franchise_id) {
+        searchCondition.franchise_id = filters.franchise_id;
       }
 
       if (filters.category_id) {
@@ -35,7 +46,7 @@ export const useCategorySearch = () => {
 
       return searchCondition;
     },
-    [franchiseId]
+    [franchiseId, tableScope]
   );
 
   const apiSearchFn = useCallback(async (payload: CategoryFranchiseSearchPayload) => {
@@ -47,7 +58,7 @@ export const useCategorySearch = () => {
     };
   }, []);
 
-  return useGenericSearch<CategoryFranchise, CategoryFranchiseSearchFilters>({
+  const search = useGenericSearch<CategoryFranchise, CategoryFranchiseSearchFilters>({
     apiSearchFn,
     defaultFilters: {
       keyword: "",
@@ -58,4 +69,31 @@ export const useCategorySearch = () => {
     buildSearchCondition,
     executeOnMount: true,
   });
+  const { refetch, setCurrentPage } = search;
+
+  const previousFranchiseIdRef = useRef<string | null | undefined>(undefined);
+  const isInitializedRef = useRef(false);
+
+  // Handle franchise context changes for franchise-scoped users
+  useEffect(() => {
+    if (tableScope !== "FRANCHISE_TABLE_SCOPE") {
+      previousFranchiseIdRef.current = franchiseId;
+      return;
+    }
+
+    if (previousFranchiseIdRef.current === undefined) {
+      previousFranchiseIdRef.current = franchiseId;
+      return;
+    }
+
+    if (previousFranchiseIdRef.current !== franchiseId) {
+      previousFranchiseIdRef.current = franchiseId;
+      setCurrentPage(1);
+      void refetch();
+    }
+  }, [franchiseId, refetch, setCurrentPage, tableScope]);
+
+  return search;
+
+  return search;
 };

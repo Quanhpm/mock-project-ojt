@@ -30,6 +30,8 @@ interface AdminAuthState {
 
 // ======================== Derived Getters ========================
 
+export type TableScope = "GLOBAL_TABLE_SCOPE" | "FRANCHISE_TABLE_SCOPE";
+
 /** Lấy roleCode hiện tại (ưu tiên active_context, fallback roles[0]) */
 export const getRoleCode = (state: AdminAuthState): string | null => {
   if (state.activeContext?.role) return state.activeContext.role;
@@ -42,6 +44,17 @@ export const getFranchiseId = (state: AdminAuthState): string | null => {
   if (state.activeContext?.franchise_id) return state.activeContext.franchise_id;
   if (state.roles.length > 0) return state.roles[0].franchise_id;
   return null;
+};
+
+/** Rule riêng cho các bảng quản trị Product/Categories */
+export const getTableScope = (state: AdminAuthState): TableScope => {
+  const roleCode = getRoleCode(state);
+
+  if (roleCode === "ADMIN" || roleCode === "MANAGER") {
+    return "GLOBAL_TABLE_SCOPE";
+  }
+
+  return "FRANCHISE_TABLE_SCOPE";
 };
 
 // ======================== Store ========================

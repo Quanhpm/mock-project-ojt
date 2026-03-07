@@ -10,6 +10,32 @@ import CategoryEditDrawer from "./CategoryEditDrawer";
 import CategoryCreateDrawer from "./CategoryCreateDrawer";
 import MasterCategoryCreateDrawer from "./MasterCategoryCreateDrawer";
 import type { CategoryFranchise } from "../api/category-franchise.types";
+import {
+  getTableScope,
+  useAdminAuthStore,
+} from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { getFranchisesForSelect, type FranchiseSelectItem } from "@/apis/endpoints/user.api";
+
+// Add CSS keyframes for animations
+const styleSheet = document.createElement("style");
+styleSheet.textContent = `
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+`;
+if (!document.head.querySelector("style[data-category-table]")) {
+  styleSheet.setAttribute("data-category-table", "true");
+  document.head.appendChild(styleSheet);
+}
 
 // ============================================================================
 // TYPES
@@ -198,6 +224,9 @@ const getButtonStyles = {
 
 export default function CategoryTable() {
   const navigate = useNavigate();
+  const tableScope = useAdminAuthStore((state) => getTableScope(state));
+  const isGlobalScope = tableScope === "GLOBAL_TABLE_SCOPE";
+  const [franchiseOptions, setFranchiseOptions] = useState<FranchiseSelectItem[]>([]);
 
   // ========================================================================
   // SEARCH HOOK
@@ -213,7 +242,7 @@ export default function CategoryTable() {
     totalItems,
     pageSize,
     refetch,
-  } = useCategorySearch();
+  } = useCategorySearch({ tableScope });
 
   // Refs for search functionality
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -271,6 +300,24 @@ export default function CategoryTable() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!isGlobalScope) {
+      setFranchiseOptions([]);
+      return;
+    }
+
+    const loadFranchises = async () => {
+      try {
+        const result = await getFranchisesForSelect();
+        setFranchiseOptions(result ?? []);
+      } catch (error) {
+        console.error("Failed to load franchise select items:", error);
+      }
+    };
+
+    void loadFranchises();
+  }, [isGlobalScope]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -502,9 +549,9 @@ export default function CategoryTable() {
         <div style={styles.contentArea}>
           {/* Filters */}
           <div style={styles.filterContainer}>
-            {/* Search Bar */}
-            <div style={{ flex: 1, minWidth: "300px", position: "relative" }}>
-              <div style={{ position: "relative" }}>
+            {/* Search Bar + Button */}
+            <div style={{ display: "flex", gap: "8px", flex: 1, minWidth: "400px", alignItems: "flex-end" }}>
+              <div style={{ flex: 1, position: "relative" }}>
                 {/* Search Icon */}
                 <div
                   style={{
@@ -549,9 +596,7 @@ export default function CategoryTable() {
                   }}
                   style={{
                     width: "100%",
-                    paddingLeft: "40px",
-                    paddingRight: "14px",
-                    padding: "10px 14px 10px 40px",
+                    padding: "10px 14px 10px 44px",
                     border: "1px solid #e5e7eb",
                     borderRadius: "8px",
                     fontSize: "14px",
@@ -570,6 +615,45 @@ export default function CategoryTable() {
                   }}
                 />
               </div>
+
+              {/* Search Button */}
+              <button
+                onClick={() => refetch()}
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "#8b5a2b",
+                  color: "white",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#6d4522";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#8b5a2b";
+                }}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                Tìm kiếm
+              </button>
             </div>
 
             {/* Status Filter */}
@@ -601,12 +685,51 @@ export default function CategoryTable() {
               </select>
             </div>
 
+            {isGlobalScope && (
+              <div style={{ minWidth: "200px" }}>
+                <select
+                  value={filters.franchise_id || ""}
+                  onChange={(e) => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      franchise_id: e.target.value,
+                    }));
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontFamily: "inherit",
+                    backgroundColor: "#f8fafc",
+                    cursor: "pointer",
+                    appearance: "none",
+                    backgroundImage:
+                      "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 10px center",
+                    backgroundSize: "16px",
+                    paddingRight: "36px",
+                  }}
+                >
+                  <option value="">Sort by Franchise</option>
+                  {franchiseOptions.map((franchise) => (
+                    <option key={franchise.value} value={franchise.value}>
+                      {franchise.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Clear Filters */}
             <button
               onClick={() => {
                 setFilters((prev) => ({
                   ...prev,
                   keyword: "",
+                  franchise_id: "",
                   is_active: "",
                 }));
                 searchInputRef.current?.focus();
@@ -720,19 +843,21 @@ export default function CategoryTable() {
                     >
                       Category
                     </th>
-                    <th
-                      style={{
-                        padding: "18px 20px",
-                        textAlign: "left",
-                        fontWeight: "700",
-                        color: "#374151",
-                        fontSize: "13px",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.8px",
-                      }}
-                    >
-                      Franchise
-                    </th>
+                    {isGlobalScope && (
+                      <th
+                        style={{
+                          padding: "18px 20px",
+                          textAlign: "left",
+                          fontWeight: "700",
+                          color: "#374151",
+                          fontSize: "13px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.8px",
+                        }}
+                      >
+                        Franchise
+                      </th>
+                    )}
                     <th
                       style={{
                         padding: "18px 20px",
@@ -814,11 +939,13 @@ export default function CategoryTable() {
                           {category.category_name}
                         </div>
                       </td>
-                      <td style={{ padding: "18px 20px" }}>
-                        <div style={{ color: "#6b7280", fontSize: "14px" }}>
-                          {category.franchise_name}
-                        </div>
-                      </td>
+                      {isGlobalScope && (
+                        <td style={{ padding: "18px 20px" }}>
+                          <div style={{ color: "#475569", fontSize: "14px" }}>
+                            {category.franchise_name}
+                          </div>
+                        </td>
+                      )}
                       <td style={{ padding: "18px 20px", textAlign: "center" }}>
                         <div
                           style={{
@@ -1149,6 +1276,7 @@ export default function CategoryTable() {
         isOpen={createModal.isOpen}
         onClose={handleCloseCreateModal}
         onSuccess={handleCreateSuccess}
+          franchiseId={isGlobalScope ? filters.franchise_id || null : undefined}
       />
 
       {/* Create Master Category Drawer */}

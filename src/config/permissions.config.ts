@@ -6,7 +6,7 @@ type Module = 'dashboard' | 'users' | 'franchise' | 'products' | 'categories' | 
 export const ROLE_PERMISSIONS: Record<RoleCode, Module[]> = {
   ADMIN: ['dashboard', 'users', 'franchise', 'products', 'categories', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
   MANAGER: ['dashboard', 'products', 'categories', 'inventory', 'customers', 'orders', 'shifts', 'select-franchise'],
-  STAFF: ['dashboard', 'customers', 'orders', 'select-franchise'],
+  STAFF: ['dashboard', 'products', 'categories', 'customers', 'orders', 'select-franchise'],
   WAREHOUSE: ['dashboard', 'inventory', 'products', 'categories', 'select-franchise']
 };
 

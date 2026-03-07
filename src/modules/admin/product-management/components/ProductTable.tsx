@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search } from "lucide-react";
 import { useProductSearch } from "../hooks/use-product-search.hook";
 import { useDeleteProduct } from "./hooks/useDeleteProduct";
 import { useRestoreProduct } from "./hooks/useRestoreProduct";
@@ -9,6 +10,11 @@ import ProductDelete from "./ProductDelete";
 import ProductRestore from "./ProductRestore";
 import ProductDetailsModal from "./ProductDetailsModal";
 import AssignFranchiseModal from "./AssignFranchiseModal";
+import {
+  getTableScope,
+  useAdminAuthStore,
+} from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { getFranchisesForSelect, type FranchiseSelectItem } from "@/apis/endpoints/user.api";
 
 // Add CSS keyframes for animations
 const styleSheet = document.createElement("style");
@@ -50,6 +56,8 @@ const formatPrice = (price: number) => {
 
 export default function ProductTable() {
   const navigate = useNavigate();
+  const tableScope = useAdminAuthStore((state) => getTableScope(state));
+  const isGlobalScope = tableScope === "GLOBAL_TABLE_SCOPE";
   const {
     products,
     isLoading,
@@ -65,7 +73,7 @@ export default function ProductTable() {
     setCurrentPage,
     totalPages,
     totalItems,
-  } = useProductSearch();
+  } = useProductSearch({ tableScope });
 
   const { deleteProduct: deleteProductAPI, isDeleting } = useDeleteProduct();
   const { restoreProduct: restoreProductAPI, isRestoring } =
@@ -80,6 +88,7 @@ export default function ProductTable() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
+  const [franchiseOptions, setFranchiseOptions] = useState<FranchiseSelectItem[]>([]);
 
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -125,6 +134,24 @@ export default function ProductTable() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isGlobalScope) {
+      setFranchiseOptions([]);
+      return;
+    }
+
+    const loadFranchises = async () => {
+      try {
+        const result = await getFranchisesForSelect();
+        setFranchiseOptions(result ?? []);
+      } catch (error) {
+        console.error("Failed to load franchises:", error);
+      }
+    };
+
+    void loadFranchises();
+  }, [isGlobalScope]);
+
   // Keyboard shortcuts - Ctrl+K to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -161,7 +188,7 @@ export default function ProductTable() {
     if (!isSearchDropdownOpen || searchHistory.length === 0) {
       if (e.key === "Enter") {
         e.preventDefault();
-        handleSearch();
+        void handleSearch();
       }
       return;
     }
@@ -187,7 +214,7 @@ export default function ProductTable() {
           setIsSearchDropdownOpen(false);
           setSelectedHistoryIndex(-1);
         } else {
-          handleSearch();
+          void handleSearch();
         }
         break;
       case "Escape":
@@ -198,10 +225,11 @@ export default function ProductTable() {
     }
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
-    executeSearch();
+    setCurrentPage(1);
+    await executeSearch();
   };
 
   const handleClearSearch = () => {
@@ -215,6 +243,10 @@ export default function ProductTable() {
 
   const handleDeletedFilterChange = (value: boolean) => {
     setFilters((prev) => ({ ...prev, is_deleted: value }));
+  };
+
+  const handleFranchiseFilterChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, franchise_id: value }));
   };
 
   const handleDeleteClick = (productId: string, productName: string) => {
@@ -757,6 +789,33 @@ export default function ProductTable() {
                   <option value="false">Không hoạt động</option>
                 </select>
 
+                {isGlobalScope && (
+                  <select
+                    value={filters.franchise_id || ""}
+                    onChange={(e) => handleFranchiseFilterChange(e.target.value)}
+                    style={{
+                      padding: "10px 16px",
+                      borderRadius: "8px",
+                      border: "1px solid #e0e0e0",
+                      backgroundColor: "white",
+                      color: "#212529",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      outline: "none",
+                      transition: "all 0.2s",
+                      minWidth: "220px",
+                    }}
+                  >
+                    <option value="">Sort by Franchise</option>
+                    {franchiseOptions.map((franchise) => (
+                      <option key={franchise.value} value={franchise.value}>
+                        {franchise.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
                 {/* Show Deleted Toggle */}
                 <button
                   onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
@@ -1074,7 +1133,7 @@ export default function ProductTable() {
                   ) : (
                     products.map((product) => (
                       <tr
-                        key={product.id}
+                        key={product.tableRowId}
                         style={{
                           transition: "background-color 0.2s",
                           borderBottom: "1px solid #f8f9fa",
@@ -1130,6 +1189,24 @@ export default function ProductTable() {
                               >
                                 {product.name}
                               </span>
+                              {product.sizeLabel && (
+                                <span
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "#8B4513",
+                                    fontWeight: "600",
+                                  }}
+                                >
+                                  Size: {product.sizeLabel}
+                                </span>
+                              )}
+                              {product.franchiseName && (
+                                <span
+                                  style={{ fontSize: "12px", color: "#6c757d" }}
+                                >
+                                  {product.franchiseName}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -1156,7 +1233,7 @@ export default function ProductTable() {
                             color: "#212529",
                           }}
                         >
-                          {formatPrice(product.min_price)}
+                          {formatPrice(product.displayPrice)}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <label
@@ -1173,7 +1250,7 @@ export default function ProductTable() {
                               checked={product.is_active}
                               onChange={() =>
                                 handleToggleStatus(
-                                  product.id,
+                                  product.masterProductId,
                                   product.is_active,
                                 )
                               }
@@ -1227,9 +1304,9 @@ export default function ProductTable() {
                               onClick={async () => {
                                 setDetailsModal({
                                   isOpen: true,
-                                  productId: product.id,
+                                  productId: product.masterProductId,
                                 });
-                                await fetchProduct(product.id);
+                                await fetchProduct(product.masterProductId);
                               }}
                               style={{
                                 display: "flex",
@@ -1263,14 +1340,12 @@ export default function ProductTable() {
                                 visibility
                               </span>
                             </button>
-
-                            {/* Assign Franchise Button */}
-                            {!filters.is_deleted && (
+                            {isGlobalScope && !filters.is_deleted && (
                               <button
                                 onClick={() =>
                                   setFranchiseModal({
                                     isOpen: true,
-                                    productId: product.id,
+                                    productId: product.masterProductId,
                                     productName: product.name,
                                   })
                                 }
@@ -1312,7 +1387,7 @@ export default function ProductTable() {
                             {filters.is_deleted ? (
                               <button
                                 onClick={() =>
-                                  handleRestoreClick(product.id, product.name)
+                                  handleRestoreClick(product.masterProductId, product.name)
                                 }
                                 disabled={isRestoring}
                                 style={{
@@ -1355,7 +1430,7 @@ export default function ProductTable() {
                             ) : (
                               <button
                                 onClick={() =>
-                                  handleDeleteClick(product.id, product.name)
+                                  handleDeleteClick(product.masterProductId, product.name)
                                 }
                                 disabled={isDeleting}
                                 style={{
