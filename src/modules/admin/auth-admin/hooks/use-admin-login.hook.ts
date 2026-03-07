@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, getProfile } from "@/apis/endpoints/auth.api";
 import { HttpError } from "@/apis/http.types";
+import { resetAuthRedirecting } from "@/apis";
 import { useAdminAuthStore } from "../stores/admin-auth.store";
 import { useToast } from "@/hooks/use-toast.hook";
 import { ROUTER_URL } from "@/routes/router.const";
@@ -21,6 +22,9 @@ export function useAdminLogin() {
       setErrorMessage("");
 
       try {
+        // Reset cờ redirect trước khi login (user đang ở trang login = hợp lệ)
+        resetAuthRedirecting();
+
         // 1. POST /auth → backend set HttpOnly Cookie
         await login({ email: data.email, password: data.password });
 
