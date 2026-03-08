@@ -6,6 +6,7 @@ import type {
   ProfileResponse,
 } from "@/apis/endpoints/auth.api";
 import { HttpError } from "@/apis/http.types";
+import { isAuthRedirecting } from "@/apis";
 import { getProfile, logout as logoutApi } from "@/apis/endpoints/auth.api";
 
 // ======================== State Interface ========================
@@ -38,7 +39,7 @@ export const getRoleCode = (state: AdminAuthState): string | null => {
 
 /** Lấy franchiseId hiện tại */
 export const getFranchiseId = (state: AdminAuthState): string | null => {
-  if (state.activeContext?.franchiseId) return state.activeContext.franchiseId;
+  if (state.activeContext?.franchise_id) return state.activeContext.franchise_id;
   if (state.roles.length > 0) return state.roles[0].franchise_id;
   return null;
 };
@@ -77,11 +78,16 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
   },
 
   hydrate: async () => {
+    // ⛔ Nếu interceptor đã redirect về login (token revoked/expired) → không gọi API nữa.
+    // Tránh loop: redirect → reload → hydrate → API fail → redirect → ...
+    if (isAuthRedirecting()) {
+      set({ isLoading: false, isLoggedIn: false });
+      return;
+    }
+
     set({ isLoading: true });
     try {
       const profile = await getProfile();
-      // ✅ getProfile() now always returns ProfileResponse or throws error
-      // No need to check if (profile)
       set({
         admin: profile.user,
         roles: profile.roles,
@@ -89,8 +95,11 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
         isLoggedIn: true,
       });
     } catch (error) {
-      // ✅ Nếu refresh token hết → throw error để App.tsx xử lý logout
-      if (error instanceof HttpError && error.code === "REFRESH_TOKEN_FAILED") {
+      // ✅ Nếu refresh token hết hoặc bị revoke → throw error để AdminRoot xử lý
+      if (
+        error instanceof HttpError &&
+        (error.code === "REFRESH_TOKEN_FAILED" || error.code === "TOKEN_REVOKED")
+      ) {
         throw error;
       }
       // ⚠️ Nếu error khác (network, server error, NOT_AUTHENTICATED) → log nhưng không throw

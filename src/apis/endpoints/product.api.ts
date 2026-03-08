@@ -1,73 +1,124 @@
-import { httpClient } from "@/apis";
-import type {
-  Product,
-  ProductCreatePayload,
-  ProductUpdatePayload,
-  ProductSearchPayload,
-  ProductSearchResponse,
-  ProductStatusPayload,
-} from "../../types/product.types";
+// Product API endpoints
+import { httpClient } from "@/apis/httpClient";
+import type { SearchResponse } from "@/apis/http.types";
 
-// Search products with pagination
-export const searchProducts = (
-  payload: ProductSearchPayload
-): Promise<ProductSearchResponse> => {
-  return httpClient.search<Product, ProductSearchPayload>({
-    url: "/products/search",
-    data: payload,
-  }) as Promise<ProductSearchResponse>;
+export interface ProductItem {
+    id: string;
+    SKU: string;
+    name: string;
+    description?: string;
+    content?: string;
+    image_url?: string;
+    images_url?: string[];
+    min_price?: number;
+    max_price?: number;
+    is_active?: boolean;
+    is_deleted?: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface CreateProductRequest {
+    SKU: string;
+    name: string;
+    description?: string;
+    content?: string;
+    image_url?: string;
+    images_url?: string[];
+    min_price?: number;
+    max_price?: number;
+}
+
+export type UpdateProductRequest = CreateProductRequest;
+
+export interface SearchProductsRequest {
+    searchCondition: {
+        keyword?: string;
+        min_price?: number | string;
+        max_price?: number | string;
+        is_active?: boolean | "";
+        is_deleted?: boolean;
+    };
+    pageInfo: {
+        pageNum: number;
+        pageSize: number;
+    };
+}
+
+// ======================== API Endpoints ========================
+
+export const getProductsByFranchise = async (franchiseId: number) => {
+        return httpClient.get<ProductItem[], { franchiseId: number }>({
+        url: `/products/franchise/${franchiseId}`,
+        params: { franchiseId },
+    });
 };
 
-// Get single product by ID
-export const getProductById = (id: string): Promise<Product | null> => {
-  return httpClient.get<Product>({
-    url: `/products/${id}`,
-  });
+export const getAllProductInFranchise = async (franchiseId: number) => {
+        return httpClient.get<unknown, { franchiseId: number }>({
+        url: `/franchises/${franchiseId}/products`,
+        params: { franchiseId },
+    });
 };
 
-// Create new product
+export const getProductsByCategory = async (categoryId: number) => {
+        return httpClient.get<ProductItem[], { categoryId: number }>({
+        url: `/products/category/${categoryId}`,
+        params: { categoryId },
+    });
+};
+
+export const getProductById = async (productId: number) => {
+        return httpClient.get<ProductItem, { productId: number }>({
+        url: `/products/${productId}`,
+        params: { productId },
+    });
+};
+
 export const createProduct = (
-  payload: ProductCreatePayload
-): Promise<Product | null> => {
-  return httpClient.post<Product, ProductCreatePayload>({
-    url: "/products",
-    data: payload,
-  });
+    data: CreateProductRequest,
+): Promise<ProductItem | null> => {
+    return httpClient.post<ProductItem, CreateProductRequest>({
+        url: "/products",
+        data,
+    });
 };
 
-// Update product
+export const searchProducts = (
+    data: SearchProductsRequest,
+): Promise<SearchResponse<ProductItem>> => {
+    return httpClient.search<ProductItem, SearchProductsRequest>({
+        url: "/products/search",
+        data,
+    });
+};
+
+export const getProductItemById = (
+    productId: string,
+): Promise<ProductItem | null> => {
+    return httpClient.get<ProductItem>({
+        url: `/products/${productId}`,
+    });
+};
+
 export const updateProduct = (
-  id: string,
-  payload: ProductUpdatePayload
-): Promise<Product | null> => {
-  return httpClient.put<Product, ProductUpdatePayload>({
-    url: `/products/${id}`,
-    data: payload,
-  });
+    productId: string,
+    data: UpdateProductRequest,
+): Promise<ProductItem | null> => {
+    return httpClient.put<ProductItem, UpdateProductRequest>({
+        url: `/products/${productId}`,
+        data,
+    });
 };
 
-// Delete product
-export const deleteProduct = (id: string): Promise<any> => {
-  return httpClient.delete<any>({
-    url: `/products/${id}`,
-  });
+export const deleteProduct = (productId: string): Promise<null> => {
+    return httpClient.delete<null>({
+        url: `/products/${productId}`,
+    });
 };
 
-// Restore deleted product
-export const restoreProduct = (id: string): Promise<Product | null> => {
-  return httpClient.patch<Product, {}>({
-    url: `/products/${id}/restore`,
-    data: {},
-  });
-};
-
-// Toggle product status (active/inactive)
-export const toggleProductStatus = (
-  id: string,
-  payload: ProductStatusPayload
-): Promise<Product | null> => {
-  return httpClient.patch<Product, ProductStatusPayload>({
-    url: `/products/${id}/status`,
-    data: payload,
-  });
+export const restoreProduct = (productId: string): Promise<ProductItem | null> => {
+    return httpClient.patch<ProductItem>({
+        url: `/products/${productId}/restore`,
+    });
 };

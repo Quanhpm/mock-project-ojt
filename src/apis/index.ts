@@ -1,5 +1,5 @@
 // Setup interceptors (gọi 1 lần ở main.tsx)
-export { setupApi } from "./axios.config";
+export { setupApi, isAuthRedirecting, resetAuthRedirecting } from "./axios.config";
 
 // HTTP Client (dùng trong endpoint files)
 export { httpClient } from "./httpClient";

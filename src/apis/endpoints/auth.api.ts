@@ -9,6 +9,27 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface SwitchContextRequest {
+  franchise_id: string | null;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
+}
+
+export interface VerifyTokenRequest {
+  token: string;
+}
+
+export interface ResendTokenRequest {
+  email: string;
+}
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -27,7 +48,7 @@ export interface UserRoleItem {
 export interface ActiveContext {
   role: string;
   scope: string;
-  franchiseId: string;
+  franchise_id: string;
 }
 
 export interface ProfileResponse {
@@ -71,16 +92,59 @@ export const logout = (): Promise<null> => {
 
 /** POST /api/auth/switch-context - Chọn franchise context (null = GLOBAL) */
 export const switchContext = (franchise_id: string | null): Promise<ProfileResponse | null> => {
-  return httpClient.post<ProfileResponse, { franchise_id: string | null }>({
+  return httpClient.post<ProfileResponse, SwitchContextRequest>({
     url: "/auth/switch-context",
     data: { franchise_id },
   });
 };
 
+/** GET /api/auth/refresh-token - Refresh access token */
+export const refreshToken = (): Promise<ProfileResponse | null> => {
+  return httpClient.get<ProfileResponse>({
+    url: "/auth/refresh-token",
+  });
+};
+
+/** PUT /api/auth/forgot-password - Gửi email quên mật khẩu */
+export const forgotPassword = (
+  data: ForgotPasswordRequest,
+): Promise<null> => {
+  return httpClient.put<null, ForgotPasswordRequest>({
+    url: "/auth/forgot-password",
+    data,
+  });
+};
+
+/** PUT /api/auth/change-password - Đổi mật khẩu */
+export const changePassword = (
+  data: ChangePasswordRequest,
+): Promise<null> => {
+  return httpClient.put<null, ChangePasswordRequest>({
+    url: "/auth/change-password",
+    data,
+  });
+};
+
 /** POST /api/auth/verify-token - Xác thực email người dùng mới */
 export const verifyEmail = (token: string): Promise<null> => {
-  return httpClient.post<null, { token: string }>({
+  return httpClient.post<null, VerifyTokenRequest>({
     url: "/auth/verify-token",
     data: { token },
+  });
+};
+
+/** Alias giữ tên đúng với backend action */
+export const verifyToken = (data: VerifyTokenRequest): Promise<null> => {
+  return httpClient.post<null, VerifyTokenRequest>({
+    url: "/auth/verify-token",
+    data,
+  });
+};
+
+/** POST /api/auth/resend-token - Gửi lại token xác thực */
+export const resendToken = (data: ResendTokenRequest): Promise<null> => {
+  return httpClient.post<null, ResendTokenRequest>({
+    url: "/auth/resend-token",
+    data,
   });
 };

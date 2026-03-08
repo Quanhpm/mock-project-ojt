@@ -11,3 +11,4 @@ export * from './chart';
 export * from './auth-card';
 export * from './auth-input';
 export * from './auth-button';
+export * from './ck-editor';

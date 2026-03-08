@@ -17,6 +17,22 @@ export const axiosClient = axios.create({
   },
 });
 
+// ======================== Auth Redirect Guard ========================
+
+/**
+ * Cờ chặn loop redirect — dùng sessionStorage vì window.location.replace
+ * sẽ full reload browser → biến JS bị reset. sessionStorage tồn tại qua reload
+ * nhưng mất khi đóng tab → đúng behavior mong muốn.
+ *
+ * Flow: interceptor detect token revoked/expired → set cờ → redirect login
+ *       → browser reload → hydrate() check cờ → SKIP gọi API → render login
+ *       → user login thành công → reset cờ
+ */
+const AUTH_REDIRECTING_KEY = "__auth_redirecting";
+
+export const isAuthRedirecting = () => sessionStorage.getItem(AUTH_REDIRECTING_KEY) === "true";
+export const resetAuthRedirecting = () => { sessionStorage.removeItem(AUTH_REDIRECTING_KEY); };
+
 // ======================== Refresh Token Queue ========================
 
 let isRefreshing = false;
@@ -150,6 +166,51 @@ const responseInterceptor = () => {
       const data = error.response?.data;
       const errorCode = data?.code ?? data?.message ?? "";
 
+      // ──────── Token bị revoke → Logout ngay lập tức ────────
+      // Khi refresh token bị revoke (admin xoá session, đổi password, ...),
+      // không cần thử refresh — đẩy thẳng ra login.
+      if (
+        status === 401 &&
+        (errorCode === API_ERROR_CODES.TOKEN_REVOKED ||
+          data?.message === API_ERROR_CODES.TOKEN_REVOKED)
+      ) {
+        const shouldSkipRevoked = SKIP_LOADING_URLS.some((url) =>
+          originalRequest.url?.includes(url),
+        );
+        if (!shouldSkipRevoked) useLoadingStore.getState().decrement();
+
+        // Reset refresh state nếu đang refresh
+        if (isRefreshing) {
+          processQueue(new Error("Token revoked"));
+          isRefreshing = false;
+          refreshQueue = [];
+        }
+
+        // ⚠️ KHÔNG gọi logout() API — token đã bị revoke nên API cũng sẽ 401 → loop.
+        // Chỉ clear state local + set cờ chặn loop + redirect thẳng ra login.
+        sessionStorage.setItem(AUTH_REDIRECTING_KEY, "true");
+        const isAdminRoute = window.location.pathname.startsWith('/admin');
+        if (isAdminRoute) {
+          useAdminAuthStore.setState({
+            admin: null,
+            roles: [],
+            activeContext: null,
+            isLoggedIn: false,
+            isLoading: false,
+          });
+          window.location.replace('/admin/login');
+        } else {
+          useClientAuthStore.getState().clearAuth();
+          window.location.replace('/client/login');
+        }
+
+        throw new HttpError({
+          status: 401,
+          message: "Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.",
+          code: "TOKEN_REVOKED",
+        });
+      }
+
       // ──────── Token hết hạn → Auto Refresh ────────
       // Only trigger refresh for ACCESS_TOKEN_EXPIRED (backend returns exact code)
       if (
@@ -157,7 +218,8 @@ const responseInterceptor = () => {
         errorCode === API_ERROR_CODES.ACCESS_TOKEN_EXPIRED &&
         !originalRequest._retry &&
         !originalRequest.url?.includes('/auth/refresh-token')
-      ) {
+      )
+       {
         // Đánh dấu request này đã retry (tránh loop vô hạn)
         originalRequest._retry = true;
 
@@ -189,7 +251,22 @@ const responseInterceptor = () => {
           });
 
           if (!refreshResponse.ok) {
-            throw new Error(`Refresh failed with status ${refreshResponse.status}`);
+            // Parse body để detect "Token has been revoked" từ refresh endpoint
+            let refreshErrorBody: { message?: string; code?: string } = {};
+            try {
+              refreshErrorBody = await refreshResponse.json();
+            } catch {
+              // Body không parse được — bỏ qua
+            }
+
+            const refreshMsg = refreshErrorBody?.message ?? refreshErrorBody?.code ?? "";
+            const isRevoked = refreshMsg === API_ERROR_CODES.TOKEN_REVOKED;
+
+            throw new Error(
+              isRevoked
+                ? "TOKEN_REVOKED"
+                : `Refresh failed with status ${refreshResponse.status}`,
+            );
           }
 
           // ⏱️ Chờ browser xử lý Set-Cookie từ cross-origin response
@@ -202,18 +279,24 @@ const responseInterceptor = () => {
         } catch (refreshError) {
           console.error("[Interceptor] Token refresh FAILED:", refreshError);
 
-          // ❌ Refresh token fail → logout và redirect login
+          // ❌ Refresh token fail → clear state + redirect login
+          // KHÔNG gọi logout() API — có thể cũng 401 → loop.
           processQueue(refreshError);
 
+          sessionStorage.setItem(AUTH_REDIRECTING_KEY, "true");
           const isAdminRoute = window.location.pathname.startsWith('/admin');
 
           if (isAdminRoute) {
-            const { logout } = useAdminAuthStore.getState();
-            await logout();
+            useAdminAuthStore.setState({
+              admin: null,
+              roles: [],
+              activeContext: null,
+              isLoggedIn: false,
+              isLoading: false,
+            });
             window.location.replace('/admin/login');
           } else {
-            const { clearAuth } = useClientAuthStore.getState();
-            clearAuth();
+            useClientAuthStore.getState().clearAuth();
             window.location.replace('/client/login');
           }
 
