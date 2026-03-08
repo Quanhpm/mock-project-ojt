@@ -7,6 +7,7 @@ export interface Franchise {
   address: string
   opened_at: string
   closed_at: string | null
+  google_map_script?: string | null
   is_active: boolean
   is_deleted: boolean
   created_at: string

@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { customerApi } from "../customer.api";
-import type { CustomerCreatePayload, Customer } from "../customer.types";
+import { customerApi } from "../../../../../apis/endpoints/customer.api";
+import type { CustomerCreatePayload, Customer } from "../../../../../types/customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useCreateCustomer = () => {

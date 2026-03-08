@@ -25,13 +25,13 @@ function FranchisePage() {
     },
   });
 
-  const onSubmit = async (data: FranchiseFormValues) => {
+  const onSubmit = async (_data: FranchiseFormValues) => {
     try {
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       // TODO: Implement actual API call to submit franchise inquiry
-      // await franchiseApi.submitInquiry(data);
+      // await franchiseApi.submitInquiry(_data);
       
       success('Đăng ký thành công!', 'Cảm ơn bạn đã quan tâm! Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.');
       reset();

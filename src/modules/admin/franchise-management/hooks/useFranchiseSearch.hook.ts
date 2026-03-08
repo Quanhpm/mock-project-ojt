@@ -1,58 +1,43 @@
 import { useState, useEffect, useCallback } from "react";
-import { searchProducts } from "../../../../apis/endpoints/product.api";
-import type {
-  Product,
-  ProductSearchPayload,
-} from "../../../../types/product.types";
+import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
+import type { Franchise, FranchiseSearchPayload } from "../../../../types/franchise.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
-// Search history stored in localStorage
-const SEARCH_HISTORY_KEY = "product_search_history";
+const SEARCH_HISTORY_KEY = "franchise_search_history";
 const MAX_HISTORY_ITEMS = 5;
 
 interface SearchFilters {
   keyword: string;
-  franchise_id?: string;
-  min_price?: string;
-  max_price?: string;
-  is_active?: string;
+  is_active?: boolean | null;
   is_deleted: boolean;
 }
 
-interface UseProductSearchReturn {
-  // Data
-  products: Product[];
+interface UseFranchiseSearchReturn {
+  franchises: Franchise[];
   isLoading: boolean;
   error: string | null;
   totalPages: number;
   totalItems: number;
-
-  // Search state
   filters: SearchFilters;
   setFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
-
-  // Pagination
   currentPage: number;
   setCurrentPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
-
-  // Actions
   executeSearch: () => Promise<void>;
   clearFilters: () => void;
-
-  // Search history
   searchHistory: string[];
   addToHistory: (keyword: string) => void;
   clearHistory: () => void;
-
-  // UI state
   isSearchDropdownOpen: boolean;
   setIsSearchDropdownOpen: (open: boolean) => void;
+  deleteFranchise: (id: number) => Promise<void>;
+  toggleFranchiseStatus: (id: number, isActive: boolean) => Promise<void>;
+  restoreFranchise: (id: number) => Promise<void>;
 }
 
-export const useProductSearch = (): UseProductSearchReturn => {
-  const [products, setProducts] = useState<Product[]>([]);
+export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
+  const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
@@ -63,17 +48,14 @@ export const useProductSearch = (): UseProductSearchReturn => {
 
   const [filters, setFilters] = useState<SearchFilters>({
     keyword: "",
-    franchise_id: "",
-    min_price: "",
-    max_price: "",
-    is_active: "",
+    is_active: null,
     is_deleted: false,
   });
 
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
 
-  const { error: showError } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
 
   // Load search history from localStorage
   useEffect(() => {
@@ -87,7 +69,7 @@ export const useProductSearch = (): UseProductSearchReturn => {
     }
   }, []);
 
-  // Save search history to localStorage
+  // Save search history
   const addToHistory = useCallback((keyword: string) => {
     if (!keyword.trim()) return;
 
@@ -120,7 +102,6 @@ export const useProductSearch = (): UseProductSearchReturn => {
     setError(null);
 
     try {
-      // Build search payload
       const searchCondition: any = {
         is_deleted: filters.is_deleted,
       };
@@ -130,23 +111,11 @@ export const useProductSearch = (): UseProductSearchReturn => {
         addToHistory(filters.keyword.trim());
       }
 
-      if (filters.franchise_id) {
-        searchCondition.franchise_id = filters.franchise_id;
+      if (filters.is_active !== null && filters.is_active !== undefined) {
+        searchCondition.is_active = filters.is_active;
       }
 
-      if (filters.min_price) {
-        searchCondition.min_price = Number(filters.min_price);
-      }
-
-      if (filters.max_price) {
-        searchCondition.max_price = Number(filters.max_price);
-      }
-
-      if (filters.is_active !== "") {
-        searchCondition.is_active = filters.is_active === "true";
-      }
-
-      const payload: ProductSearchPayload = {
+      const payload: FranchiseSearchPayload = {
         searchCondition,
         pageInfo: {
           pageNum: currentPage,
@@ -154,23 +123,23 @@ export const useProductSearch = (): UseProductSearchReturn => {
         },
       };
 
-      const response = await searchProducts(payload);
+      const response = await franchiseApi.searchFranchises(payload);
 
       if (response.success && response.data) {
-        setProducts(response.data);
+        setFranchises(response.data);
         setTotalPages(response.pageInfo?.totalPages || 0);
         setTotalItems(response.pageInfo?.totalItems || 0);
       } else {
-        setProducts([]);
+        setFranchises([]);
         setTotalPages(0);
         setTotalItems(0);
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải dữ liệu sản phẩm";
+        err instanceof Error ? err.message : "Lỗi tải dữ liệu nhượng quyền";
       setError(errorMessage);
       showError("Lỗi", errorMessage);
-      setProducts([]);
+      setFranchises([]);
       setTotalPages(0);
       setTotalItems(0);
     } finally {
@@ -178,53 +147,99 @@ export const useProductSearch = (): UseProductSearchReturn => {
     }
   }, [filters, currentPage, pageSize, addToHistory, showError]);
 
-  // Clear all filters
+  // Clear filters
   const clearFilters = useCallback(() => {
     setFilters({
       keyword: "",
-      franchise_id: "",
-      min_price: "",
-      max_price: "",
-      is_active: "",
+      is_active: null,
       is_deleted: false,
     });
     setCurrentPage(1);
   }, []);
 
-  // Load initial products on mount
+  // Delete franchise
+  const deleteFranchise = useCallback(
+    async (id: number) => {
+      setIsLoading(true);
+      try {
+        await franchiseApi.deleteFranchise(id);
+        showSuccess("Thành công", "Xóa nhượng quyền thành công");
+        await executeSearch();
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Lỗi xóa nhượng quyền";
+        showError("Lỗi", errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [executeSearch, showSuccess, showError]
+  );
+
+  // Toggle franchise status
+  const toggleFranchiseStatus = useCallback(
+    async (id: number, isActive: boolean) => {
+      setIsLoading(true);
+      try {
+        await franchiseApi.toggleFranchiseStatus(id, { is_active: !isActive });
+        showSuccess("Thành công", "Cập nhật trạng thái thành công");
+        await executeSearch();
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Lỗi cập nhật trạng thái";
+        showError("Lỗi", errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [executeSearch, showSuccess, showError]
+  );
+
+  // Restore franchise
+  const restoreFranchise = useCallback(
+    async (id: number) => {
+      setIsLoading(true);
+      try {
+        await franchiseApi.restoreFranchise(id);
+        showSuccess("Thành công", "Phục hồi nhượng quyền thành công");
+        await executeSearch();
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Lỗi phục hồi nhượng quyền";
+        showError("Lỗi", errorMessage);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [executeSearch, showSuccess, showError]
+  );
+
+  // Load initial data on mount
   useEffect(() => {
     executeSearch();
   }, []);
 
   return {
-    // Data
-    products,
+    franchises,
     isLoading,
     error,
     totalPages,
     totalItems,
-
-    // Search state
     filters,
     setFilters,
-
-    // Pagination
     currentPage,
     setCurrentPage,
     pageSize,
     setPageSize,
-
-    // Actions
     executeSearch,
     clearFilters,
-
-    // Search history
     searchHistory,
     addToHistory,
     clearHistory,
-
-    // UI state
     isSearchDropdownOpen,
     setIsSearchDropdownOpen,
+    deleteFranchise,
+    toggleFranchiseStatus,
+    restoreFranchise,
   };
 };

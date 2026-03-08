@@ -66,6 +66,9 @@ export default function ProductTable() {
     totalPages,
     totalItems,
   } = useProductSearch();
+  useEffect(() => {
+  executeSearch();
+}, [currentPage]);
 
   const { deleteProduct: deleteProductAPI, isDeleting } = useDeleteProduct();
   const { restoreProduct: restoreProductAPI, isRestoring } =

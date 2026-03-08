@@ -1,5 +1,4 @@
 export * from "./pages/ProductListPage"
-export * from "./pages/ProductDetailPage"
 
 // Product Franchise
 export { default as AddProductToFranchiseDrawer } from "./components/AddProductToFranchiseDrawer"

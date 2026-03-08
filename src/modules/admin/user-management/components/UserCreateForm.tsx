@@ -81,7 +81,7 @@ export const UserCreateForm: React.FC = () => {
     <div className="w-full flex flex-col">
       <main className="flex flex-col flex-1">
         {/* Page Header */}
-        <header className="w-full px-8 py-6 flex flex-col gap-6 shrink-0 z-10 bg-white border-b border-slate-200">
+        <header className="w-full px-10 py-8 flex flex-col gap-6 shrink-0 z-10 bg-white border-b border-slate-200">
           <div className="flex flex-col gap-1">
             <nav className="flex items-center gap-2 text-sm text-slate-500">
               <a className="hover:text-primary transition-colors" href="/admin/users">
@@ -165,7 +165,7 @@ export const UserCreateForm: React.FC = () => {
 
         {/* Content Area */}
         <div className="px-8 pb-8 flex-1">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-4x1 mx-auto">
             {/* Error Banner */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
@@ -178,11 +178,11 @@ export const UserCreateForm: React.FC = () => {
 
             {/* Step 1: Create User Form */}
             {currentStep === 1 && (
-              <form onSubmit={onSubmitStep1} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <form onSubmit={onSubmitStep1} className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
                 <div className="space-y-5">
                   {/* Name */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
+                    <label className="text-base font-semibold text-gray-700">
                       Full Name <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -193,7 +193,7 @@ export const UserCreateForm: React.FC = () => {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         placeholder="e.g. Nguyen Van A"
                         required
                       />
@@ -213,7 +213,7 @@ export const UserCreateForm: React.FC = () => {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         placeholder="user@example.com"
                         required
                       />
@@ -233,7 +233,7 @@ export const UserCreateForm: React.FC = () => {
                         type="text"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         placeholder="Enter password"
                         required
                       />
@@ -253,7 +253,7 @@ export const UserCreateForm: React.FC = () => {
                         type="text"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         placeholder="Re-enter password"
                         required
                       />
@@ -281,7 +281,7 @@ export const UserCreateForm: React.FC = () => {
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         placeholder="+84 xxx xxx xxxx"
                       />
                     </div>
@@ -293,14 +293,14 @@ export const UserCreateForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                    className="px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!isStep1Valid || isSubmitting}
-                    className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
                       <>
@@ -325,7 +325,7 @@ export const UserCreateForm: React.FC = () => {
             {/* Step 2: Assign Role & Franchise */}
             {currentStep === 2 && (
               <form onSubmit={onSubmitStep2} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div className="space-y-5">
+                <div className="space-y-6">
                   {/* Success banner from Step 1 */}
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
                     <span className="material-symbols-outlined text-green-600 text-[18px]">
@@ -348,7 +348,7 @@ export const UserCreateForm: React.FC = () => {
                       <select
                         value={selectedRoleId}
                         onChange={(e) => setSelectedRoleId(e.target.value)}
-                        className="w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
+                        className="w-full h-12 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
                         required
                       >
                         <option value="">
@@ -391,7 +391,7 @@ export const UserCreateForm: React.FC = () => {
                         value={selectedFranchiseId}
                         onChange={(e) => setSelectedFranchiseId(e.target.value)}
                         disabled={isAdmin}
-                        className="w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        className="w-full h-12 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
                         required={!isAdmin}
                       >
                         <option value="">
@@ -428,14 +428,14 @@ export const UserCreateForm: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                      className="px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={!isStep2Valid || isSubmitting}
-                      className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-6 py-3 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isSubmitting ? (
                         <>

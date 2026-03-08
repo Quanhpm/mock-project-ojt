@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { getProductById } from "../product.api";
-import type { Product } from "../product.types";
+import { getProductById } from "../../../../../apis/endpoints/product.api";
+import type { Product } from "../../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
 interface UseGetProductByIdReturn {
