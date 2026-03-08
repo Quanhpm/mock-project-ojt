@@ -39,7 +39,7 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
     return (
         <div
             key={product.product_id}
-            onClick={() => navigate(`/product/${product.product_id}`, { state: { franchiseId } })}
+            onClick={() => navigate(`/product/${slugify(product.name)}`, { state: { franchiseId, productId: product.product_id } })}
             className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
         >
             {/* Product Info */}
