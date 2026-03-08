@@ -157,3 +157,20 @@ export const productApi = {
     });
   },
 };
+
+export const toggleProductStatus = (
+    productId: string,
+    data: { is_active: boolean },
+): Promise<ProductItem | null> => {
+    return httpClient.patch<ProductItem, { is_active: boolean }>({
+        url: `/products/${productId}/status`,
+        data,
+    });
+};
+
+// Standalone named exports for backward compatibility
+export const searchProducts = (
+    data: SearchProductsRequest,
+): Promise<SearchResponse<ProductItem>> => {
+    return productApi.searchProducts(data);
+};

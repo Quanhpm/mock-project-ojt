@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { searchProducts } from "../../../../apis/endpoints/product.api";
+import { searchProductFranchises } from "../api/product-franchise.api";
 import type {
   ProductTableItem,
-  ProductSearchPayload,
 } from "../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 import {
@@ -145,54 +145,48 @@ export const useProductSearch = (
     setError(null);
 
     try {
-      // Build search payload
-      const searchCondition: any = {
-        is_deleted: filters.is_deleted,
-      };
-
-      if (filters.keyword.trim()) {
-        searchCondition.keyword = filters.keyword.trim();
-        addToHistory(filters.keyword.trim());
-      }
-
-      if (filters.min_price) {
-        searchCondition.min_price = Number(filters.min_price);
-      }
-
-      if (filters.max_price) {
-        searchCondition.max_price = Number(filters.max_price);
-      }
-
-      if (filters.is_active !== "") {
-        searchCondition.is_active = filters.is_active === "true";
-      }
-
-      const payload: ProductSearchPayload = {
-        searchCondition,
-        pageInfo: {
-          pageNum: currentPage,
-          pageSize: pageSize,
-        },
-      };
-
       if (tableScope === "GLOBAL_TABLE_SCOPE") {
-        if (effectiveFranchiseId) {
-          payload.searchCondition = {
-            ...payload.searchCondition,
-            franchise_id: effectiveFranchiseId,
-          };
-        }
+        // Build master-product search condition
+        const searchCondition: {
+          keyword?: string;
+          franchise_id?: string;
+          min_price?: number;
+          max_price?: number;
+          is_active?: boolean;
+          is_deleted: boolean;
+        } = { is_deleted: filters.is_deleted };
 
-      const response = await searchProducts(payload);
+        if (filters.keyword.trim()) {
+          searchCondition.keyword = filters.keyword.trim();
+          addToHistory(filters.keyword.trim());
+        }
+        if (filters.min_price) searchCondition.min_price = Number(filters.min_price);
+        if (filters.max_price) searchCondition.max_price = Number(filters.max_price);
+        if (filters.is_active !== "") searchCondition.is_active = filters.is_active === "true";
+        if (effectiveFranchiseId) searchCondition.franchise_id = effectiveFranchiseId;
+
+        const response = await searchProducts({
+          searchCondition,
+          pageInfo: { pageNum: currentPage, pageSize },
+        });
 
         if (response.success && response.data) {
           setProducts(
             response.data.map((product) => ({
               ...product,
+              description: product.description ?? "",
+              content: product.content ?? "",
+              image_url: product.image_url ?? "",
+              images_url: product.images_url ?? [],
+              is_have_topping: false,
               tableRowId: product.id,
               masterProductId: product.id,
-              displayPrice: product.min_price,
-              sourceType: "MASTER_PRODUCT",
+              displayPrice: product.min_price ?? 0,
+              min_price: product.min_price ?? 0,
+              max_price: product.max_price ?? 0,
+              is_active: product.is_active ?? true,
+              is_deleted: product.is_deleted ?? false,
+              sourceType: "MASTER_PRODUCT" as const,
             })),
           );
           setTotalPages(response.pageInfo?.totalPages || 0);
@@ -203,6 +197,7 @@ export const useProductSearch = (
           setTotalItems(0);
         }
       } else {
+        // Franchise-scoped search via product-franchise API
         const response = await searchProductFranchises({
           searchCondition: {
             franchise_id: effectiveFranchiseId || undefined,
@@ -210,21 +205,16 @@ export const useProductSearch = (
             size: undefined,
             price_from: filters.min_price ? Number(filters.min_price) : undefined,
             price_to: filters.max_price ? Number(filters.max_price) : undefined,
-            is_active:
-              filters.is_active !== "" ? filters.is_active === "true" : undefined,
+            is_active: filters.is_active !== "" ? filters.is_active === "true" : undefined,
             is_deleted: filters.is_deleted,
           },
-          pageInfo: {
-            pageNum: currentPage,
-            pageSize,
-          },
+          pageInfo: { pageNum: currentPage, pageSize },
         });
 
         const keyword = filters.keyword.trim().toLowerCase();
-        const normalizedProducts = response.data
+        const normalizedProducts: ProductTableItem[] = response.data
           .filter((item) => {
             if (!keyword) return true;
-
             return [item.product_name, item.product_sku, item.size]
               .filter(Boolean)
               .some((value) => value!.toLowerCase().includes(keyword));
@@ -247,7 +237,7 @@ export const useProductSearch = (
             displayPrice: item.price_base,
             franchiseName: item.franchise_name,
             sizeLabel: item.size,
-            sourceType: "PRODUCT_FRANCHISE",
+            sourceType: "PRODUCT_FRANCHISE" as const,
           }));
 
         setProducts(normalizedProducts);
@@ -266,7 +256,6 @@ export const useProductSearch = (
       setIsLoading(false);
     }
   }, [
-    activeFranchiseId,
     addToHistory,
     currentPage,
     effectiveFranchiseId,
@@ -295,6 +284,7 @@ export const useProductSearch = (
       isInitializedRef.current = true;
       void executeSearch();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
