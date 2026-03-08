@@ -4,20 +4,30 @@ import type { FranchiseResponse, CategoryResponse, MenuByFranchise, MenuProduct,
 import ProductCard from "../components/ProductCard";
 
 function MenuPage() {
+    // Cho phần cuộn
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const [activeCategory, setActiveCategory] = useState<string>('');
+
+    // Search product
     const [search, setSearch] = useState<string>('');
     const [filteredProducts, setFilteredProducts] = useState<MenuProduct[]>([]); // Lưu kết quả tìm kiếm
     const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // Hiển thị kết quả tìm kiếm
 
+    // Lưu franchise
     const [franchiseId, setFranchiseId] = useState<string>('');
-
     const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+
+    // fetch api
     const fetchFranchises = async () => {
         try {
             const response = await getAllFranchises();
             setFranchises(response || []);
-            setFranchiseId(response && response.length > 0 ? response[0].id : '');
+            const savedFranchiseId = localStorage.getItem('selectedFranchiseId');
+            if (savedFranchiseId) {
+                setFranchiseId(savedFranchiseId);
+            } else {
+                setFranchiseId(response && response.length > 0 ? response[0].id : '');
+            }
         } catch (error) {
             console.error("Failed to fetch franchises:", error);
         }
@@ -44,25 +54,32 @@ function MenuPage() {
             console.error("Failed to fetch products:", error);
         }
     }
+    // Lọc product theo category
     const getProductByCategory = useMemo(() => (categoryId: string) => {
         const category = products.find(item => item.category_id === categoryId);
         return category ? category.products : [];
     }, [products]);
 
+    // Lấy data franchise (chỉ lấy 1 lần)
     useEffect(() => {
         const fetchData = async () => {
             await fetchFranchises();
         }
         fetchData();
     }, []);
+    // Lấy data category và product (đổi theo franchise)
     useEffect(() => {
         const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
         };
         fetchData();
+        if (franchiseId) {
+            localStorage.setItem('selectedFranchiseId', franchiseId);
+        }
     }, [franchiseId]);
 
+    // hiệu ứng scroll
     const scrollToSection = (code: string) => {
         const element = sectionRefs.current[code];
         if (element) {
@@ -122,6 +139,7 @@ function MenuPage() {
             )
         );
     };
+    
     // Hàm xử lý khi người dùng nhấn Enter
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
