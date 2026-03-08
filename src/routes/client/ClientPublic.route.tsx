@@ -11,6 +11,7 @@ const MenuPage = React.lazy(() => import("@/modules/client/menu/pages/MenuPage")
 const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
 const VerifyEmailPage = React.lazy(() => import("@/modules/client/auth-client/pages/VerifyEmailPage"));
 const LocationPage = React.lazy(() => import("@/modules/client/store"));
+const FranchiseDetailPage = React.lazy(() => import("@/modules/client/store/pages/StorePageDetail"));
 
 /**
  * ClientPublicRoutes - Các route PUBLIC cho GUEST
@@ -26,6 +27,7 @@ export const ClientPublicRoutes = (
     <Route path={ROUTER_URL.ABOUT} element={<AboutPage />} />
     <Route path={ROUTER_URL.CONTACT} element={<ContactPage />} />
     <Route path={ROUTER_URL.HOME_ROUTER.LOCATION} element={<LocationPage />} />
+    <Route path={ROUTER_URL.HOME_ROUTER.LOCATION_DETAIL} element={<FranchiseDetailPage />} />
   </Route>
 );
 

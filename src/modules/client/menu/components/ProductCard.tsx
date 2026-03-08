@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast.hook';
 import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 import { ROUTER_URL } from '@/routes/router.const';
 
-function ProductCard({ product }: { product: MenuProduct }) {
+function ProductCard({ product, franchiseId }: { product: MenuProduct; franchiseId: string }) {
     const navigate = useNavigate();
     const addItem = useCartStore((state) => state.addItem);
     const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
@@ -39,7 +39,7 @@ function ProductCard({ product }: { product: MenuProduct }) {
     return (
         <div
             key={product.product_id}
-            onClick={() => navigate(`/product/${slugify(product.name)}`)}
+            onClick={() => navigate(`/product/${product.product_id}`, { state: { franchiseId } })}
             className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
         >
             {/* Product Info */}

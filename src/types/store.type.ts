@@ -5,4 +5,7 @@ export interface Store {
   phone: string;
   latitude: number;
   longitude: number;
+  image_url?: string;
+  opened_at?: string;
+  closed_at?: string;
 }

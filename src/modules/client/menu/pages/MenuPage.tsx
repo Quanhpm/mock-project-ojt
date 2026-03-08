@@ -139,7 +139,7 @@ function MenuPage() {
             )
         );
     };
-    
+
     // Hàm xử lý khi người dùng nhấn Enter
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
@@ -261,13 +261,13 @@ function MenuPage() {
                                     <ProductCard
                                         key={product.product_id}
                                         product={product}
+                                        franchiseId={franchiseId}
                                     />
                                 ))}
                             </div>
                         )}
                     </div>
-                )
-                }
+                )}
 
                 {/* Category Sections */}
                 {!showSearchResults && (
@@ -296,6 +296,7 @@ function MenuPage() {
                                             <ProductCard
                                                 key={product.product_id}
                                                 product={product}
+                                                franchiseId={franchiseId}
                                             />
                                         ))
                                     ) : (

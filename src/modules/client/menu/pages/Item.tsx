@@ -1,57 +1,49 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 
 // Stores & Hooks
 import { useCartStore } from "@/stores/cart.store";
 import { useToast } from "@/hooks/use-toast.hook";
-import type { Topping, SugarOption, IceOption, Size } from "@/types/product-option.type";
+import { useProductDetail } from "../hooks/useProductDetail";
 
-// Utils & Data
-import products from "@/mockdata/products.json";
-import { slugify } from "@/utils/slugify.util";
-import type { Product } from "@/types/product.type";
-
-// Constants
-import {
-    SIZE_OPTIONS,
-    TOPPINGS,
-    SUGAR_LEVELS,
-    ICE_LEVELS,
-} from "@/types/product-option.type";
+// API types
+import type { ProductSize } from "@/apis/endpointsCLIENT/productDetail.api";
 import { ROUTER_URL } from "@/routes/router.const";
 import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 
 // --- COMPONENT ---
 function Item() {
-    const { slug } = useParams<{ slug: string }>();
+    const { slug: productId } = useParams<{ slug: string }>();
+    const location = useLocation();
+    const franchiseId: string = (location.state as { franchiseId?: string })?.franchiseId ?? '';
     const navigate = useNavigate();
     const { success, error } = useToast();
     const addItem = useCartStore((s) => s.addItem);
     const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
 
-    // State
-    const [size, setSize] = useState<Size>(SIZE_OPTIONS[0]);
-    const [sugar, setSugar] = useState<SugarOption>(SUGAR_LEVELS[0]);
-    const [ice, setIce] = useState<IceOption>(ICE_LEVELS[0]);
-    const [toppings, setToppings] = useState<Topping[]>([]);
+    const { product, loading, selectedSize, setSelectedSize } = useProductDetail(franchiseId, productId ?? '');
+
+    // Option State
     const [qty, setQty] = useState(1);
 
-    // Find Product
-    const product = products.find((p) => slugify(p.name) === slug);
+    const [activeImg, setActiveImg] = useState(0);
+    const images = product
+        ? [product.image_url, ...(product.images_url ?? []).filter(u => u !== product.image_url)]
+        : [];
 
-    // Memoized Totals
-        const { extrasTotal, totalPrice } = useMemo(() => {
-        if (!product) return { extrasTotal: 0, totalPrice: 0 };
+    const totalPrice = useMemo(() => {
+        if (!selectedSize) return 0;
+        return selectedSize.price * qty;
+    }, [selectedSize, qty]);
 
-        const sizeExtra = size?.bonusPrice ?? 0;
-        const toppingExtra = toppings.reduce((sum, t) => sum + t.price, 0);
-        const extrasTotal = sizeExtra + toppingExtra;
-        const totalPrice = (product.min_price + extrasTotal) * qty;
+    if (loading) {
+        return (
+            <div className="p-10 text-center font-medium text-[var(--cf-primary)]">
+                Đang tải...
+            </div>
+        );
+    }
 
-        return { extrasTotal, totalPrice };
-    }, [product, size, toppings, qty]);
-
-    // Handlers
     if (!product) {
         return (
             <div className="p-10 text-center font-medium text-[var(--cf-primary)]">
@@ -60,52 +52,85 @@ function Item() {
         );
     }
 
-    const toggleTopping = (t: Topping) => {
-        setToppings((prev) =>
-            prev.some((x) => x.code === t.code)
-                ? prev.filter((x) => x.code !== t.code)
-                : [...prev, t]
-        );
-    };
+    const handleAddToCart = (e: React.MouseEvent) => {
+        e.stopPropagation();
 
-    const handleAddToCart = (product: Product, e: React.MouseEvent) => {
-            e.stopPropagation();
-    
-            // Kiểm tra đăng nhập
-            if (!isLoggedIn) {
-                error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
-                setTimeout(() => {
-                    navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
-                        state: { from: ROUTER_URL.MENU }
-                    });
-                }, 1500);
-                return;
-            }
-    
-            addItem({
-                productId: product.id,
-                name: product.name,
-                price: product.min_price,
-                image_url: product.image_url,
-                SKU: product.SKU
-            });
-    
-            success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
-            navigate("/menu");
-        };
+        if (!isLoggedIn) {
+            error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+            setTimeout(() => {
+                navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
+                    state: { from: ROUTER_URL.MENU }
+                });
+            }, 1500);
+            return;
+        }
+
+        if (!product || !selectedSize) return;
+
+        addItem({
+            productId: product.product_id,
+            franchiseId: franchiseId,
+            name: product.name,
+            price: selectedSize.price,
+            image_url: product.image_url,
+            SKU: product.SKU,
+            options: {
+                size: { code: selectedSize.size as "S" | "M" | "L", label: `Size ${selectedSize.size}`, bonusPrice: 0 },
+                sugar: { value: 100, label: '100%' },
+                ice: { value: 100, label: '100%' },
+                toppings: [],
+            },
+            extras_total: 0,
+        });
+
+        success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
+        navigate("/menu");
+    };
 
     return (
         <div className="h-full bg-[var(--cf-bg)] px-8 py-4 flex items-center justify-center">
             <main className="w-full grid grid-cols-1 md:grid-cols-10 gap-8 items-start">
-                {/* LEFT COLUMN: Image */}
-                <section className="md:col-span-3 w-full">
-                    <div className="aspect-square w-full rounded-[2rem] overflow-hidden bg-white">
+                {/* LEFT COLUMN: Image Slider */}
+                <section className="md:col-span-3 w-full flex flex-col gap-3">
+                    {/* Main image */}
+                    <div className="w-full aspect-square rounded-[2rem] overflow-hidden bg-white relative">
                         <img
-                            src={product.image_url}
+                            key={activeImg}
+                            src={images[activeImg]}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-opacity duration-300"
                         />
+                        {images.length > 1 && (
+                            <>
+                                <button
+                                    onClick={() => setActiveImg(i => (i - 1 + images.length) % images.length)}
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition cursor-pointer text-lg font-bold"
+                                >
+                                    ‹
+                                </button>
+                                <button
+                                    onClick={() => setActiveImg(i => (i + 1) % images.length)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center shadow hover:bg-white transition cursor-pointer text-lg font-bold"
+                                >
+                                    ›
+                                </button>
+                            </>
+                        )}
                     </div>
+                    {/* Thumbnails - horizontal strip below */}
+                    {images.length > 0 && (
+                        <div className="flex flex-row gap-2 justify-center flex-wrap">
+                            {images.map((url, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setActiveImg(idx)}
+                                    className={`w-14 h-14 rounded-xl overflow-hidden border-2 transition cursor-pointer flex-shrink-0 ${activeImg === idx ? 'border-[var(--cf-primary)]' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                >
+                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </section>
 
                 {/* RIGHT COLUMN: Product Info & Options */}
@@ -118,8 +143,13 @@ function Item() {
                             <p className="text-[var(--cf-primary)] italic opacity-80 text-lg">
                                 {product.description}
                             </p>
+                            <div className="flex items-center gap-3 text-sm text-[var(--cf-primary)]/70">
+                                <span className="font-medium">{product.category_name}</span>
+                                <span className="opacity-40">|</span>
+                                <span className="font-mono">SKU: {product.SKU}</span>
+                            </div>
                             <div className="text-3xl font-black text-[var(--cf-primary)]">
-                                {product.min_price.toLocaleString()}đ
+                                {selectedSize ? selectedSize.price.toLocaleString() : 0}đ
                             </div>
                         </header>
 
@@ -131,102 +161,26 @@ function Item() {
                                     Kích thước
                                 </h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {SIZE_OPTIONS.map((s) => {
-                                        const active = size.code === s.code;
+                                    {product.sizes.map((s) => {
+                                        const active = selectedSize?.product_franchise_id === s.product_franchise_id;
                                         return (
                                             <button
-                                                key={s.code}
-                                                onClick={() => setSize(s)}
-                                                className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer ${active
+                                                key={s.product_franchise_id}
+                                                onClick={() => setSelectedSize(s)}
+                                                disabled={!s.is_available}
+                                                className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${active
                                                     ? "bg-[var(--cf-primary)] text-white shadow-md"
                                                     : "bg-white/60 border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-white"
                                                     }`}
                                             >
-                                                {s.label}{" "}
-                                                {s.bonusPrice > 0 ? `+${s.bonusPrice / 1000}k` : ""}
+                                                {s.size} — {s.price.toLocaleString()}đ
                                             </button>
                                         );
                                     })}
                                 </div>
                             </section>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Sugar Level Selection */}
-                                <section className="space-y-2">
-                                    <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-                                        Mức đường
-                                    </h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {SUGAR_LEVELS.map((s) => {
-                                            const active = sugar.value === s.value;
-                                            return (
-                                                <button
-                                                    key={s.value}
-                                                    onClick={() => setSugar(s)}
-                                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
-                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
-                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
-                                                        }`}
-                                                >
-                                                    {s.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </section>
 
-                                {/* Ice Level Selection */}
-                                <section className="space-y-2">
-                                    <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-                                        Mức đá
-                                    </h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {ICE_LEVELS.map((i) => {
-                                            const active = ice.value === i.value;
-                                            return (
-                                                <button
-                                                    key={i.value}
-                                                    onClick={() => setIce(i)}
-                                                    className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${active
-                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
-                                                        : "bg-white/60 text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-white"
-                                                        }`}
-                                                >
-                                                    {i.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </section>
-                            </div>
-
-
-                            {/* Toppings Selection */}
-                            <section className="space-y-2">
-                                <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-                                    Toppings
-                                </h3>
-                                <div className="flex flex-wrap gap-3">
-                                    {TOPPINGS.map((t) => {
-                                        const active = toppings.some((x) => x.code === t.code);
-                                        return (
-                                            <button
-                                                key={t.code}
-                                                onClick={() => toggleTopping(t)}
-                                                className={`px-5 py-2.5 rounded-xl border transition-all cursor-pointer ${active
-                                                    ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white font-bold shadow-sm"
-                                                    : "border-[var(--cf-primary)] bg-white/60 text-[var(--cf-primary)] font-medium hover:bg-white"
-                                                    }`}
-                                            >
-                                                {t.name}{" "}
-                                                <span className="text-xs opacity-70">
-                                                    +{t.price / 1000}k
-                                                </span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </section>
                         </div>
 
                         {/* Footer Section: Total & CTA */}
@@ -266,7 +220,7 @@ function Item() {
 
                             {/* Add to Cart Button */}
                             <button
-                                onClick={(e) => handleAddToCart(product, e)}
+                                onClick={handleAddToCart}
                                 className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer"
                             >
                                 Thêm vào giỏ hàng

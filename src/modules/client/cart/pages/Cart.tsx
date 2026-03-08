@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useCartStore, formatOptionsNote } from '@/stores/cart.store';
 import type { CartItem } from '@/stores/cart.store';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Pencil } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, Pencil, NotebookPen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { Confirm } from '../components/Confirm';
@@ -119,6 +119,12 @@ function Cart() {
                   <p className="text-sm text-[var(--cf-primary)]/70 mb-3">
                     {formatOptionsNote(item)}
                   </p>
+                  {item.options?.note && (
+                    <div className="flex items-center gap-1.5 text-sm text-[var(--cf-secondary)] bg-[var(--cf-bg)] rounded-lg px-3 py-1.5 mb-3 italic">
+                      <NotebookPen size={13} className="text-[var(--cf-primary)] flex-shrink-0" />
+                      <span><span className="font-semibold not-italic text-[var(--cf-dark)]">Ghi chú:</span> {item.options.note}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     {/* Quantity Controls */}
                     <div className="flex items-center gap-3">
@@ -131,17 +137,18 @@ function Cart() {
                       <input
                         type="number"
                         min={1}
+                        max={999}
                         value={item.quantity}
                         onChange={(e) => {
                           const val = parseInt(e.target.value);
-                          if (!isNaN(val) && val >= 1) {
+                          if (!isNaN(val) && val >= 1 && val <= 999) {
                             updateQuantity(item.id, val);
                           }
                         }}
                         className="font-semibold text-[var(--cf-dark)] w-12 text-center border border-gray-200 rounded-md py-1 focus:outline-none focus:border-[var(--cf-secondary)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, Math.min(999, item.quantity + 1))}
                         className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors cursor-pointer"
                       >
                         <Plus size={16} />
