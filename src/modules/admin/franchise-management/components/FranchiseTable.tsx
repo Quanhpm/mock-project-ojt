@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2, RotateCcw } from "lucide-react";
+import { Eye, Edit2, Trash2, RotateCcw, Package } from "lucide-react";
 import { useFranchiseSearch } from "../hooks";
 import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
 import { useToast } from "@/hooks/use-toast.hook";
@@ -189,8 +189,8 @@ export default function FranchiseTable() {
     restoreFranchise,
   } = useFranchiseSearch();
   useEffect(() => {
-  executeSearch();
-}, [currentPage]);
+    executeSearch();
+  }, [currentPage]);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -220,7 +220,7 @@ export default function FranchiseTable() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setIsSearchDropdownOpen]);
 
-    const handleDeletedFilterChange = (value: boolean) => {
+  const handleDeletedFilterChange = (value: boolean) => {
     setFilters((prev) => ({ ...prev, is_deleted: value }));
     setCurrentPage(1);
     setTimeout(() => executeSearch(), 0);
@@ -455,6 +455,27 @@ export default function FranchiseTable() {
               title={isLoadingDetail === franchise.id ? "Đang tải..." : "View"}
             >
               <Eye size={20} />
+            </button>
+
+            <button
+              onClick={() => navigate(`/admin/franchises/${franchise.id}/products`)}
+              style={
+                {
+                  ...getButtonStyles.actionButton,
+                  color: "#4b5563",
+                } as React.CSSProperties
+              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#ede9fe";
+                e.currentTarget.style.color = "#7c3aed";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#4b5563";
+              }}
+              title="Products"
+            >
+              <Package size={20} />
             </button>
 
             <button
@@ -777,8 +798,8 @@ export default function FranchiseTable() {
                           (e.currentTarget.style.backgroundColor = "#fee")
                         }
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor =
-                            "transparent")
+                        (e.currentTarget.style.backgroundColor =
+                          "transparent")
                         }
                       >
                         Xóa
@@ -808,10 +829,10 @@ export default function FranchiseTable() {
                           (e.currentTarget.style.backgroundColor = "#f9fafb")
                         }
                         onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor =
-                            selectedHistoryIndex === index
-                              ? "#f3f4f6"
-                              : "transparent")
+                        (e.currentTarget.style.backgroundColor =
+                          selectedHistoryIndex === index
+                            ? "#f3f4f6"
+                            : "transparent")
                         }
                       >
                         <svg

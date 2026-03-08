@@ -22,7 +22,7 @@ export type AdminMenuItem = {
   component: React.LazyExoticComponent<React.FC<object>>;
   isEnd?: boolean;
   module: string;
-  hideFromSidebar?: boolean; 
+  hideFromSidebar?: boolean;
 };
 
 export const ADMIN_MENU: AdminMenuItem[] = [
@@ -47,7 +47,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.USER,
     icon: <Users size={18} />,
     component: React.lazy(() => import("@/modules/admin/user-management/pages/UserManagement")),
-    module: "users", 
+    module: "users",
   },
   {
     label: "Create User",
@@ -89,6 +89,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
+    label: "Product Franchise",
+    path: ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-franchise/pages/ProductFranchisePage")),
+    module: "franchise",
+    hideFromSidebar: true,
+  },
+  {
     label: "Products",
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT,
     icon: <Package size={18} />,
@@ -123,7 +131,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.INVENTORY,
     icon: <Warehouse size={18} />,
     component: React.lazy(() => import("@/modules/admin/inventory-management/pages/InventoryListPage")),
-    module: "inventory",   
+    module: "inventory",
   },
   {
     label: "Create Inventory",
@@ -210,7 +218,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     module: "products",
     hideFromSidebar: true, // ← Ẩn khỏi sidebar
   },
-  
+
   // {
   //   label: "Orders",
   //   path: ROUTER_URL.ADMIN_ROUTER.ORDER,
