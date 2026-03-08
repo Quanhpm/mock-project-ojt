@@ -16,11 +16,11 @@ export const useGetFranchiseById = (): UseGetFranchiseByIdReturn => {
   const [error, setError] = useState<string | null>(null);
   const { error: showError } = useToast();
 
-  const fetchFranchise = async (id: number) => {
+  const fetchFranchise = async (id: number | string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await franchiseApi.getFranchiseById(id);
+      const response = await franchiseApi.getFranchiseById(String(id));
       if (response) {
         setFranchise(response);
       } else {

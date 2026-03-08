@@ -28,7 +28,7 @@ export default function FranchiseEditForm() {
   // Load franchise data on component mount
   useEffect(() => {
     if (id) {
-      fetchFranchise(parseInt(id));
+      fetchFranchise(id);
     }
   }, [id, fetchFranchise]);
 

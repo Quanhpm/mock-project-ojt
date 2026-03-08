@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getProductById } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import type { Product } from "../../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
@@ -20,7 +20,7 @@ export const useGetProductById = (): UseGetProductByIdReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await getProductById(id);
+      const response = await productApi.getProductById(id);
       if (response) {
         setProduct(response);
       } else {

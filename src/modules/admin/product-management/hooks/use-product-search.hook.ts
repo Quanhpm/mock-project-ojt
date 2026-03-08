@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { searchProducts } from "../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../apis/endpoints/product.api";
 import type {
   Product,
   ProductSearchPayload,
@@ -154,7 +154,7 @@ export const useProductSearch = (): UseProductSearchReturn => {
         },
       };
 
-      const response = await searchProducts(payload);
+      const response = await productApi.searchProducts(payload);
 
       if (response.success && response.data) {
         setProducts(response.data);

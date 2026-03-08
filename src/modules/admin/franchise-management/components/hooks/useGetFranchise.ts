@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { searchProducts } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import type { Product, ProductSearchPayload } from "../../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
@@ -24,7 +24,7 @@ export const useGetProducts = (): UseGetProductsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await searchProducts(payload);
+      const response = await productApi.searchProducts(payload);
       if (response.success && response.data) {
         setProducts(response.data);
         setTotalPages(response.pageInfo?.totalPages || 0);

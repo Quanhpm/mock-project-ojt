@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { deleteProduct as deleteProductAPI } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useDeleteProduct = () => {
@@ -22,7 +22,7 @@ export const useDeleteProduct = () => {
     setError(null);
 
     try {
-      await deleteProductAPI(id);
+      await productApi.deleteProduct(id);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
       success("Xóa sản phẩm thành công", "Sản phẩm đã được xóa.");

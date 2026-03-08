@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toggleProductStatus } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 interface UseToggleProductStatusReturn {
@@ -30,7 +30,7 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
     );
 
     try {
-      const response = await toggleProductStatus(id, {
+      const response = await productApi.toggleProductStatus(id, {
         is_active: newStatus,
       });
 

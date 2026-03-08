@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createProduct } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import type { ProductCreatePayload, Product } from "../../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
@@ -21,7 +21,7 @@ export const useCreateProduct = () => {
     setError(null);
 
     try {
-      const newProduct = await createProduct(payload);
+      const newProduct = await productApi.createProduct(payload);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
       success("Tạo sản phẩm thành công", "Sản phẩm đã được tạo.");

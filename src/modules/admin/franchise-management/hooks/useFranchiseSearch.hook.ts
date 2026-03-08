@@ -31,9 +31,9 @@ interface UseFranchiseSearchReturn {
   clearHistory: () => void;
   isSearchDropdownOpen: boolean;
   setIsSearchDropdownOpen: (open: boolean) => void;
-  deleteFranchise: (id: number) => Promise<void>;
-  toggleFranchiseStatus: (id: number, isActive: boolean) => Promise<void>;
-  restoreFranchise: (id: number) => Promise<void>;
+  deleteFranchise: (id: number | string) => Promise<void>;
+  toggleFranchiseStatus: (id: number | string, isActive: boolean) => Promise<void>;
+  restoreFranchise: (id: number | string) => Promise<void>;
 }
 
 export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
@@ -159,10 +159,10 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
 
   // Delete franchise
   const deleteFranchise = useCallback(
-    async (id: number) => {
+    async (id: number | string) => {
       setIsLoading(true);
       try {
-        await franchiseApi.deleteFranchise(id);
+        await franchiseApi.deleteFranchise(String(id));
         showSuccess("Thành công", "Xóa nhượng quyền thành công");
         await executeSearch();
       } catch (err) {
@@ -178,10 +178,10 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
 
   // Toggle franchise status
   const toggleFranchiseStatus = useCallback(
-    async (id: number, isActive: boolean) => {
+    async (id: number | string, isActive: boolean) => {
       setIsLoading(true);
       try {
-        await franchiseApi.toggleFranchiseStatus(id, { is_active: !isActive });
+        await franchiseApi.toggleFranchiseStatus(String(id), { is_active: !isActive });
         showSuccess("Thành công", "Cập nhật trạng thái thành công");
         await executeSearch();
       } catch (err) {
@@ -197,10 +197,10 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
 
   // Restore franchise
   const restoreFranchise = useCallback(
-    async (id: number) => {
+    async (id: number | string) => {
       setIsLoading(true);
       try {
-        await franchiseApi.restoreFranchise(id);
+        await franchiseApi.restoreFranchise(String(id));
         showSuccess("Thành công", "Phục hồi nhượng quyền thành công");
         await executeSearch();
       } catch (err) {

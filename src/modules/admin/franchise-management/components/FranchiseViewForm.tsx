@@ -11,7 +11,7 @@ export default function FranchiseViewForm() {
   // Load franchise data on component mount
   React.useEffect(() => {
     if (id) {
-      fetchFranchise(parseInt(id));
+      fetchFranchise(id);
     }
   }, [id, fetchFranchise]);
 

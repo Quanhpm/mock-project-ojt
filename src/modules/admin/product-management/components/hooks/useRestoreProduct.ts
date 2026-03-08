@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { restoreProduct } from "../../../../../apis/endpoints/product.api";
+import { productApi } from "../../../../../apis/endpoints/product.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useRestoreProduct = () => {
@@ -22,7 +22,7 @@ export const useRestoreProduct = () => {
     setError(null);
 
     try {
-      const response = await restoreProduct(id);
+      const response = await productApi.restoreProduct(id);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
       success("Khôi phục sản phẩm thành công", "Sản phẩm đã được khôi phục.");

@@ -56,64 +56,86 @@ export interface FranchiseOptionItem {
 
 // ======================== API Endpoints ========================
 
-export const createFranchise = (
-    data: CreateFranchiseRequest,
-): Promise<FranchiseItem | null> => {
-    return httpClient.post<FranchiseItem, CreateFranchiseRequest>({
-        url: "/franchises",
-        data,
-    });
-};
-
-export const searchFranchises = (
+export const franchiseApi = {
+  /**
+   * Search franchises by conditions with pagination
+   * POST /api/franchises/search
+   */
+  searchFranchises: (
     data: SearchFranchisesRequest,
-): Promise<SearchResponse<FranchiseItem>> => {
+  ): Promise<SearchResponse<FranchiseItem>> => {
     return httpClient.search<FranchiseItem, SearchFranchisesRequest>({
-        url: "/franchises/search",
-        data,
+      url: "/franchises/search",
+      data,
     });
-};
+  },
 
-export const getFranchiseById = (
+  /**
+   * Get franchise by ID
+   */
+  getFranchiseById: (
     franchiseId: string,
-): Promise<FranchiseItem | null> => {
+  ): Promise<FranchiseItem | null> => {
     return httpClient.get<FranchiseItem>({
-        url: `/franchises/${franchiseId}`,
+      url: `/franchises/${franchiseId}`,
     });
-};
+  },
 
-export const updateFranchise = (
+  /**
+   * Create new franchise
+   */
+  createFranchise: (
+    data: CreateFranchiseRequest,
+  ): Promise<FranchiseItem | null> => {
+    return httpClient.post<FranchiseItem, CreateFranchiseRequest>({
+      url: "/franchises",
+      data,
+    });
+  },
+
+  /**
+   * Update franchise
+   */
+  updateFranchise: (
     franchiseId: string,
     data: UpdateFranchiseRequest,
-): Promise<FranchiseItem | null> => {
+  ): Promise<FranchiseItem | null> => {
     return httpClient.put<FranchiseItem, UpdateFranchiseRequest>({
-        url: `/franchises/${franchiseId}`,
-        data,
+      url: `/franchises/${franchiseId}`,
+      data,
     });
-};
+  },
 
-export const deleteFranchise = (franchiseId: string): Promise<null> => {
+  /**
+   * Delete franchise (soft delete)
+   */
+  deleteFranchise: (franchiseId: string | number): Promise<null> => {
     return httpClient.delete<null>({
-        url: `/franchises/${franchiseId}`,
+      url: `/franchises/${franchiseId}`,
     });
-};
+  },
 
-export const restoreFranchise = (
-    franchiseId: string,
-): Promise<FranchiseItem | null> => {
+  /**
+   * Toggle franchise status
+   */
+  toggleFranchiseStatus: (
+    franchiseId: string | number,
+    payload: FranchiseStatusPayload,
+  ): Promise<FranchiseItem | null> => {
+    return httpClient.patch<FranchiseItem, FranchiseStatusPayload>({
+      url: `/franchises/${franchiseId}/status`,
+      data: payload,
+    });
+  },
+
+  /**
+   * Restore deleted franchise
+   */
+  restoreFranchise: (franchiseId: string | number): Promise<FranchiseItem | null> => {
     return httpClient.patch<FranchiseItem>({
-        url: `/franchises/${franchiseId}/restore`,
+      url: `/franchises/${franchiseId}/restore`,
     });
-};
-
-export const changeFranchiseStatus = (
-    franchiseId: string,
-    data: FranchiseStatusPayload,
-): Promise<null> => {
-    return httpClient.patch<null, FranchiseStatusPayload>({
-        url: `/franchises/${franchiseId}/status`,
-        data,
-    });
+  },
 };
 
 export const getFranchisesSelect = (): Promise<FranchiseOptionItem[] | null> => {

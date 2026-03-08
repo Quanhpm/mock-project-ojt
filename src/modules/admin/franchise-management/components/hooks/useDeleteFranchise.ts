@@ -14,7 +14,7 @@ export const useDeleteFranchise = () => {
    * @param onError Callback chạy khi xóa thất bại
    */
   const deleteFranchise = async (
-    id: number,
+    id: number | string,
     onSuccess?: () => void,
     onError?: (errorMessage: string) => void,
   ) => {
@@ -22,7 +22,7 @@ export const useDeleteFranchise = () => {
     setError(null);
 
     try {
-      await franchiseApi.deleteFranchise(id);
+      await franchiseApi.deleteFranchise(String(id));
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
       success("Xóa nhượng quyền thành công", "Nhượng quyền đã được xóa.");

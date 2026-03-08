@@ -3,7 +3,7 @@ import { franchiseApi } from "../../../../../apis/endpoints/franchise.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 interface UseToggleFranchiseStatusReturn {
-  toggleStatus: (id: number, currentStatus: boolean, onSuccess?: () => void, onError?: () => void) => Promise<void>;
+  toggleStatus: (id: number | string, currentStatus: boolean, onSuccess?: () => void, onError?: () => void) => Promise<void>;
   isToggling: boolean;
   error: string | null;
 }
@@ -14,7 +14,7 @@ export const useToggleFranchiseStatus = (): UseToggleFranchiseStatusReturn => {
   const { success, error: showErrorToast } = useToast();
 
   const toggleStatusAction = async (
-    id: number,
+    id: number | string,
     currentStatus: boolean,
     onSuccess?: () => void,
     onError?: () => void
@@ -30,7 +30,7 @@ export const useToggleFranchiseStatus = (): UseToggleFranchiseStatusReturn => {
     );
 
     try {
-      const response = await franchiseApi.toggleFranchiseStatus(id, {
+      const response = await franchiseApi.toggleFranchiseStatus(String(id), {
         is_active: newStatus,
       });
 

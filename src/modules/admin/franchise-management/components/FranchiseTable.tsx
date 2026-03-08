@@ -253,10 +253,10 @@ export default function FranchiseTable() {
     searchInputRef.current?.focus();
   };
 
-  const handleViewFranchise = async (id: number) => {
+  const handleViewFranchise = async (id: string | number) => {
     setIsLoadingDetail(id);
     try {
-      await franchiseApi.getFranchiseById(id);
+      await franchiseApi.getFranchiseById(String(id));
       navigate(`/admin/franchises/view/${id}`);
     } catch (err) {
       const errorMessage =

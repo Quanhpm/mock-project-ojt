@@ -14,7 +14,7 @@ export const useRestoreFranchise = () => {
    * @param onError Callback chạy khi khôi phục thất bại
    */
   const restoreFranchiseAction = async (
-    id: number,
+    id: number | string,
     onSuccess?: () => void,
     onError?: (errorMessage: string) => void,
   ) => {
@@ -22,7 +22,7 @@ export const useRestoreFranchise = () => {
     setError(null);
 
     try {
-      await franchiseApi.restoreFranchise(id);
+      await franchiseApi.restoreFranchise(String(id));
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
       success("Khôi phục nhượng quyền thành công", "Nhượng quyền đã được khôi phục.");
