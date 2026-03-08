@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 // Stores & Hooks
 import { useCartStore } from "@/stores/cart.store";
@@ -7,15 +7,14 @@ import { useToast } from "@/hooks/use-toast.hook";
 import { useProductDetail } from "../hooks/useProductDetail";
 
 // API types
-import type { ProductSize } from "@/apis/endpointsCLIENT/productDetail.api";
 import { ROUTER_URL } from "@/routes/router.const";
 import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
 
 // --- COMPONENT ---
 function Item() {
-    const { slug: productId } = useParams<{ slug: string }>();
     const location = useLocation();
-    const franchiseId: string = (location.state as { franchiseId?: string })?.franchiseId ?? '';
+    const franchiseId: string = (location.state as { franchiseId?: string; productId?: string })?.franchiseId ?? '';
+    const productId: string = (location.state as { franchiseId?: string; productId?: string })?.productId ?? '';
     const navigate = useNavigate();
     const { success, error } = useToast();
     const addItem = useCartStore((s) => s.addItem);
