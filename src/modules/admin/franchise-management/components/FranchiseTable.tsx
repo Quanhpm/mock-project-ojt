@@ -1,21 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2 } from "lucide-react";
-import CustomerDelete from "./CustomerDelete";
-import { useCustomerSearch } from "../hooks";
-import { useCustomerStatus } from "./hooks/useCustomerStatus";
-import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
-import type { Customer } from "../../../../types/customer.types";
-
-// ============================================================================
-// TYPES
-// ============================================================================
-
-interface DeleteModal {
-  isOpen: boolean;
-  customerId: string;
-  customerName: string;
-}
+import { Eye, Edit2, Trash2, RotateCcw } from "lucide-react";
+import { useFranchiseSearch } from "../hooks";
+import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
+import { useToast } from "@/hooks/use-toast.hook";
+import type { Franchise } from "../../../../types/franchise.types";
 
 // ============================================================================
 // STYLES
@@ -100,10 +89,6 @@ const styles = {
   },
 };
 
-// ============================================================================
-// BUTTON STYLES
-// ============================================================================
-
 const getButtonStyles = {
   primary: {
     display: "flex" as const,
@@ -179,14 +164,11 @@ const getButtonStyles = {
 // MAIN COMPONENT
 // ============================================================================
 
-export default function CustomerTable() {
+export default function FranchiseTable() {
   const navigate = useNavigate();
 
-  // ========================================================================
-  // SEARCH HOOK
-  // ========================================================================
   const {
-    data: customers,
+    franchises,
     isLoading,
     error,
     filters,
@@ -199,36 +181,22 @@ export default function CustomerTable() {
     setIsSearchDropdownOpen,
     currentPage,
     setCurrentPage,
+    pageSize,
     totalPages,
     totalItems,
-  } = useCustomerSearch();
+    deleteFranchise,
+    toggleFranchiseStatus,
+    restoreFranchise,
+  } = useFranchiseSearch();
+  useEffect(() => {
+  executeSearch();
+}, [currentPage]);
 
-  // Refs for search functionality
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
-
-  // ========================================================================
-  // OTHER CUSTOM HOOKS
-  // ========================================================================
-  const { toggleStatus, updatingId } = useCustomerStatus();
-  const { deleteCustomer, isDeleting } = useDeleteCustomer();
-
-  // ========================================================================
-  // LOCAL STATE
-  // ========================================================================
-  const [customerStatus, setCustomerStatus] = useState<Record<string, boolean>>(
-    {},
-  );
-  const [deleteModal, setDeleteModal] = useState<DeleteModal>({
-    isOpen: false,
-    customerId: "",
-    customerName: "",
-  });
-
-  // ========================================================================
-  // EFFECTS
-  // ========================================================================
+  const [isLoadingDetail, setIsLoadingDetail] = useState<number | null>(null);
+  const { error: showError } = useToast();
 
   // Prevent body scroll
   useEffect(() => {
@@ -252,6 +220,12 @@ export default function CustomerTable() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setIsSearchDropdownOpen]);
 
+    const handleDeletedFilterChange = (value: boolean) => {
+    setFilters((prev) => ({ ...prev, is_deleted: value }));
+    setCurrentPage(1);
+    setTimeout(() => executeSearch(), 0);
+  };
+
   // Click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -268,10 +242,6 @@ export default function CustomerTable() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
 
-  // ========================================================================
-  // EVENT HANDLERS
-  // ========================================================================
-
   const handleSearch = () => {
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
@@ -281,6 +251,20 @@ export default function CustomerTable() {
   const handleClearSearch = () => {
     setFilters((prev) => ({ ...prev, keyword: "" }));
     searchInputRef.current?.focus();
+  };
+
+  const handleViewFranchise = async (id: number) => {
+    setIsLoadingDetail(id);
+    try {
+      await franchiseApi.getFranchiseById(id);
+      navigate(`/admin/franchises/view/${id}`);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Lỗi tải chi tiết nhượng quyền";
+      showError("Lỗi", errorMessage);
+    } finally {
+      setIsLoadingDetail(null);
+    }
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -325,86 +309,23 @@ export default function CustomerTable() {
   };
 
   const handleStatusFilterChange = (value: string) => {
-    setFilters((prev) => ({ ...prev, is_active: value }));
+    let is_active: boolean | null;
+    if (value === "null") {
+      is_active = null;
+    } else if (value === "true") {
+      is_active = true;
+    } else {
+      is_active = false;
+    }
+    setFilters((prev) => ({ ...prev, is_active }));
+    setCurrentPage(1);
+    setTimeout(() => executeSearch(), 0);
   };
 
-  const handleDeletedFilterChange = (value: boolean) => {
-    setFilters((prev) => ({ ...prev, is_deleted: value }));
-  };
-
-  const handleToggleCustomerStatus = (customerId: string) => {
-    // Get current status from state or customer data
-    const currentStatus =
-      customerStatus[customerId] ??
-      customers.find((c) => c.id === customerId)?.is_active ??
-      false;
-
-    console.log(
-      `🎯 Toggle status clicked for customer ${customerId}. Current status: ${currentStatus}`,
-    );
-
-    // Optimistic UI update: Update state immediately
-    setCustomerStatus((prev) => ({
-      ...prev,
-      [customerId]: !currentStatus,
-    }));
-
-    // Call API to update customer status
-    toggleStatus(
-      customerId,
-      currentStatus,
-      () => {
-        // onSuccess - Refresh data
-        console.log("✅ Toggle status success, refreshing data...");
-        executeSearch();
-      },
-      () => {
-        // onError - Rollback to previous state
-        console.log("❌ Toggle status failed, rolling back UI...");
-        setCustomerStatus((prev) => ({
-          ...prev,
-          [customerId]: currentStatus,
-        }));
-      },
-    );
-  };
-
-  const handleDeleteClick = (customerId: string, customerName: string) => {
-    setDeleteModal({
-      isOpen: true,
-      customerId,
-      customerName,
-    });
-  };
-
-  const handleDeleteConfirm = () => {
-    // Prevent double clicks
-    if (isDeleting) return;
-
-    // Call API to delete customer
-    deleteCustomer(deleteModal.customerId, () => {
-      // onSuccess: Close modal and refresh data
-      setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
-
-      // Refresh customer list by executing search again
-      executeSearch();
-    });
-  };
-
-  const handleCloseDeleteModal = () => {
-    setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
-  };
-
-  // ========================================================================
-  // RENDER - TABLE ROW
-  // ========================================================================
-
-  const renderTableRow = (customer: Customer, index: number) => {
-    const isActive = customerStatus[customer.id] ?? customer.is_active;
-
+  const renderTableRow = (franchise: Franchise, index: number) => {
     return (
       <tr
-        key={customer.id}
+        key={franchise.id}
         style={{
           borderBottom: "1px solid #e5e7eb",
           backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
@@ -426,55 +347,73 @@ export default function CustomerTable() {
                 width: "40px",
                 height: "40px",
                 borderRadius: "8px",
-                backgroundImage: `url('${customer.avatar_url}')`,
+                backgroundImage: `url('${franchise.logo_url}')`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 border: "1px solid #e5e7eb",
+                backgroundColor: "#f3f4f6",
               }}
             />
             <span style={{ fontWeight: "600", color: "#1f2937" }}>
-              {customer.name}
+              {franchise.name}
             </span>
           </div>
         </td>
 
-        {/* Email */}
+        {/* Code */}
         <td style={{ padding: "16px 20px", color: "#6b7280" }}>
-          {customer.email || "—"}
+          {franchise.code}
         </td>
 
-        {/* Phone */}
-        <td style={{ padding: "16px 20px", color: "#6b7280" }}>
-          {customer.phone}
+        {/* Address */}
+        <td
+          style={{
+            padding: "16px 20px",
+            color: "#6b7280",
+            maxWidth: "250px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {franchise.address}
         </td>
 
-        {/* Status Toggle */}
+        {/* Status */}
         <td style={{ padding: "16px 20px" }}>
-          <label style={getButtonStyles.toggleSwitch as React.CSSProperties}>
+          <label
+            style={
+              {
+                ...getButtonStyles.toggleSwitch,
+                cursor: isLoading ? "not-allowed" : "pointer",
+              } as React.CSSProperties
+            }
+          >
             <input
               type="checkbox"
-              checked={isActive}
-              onChange={() => handleToggleCustomerStatus(customer.id)}
-              disabled={updatingId === customer.id}
+              checked={franchise.is_active}
+              onChange={() =>
+                !isLoading && toggleFranchiseStatus(franchise.id, franchise.is_active)
+              }
               style={getButtonStyles.toggleInput as React.CSSProperties}
+              disabled={isLoading}
             />
             <div
               style={{
                 width: "44px",
                 height: "24px",
-                backgroundColor: isActive ? "#8B5A2B" : "#d1d5db",
+                backgroundColor: franchise.is_active ? "#8B5A2B" : "#d1d5db",
                 borderRadius: "12px",
                 transition: "background-color 0.3s",
                 position: "relative",
-                opacity: updatingId === customer.id ? 0.5 : 1,
-                cursor: updatingId === customer.id ? "not-allowed" : "pointer",
+                opacity: isLoading ? 0.6 : 1,
               }}
             >
               <div
                 style={{
                   position: "absolute",
                   top: "2px",
-                  left: isActive ? "22px" : "2px",
+                  left: franchise.is_active ? "22px" : "2px",
                   width: "20px",
                   height: "20px",
                   backgroundColor: "white",
@@ -492,31 +431,34 @@ export default function CustomerTable() {
           <div
             style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
           >
-            {/* View Button */}
             <button
-              onClick={() => navigate(`/admin/customers/${customer.id}`)}
+              onClick={() => handleViewFranchise(franchise.id)}
+              disabled={isLoadingDetail === franchise.id}
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: "#4b5563",
+                  color: isLoadingDetail === franchise.id ? "#c0c0c0" : "#4b5563",
+                  opacity: isLoadingDetail === franchise.id ? 0.6 : 1,
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e0f2fe";
-                e.currentTarget.style.color = "#0066cc";
+                if (isLoadingDetail !== franchise.id) {
+                  e.currentTarget.style.backgroundColor = "#e0f2fe";
+                  e.currentTarget.style.color = "#0066cc";
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
+                e.currentTarget.style.color =
+                  isLoadingDetail === franchise.id ? "#c0c0c0" : "#4b5563";
               }}
-              title="View"
+              title={isLoadingDetail === franchise.id ? "Đang tải..." : "View"}
             >
               <Eye size={20} />
             </button>
 
-            {/* Edit Button */}
             <button
-              onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+              onClick={() => navigate(`/admin/franchises/edit/${franchise.id}`)}
               style={
                 {
                   ...getButtonStyles.actionButton,
@@ -536,28 +478,52 @@ export default function CustomerTable() {
               <Edit2 size={20} />
             </button>
 
-            {/* Delete Button */}
             <button
-              onClick={() =>
-                handleDeleteClick(customer.id.toString(), customer.name)
-              }
+              onClick={() => {
+                if (franchise.is_deleted) {
+                  if (
+                    window.confirm(
+                      `Bạn có chắc chắn muốn phục hồi nhượng quyền "${franchise.name}"?`
+                    )
+                  ) {
+                    restoreFranchise(franchise.id);
+                  }
+                } else {
+                  if (
+                    window.confirm(
+                      `Bạn có chắc chắn muốn xóa nhượng quyền "${franchise.name}"?`
+                    )
+                  ) {
+                    deleteFranchise(franchise.id);
+                  }
+                }
+              }}
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: "#4b5563",
+                  color: franchise.is_deleted ? "#16a34a" : "#4b5563",
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fee2e2";
-                e.currentTarget.style.color = "#dc2626";
+                if (franchise.is_deleted) {
+                  e.currentTarget.style.backgroundColor = "#d1fae5";
+                  e.currentTarget.style.color = "#15803d";
+                } else {
+                  e.currentTarget.style.backgroundColor = "#fee2e2";
+                  e.currentTarget.style.color = "#dc2626";
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
+                e.currentTarget.style.color = franchise.is_deleted ? "#16a34a" : "#4b5563";
               }}
-              title="Delete"
+              title={franchise.is_deleted ? "Restore" : "Delete"}
             >
-              <Trash2 size={20} />
+              {franchise.is_deleted ? (
+                <RotateCcw size={20} />
+              ) : (
+                <Trash2 size={20} />
+              )}
             </button>
           </div>
         </td>
@@ -565,15 +531,9 @@ export default function CustomerTable() {
     );
   };
 
-  // ========================================================================
-  // RENDER
-  // ========================================================================
-
   return (
     <div style={styles.container}>
-      {/* Main Content */}
       <main style={styles.main}>
-        {/* Header */}
         <header style={styles.header}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <nav
@@ -597,7 +557,7 @@ export default function CustomerTable() {
               </a>
               <span style={{ fontSize: "16px" }}>›</span>
               <span style={{ color: "#212529", fontWeight: "500" }}>
-                Customers
+                Franchises
               </span>
             </nav>
           </div>
@@ -622,14 +582,14 @@ export default function CustomerTable() {
                   margin: 0,
                 }}
               >
-                Customer Management
+                Franchise Management
               </h1>
               <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
-                Total Customers: {totalItems || 0}
+                Total Franchises: {totalItems || 0}
               </p>
             </div>
             <button
-              onClick={() => navigate("/admin/customers/create")}
+              onClick={() => navigate("/admin/franchises/create")}
               style={getButtonStyles.primary as React.CSSProperties}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#6d4423";
@@ -643,22 +603,18 @@ export default function CustomerTable() {
               }}
             >
               <span style={{ fontSize: "20px" }}>+</span>
-              <span>Create Customer</span>
+              <span>Create Franchise</span>
             </button>
           </div>
         </header>
 
-        {/* Content Area */}
         <div style={styles.contentArea}>
-          {/* Filters */}
           <div style={styles.filterContainer}>
-            {/* Search Bar with History */}
             <div
               style={{ flex: 1, minWidth: "300px", position: "relative" }}
               ref={dropdownRef}
             >
               <div style={{ position: "relative" }}>
-                {/* Search Icon */}
                 <div
                   style={{
                     position: "absolute",
@@ -682,11 +638,10 @@ export default function CustomerTable() {
                   </svg>
                 </div>
 
-                {/* Search Input */}
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Tìm kiếm theo tên, email, số điện thoại... (Ctrl+K)"
+                  placeholder="Tìm kiếm theo tên, mã, địa chỉ... (Ctrl+K)"
                   value={filters.keyword}
                   onChange={(e) => {
                     setFilters((prev) => ({
@@ -721,7 +676,6 @@ export default function CustomerTable() {
                   }}
                 />
 
-                {/* Clear Button */}
                 {filters.keyword && (
                   <button
                     onClick={handleClearSearch}
@@ -766,7 +720,6 @@ export default function CustomerTable() {
                 )}
               </div>
 
-              {/* Search Dropdown - History */}
               {isSearchDropdownOpen &&
                 searchHistory.length > 0 &&
                 !filters.keyword && (
@@ -882,7 +835,6 @@ export default function CustomerTable() {
                 )}
             </div>
 
-            {/* Search Button */}
             <button
               type="button"
               onClick={handleSearch}
@@ -891,20 +843,17 @@ export default function CustomerTable() {
                 minWidth: "110px",
                 height: "42px",
               }}
-              aria-label="Search customers"
             >
-              <span className="material-symbols-outlined">search</span>
-              <span>Tìm kiếm</span>
+              Tìm kiếm
             </button>
-            
-            {/* Status Filter */}
+
             <div style={{ minWidth: "140px" }}>
               <select
-                value={filters.is_active}
+                value={filters.is_active === null ? "null" : String(filters.is_active)}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
                 style={getButtonStyles.filterInput as React.CSSProperties}
               >
-                <option value="">Tất cả trạng thái</option>
+                <option value="null">Tất cả trạng thái</option>
                 <option value="true">Đang hoạt động</option>
                 <option value="false">Ngừng hoạt động</option>
               </select>
@@ -924,11 +873,11 @@ export default function CustomerTable() {
               </select>
             </div>
 
-          
-
-            {/* Clear Filters Button */}
             <button
-              onClick={clearFilters}
+              onClick={() => {
+                clearFilters();
+                setCurrentPage(1);
+              }}
               style={getButtonStyles.clearFilter as React.CSSProperties}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#e5e7eb";
@@ -941,7 +890,6 @@ export default function CustomerTable() {
             </button>
           </div>
 
-          {/* Table */}
           <div style={styles.tableContainer}>
             <table style={styles.table}>
               <thead style={styles.tableHead}>
@@ -972,7 +920,7 @@ export default function CustomerTable() {
                       letterSpacing: "0.5px",
                     }}
                   >
-                    Email
+                    Code
                   </th>
                   <th
                     style={{
@@ -986,7 +934,7 @@ export default function CustomerTable() {
                       letterSpacing: "0.5px",
                     }}
                   >
-                    Phone
+                    Address
                   </th>
                   <th
                     style={{
@@ -1019,7 +967,6 @@ export default function CustomerTable() {
                 </tr>
               </thead>
               <tbody>
-                {/* Loading State */}
                 {isLoading && (
                   <tr>
                     <td
@@ -1037,13 +984,12 @@ export default function CustomerTable() {
                           color: "#8B5A2B",
                         }}
                       >
-                        Đang tải dữ liệu khách hàng...
+                        Đang tải dữ liệu nhượng quyền...
                       </div>
                     </td>
                   </tr>
                 )}
 
-                {/* Error State */}
                 {!isLoading && error && (
                   <tr>
                     <td
@@ -1076,17 +1022,15 @@ export default function CustomerTable() {
                   </tr>
                 )}
 
-                {/* Data State */}
-                {!isLoading && !error && customers?.length > 0 && (
+                {!isLoading && !error && franchises?.length > 0 && (
                   <>
-                    {customers.map((customer, index) =>
-                      renderTableRow(customer, index),
+                    {franchises.map((franchise, index) =>
+                      renderTableRow(franchise, index),
                     )}
                   </>
                 )}
 
-                {/* Empty State */}
-                {!isLoading && !error && customers?.length === 0 && (
+                {!isLoading && !error && franchises?.length === 0 && (
                   <tr>
                     <td
                       colSpan={5}
@@ -1100,20 +1044,13 @@ export default function CustomerTable() {
                         style={{
                           fontSize: "16px",
                           fontWeight: "600",
-                          marginBottom: "8px",
-                          color: "#1f2937",
+                          marginBottom: "4px",
                         }}
                       >
-                        No customers found
+                        📭 Không có dữ liệu
                       </div>
-                      <p
-                        style={{
-                          fontSize: "14px",
-                          margin: "0",
-                          color: "#6b7280",
-                        }}
-                      >
-                        Try adjusting your filters or create a new customer.
+                      <p style={{ fontSize: "14px", margin: "0" }}>
+                        Hãy thử điều chỉnh bộ lọc hoặc tạo một nhượng quyền mới
                       </p>
                     </td>
                   </tr>
@@ -1122,130 +1059,69 @@ export default function CustomerTable() {
             </table>
           </div>
 
-          {/* Pagination */}
-          {!isLoading && customers.length > 0 && totalPages > 1 && (
+          {!isLoading && totalPages > 0 && (
             <div style={styles.paginationContainer}>
-              <span style={{ color: "#6b7280", fontWeight: "600" }}>
-                Showing {(currentPage - 1) * 10 + 1} to{" "}
-                {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
-                customers
+              <span style={{ color: "#6b7280" }}>
+                Showing {Math.min((currentPage - 1) * pageSize + 1, totalItems)} to{" "}
+                {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
               </span>
-              <div
-                style={{ display: "flex", gap: "8px", alignItems: "center" }}
-              >
-                {/* Previous Button */}
+              <div style={{ display: "flex", gap: "8px" }}>
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  style={
-                    {
-                      ...getButtonStyles.pagination,
-                      backgroundColor:
-                        currentPage === 1 ? "#f3f4f6" : "#ffffff",
-                      color: currentPage === 1 ? "#9ca3af" : "#374151",
-                      cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                    } as React.CSSProperties
-                  }
-                  onMouseEnter={(e) => {
-                    if (currentPage !== 1) {
-                      e.currentTarget.style.backgroundColor = "#f9fafb";
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (currentPage !== 1) {
-                      e.currentTarget.style.backgroundColor = "#ffffff";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                    }
-                  }}
+                  style={{
+                    ...getButtonStyles.pagination,
+                    opacity: currentPage === 1 ? 0.5 : 1,
+                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                  } as React.CSSProperties}
                 >
-                  ‹
+                  Previous
                 </button>
-
-                {/* Page Numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={
-                        {
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const page =
+                    currentPage <= 3
+                      ? i + 1
+                      : currentPage >= totalPages - 2
+                        ? totalPages - 4 + i
+                        : currentPage - 2 + i;
+                  return (
+                    page >= 1 &&
+                    page <= totalPages && (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={{
                           ...getButtonStyles.pagination,
                           backgroundColor:
-                            currentPage === page ? "#8B5A2B" : "#ffffff",
-                          color: currentPage === page ? "#ffffff" : "#374151",
-                          fontWeight:
-                            currentPage === page
-                              ? ("700" as const)
-                              : ("600" as const),
-                          minWidth: "40px",
-                          textAlign: "center" as const,
-                        } as React.CSSProperties
-                      }
-                      onMouseEnter={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#f9fafb";
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#ffffff";
-                          e.currentTarget.style.borderColor = "#e5e7eb";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
-
-                {/* Next Button */}
+                            page === currentPage ? "#8B5A2B" : "white",
+                          color:
+                            page === currentPage ? "white" : "#374151",
+                        } as React.CSSProperties}
+                      >
+                        {page}
+                      </button>
+                    )
+                  );
+                })}
                 <button
                   onClick={() =>
                     setCurrentPage(Math.min(totalPages, currentPage + 1))
                   }
                   disabled={currentPage === totalPages}
-                  style={
-                    {
-                      ...getButtonStyles.pagination,
-                      backgroundColor:
-                        currentPage === totalPages ? "#f3f4f6" : "#ffffff",
-                      color: currentPage === totalPages ? "#9ca3af" : "#374151",
-                      cursor:
-                        currentPage === totalPages ? "not-allowed" : "pointer",
-                    } as React.CSSProperties
-                  }
-                  onMouseEnter={(e) => {
-                    if (currentPage !== totalPages) {
-                      e.currentTarget.style.backgroundColor = "#f9fafb";
-                      e.currentTarget.style.borderColor = "#d1d5db";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (currentPage !== totalPages) {
-                      e.currentTarget.style.backgroundColor = "#ffffff";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                    }
-                  }}
+                  style={{
+                    ...getButtonStyles.pagination,
+                    opacity: currentPage === totalPages ? 0.5 : 1,
+                    cursor:
+                      currentPage === totalPages ? "not-allowed" : "pointer",
+                  } as React.CSSProperties}
                 >
-                  ›
+                  Next
                 </button>
               </div>
             </div>
           )}
         </div>
       </main>
-
-      {/* Delete Modal */}
-      <CustomerDelete
-        isOpen={deleteModal.isOpen}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleDeleteConfirm}
-        customerName={deleteModal.customerName}
-        customerId={deleteModal.customerId}
-        isDeleting={isDeleting}
-      />
     </div>
   );
 }

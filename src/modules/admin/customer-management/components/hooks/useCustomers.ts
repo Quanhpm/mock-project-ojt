@@ -1,10 +1,10 @@
 import { useState, useCallback } from "react";
-import { customerApi } from "../customer.api";
+import { customerApi } from "../../../../../apis/endpoints/customer.api";
 import type {
   Customer,
   CustomerSearchPayload,
   PageInfoResponse,
-} from "../customer.types";
+} from "../../../../../types/customer.types";
 
 export const useCustomers = () => {
   // 1. Khởi tạo các State để quản lý dữ liệu và trạng thái UI

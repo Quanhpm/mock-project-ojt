@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
-import { customerApi } from "../customer.api";
-import type { Customer } from "../customer.types";
+import { customerApi } from "../../../../../apis/endpoints/customer.api";
+import type { Customer } from "../../../../../types/customer.types";
 
 export const useGetCustomer = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);

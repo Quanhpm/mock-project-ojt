@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { customerApi } from "../customer.api";
+import { customerApi } from "../../../../../apis/endpoints/customer.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useCustomerStatus = () => {

@@ -9,7 +9,7 @@ import type {
   CustomerStatusPayload,
   ForgotPasswordPayload,
   ChangePasswordPayload,
-} from "./customer.types";
+} from "./../../types/customer.types";
 
 // ============================================================================
 // CUSTOMER MANAGEMENT APIS (Dành cho Admin/Staff)

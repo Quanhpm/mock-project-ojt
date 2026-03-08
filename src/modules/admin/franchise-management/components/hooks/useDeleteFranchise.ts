@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { deleteProduct as deleteProductAPI } from "../../../../../apis/endpoints/product.api";
+import { franchiseApi } from "../../../../../apis/endpoints/franchise.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
-export const useDeleteProduct = () => {
+export const useDeleteFranchise = () => {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { success, error: showErrorToast } = useToast();
 
   /**
-   * Hàm thực thi gọi API xóa sản phẩm
-   * @param id ID của sản phẩm cần xóa
+   * Hàm thực thi gọi API xóa nhượng quyền
+   * @param id ID của nhượng quyền cần xóa
    * @param onSuccess Callback chạy khi xóa thành công (dùng để đóng Modal và Refresh bảng)
    * @param onError Callback chạy khi xóa thất bại
    */
-  const deleteProduct = async (
-    id: string,
+  const deleteFranchise = async (
+    id: number,
     onSuccess?: () => void,
     onError?: (errorMessage: string) => void,
   ) => {
@@ -22,20 +22,20 @@ export const useDeleteProduct = () => {
     setError(null);
 
     try {
-      await deleteProductAPI(id);
+      await franchiseApi.deleteFranchise(id);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Xóa sản phẩm thành công", "Sản phẩm đã được xóa.");
+      success("Xóa nhượng quyền thành công", "Nhượng quyền đã được xóa.");
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error("Lỗi khi xóa sản phẩm:", err);
+      console.error("Lỗi khi xóa nhượng quyền:", err);
 
       const errorMessage =
         err.response?.data?.message ||
-        "Không thể xóa sản phẩm lúc này. Vui lòng thử lại!";
+        "Không thể xóa nhượng quyền lúc này. Vui lòng thử lại!";
       setError(errorMessage);
 
-      showErrorToast("Xóa sản phẩm thất bại", errorMessage);
+      showErrorToast("Xóa nhượng quyền thất bại", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsDeleting(false);
@@ -43,7 +43,7 @@ export const useDeleteProduct = () => {
   };
 
   return {
-    deleteProduct,
+    deleteFranchise,
     isDeleting,
     error,
   };

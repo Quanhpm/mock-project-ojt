@@ -1,45 +1,45 @@
 import { useState } from "react";
-import { createProduct } from "../../../../../apis/endpoints/product.api";
-import type { ProductCreatePayload, Product } from "../../../../../types/product.types";
+import { franchiseApi } from "../../../../../apis/endpoints/franchise.api";
+import type { Franchise } from "../../../../../types/franchise.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
-export const useCreateProduct = () => {
+export const useCreateFranchise = () => {
   const { success, error: showErrorToast } = useToast();
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Hàm thực thi gọi API tạo mới sản phẩm
+   * Hàm thực thi gọi API tạo mới nhượng quyền
    * @param payload Dữ liệu từ Form nhập vào
    * @param onSuccess Callback chạy khi tạo thành công (vd: Đóng modal, chuyển trang, reset form)
    */
-  const createProductAction = async (
-    payload: ProductCreatePayload,
-    onSuccess?: (newProduct: Product) => void,
+  const createFranchiseAction = async (
+    payload: Omit<Franchise, 'id' | 'created_at' | 'updated_at' | 'is_deleted'>,
+    onSuccess?: (newFranchise: Franchise) => void,
   ) => {
     setIsCreating(true);
     setError(null);
 
     try {
-      const newProduct = await createProduct(payload);
+      const newFranchise = await franchiseApi.createFranchise(payload as any);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Tạo sản phẩm thành công", "Sản phẩm đã được tạo.");
+      success("Tạo nhượng quyền thành công", "Nhượng quyền đã được tạo.");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
       if (onSuccess) {
-        onSuccess(newProduct!);
+        onSuccess(newFranchise);
       }
 
-      return newProduct; // Trả về data nếu Component bên ngoài muốn dùng trực tiếp
+      return newFranchise; // Trả về data nếu Component bên ngoài muốn dùng trực tiếp
     } catch (err: any) {
-      console.error("Lỗi khi tạo sản phẩm:", err);
+      console.error("Lỗi khi tạo nhượng quyền:", err);
 
       // Bắt thông báo lỗi từ Backend
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.data ||
-        "Có lỗi xảy ra khi tạo sản phẩm mới. Vui lòng thử lại!";
+        "Có lỗi xảy ra khi tạo nhượng quyền mới. Vui lòng thử lại!";
       setError(errorMessage);
 
       showErrorToast("Tạo mới thất bại", errorMessage);
@@ -50,7 +50,7 @@ export const useCreateProduct = () => {
   };
 
   return {
-    createProduct: createProductAction,
+    createFranchise: createFranchiseAction,
     isCreating,
     error,
     setError, // Trả ra ngoài để Form có thể tự clear lỗi nếu người dùng bắt đầu gõ lại

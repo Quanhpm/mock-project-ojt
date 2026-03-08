@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { toggleProductStatus } from "../../../../../apis/endpoints/product.api";
+import { franchiseApi } from "../../../../../apis/endpoints/franchise.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
-interface UseToggleProductStatusReturn {
-  toggleStatus: (id: string, currentStatus: boolean, onSuccess?: () => void, onError?: () => void) => Promise<void>;
+interface UseToggleFranchiseStatusReturn {
+  toggleStatus: (id: number, currentStatus: boolean, onSuccess?: () => void, onError?: () => void) => Promise<void>;
   isToggling: boolean;
   error: string | null;
 }
 
-export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
+export const useToggleFranchiseStatus = (): UseToggleFranchiseStatusReturn => {
   const [isToggling, setIsToggling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { success, error: showErrorToast } = useToast();
 
   const toggleStatusAction = async (
-    id: string,
+    id: number,
     currentStatus: boolean,
     onSuccess?: () => void,
     onError?: () => void
@@ -26,11 +26,11 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
     const newStatus = !currentStatus;
 
     console.log(
-      `🔄 Toggling status for product ${id}: ${currentStatus} → ${newStatus}`
+      `🔄 Toggling status for franchise ${id}: ${currentStatus} → ${newStatus}`
     );
 
     try {
-      const response = await toggleProductStatus(id, {
+      const response = await franchiseApi.toggleFranchiseStatus(id, {
         is_active: newStatus,
       });
 
@@ -39,7 +39,7 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
       // Thông báo thành công
       success(
         "Cập nhật trạng thái thành công",
-        `Sản phẩm đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`
+        `Nhượng quyền đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`
       );
 
       if (onSuccess) onSuccess();

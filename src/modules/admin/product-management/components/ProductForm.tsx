@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { RefreshCw, Upload, AlertCircle, Package, Check } from "lucide-react";
 import { useCreateProduct } from "./hooks/useCreateProduct";
-import type { ProductCreatePayload } from "./product.types";
+import type { ProductCreatePayload } from "../../../../types/product.types";
 
 export default function ProductForm() {
   const navigate = useNavigate();

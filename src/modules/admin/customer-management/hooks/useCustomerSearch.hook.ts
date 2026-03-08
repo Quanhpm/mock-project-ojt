@@ -1,6 +1,6 @@
 import { useGenericSearch } from "@/hooks";
-import { customerApi } from "../components/customer.api";
-import type { Customer } from "../components/customer.types";
+import { customerApi } from "../../../../../src/apis/endpoints/customer.api";
+import type { Customer } from "../../../../types/customer.types";
 
 // ============================================================================
 // CUSTOMER SEARCH FILTERS

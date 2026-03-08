@@ -60,7 +60,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Franchise",
     path: ROUTER_URL.ADMIN_ROUTER.FRANCHISE,
     icon: <Store size={18} />,
-    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseManagement")),
+    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseListPage")),
     module: "franchise",
   },
   {
@@ -76,6 +76,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/edit/:id`,
     icon: <Store size={18} />,
     component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseEditPage")),
+    module: "franchise",
+    hideFromSidebar: true,
+  },
+  {
+    label: "View Franchise",
+    path: `${ROUTER_URL.ADMIN_ROUTER.FRANCHISE}/view/:id`,
+    icon: <Store size={18} />,
+    component: React.lazy(() => import("@/modules/admin/franchise-management/pages/FranchiseViewPage")),
     module: "franchise",
     hideFromSidebar: true,
   },

@@ -6,7 +6,7 @@ import * as yup from "yup";
 import { Upload, User, X } from "lucide-react";
 import { useCreateCustomer } from "./hooks/useCreateCustomer";
 import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
-import type { Customer } from "./customer.types";
+import type { Customer } from "../../../../types/customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
 import axios from "axios";
 import { ENV } from "@/config/env.config";

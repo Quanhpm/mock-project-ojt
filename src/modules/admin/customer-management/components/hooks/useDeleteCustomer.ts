@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { customerApi } from "../customer.api";
+import { customerApi } from "../../../../../apis/endpoints/customer.api";
 
 export const useDeleteCustomer = () => {
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
