@@ -1,5 +1,5 @@
 import { useGenericSearch } from "@/hooks";
-import { customerApi } from "../../../../../src/apis/endpoints/customer.api";
+import { customerApi } from "@/apis";
 import type { Customer } from "../../../../types/customer.types";
 
 // ============================================================================

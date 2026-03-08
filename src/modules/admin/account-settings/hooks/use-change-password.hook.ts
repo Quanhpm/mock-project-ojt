@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { customerApi } from "@/modules/admin/customer-management/components/customer.api";
-import { HttpError } from "@/apis";
+import { customerApi, HttpError } from "@/apis";
 import type { ChangePasswordPayload } from "@/types/customer.types";
 
 export const useChangePassword = () => {

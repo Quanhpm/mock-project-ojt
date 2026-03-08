@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import type { UserItem } from '../hooks/useUserList.hook'
 import {
   updateUser,
@@ -8,6 +8,10 @@ import {
 import type { FranchiseSelectItem } from '@/apis'
 import { ROLES } from '@/consts/roles.const'
 import type { RoleOption } from '@/consts/roles.const'
+import { Upload, X } from 'lucide-react'
+import axios from 'axios'
+import { ENV } from '@/config/env.config'
+import { useToast } from '@/hooks/use-toast.hook'
 
 // ======================== Types ========================
 
@@ -28,6 +32,8 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { success: showSuccess, error: showError } = useToast()
+
   // ──────── Tab ────────
   const [activeTab, setActiveTab] = useState<ActiveTab>('info')
 
@@ -36,6 +42,56 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
+
+  // ──────── Cloudinary Upload ────────
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (file: File) => {
+    setIsUploading(true)
+    setError(null)
+    try {
+      const uploadData = new FormData()
+      uploadData.append('file', file)
+      uploadData.append('upload_preset', ENV.CLOUDINARY_UPLOAD_PRESET)
+      uploadData.append('folder', 'users/avatars')
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
+        uploadData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      )
+
+      setAvatarUrl(response.data.secure_url)
+      showSuccess('Tải ảnh lên thành công', 'Ảnh đại diện đã được cập nhật.')
+    } catch (err: any) {
+      console.error('Avatar Upload Error:', err)
+      showError('Upload thất bại', err.message || 'Không thể tải ảnh.')
+      setError('Upload ảnh thất bại. Tệp tin có thể quá lớn hoặc lỗi kết nối.')
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        showError('Lỗi file', 'Vui lòng chọn file ảnh hợp lệ.')
+        return
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showError('Quá dung lượng', 'Kích thước ảnh tối đa là 5MB.')
+        return
+      }
+      handleImageUpload(file)
+    }
+  }
+
+  const removeImage = () => {
+    setAvatarUrl('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   // ──────── Part 2: Role & Franchise ────────
   const [selectedRoleId, setSelectedRoleId] = useState('')
@@ -283,22 +339,64 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                 </div>
               </div>
 
-              {/* Avatar URL */}
+              {/* Avatar Upload */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Avatar URL{' '}
+                  Avatar Image{' '}
                   <span className="text-gray-400 font-normal lowercase">(optional)</span>
                 </label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">image</span>
-                  <input
-                    type="url"
-                    value={avatarUrl}
-                    onChange={(e) => setAvatarUrl(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    placeholder="https://example.com/avatar.jpg"
-                  />
-                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                  style={{ display: "none" }}
+                />
+
+                {avatarUrl ? (
+                  // Preview Mode
+                  <div className="relative border-2 border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center gap-4">
+                    <img
+                      src={avatarUrl}
+                      alt="Avatar preview"
+                      className="w-20 h-20 object-cover rounded-full border-2 border-white shadow-sm"
+                    />
+                    <div className="flex-1 overflow-hidden">
+                      <p className="text-sm font-semibold text-slate-800 m-0 mb-1">Avatar Uploaded</p>
+                      <p className="text-xs text-slate-500 m-0 truncate">{avatarUrl}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      disabled={isUploading}
+                      className="absolute top-3 right-3 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors focus:outline-none"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  // Upload Mode
+                  <div
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${isUploading
+                        ? 'border-slate-300 bg-slate-50 cursor-not-allowed opacity-60'
+                        : 'border-slate-300 bg-slate-50 hover:bg-white hover:border-primary cursor-pointer'
+                      }`}
+                  >
+                    <Upload
+                      size={32}
+                      className={`mx-auto mb-3 ${isUploading ? 'text-slate-400' : 'text-primary'}`}
+                    />
+                    <p className={`text-sm font-semibold m-0 mb-1 ${isUploading ? 'text-slate-500' : 'text-slate-800'}`}>
+                      {isUploading ? "Uploading..." : "Click to select avatar image"}
+                    </p>
+                    <p className="text-xs text-slate-500 m-0">
+                      JPG, PNG, WEBP (max 5MB)
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 

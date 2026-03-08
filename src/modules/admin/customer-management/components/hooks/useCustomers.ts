@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { customerApi } from "../../../../../apis/endpoints/customer.api";
+import { customerApi } from "@/apis";
 import type {
   Customer,
   CustomerSearchPayload,
@@ -34,7 +34,7 @@ export const useCustomers = () => {
       // Xử lý thông báo lỗi (có thể tuỳ chỉnh theo cấu trúc lỗi backend trả về)
       setError(
         err.response?.data?.message ||
-          "Không thể tải danh sách khách hàng. Vui lòng thử lại!",
+        "Không thể tải danh sách khách hàng. Vui lòng thử lại!",
       );
     } finally {
       // Dù thành công hay thất bại cũng phải tắt trạng thái loading

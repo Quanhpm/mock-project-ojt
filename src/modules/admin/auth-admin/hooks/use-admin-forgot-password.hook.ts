@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { customerApi } from "@/modules/admin/customer-management/components/customer.api";
+import { customerApi } from "@/apis";
 import { HttpError } from "@/apis";
 
 export const useAdminForgotPassword = () => {

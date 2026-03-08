@@ -9,3 +9,4 @@ export * from './category-franchise.api';
 export * from './product-franchise.api';
 export * from './product-category-franchise.api';
 export * from './user-franchise-role.api';
+export * from './customer.api';

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { customerApi } from "../../../../../apis/endpoints/customer.api";
+import { customerApi } from "@/apis";
 import type { CustomerUpdatePayload, Customer } from "../../../../../types/customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
 

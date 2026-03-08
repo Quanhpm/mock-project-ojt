@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, AlertCircle, Package } from "lucide-react";
+import { Upload, AlertCircle, Package, X } from "lucide-react";
 import { useCreateProduct } from "./hooks/useCreateProduct";
 import type { ProductCreatePayload } from "../../../../types/product.types";
 import { useAssignProductFranchise } from "../hooks/useAssignProductFranchise.hook";
 import { CKEditorField } from "@/components/ui";
 import { SIZE_OPTIONS } from "@/types/product-option.type";
+import axios from "axios";
+import { ENV } from "@/config/env.config";
+import { useToast } from "@/hooks/use-toast.hook";
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -44,7 +47,7 @@ export default function ProductForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     const errors: Record<string, string> = {};
     if (!formData.SKU.trim()) errors.SKU = "SKU is required";
@@ -88,7 +91,7 @@ export default function ProductForm() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
+
     // Clear error for this field
     if (formErrors[name]) {
       setFormErrors(prev => {
@@ -109,19 +112,121 @@ export default function ProductForm() {
     }));
   };
 
-  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value.trim();
-    setFormData(prev => ({
-      ...prev,
-      image_url: url,
-    }));
-    if (formErrors.image_url) {
-      setFormErrors(prev => {
+  const { success: showSuccess, error: showError } = useToast();
+
+  // ──────── Cloudinary Upload State ────────
+  const [isUploadingMain, setIsUploadingMain] = useState(false);
+  const mainFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
+  const additionalFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleUploadMainImage = async (file: File) => {
+    setIsUploadingMain(true);
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
+      uploadData.append("folder", "products/main");
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
+        uploadData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const { secure_url } = response.data;
+      setFormData((prev) => ({
+        ...prev,
+        image_url: secure_url,
+      }));
+      setFormErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors.image_url;
         return newErrors;
       });
+      showSuccess("Tải ảnh lên thành công", "Ảnh chính đã được tải lên.");
+    } catch (err: any) {
+      console.error("Main Image Upload Error:", err);
+      showError("Upload thất bại", err.message || "Không thể tải ảnh chính.");
+    } finally {
+      setIsUploadingMain(false);
     }
+  };
+
+  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith("image/")) {
+        showError("File không hợp lệ", "Vui lòng chọn file ảnh.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showError("File quá lớn", "Kích thước tối đa 5MB.");
+        return;
+      }
+      handleUploadMainImage(file);
+    }
+  };
+
+  const removeMainImage = () => {
+    setFormData((prev) => ({ ...prev, image_url: "" }));
+    if (mainFileInputRef.current) mainFileInputRef.current.value = "";
+  };
+
+  const handleUploadAdditionalImages = async (files: FileList) => {
+    setIsUploadingAdditional(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        if (!file.type.startsWith("image/")) throw new Error("File không phải là ảnh");
+        if (file.size > 5 * 1024 * 1024) throw new Error("File vượt quá 5MB");
+
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        uploadData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
+        uploadData.append("folder", "products/additional");
+
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
+          uploadData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          }
+        );
+        return response.data.secure_url;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      setFormData((prev) => ({
+        ...prev,
+        images_url: [...(prev.images_url || []), ...urls],
+      }));
+      showSuccess("Thành công", `Đã tải lên ${urls.length} ảnh bổ sung.`);
+    } catch (err: any) {
+      console.error("Additional Images Upload Error:", err);
+      showError("Upload thất bại", err.message || "Không thể tải lên một hoặc nhiều ảnh.");
+    } finally {
+      setIsUploadingAdditional(false);
+      // reset input to allow re-selection
+      if (additionalFileInputRef.current) additionalFileInputRef.current.value = "";
+    }
+  };
+
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleUploadAdditionalImages(e.target.files);
+    }
+  };
+
+  const removeAdditionalImage = (indexToRemove: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      images_url: prev.images_url?.filter((_, idx) => idx !== indexToRemove) || [],
+    }));
   };
 
   return (
@@ -158,11 +263,10 @@ export default function ProductForm() {
             {/* Step 1 dot */}
             <div className="flex items-center gap-2">
               <div
-                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  currentStep === 1
-                    ? "bg-primary text-white"
-                    : "bg-green-500 text-white"
-                }`}
+                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${currentStep === 1
+                  ? "bg-primary text-white"
+                  : "bg-green-500 text-white"
+                  }`}
               >
                 {currentStep > 1 ? (
                   <span className="material-symbols-outlined text-[18px]">check</span>
@@ -171,9 +275,8 @@ export default function ProductForm() {
                 )}
               </div>
               <span
-                className={`text-sm font-medium ${
-                  currentStep === 1 ? "text-gray-800" : "text-green-600"
-                }`}
+                className={`text-sm font-medium ${currentStep === 1 ? "text-gray-800" : "text-green-600"
+                  }`}
               >
                 Create Product
               </span>
@@ -181,26 +284,23 @@ export default function ProductForm() {
 
             {/* Connector */}
             <div
-              className={`flex-1 h-0.5 mx-3 rounded transition-colors ${
-                currentStep > 1 ? "bg-green-500" : "bg-gray-200"
-              }`}
+              className={`flex-1 h-0.5 mx-3 rounded transition-colors ${currentStep > 1 ? "bg-green-500" : "bg-gray-200"
+                }`}
             />
 
             {/* Step 2 dot */}
             <div className="flex items-center gap-2">
               <div
-                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  currentStep === 2
-                    ? "bg-primary text-white"
-                    : "bg-gray-200 text-gray-500"
-                }`}
+                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${currentStep === 2
+                  ? "bg-primary text-white"
+                  : "bg-gray-200 text-gray-500"
+                  }`}
               >
                 2
               </div>
               <span
-                className={`text-sm font-medium ${
-                  currentStep === 2 ? "text-gray-800" : "text-gray-400"
-                }`}
+                className={`text-sm font-medium ${currentStep === 2 ? "text-gray-800" : "text-gray-400"
+                  }`}
               >
                 Assign Franchise
               </span>
@@ -373,37 +473,109 @@ export default function ProductForm() {
                       {formErrors.content && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.content}</p>}
                     </div>
 
-                    {/* Main Image URL */}
+                    {/* Main Image Upload */}
                     <div>
                       <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                        Main Image URL <span style={{ color: "#ef4444" }}>*</span>
+                        Main Image <span style={{ color: "#ef4444" }}>*</span>
                       </label>
+
                       <input
-                        type="url"
-                        value={formData.image_url}
-                        onChange={handleImageUrlChange}
-                        placeholder="https://example.com/image.jpg"
-                        style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          border: formErrors.image_url ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                          borderRadius: "8px",
-                          fontSize: "14px",
-                          outline: "none",
-                          boxSizing: "border-box",
-                          marginBottom: "8px"
-                        }}
+                        type="file"
+                        ref={mainFileInputRef}
+                        accept="image/*"
+                        onChange={handleMainImageChange}
+                        disabled={isUploadingMain}
+                        style={{ display: "none" }}
                       />
-                      {formErrors.image_url && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.image_url}</p>}
-                      {formData.image_url && (
-                        <div style={{ marginTop: "12px", borderRadius: "8px", overflow: "hidden", border: "1px solid #e0e0e0" }}>
-                          <img 
-                            src={formData.image_url} 
-                            alt="Preview" 
-                            style={{ width: "100%", height: "auto", maxHeight: "200px", objectFit: "cover" }} 
+
+                      {formData.image_url ? (
+                        // Preview Mode
+                        <div
+                          style={{
+                            position: "relative",
+                            border: formErrors.image_url ? "2px solid #ef4444" : "2px solid #dee2e6",
+                            borderRadius: "8px",
+                            padding: "16px",
+                            backgroundColor: "#f8f9fa",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "16px",
+                          }}
+                        >
+                          <img
+                            src={formData.image_url}
+                            alt="Main preview"
+                            style={{
+                              width: "120px",
+                              height: "120px",
+                              objectFit: "cover",
+                              borderRadius: "8px",
+                              border: "2px solid #dee2e6",
+                            }}
                           />
+                          <div style={{ flex: 1, overflow: "hidden" }}>
+                            <p style={{ margin: "0 0 8px 0", fontSize: "14px", fontWeight: "600", color: "#212529" }}>
+                              Image Uploaded
+                            </p>
+                            <p style={{ margin: 0, fontSize: "12px", color: "#6c757d", wordBreak: "break-all", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                              {formData.image_url}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={removeMainImage}
+                            disabled={isUploadingMain}
+                            style={{
+                              position: "absolute",
+                              top: "12px",
+                              right: "12px",
+                              padding: "6px",
+                              border: "none",
+                              borderRadius: "50%",
+                              backgroundColor: "#dc3545",
+                              color: "white",
+                              cursor: isUploadingMain ? "not-allowed" : "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              opacity: isUploadingMain ? 0.5 : 1,
+                            }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        // Upload Mode
+                        <div
+                          onClick={() => !isUploadingMain && mainFileInputRef.current?.click()}
+                          style={{
+                            border: formErrors.image_url ? "2px dashed #ef4444" : "2px dashed #dee2e6",
+                            borderRadius: "8px",
+                            padding: "32px 24px",
+                            textAlign: "center",
+                            backgroundColor: "#f8f9fa",
+                            cursor: isUploadingMain ? "not-allowed" : "pointer",
+                            transition: "all 0.2s",
+                            opacity: isUploadingMain ? 0.6 : 1,
+                          }}
+                        >
+                          <Upload
+                            size={40}
+                            style={{
+                              color: isUploadingMain ? "#6c757d" : "#8B4513",
+                              margin: "0 auto 12px",
+                            }}
+                          />
+                          <p style={{ margin: "0 0 4px 0", fontSize: "14px", fontWeight: "600", color: isUploadingMain ? "#6c757d" : "#212529" }}>
+                            {isUploadingMain ? "Uploading..." : "Click to select main image"}
+                          </p>
+                          <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>
+                            JPG, PNG, WEBP (max 5MB)
+                          </p>
                         </div>
                       )}
+
+                      {formErrors.image_url && <p style={{ fontSize: "11px", color: "#ef4444", margin: "8px 0 0 0" }}>{formErrors.image_url}</p>}
                     </div>
                   </div>
                 </div>
@@ -420,28 +592,89 @@ export default function ProductForm() {
                     {/* Additional Image URLs */}
                     <div style={{ marginBottom: "20px" }}>
                       <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                        Additional Image URLs (one per line)
+                        Additional Images
                       </label>
-                      <textarea
-                        value={formData.images_url?.join("\n") || ""}
-                        onChange={(e) => {
-                          const urls = e.target.value.split("\n").filter(url => url.trim());
-                          setFormData(prev => ({ ...prev, images_url: urls }));
-                        }}
-                        placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                        rows={6}
+                      <input
+                        type="file"
+                        ref={additionalFileInputRef}
+                        accept="image/*"
+                        multiple
+                        onChange={handleAdditionalImagesChange}
+                        disabled={isUploadingAdditional}
+                        style={{ display: "none" }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => !isUploadingAdditional && additionalFileInputRef.current?.click()}
+                        disabled={isUploadingAdditional}
                         style={{
                           width: "100%",
                           padding: "10px 12px",
-                          border: "1px solid #e0e0e0",
+                          border: "1px dashed #8B4513",
                           borderRadius: "8px",
                           fontSize: "14px",
-                          outline: "none",
-                          resize: "vertical",
-                          boxSizing: "border-box",
-                          fontFamily: "monospace"
+                          color: "#8B4513",
+                          backgroundColor: "#fffafa",
+                          cursor: isUploadingAdditional ? "not-allowed" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                          opacity: isUploadingAdditional ? 0.7 : 1,
+                          marginBottom: "12px",
                         }}
-                      />
+                      >
+                        <Upload size={16} />
+                        {isUploadingAdditional ? "Uploading..." : "Click to select additional images (multiple)"}
+                      </button>
+
+                      {/* Display Additional Images Preview */}
+                      {formData.images_url && formData.images_url.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))", gap: "10px" }}>
+                          {formData.images_url.map((url, idx) => (
+                            <div
+                              key={idx}
+                              style={{
+                                position: "relative",
+                                aspectRatio: "1",
+                                border: "1px solid #e0e0e0",
+                                borderRadius: "8px",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <img
+                                src={url}
+                                alt={`Additional ${idx + 1}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeAdditionalImage(idx)}
+                                style={{
+                                  position: "absolute",
+                                  top: "4px",
+                                  right: "4px",
+                                  padding: "4px",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  backgroundColor: "rgba(220, 53, 69, 0.9)",
+                                  color: "white",
+                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <X size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Has Topping */}

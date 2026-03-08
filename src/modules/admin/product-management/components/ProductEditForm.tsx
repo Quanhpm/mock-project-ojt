@@ -1,14 +1,20 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save, Package, Upload, X } from "lucide-react";
 import { mockProducts, mockCategories, mockFranchises } from "@/mockdata";
 import productFranchises from "@/mockdata/product_franchise.json";
 import inventory from "@/mockdata/inventory.json";
+import axios from "axios";
+import { ENV } from "@/config/env.config";
+import { useToast } from "@/hooks/use-toast.hook";
 
 export default function ProductEditForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  
+  const { success: showSuccess, error: showError } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Helper functions to get product data from normalized structure
   const getProductPrice = (productId: number, franchiseId: number = 1) => {
     const productFranchise = productFranchises.find(
@@ -44,7 +50,7 @@ export default function ProductEditForm() {
       if (product) {
         const price = getProductPrice(product.id);
         const stock = getProductStock(product.id);
-        
+
         return {
           id: product.id.toString(),
           name: product.name,
@@ -92,7 +98,7 @@ export default function ProductEditForm() {
     }
     return [];
   });
-  
+
   const [franchiseAvailability, setFranchiseAvailability] = useState<number[]>(() => {
     if (id) {
       const productId = parseInt(id);
@@ -175,24 +181,44 @@ export default function ProductEditForm() {
     });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages: string[] = [];
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          newImages.push(reader.result as string);
-          if (newImages.length === files.length) {
-            setImagePreview([...imagePreview, ...newImages]);
-            setFormData({
-              ...formData,
-              images: [...formData.images, ...newImages]
-            });
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        if (!file.type.startsWith("image/")) throw new Error("File không phải là ảnh");
+        if (file.size > 5 * 1024 * 1024) throw new Error("File vượt quá 5MB");
+
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        uploadData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
+        uploadData.append("folder", "products");
+
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
+          uploadData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
           }
-        };
-        reader.readAsDataURL(file);
+        );
+        return response.data.secure_url;
       });
+
+      const urls = await Promise.all(uploadPromises);
+      setImagePreview((prev) => [...prev, ...urls]);
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...urls],
+      }));
+      showSuccess("Thành công", `Đã tải lên ${urls.length} ảnh.`);
+    } catch (err: any) {
+      console.error("Images Upload Error:", err);
+      showError("Upload thất bại", err.message || "Không thể tải lên một hoặc nhiều ảnh.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -209,7 +235,7 @@ export default function ProductEditForm() {
     <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
       {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        <span 
+        <span
           onClick={() => navigate("/admin/products")}
           style={{ cursor: "pointer", color: "#8B4513" }}
         >
@@ -457,11 +483,11 @@ export default function ProductEditForm() {
             {/* Images */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Product Images</h2>
-              
-              <div style={{ 
-                border: "2px dashed #e0e0e0", 
-                borderRadius: "8px", 
-                padding: "32px", 
+
+              <div style={{
+                border: "2px dashed #e0e0e0",
+                borderRadius: "8px",
+                padding: "32px",
                 textAlign: "center",
                 marginBottom: "16px"
               }}>
@@ -469,14 +495,16 @@ export default function ProductEditForm() {
                 <p style={{ margin: 0, marginBottom: "8px", fontSize: "14px", color: "#6c757d" }}>
                   Click to upload or drag and drop
                 </p>
-                <p style={{ margin: 0, fontSize: "12px", color: "#9e9e9e" }}>
-                  PNG, JPG or WEBP (max. 5MB)
+                <p style={{ margin: 0, fontSize: "12px", color: isUploading ? "#8B4513" : "#9e9e9e" }}>
+                  {isUploading ? "Uploading..." : "PNG, JPG or WEBP (max. 5MB)"}
                 </p>
                 <input
                   type="file"
+                  ref={fileInputRef}
                   accept="image/*"
                   multiple
                   onChange={handleImageUpload}
+                  disabled={isUploading}
                   style={{ display: "none" }}
                   id="image-upload"
                 />
@@ -486,18 +514,18 @@ export default function ProductEditForm() {
                     display: "inline-block",
                     marginTop: "16px",
                     padding: "8px 16px",
-                    backgroundColor: "#8B4513",
-                    color: "white",
+                    backgroundColor: isUploading ? "#e0e0e0" : "#8B4513",
+                    color: isUploading ? "#9e9e9e" : "white",
                     borderRadius: "6px",
-                    cursor: "pointer",
+                    cursor: isUploading ? "not-allowed" : "pointer",
                     fontSize: "14px",
                     fontWeight: "500",
                     transition: "background-color 0.2s"
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
+                  onMouseEnter={(e) => { if (!isUploading) e.currentTarget.style.backgroundColor = "#6d3610"; }}
+                  onMouseLeave={(e) => { if (!isUploading) e.currentTarget.style.backgroundColor = "#8B4513"; }}
                 >
-                  Choose Files
+                  {isUploading ? "Uploading..." : "Choose Files"}
                 </label>
               </div>
 
@@ -546,7 +574,7 @@ export default function ProductEditForm() {
             {/* Specifications */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Specifications</h2>
-              
+
               <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
                 <input
                   type="text"
@@ -664,7 +692,7 @@ export default function ProductEditForm() {
             {/* Inventory */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Inventory</h2>
-              
+
               <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
                 Stock Quantity
               </label>
@@ -744,7 +772,7 @@ export default function ProductEditForm() {
             {/* Tags */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Tags</h2>
-              
+
               <div style={{ display: "flex", gap: "8px", marginBottom: "12px" }}>
                 <input
                   type="text"
@@ -819,7 +847,7 @@ export default function ProductEditForm() {
             {/* Franchise Availability */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Franchise Availability</h2>
-              
+
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {mockFranchises.filter(f => f.is_active).map((franchise) => (
                   <label

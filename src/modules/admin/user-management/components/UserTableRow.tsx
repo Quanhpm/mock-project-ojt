@@ -27,9 +27,20 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
       {/* USER */}
       <td className="p-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm">
-            {initial}
-          </div>
+          {user.avatar_url ? (
+            <div
+              className="h-10 w-10 rounded-full shrink-0 border border-slate-200"
+              style={{
+                backgroundImage: `url('${user.avatar_url}')`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm border border-transparent">
+              {initial}
+            </div>
+          )}
           <div className="flex flex-col min-w-0">
             <span className="font-semibold text-slate-900 truncate">
               {user.name}
