@@ -1,4 +1,3 @@
-import { type ApiSuccessResponse } from "../http.types";
 import { httpClient } from "../httpClient";
 
 // Interface
