@@ -57,6 +57,7 @@ export interface HttpRequestConfig<
   data?: TData;
   params?: TParams;
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 }
 
 /** Interface cho httpClient — tất cả HTTP methods */

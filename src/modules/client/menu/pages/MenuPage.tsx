@@ -69,6 +69,7 @@ function MenuPage() {
     }, []);
     // Lấy data category và product (đổi theo franchise)
     useEffect(() => {
+        if (!franchiseId) return;
         const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
@@ -131,7 +132,7 @@ function MenuPage() {
         });
 
         return () => observer.disconnect();
-    }, [franchiseId]);
+    }, [categories]);
 
     // Filter search
     const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {

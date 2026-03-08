@@ -35,6 +35,7 @@ export const httpClient: HttpClient = {
     const res = await axiosClient.get<ApiSuccessResponse<T>>(config.url, {
       params: cleanParams(config.params),
       headers: config.headers,
+      signal: config.signal,
     });
     return res.data.data;
   },
