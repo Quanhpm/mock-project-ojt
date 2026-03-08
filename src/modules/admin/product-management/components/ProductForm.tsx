@@ -4,7 +4,6 @@ import { Upload, AlertCircle, Package } from "lucide-react";
 import { useCreateProduct } from "./hooks/useCreateProduct";
 import type { ProductCreatePayload } from "../../../../types/product.types";
 import { useAssignProductFranchise } from "../hooks/useAssignProductFranchise.hook";
-import type { ProductCreatePayload } from "./product.types";
 import { CKEditorField } from "@/components/ui";
 import { SIZE_OPTIONS } from "@/types/product-option.type";
 

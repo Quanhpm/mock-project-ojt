@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAssignProductFranchise } from "../hooks/useAssignProductFranchise.hook";
+import { useProductFranchiseAssignments } from "../hooks/useProductFranchiseAssignments.hook";
 import { SIZE_OPTIONS } from "@/types/product-option.type";
 
 // ======================== Props ========================
@@ -34,12 +35,16 @@ export default function AssignFranchiseModal({
     handleAssignFranchise,
     initWithProductId,
     resetFlow,
-  } = useAssignProductFranchise(onSuccess);
+  } = useAssignProductFranchise(undefined);
 
   // ──────── Form fields ────────
   const [selectedFranchiseId, setSelectedFranchiseId] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [priceBase, setPriceBase] = useState<number>(0);
+
+  // ──────── Assigned franchises for this product ────────
+  const { assignments, isLoading: isAssignmentsLoading, refresh: refreshAssignments } =
+    useProductFranchiseAssignments(productId);
 
   // ──────── Init cho Luồng 2 (từ Table) ────────
   useEffect(() => {
@@ -54,6 +59,7 @@ export default function AssignFranchiseModal({
     setSelectedSize("");
     setPriceBase(0);
     resetFlow();
+    onSuccess?.();
     onClose();
   };
 
@@ -74,7 +80,11 @@ export default function AssignFranchiseModal({
         size: selectedSize,
         price_base: priceBase,
       });
-      handleClose();
+      // Reset form fields but keep modal open — refresh list to show new assignment
+      setSelectedFranchiseId("");
+      setSelectedSize("");
+      setPriceBase(0);
+      refreshAssignments();
     } catch {
       // Error đã được handle trong hook
     }
@@ -235,6 +245,74 @@ export default function AssignFranchiseModal({
             </button>
           </div>
         </form>
+
+        {/* ═══════════ Assigned Franchises ═══════════ */}
+        <div className="px-6 pb-6 pt-2">
+          <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+            {/* Section header */}
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-white">
+              <span className="material-symbols-outlined text-primary text-[20px]">
+                badge
+              </span>
+              <h3 className="text-sm font-semibold text-gray-700">
+                Assigned Roles &amp; Franchises
+              </h3>
+            </div>
+
+            {/* Table header */}
+            <div className="grid grid-cols-3 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-white">
+              <span>Size</span>
+              <span>Franchise</span>
+              <span className="text-right">Price</span>
+            </div>
+
+            {/* Rows */}
+            {isAssignmentsLoading ? (
+              <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
+                <span className="material-symbols-outlined text-[18px] animate-spin">
+                  progress_activity
+                </span>
+                <span className="text-sm">Loading...</span>
+              </div>
+            ) : assignments.length === 0 ? (
+              <div className="flex items-center justify-center py-6 text-sm text-gray-400">
+                No franchises assigned yet
+              </div>
+            ) : (
+              assignments.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-3 items-center px-4 py-3 border-b border-gray-100 last:border-b-0 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  {/* Size badge */}
+                  <span className="inline-flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold">
+                    {item.size}
+                  </span>
+
+                  {/* Franchise name */}
+                  <div className="flex items-center gap-2 text-sm text-gray-700">
+                    <span className="material-symbols-outlined text-gray-400 text-[16px]">
+                      storefront
+                    </span>
+                    <span className="font-medium">
+                      {item.franchise_name ?? item.franchise_id}
+                    </span>
+                  </div>
+
+                  {/* Price */}
+                  <div className="flex justify-end">
+                    <span className="text-sm font-semibold text-gray-700">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(item.price_base)}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

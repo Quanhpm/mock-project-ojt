@@ -1,6 +1,6 @@
 export type SugarLevel = 0 | 30 | 50 | 70 | 100;
 export type IceLevel = 0 | 30 | 50 | 70 | 100;
-export type SizeCode = "S" | "M" | "L";
+export type SizeCode = "S" | "M" | "L" | "XL";
 
 export type Size = {
   code: SizeCode;
@@ -36,6 +36,7 @@ export const SIZE_OPTIONS: Size[] = [
     { code: "S", label: "Size S", bonusPrice: 0 },
     { code: "M", label: "Size M", bonusPrice: 5000 },
     { code: "L", label: "Size L", bonusPrice: 10000 },
+    { code: "XL", label: "Size XL", bonusPrice: 15000 },
 ];
 
 export const TOPPINGS: Topping[] = [
