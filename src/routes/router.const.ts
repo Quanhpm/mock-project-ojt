@@ -30,6 +30,7 @@ export const ROUTER_URL = {
     CHANGE_PASSWORD: "/change-password",
     ORDER_HISTORY: "/order-history",
     LOCATION: "/location",
+    LOCATION_DETAIL: "/location/:franchiseId",
   },
 
   // ========== ADMIN ROUTES ==========

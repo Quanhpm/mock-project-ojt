@@ -44,6 +44,7 @@ export interface CartItem {
   /** Unique UUID for every cart line — never shared between items. */
   id: string;
   productId: string;
+  franchiseId?: string;
   name: string;
   /** Base price (snapshot at time of add). */
   price: number;
@@ -64,7 +65,7 @@ interface CartState {
   updateQuantity: (id: string, quantity: number) => void;
   updateCartItem: (
     id: string,
-    data: Pick<CartItem, 'options' | 'extras_total' | 'quantity'>,
+    data: Pick<CartItem, 'options' | 'extras_total' | 'quantity'> & { price?: number },
   ) => void;
   clearCart: () => void;
   getTotalItems: () => number;
@@ -172,6 +173,7 @@ export const useCartStore = create<CartState>()(
               item.id === id
                 ? {
                     ...item,
+                    ...(data.price !== undefined ? { price: data.price } : {}),
                     options: cloneOptions(data.options),
                     extras_total: data.extras_total,
                     quantity: data.quantity,
@@ -213,6 +215,7 @@ export const useCartStore = create<CartState>()(
           const newItem: CartItem = {
             ...target,
             id: generateId(),
+            ...(data.price !== undefined ? { price: data.price } : {}),
             options: cloneOptions(data.options),
             extras_total: data.extras_total,
             quantity: data.quantity,

@@ -1,14 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import type { CartItem } from '@/stores/cart.store';
 import { useCartStore } from '@/stores/cart.store';
-import type { Topping, SugarOption, IceOption, Size } from '@/types/product-option.type';
-import {
-  SIZE_OPTIONS,
-  TOPPINGS,
-  SUGAR_LEVELS,
-  ICE_LEVELS,
-} from '@/types/product-option.type';
+import type { ProductSize } from '@/apis/endpointsCLIENT/client.api';
+import { getAllFranchises } from '@/apis/endpointsCLIENT/client.api';
+import { getProductDetail as getProductDetailByFranchise } from '@/apis/endpointsCLIENT/productDetail.api';
 
 interface CartItemEditorProps {
   item: CartItem;
@@ -18,41 +14,58 @@ interface CartItemEditorProps {
 function CartItemEditor({ item, onClose }: CartItemEditorProps) {
   const updateCartItem = useCartStore((s) => s.updateCartItem);
 
-  const [size, setSize] = useState<Size>(
-    item.options?.size ?? SIZE_OPTIONS[0]
-  );
-  const [sugar, setSugar] = useState<SugarOption>(
-    item.options?.sugar ?? SUGAR_LEVELS[0]
-  );
-  const [ice, setIce] = useState<IceOption>(
-    item.options?.ice ?? ICE_LEVELS[0]
-  );
-  const [toppings, setToppings] = useState<Topping[]>(
-    item.options?.toppings ?? []
-  );
+  const [sizes, setSizes] = useState<ProductSize[]>([]);
+  const [selectedSize, setSelectedSize] = useState<ProductSize | null>(null);
+  const [productLoading, setProductLoading] = useState(true);
+
+  useEffect(() => {
+    setProductLoading(true);
+
+    const loadSizes = async () => {
+      try {
+        let franchiseId = item.franchiseId;
+        if (!franchiseId) {
+          const franchises = await getAllFranchises();
+          franchiseId = franchises?.[0]?.id ?? '';
+        }
+        if (!franchiseId) return;
+        const data = await getProductDetailByFranchise(franchiseId, item.productId);
+        if (data?.sizes?.length) {
+          setSizes(data.sizes);
+          const match = data.sizes.find(s => s.size === item.options?.size?.code);
+          setSelectedSize(match ?? data.sizes[0]);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setProductLoading(false);
+      }
+    };
+
+    loadSizes();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.productId]);
+
   const [note, setNote] = useState(item.options?.note ?? '');
   const [qty, setQty] = useState(item.quantity);
 
-  const { extrasTotal, totalPrice } = useMemo(() => {
-    const sizeExtra = size?.bonusPrice ?? 0;
-    const toppingExtra = toppings.reduce((sum, t) => sum + t.price, 0);
-    const extrasTotal = sizeExtra + toppingExtra;
-    const totalPrice = (item.price + extrasTotal) * qty;
-    return { extrasTotal, totalPrice };
-  }, [item.price, size, toppings, qty]);
-
-  const toggleTopping = (t: Topping) => {
-    setToppings((prev) =>
-      prev.some((x) => x.code === t.code)
-        ? prev.filter((x) => x.code !== t.code)
-        : [...prev, t]
-    );
-  };
+  const totalPrice = useMemo(() => {
+    const basePrice = selectedSize?.price ?? item.price;
+    return basePrice * qty;
+  }, [selectedSize, item.price, qty]);
 
   const handleUpdate = () => {
+    const sizeCode = selectedSize?.size ?? item.options?.size?.code ?? 'S';
     updateCartItem(item.id, {
-      options: { size, sugar, ice, toppings, note: note.trim() || undefined },
-      extras_total: extrasTotal,
+      price: selectedSize?.price ?? item.price,
+      options: {
+        size: { code: sizeCode as 'S' | 'M' | 'L', label: `Size ${sizeCode}`, bonusPrice: 0 },
+        sugar: { value: 100, label: '100%' },
+        ice: { value: 100, label: '100%' },
+        toppings: [],
+        note: note.trim() || undefined,
+      },
+      extras_total: 0,
       quantity: qty,
     });
     onClose();
@@ -100,100 +113,26 @@ function CartItemEditor({ item, onClose }: CartItemEditorProps) {
           {/* Size */}
           <section className="space-y-3">
             <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-              Kích thước
+              Size
             </h3>
             <div className="flex flex-wrap gap-3">
-              {SIZE_OPTIONS.map((s) => {
-                const active = size.code === s.code;
+              {productLoading && (
+                <span className="text-sm text-[var(--cf-primary)]/60">Đang tải...</span>
+              )}
+              {!productLoading && sizes.map((s) => {
+                const active = selectedSize?.product_franchise_id === s.product_franchise_id;
                 return (
                   <button
-                    key={s.code}
-                    onClick={() => setSize(s)}
-                    className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer ${
+                    key={s.product_franchise_id}
+                    onClick={() => setSelectedSize(s)}
+                    disabled={!s.is_available}
+                    className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                       active
                         ? 'bg-[var(--cf-primary)] text-white shadow-md'
                         : 'bg-white border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-gray-50'
                     }`}
                   >
-                    {s.label}{' '}
-                    {s.bonusPrice > 0 ? `+${s.bonusPrice / 1000}k` : ''}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Sugar & Ice */}
-          <div className="grid grid-cols-2 gap-6">
-            <section className="space-y-3">
-              <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-                Mức đường
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {SUGAR_LEVELS.map((s) => {
-                  const active = sugar.value === s.value;
-                  return (
-                    <button
-                      key={s.value}
-                      onClick={() => setSugar(s)}
-                      className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${
-                        active
-                          ? 'bg-[var(--cf-primary)] text-white shadow-md'
-                          : 'bg-white text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-gray-50'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="space-y-3">
-              <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-                Mức đá
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {ICE_LEVELS.map((i) => {
-                  const active = ice.value === i.value;
-                  return (
-                    <button
-                      key={i.value}
-                      onClick={() => setIce(i)}
-                      className={`px-4 py-2 rounded-full font-medium transition-all cursor-pointer ${
-                        active
-                          ? 'bg-[var(--cf-primary)] text-white shadow-md'
-                          : 'bg-white text-[var(--cf-primary)] border border-[var(--cf-primary)] hover:bg-gray-50'
-                      }`}
-                    >
-                      {i.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </div>
-
-          {/* Toppings */}
-          <section className="space-y-3">
-            <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
-              Toppings
-            </h3>
-            <div className="flex flex-wrap gap-3">
-              {TOPPINGS.map((t) => {
-                const active = toppings.some((x) => x.code === t.code);
-                return (
-                  <button
-                    key={t.code}
-                    onClick={() => toggleTopping(t)}
-                    className={`px-5 py-2.5 rounded-xl border transition-all cursor-pointer ${
-                      active
-                        ? 'border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white font-bold shadow-sm'
-                        : 'border-[var(--cf-primary)] bg-white text-[var(--cf-primary)] font-medium hover:bg-gray-50'
-                    }`}
-                  >
-                    {t.name}{' '}
-                    <span className="text-xs opacity-70">+{t.price / 1000}k</span>
+                    {s.size} — {s.price.toLocaleString()}đ
                   </button>
                 );
               })}
