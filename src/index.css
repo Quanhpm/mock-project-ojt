@@ -100,3 +100,12 @@
 [data-sonner-toast] {
   cursor: pointer !important;
 }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Ẩn scrollbar trên Internet Explorer */
+  scrollbar-width: none;      /* Ẩn scrollbar trên Firefox */
+}

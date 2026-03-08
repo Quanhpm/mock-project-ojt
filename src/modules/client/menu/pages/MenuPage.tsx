@@ -4,17 +4,30 @@ import type { FranchiseResponse, CategoryResponse, MenuByFranchise, MenuProduct,
 import ProductCard from "../components/ProductCard";
 
 function MenuPage() {
+    // Cho phần cuộn
     const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const [activeCategory, setActiveCategory] = useState<string>('');
-    const [search, setSearch] = useState<string>('');
-    const [franchiseId, setFranchiseId] = useState<string>('');
 
+    // Search product
+    const [search, setSearch] = useState<string>('');
+    const [filteredProducts, setFilteredProducts] = useState<MenuProduct[]>([]); // Lưu kết quả tìm kiếm
+    const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // Hiển thị kết quả tìm kiếm
+
+    // Lưu franchise
+    const [franchiseId, setFranchiseId] = useState<string>('');
     const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+
+    // fetch api
     const fetchFranchises = async () => {
         try {
             const response = await getAllFranchises();
             setFranchises(response || []);
-            setFranchiseId(response && response.length > 0 ? response[0].id : '');
+            const savedFranchiseId = localStorage.getItem('selectedFranchiseId');
+            if (savedFranchiseId) {
+                setFranchiseId(savedFranchiseId);
+            } else {
+                setFranchiseId(response && response.length > 0 ? response[0].id : '');
+            }
         } catch (error) {
             console.error("Failed to fetch franchises:", error);
         }
@@ -41,33 +54,32 @@ function MenuPage() {
             console.error("Failed to fetch products:", error);
         }
     }
-    const getProductByCategory = (categoryId: string): MenuProduct[] => {
+    // Lọc product theo category
+    const getProductByCategory = useMemo(() => (categoryId: string) => {
         const category = products.find(item => item.category_id === categoryId);
         return category ? category.products : [];
-    };
+    }, [products]);
 
+    // Lấy data franchise (chỉ lấy 1 lần)
     useEffect(() => {
         const fetchData = async () => {
             await fetchFranchises();
+        }
+        fetchData();
+    }, []);
+    // Lấy data category và product (đổi theo franchise)
+    useEffect(() => {
+        const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
-            console.log("Fetched products:", products);
-            console.log("Categories:", categories);
         };
         fetchData();
+        if (franchiseId) {
+            localStorage.setItem('selectedFranchiseId', franchiseId);
+        }
     }, [franchiseId]);
 
-    // const getCategoryIcon = (code: string): string => {
-    //     const iconMap: { [key: string]: string } = {
-    //         'COFFEE': 'local_cafe',
-    //         'TEA': 'emoji_food_beverage',
-    //         'BAKERY': 'bakery_dining',
-    //         'SMOOTHIE': 'blender',
-    //         'JUICE': 'local_bar',
-    //     };
-    //     return iconMap[code] || 'restaurant_menu';
-    // };
-
+    // hiệu ứng scroll
     const scrollToSection = (code: string) => {
         const element = sectionRefs.current[code];
         if (element) {
@@ -80,12 +92,27 @@ function MenuPage() {
 
     // Thêm hiệu ứng active cho sidebar khi cuộn đến section tương ứng
     useEffect(() => {
-        setActiveCategory('');
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                         setActiveCategory(entry.target.id);
+                        // Đồng bộ hóa vị trí cuộn của sidebar với phần sản phẩm
+                        const categoryElement = document.getElementById(entry.target.id);
+                        if (categoryElement) {
+                            const sidebar = document.querySelector('aside');
+                            if (sidebar) {
+                                // Tính toán offset
+                                const categoryOffset = categoryElement.offsetTop;
+                                const sidebarHeight = sidebar.offsetHeight;
+                                const categoryHeight = categoryElement.offsetHeight;
+
+                                // Điều chỉnh vị trí cuộn để phù hợp với cả cuộn lên và cuộn xuống
+                                if (categoryOffset < sidebar.scrollTop || categoryOffset + categoryHeight > sidebar.scrollTop + sidebarHeight) {
+                                    sidebar.scrollTop = categoryOffset - 1900; // Điều chỉnh vị trí của sidebar
+                                }
+                            }
+                        }
                     }
                 });
             },
@@ -105,39 +132,58 @@ function MenuPage() {
     // Filter search
     const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
         return products.flatMap((category) =>
-            category.products.filter((product) =>
-                product.name.toLowerCase().includes(searchTerm.toLowerCase())
+            category.products.filter(
+                (product) =>
+                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
             )
         );
+    };
+
+    // Hàm xử lý khi người dùng nhấn Enter
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
+            const results = filterProductsBySearch(search);
+            setFilteredProducts(results); // Cập nhật danh sách sản phẩm đã lọc
+            setShowSearchResults(true);
+        }
+    };
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const searchTerm = e.target.value;
+        setSearch(searchTerm);
+        // Ẩn kết quả tìm kiếm khi người dùng thay đổi nội dung
+        if (searchTerm === '') {
+            setShowSearchResults(false); // Ẩn kết quả khi ô tìm kiếm trống
+        }
     };
 
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
             {/* Sidebar Navigation - Sticky & Prominent */}
-            <aside className="w-80 shrink-0 hidden lg:block sticky top-[100px] h-fit">
-                <div className="bg-[var(--cf-surface)] rounded-2xl shadow-xl border border-[var(--cf-primary)]/10 p-8 backdrop-blur-sm">
+            <aside className="w-80 shrink-0 hidden lg:block sticky top-[64px] h-[calc(100vh-60px)] overflow-y-auto scrollbar-hide">
+                <div className="bg-[var(--cf-surface)] shadow-xl border border-[var(--cf-primary)]/10 p-8 backdrop-blur-sm">
                     <div className="flex flex-col gap-5">
                         <div className="mb-6">
                             <h3 className="text-3xl font-black uppercase tracking-wide text-[var(--cf-dark)] mb-3">Danh mục</h3>
                             <div className="h-1.5 w-20 bg-gradient-to-r from-[var(--cf-primary)] to-[var(--cf-accent-light)] rounded-full"></div>
                         </div>
-                        {(categories as CategoryResponse[]).map((item: CategoryResponse) => (
-                            <button
-                                key={item.category_code}
-                                onClick={() => scrollToSection(item.category_code)}
-                                className={`group relative flex items-center gap-5 px-7 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
-                                    ${activeCategory === item.category_code
-                                        ? 'bg-[var(--cf-primary)] !text-white'
-                                        : ''
-                                    }
-                                `}
-                            >
-                                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                {/* <span className={`material-icons-outlined text-3xl relative z-10 text-[var(--cf-primary)] group-hover:text-white transition-colors`}>{getCategoryIcon(item.franchise_code)}</span> */}
-                                <span className="relative z-10 tracking-wide">{item.category_name}</span>
-                            </button>
-                        ))}
+                        <div className="flex flex-col overflow-y-auto h-full scrollbar-hide">
+                            {(categories as CategoryResponse[]).map((item: CategoryResponse) => (
+                                <button
+                                    key={item.category_code}
+                                    onClick={() => scrollToSection(item.category_code)}
+                                    className={`group relative flex items-center mb-5 mx-5 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
+                        ${activeCategory === item.category_code
+                                            ? 'bg-[var(--cf-primary)] !text-white'
+                                            : ''
+                                        }
+                    `}>
+                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    <span className="pl-5 relative z-10 tracking-wide">{item.category_name}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -165,12 +211,13 @@ function MenuPage() {
                             type="text"
                             placeholder="Nhập tên sản phẩm..."
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            onChange={handleSearchChange}
+                            onKeyDown={handleKeyDown}
                             className="w-full h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
-                       text-[var(--cf-dark)] placeholder:text-[var(--cf-secondary)] 
-                       focus:outline-none focus:border-[var(--cf-primary)] 
-                       focus:ring-2 focus:ring-[var(--cf-primary)]/20 
-                       shadow-sm transition-all"
+                        text-[var(--cf-dark)] placeholder:text-[var(--cf-secondary)] 
+                        focus:outline-none focus:border-[var(--cf-primary)] 
+                        focus:ring-2 focus:ring-[var(--cf-primary)]/20 
+                        shadow-sm transition-all"
                         />
                     </div>
 
@@ -183,10 +230,10 @@ function MenuPage() {
                             value={franchiseId}
                             onChange={(e) => setFranchiseId(e.target.value)}
                             className="h-14 px-5 rounded-xl bg-white/70 backdrop-blur-sm border border-[var(--cf-secondary)]/30 
-                       text-[var(--cf-dark)] 
-                       focus:outline-none focus:border-[var(--cf-primary)] 
-                       focus:ring-2 focus:ring-[var(--cf-primary)]/20 
-                       shadow-sm transition-all cursor-pointer"
+                        text-[var(--cf-dark)] 
+                        focus:outline-none focus:border-[var(--cf-primary)] 
+                        focus:ring-2 focus:ring-[var(--cf-primary)]/20 
+                        shadow-sm transition-all cursor-pointer"
                         >
                             {franchises.map((franchise: FranchiseResponse) => (
                                 <option key={franchise.id} value={franchise.id}>
@@ -198,35 +245,32 @@ function MenuPage() {
                 </div>
 
                 {/* Product Sections */}
-                {search.length > 0 && (() => {
-                    const searching = filterProductsBySearch(search);
-                    return (
-                        <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
-                                Kết quả tìm kiếm cho "{search}"
-                            </h2>
+                {showSearchResults && (
+                    <div className="mb-8">
+                        <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
+                            Kết quả tìm kiếm cho "{search}"
+                        </h2>
 
-                            {searching.length === 0 ? (
-                                <p className="text-[var(--cf-secondary)] text-base">
-                                    Không tìm thấy sản phẩm phù hợp
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-1 gap-4"> {/* Đã sửa gaep-4 thành gap-4 */}
-                                    {searching.map((product: MenuProduct) => (
-                                        <ProductCard
-                                            key={product.product_id}
-                                            product={product}
-                                            franchiseId={franchiseId}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })()}
+                        {filteredProducts.length === 0 ? (
+                            <p className="text-[var(--cf-secondary)] text-base">
+                                Không tìm thấy sản phẩm phù hợp
+                            </p>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-4">
+                                {filteredProducts.map((product: MenuProduct) => (
+                                    <ProductCard
+                                        key={product.product_id}
+                                        product={product}
+                                        franchiseId={franchiseId}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Category Sections */}
-                {search.length === 0 &&
+                {!showSearchResults && (
                     (categories as CategoryResponse[]).map((category: CategoryResponse) => {
                         const categoryProducts = getProductByCategory(category.category_id);
                         return (
@@ -240,8 +284,9 @@ function MenuPage() {
                             >
                                 {/* Category Header */}
                                 <div className="border-b border-[var(--cf-secondary)]/20 pb-4">
-                                    <h2 className="text-2xl font-bold text-[var(--cf-dark)]">{category.category_name}</h2>
-                                    {/* <p className="text-[var(--cf-secondary)] text-sm">{category.description}</p> */}
+                                    <h2 className="text-2xl font-bold text-[var(--cf-dark)]">
+                                        {category.category_name}
+                                    </h2>
                                 </div>
 
                                 {/* Product List */}
@@ -256,7 +301,9 @@ function MenuPage() {
                                         ))
                                     ) : (
                                         <div className="px-6 py-10 text-center bg-[var(--cf-surface)] rounded-xl">
-                                            <span className="material-icons-outlined text-4xl text-[var(--cf-secondary)]/30 mb-2">inventory_2</span>
+                                            <span className="material-icons-outlined text-4xl text-[var(--cf-secondary)]/30 mb-2">
+                                                inventory_2
+                                            </span>
                                             <p className="text-[var(--cf-secondary)] text-base">
                                                 Chưa có sản phẩm trong danh mục này
                                             </p>
@@ -265,7 +312,8 @@ function MenuPage() {
                                 </div>
                             </div>
                         );
-                    })}
+                    })
+                )}
             </section>
 
         </div>
