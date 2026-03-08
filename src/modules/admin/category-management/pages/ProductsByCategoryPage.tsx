@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Search, Package, Edit, Trash2, Plus, RotateCcw } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw } from "lucide-react";
 import { searchProductCategoryFranchises, type ProductCategoryFranchise } from "../api/product-category-franchise.api";
+import { getCategoryFranchiseById } from "../api/category-franchise.api";
 import { useProductCategoryActions } from "../hooks/useProductCategoryActions.hook";
-import { AddProductToFranchiseDrawer } from "@/modules/admin/product-management";
 import EditProductCategoryDrawer from "../components/EditProductCategoryDrawer";
+import { getFranchiseId, useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { ROUTER_URL } from "@/routes/router.const";
 
 interface DeleteModal {
@@ -16,20 +17,31 @@ interface DeleteModal {
 export default function ProductsByCategoryPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const state = location.state as {
-    categoryFranchiseId: string;
-    categoryId: string;
-    categoryName: string;
-    franchiseId: string;
-  };
+  const params = useParams<{ categoryId: string }>();
+  const franchiseId = useAdminAuthStore((state) => getFranchiseId(state));
+
+  const state = (location.state as {
+    categoryFranchiseId?: string;
+    categoryId?: string;
+    categoryName?: string;
+    franchiseId?: string;
+  } | null) ?? null;
+
+  const [categoryContext, setCategoryContext] = useState({
+    categoryFranchiseId: state?.categoryFranchiseId || params.categoryId || "",
+    categoryId: state?.categoryId || "",
+    categoryName: state?.categoryName || "",
+    franchiseId: state?.franchiseId || franchiseId || "",
+  });
+  const [isLoadingCategoryContext, setIsLoadingCategoryContext] = useState(
+    Boolean(params.categoryId && (!state?.categoryId || !state?.categoryName))
+  );
 
   const [products, setProducts] = useState<ProductCategoryFranchise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [deleteModal, setDeleteModal] = useState<DeleteModal>({ isOpen: false, productId: "", productName: "" });
-  const [isAddDrawerOpen, setIsAddDrawerOpen] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductCategoryFranchise | null>(null);
 
@@ -37,8 +49,45 @@ export default function ProductsByCategoryPage() {
     fetchProducts();
   });
 
+  useEffect(() => {
+    const routeCategoryFranchiseId = params.categoryId || "";
+
+    setCategoryContext((prev) => ({
+      categoryFranchiseId: state?.categoryFranchiseId || routeCategoryFranchiseId,
+      categoryId: state?.categoryId || prev.categoryId,
+      categoryName: state?.categoryName || prev.categoryName,
+      franchiseId: state?.franchiseId || prev.franchiseId || franchiseId || "",
+    }));
+
+    if (!routeCategoryFranchiseId || (state?.categoryId && state?.categoryName)) {
+      setIsLoadingCategoryContext(false);
+      return;
+    }
+
+    const loadCategoryContext = async () => {
+      try {
+        setIsLoadingCategoryContext(true);
+        const categoryFranchise = await getCategoryFranchiseById(routeCategoryFranchiseId);
+        setCategoryContext({
+          categoryFranchiseId: categoryFranchise.id,
+          categoryId: categoryFranchise.category_id,
+          categoryName: categoryFranchise.category_name,
+          franchiseId: categoryFranchise.franchise_id,
+        });
+      } catch (error) {
+        console.error("Failed to load category context:", error);
+      } finally {
+        setIsLoadingCategoryContext(false);
+      }
+    };
+
+    void loadCategoryContext();
+  }, [params.categoryId, state?.categoryFranchiseId, state?.categoryId, state?.categoryName]);
+
   const fetchProducts = async () => {
-    if (!state?.categoryId || !state?.franchiseId) {
+    const effectiveFranchiseId = categoryContext.franchiseId || franchiseId;
+
+    if (!categoryContext.categoryId || !effectiveFranchiseId) {
       setIsLoading(false);
       return;
     }
@@ -48,10 +97,8 @@ export default function ProductsByCategoryPage() {
       
       const response = await searchProductCategoryFranchises({
         searchCondition: {
-          franchise_id: state.franchiseId,
-          category_id: state.categoryId,
-          product_id: "",
-          is_active: "",
+          franchise_id: effectiveFranchiseId,
+          category_id: categoryContext.categoryId,
           is_deleted: showDeleted,
         },
         pageInfo: {
@@ -69,8 +116,8 @@ export default function ProductsByCategoryPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, [state?.categoryFranchiseId, showDeleted]);
+    void fetchProducts();
+  }, [categoryContext.categoryFranchiseId, categoryContext.categoryId, categoryContext.franchiseId, franchiseId, showDeleted]);
 
   const handleBack = () => {
     navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.CATEGORY}`);
@@ -102,7 +149,7 @@ export default function ProductsByCategoryPage() {
     item.product_name?.toLowerCase().includes(keyword.toLowerCase())
   );
 
-  if (isLoading) {
+  if (isLoading || isLoadingCategoryContext) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -113,7 +160,7 @@ export default function ProductsByCategoryPage() {
     );
   }
 
-  if (!state?.categoryFranchiseId) {
+  if (!categoryContext.categoryFranchiseId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -145,7 +192,7 @@ export default function ProductsByCategoryPage() {
               </button>
               <span className="text-slate-400 text-sm font-medium">/</span>
               <span className="text-slate-900 text-sm font-semibold">
-                {state.categoryName || "Category"}
+                {categoryContext.categoryName || "Category"}
               </span>
             </div>
 
@@ -153,10 +200,10 @@ export default function ProductsByCategoryPage() {
             <div className="flex items-center justify-between gap-4 mb-8">
               <div className="flex flex-col">
                 <h1 className="text-slate-900 text-3xl font-bold">
-                  {state.categoryName} Products
+                  {categoryContext.categoryName} Products
                 </h1>
                 <p className="text-slate-500 text-sm mt-1">
-                  Manage all products within the {state.categoryName} category
+                  Manage all products within the {categoryContext.categoryName} category
                 </p>
               </div>
               <button
@@ -177,7 +224,7 @@ export default function ProductsByCategoryPage() {
                     <Search className="text-slate-400" size={20} />
                     <input
                       className="w-full bg-transparent border-none text-slate-900 focus:ring-0 placeholder:text-slate-400 px-2 py-2.5 text-sm outline-none"
-                      placeholder={`Search products in ${state.categoryName}...`}
+                      placeholder={`Search products in ${categoryContext.categoryName}...`}
                       value={keyword}
                       onChange={(e) => setKeyword(e.target.value)}
                     />
@@ -197,13 +244,6 @@ export default function ProductsByCategoryPage() {
                     <Trash2 size={16} />
                     <span>{showDeleted ? "Hide Deleted" : "Show Deleted"}</span>
                   </button>
-                  <button
-                    onClick={() => setIsAddDrawerOpen(true)}
-                    className="flex h-10 items-center gap-2 rounded-lg bg-[#8B5A2B] text-white px-6 hover:bg-[#6d4622] transition-colors shadow-sm font-semibold text-sm ml-2"
-                  >
-                    <Plus size={18} />
-                    Add Product
-                  </button>
                 </div>
               </div>
             </div>
@@ -220,12 +260,6 @@ export default function ProductsByCategoryPage() {
                     ? "Try adjusting your search terms"
                     : "There are no products in this category yet"}
                 </p>
-                <button
-                  className="px-6 py-2.5 bg-[#8B5A2B] text-white rounded-lg hover:bg-[#6d4622] transition-colors font-medium"
-                  onClick={() => setIsAddDrawerOpen(true)}
-                >
-                  Add First Product
-                </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -377,18 +411,6 @@ export default function ProductsByCategoryPage() {
           </div>
         </div>
       )}
-
-      {/* Add Product to Franchise Drawer */}
-      <AddProductToFranchiseDrawer
-        isOpen={isAddDrawerOpen}
-        onClose={() => setIsAddDrawerOpen(false)}
-        onSuccess={() => {
-          setIsAddDrawerOpen(false);
-          fetchProducts();
-        }}
-        categoryFranchiseId={state?.categoryFranchiseId}
-      />
-
       {/* Edit Product Category Drawer */}
       <EditProductCategoryDrawer
         isOpen={isEditDrawerOpen}
