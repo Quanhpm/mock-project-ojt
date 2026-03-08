@@ -18,6 +18,7 @@ export default function CategoryCreateDrawer({
   isOpen,
   onClose,
   onSuccess,
+  franchiseId,
 }: CategoryCreateDrawerProps) {
   const authFranchiseId = useAdminAuthStore((state) => getFranchiseId(state));
   const roleCode = useAdminAuthStore((state) => getRoleCode(state));
@@ -99,14 +100,14 @@ export default function CategoryCreateDrawer({
 
   // Reset form when drawer opens
   useEffect(() => {
-    if (isOpen && isGlobalRole) {
+    if (isOpen) {
       setFormData({
-        franchise_id: "",
+        franchise_id: franchiseId || "",
         category_id: "",
         display_order: 1,
       });
     }
-  }, [isOpen, isGlobalRole]);
+  }, [isOpen, franchiseId]);
 
   const validateForm = () => {
     const newErrors = {
@@ -260,19 +261,18 @@ export default function CategoryCreateDrawer({
                         onChange={(e) =>
                           setFormData({ ...formData, franchise_id: e.target.value })
                         }
-                        disabled={isLoadingFranchises || loadFranchisesError}
-                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${
-                          errors.franchise_id
-                            ? "border-red-300 focus:ring-red-200 focus:border-red-500"
-                            : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
-                        } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+                        disabled={!!franchiseId || isLoadingFranchises || loadFranchisesError}
+                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.franchise_id
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                          : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                          } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
                       >
                         <option value="">
                           {isLoadingFranchises
                             ? "Loading franchises..."
                             : loadFranchisesError
-                            ? "Failed to load franchises"
-                            : "Select a franchise..."}
+                              ? "Failed to load franchises"
+                              : "Select a franchise..."}
                         </option>
                         {franchises.map((franchise) => (
                           <option key={franchise.value} value={franchise.value}>
@@ -323,18 +323,17 @@ export default function CategoryCreateDrawer({
                           setFormData({ ...formData, category_id: e.target.value })
                         }
                         disabled={isLoadingCategories || loadCategoriesError}
-                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${
-                          errors.category_id
-                            ? "border-red-300 focus:ring-red-200 focus:border-red-500"
-                            : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
-                        } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.category_id
+                          ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                          : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                          } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
                       >
                         <option value="">
                           {isLoadingCategories
                             ? "Loading categories..."
                             : loadCategoriesError
-                            ? "Failed to load categories"
-                            : "Select a category..."}
+                              ? "Failed to load categories"
+                              : "Select a category..."}
                         </option>
                         {categories.map((cat) => (
                           <option key={cat.value} value={cat.value}>
@@ -390,11 +389,10 @@ export default function CategoryCreateDrawer({
                       })
                     }
                     min="1"
-                    className={`w-full h-11 px-4 rounded-lg border ${
-                      errors.display_order
-                        ? "border-red-300 focus:ring-red-200 focus:border-red-500"
-                        : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
-                    } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors`}
+                    className={`w-full h-11 px-4 rounded-lg border ${errors.display_order
+                      ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                      : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                      } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors`}
                   />
                   {errors.display_order && (
                     <p className="text-xs text-red-500 mt-1">{errors.display_order}</p>
