@@ -1,34 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  mockProducts,
-  mockFranchises,
-} from "../../../../mockdata";
-import inventory from "../../../../mockdata/inventory.json";
-import productFranchise from "../../../../mockdata/product_franchise.json";
+import { useGetInventories } from "./hooks/useGetInventories";
+import { useDeleteInventory } from "./hooks/useDeleteInventory";
+import { useRestoreInventory } from "./hooks/useRestoreInventory";
+import { useAdjustInventory } from "./hooks/useAdjustInventory";
+import { useGetInventoryLogs } from "./hooks/useGetInventoryLogs";
+import type { InventoryItem, InventorySearchPayload } from "./inventory.types";
 import InventoryDelete from "./InventoryDelete";
-
-// Helper functions to work with normalized data
-const getProductName = (productFranchiseId: number) => {
-  const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-  if (!pf) return "Unknown Product";
-  const product = mockProducts.find(p => p.id === pf.product_id);
-  return product?.name || "Unknown Product";
-};
-
-const getFranchiseName = (productFranchiseId: number) => {
-  const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-  if (!pf) return "Unknown Franchise";
-  const franchise = mockFranchises.find(f => f.id === pf.franchise_id);
-  return franchise?.name || "Unknown Franchise";
-};
-
-const getProductSKU = (productFranchiseId: number) => {
-  const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-  if (!pf) return "";
-  const product = mockProducts.find(p => p.id === pf.product_id);
-  return product?.SKU || "";
-};
 
 const getStockStatus = (quantity: number, alertThreshold: number) => {
   if (quantity === 0) {
@@ -43,74 +21,102 @@ const getStockStatus = (quantity: number, alertThreshold: number) => {
 export default function InventoryTable() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFranchise, setSelectedFranchise] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [inventoryStatus, setInventoryStatus] = useState<Record<number, boolean>>(
-    inventory.reduce((acc, item) => ({
-      ...acc,
-      [item.id]: item.is_active
-    }), {})
-  );
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; inventoryId: number; productName: string }>({
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; inventoryId: string; productName: string }>({
     isOpen: false,
-    inventoryId: 0,
+    inventoryId: "",
     productName: ""
   });
-  const itemsPerPage = 5;
+  const [adjustPopover, setAdjustPopover] = useState<{ open: boolean; item: InventoryItem | null }>({
+    open: false, item: null
+  });
+  const [popoverIncrease, setPopoverIncrease] = useState("");
+  const [popoverDecrease, setPopoverDecrease] = useState("");
+  const [popoverReason, setPopoverReason] = useState("");
+  const [logsModal, setLogsModal] = useState<{ open: boolean; inventoryId: string; productName: string }>({
+    open: false, inventoryId: "", productName: ""
+  });
 
-  const filteredInventory = inventory.filter(item => {
-    if (!item.is_active || item.is_deleted) return false;
+  const itemsPerPage = 7;
 
-    // Filter by selected franchise (must select a franchise to see data)
-    const pf = productFranchise.find(pf => pf.id === item.product_franchise_id);
-    if (selectedFranchise === null || pf?.franchise_id !== selectedFranchise) {
-      return false;
-    }
+  const { inventories, isLoading, totalItems, totalPages, refetch } = useGetInventories();
+  const { deleteInventory, isDeleting } = useDeleteInventory();
+  const { restoreInventory } = useRestoreInventory();
+  const { adjustInventory, isAdjusting } = useAdjustInventory();
+  const { logs, isLoading: isLogsLoading, fetchLogs } = useGetInventoryLogs();
 
-    // Filter by search term (product name or SKU)
-    const productName = getProductName(item.product_franchise_id);
-    const productSKU = getProductSKU(item.product_franchise_id);
-    const matchesSearch = searchTerm === "" || 
-      productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      productSKU.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    // Filter by status
+  const buildPayload = (page: number): InventorySearchPayload => ({
+    searchCondition: { is_deleted: false },
+    pageInfo: { pageNum: page, pageSize: itemsPerPage },
+  });
+
+  useEffect(() => {
+    refetch(buildPayload(currentPage));
+  }, [currentPage]);
+
+  // Client-side filter by search term and status
+  const filteredInventory = inventories.filter(item => {
+    const productName = item.product_name ?? "";
+    const matchesSearch =
+      searchTerm === "" ||
+      productName.toLowerCase().includes(searchTerm.toLowerCase());
+
     const stockStatus = getStockStatus(item.quantity, item.alert_threshold);
-    const matchesStatus = statusFilter === "all" || 
+    const matchesStatus =
+      statusFilter === "all" ||
       (statusFilter === "in-stock" && stockStatus.label === "In Stock") ||
       (statusFilter === "low-stock" && stockStatus.label === "Low Stock") ||
       (statusFilter === "out-of-stock" && stockStatus.label === "Out of Stock");
-    
+
     return matchesSearch && matchesStatus;
   });
-
-  const totalPages = Math.ceil(filteredInventory.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentInventory = filteredInventory.slice(startIndex, startIndex + itemsPerPage);
 
   const handleClearFilters = () => {
     setSearchTerm("");
     setStatusFilter("all");
   };
 
-  const handleEdit = (inventoryId: number) => {
-    navigate(`/admin/inventory/edit/${inventoryId}`);
+  const handleOpenAdjust = (_e: React.MouseEvent<HTMLButtonElement>, item: InventoryItem) => {
+    setAdjustPopover({ open: true, item });
+    setPopoverIncrease("");
+    setPopoverDecrease("");
+    setPopoverReason("");
   };
 
-  const handleDelete = (inventoryId: number) => {
-    const item = inventory.find(i => i.id === inventoryId);
-    const productName = item ? getProductName(item.product_franchise_id) : "Unknown Product";
-    setDeleteModal({
-      isOpen: true,
-      inventoryId,
-      productName
-    });
+  const handleAdjustSubmit = () => {
+    if (!adjustPopover.item) return;
+    const change = (Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0);
+    if (change === 0) return;
+    adjustInventory(
+      { product_franchise_id: adjustPopover.item.product_franchise_id, change, reason: popoverReason.trim() || "Điều chỉnh số lượng" },
+      () => {
+        setAdjustPopover({ open: false, item: null });
+        refetch(buildPayload(currentPage));
+      }
+    );
+  };
+
+  const handleViewLogs = (inventoryId: string, productName: string) => {
+    setLogsModal({ open: true, inventoryId, productName });
+    fetchLogs(inventoryId);
+  };
+
+  const handleDelete = (inventoryId: string, productName: string) => {
+    setDeleteModal({ isOpen: true, inventoryId, productName });
   };
 
   const handleDeleteConfirm = () => {
-    console.log("Delete inventory:", deleteModal.inventoryId);
-    alert(`Inventory item #${deleteModal.inventoryId} has been deleted successfully!`);
+    deleteInventory(deleteModal.inventoryId, () => {
+      setDeleteModal({ isOpen: false, inventoryId: "", productName: "" });
+      refetch(buildPayload(currentPage));
+    });
+  };
+
+  const handleRestore = (inventoryId: string) => {
+    restoreInventory(inventoryId, () => {
+      refetch(buildPayload(currentPage));
+    });
   };
 
   return (
@@ -133,7 +139,7 @@ export default function InventoryTable() {
               <h2 style={{ fontSize: "32px", fontWeight: "900", letterSpacing: "-0.025em", color: "#212529", margin: 0 }}>
                 Inventory Management
               </h2>
-              <p style={{ color: "#6c757d", margin: 0 }}>Total Items: {inventory.filter(i => i.is_active && !i.is_deleted).length}</p>
+              <p style={{ color: "#6c757d", margin: 0 }}>Total Items: {totalItems}</p>
             </div>
             <button
               onClick={() => navigate('/admin/inventory/create')}
@@ -161,11 +167,11 @@ export default function InventoryTable() {
           </div>
         </header>
 
-        {/* Scrollable Content Area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "0 32px 32px" }}>
+        {/* Content Area */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 32px 32px", gap: "16px", minHeight: 0 }}>
           {/* Filters & Franchise Selector */}
-          <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", marginBottom: "20px", position: "sticky", top: 0, zIndex: 20 }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
+          <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", flexShrink: 0, zIndex: 20 }}>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               {/* Search */}
               <div style={{ flex: 1, position: "relative" }}>
                 <div style={{ position: "absolute", top: "50%", left: "12px", transform: "translateY(-50%)", pointerEvents: "none", color: "#6c757d" }}>
@@ -197,20 +203,16 @@ export default function InventoryTable() {
               </button>
             </div>
 
-            {/* Franchise Buttons - Below Search */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {mockFranchises.filter(f => f.is_active && !f.is_deleted).map((franchise) => (
-                <button key={franchise.id} onClick={() => { setSelectedFranchise(franchise.id); setCurrentPage(1); }} style={{ padding: "6px 14px", borderRadius: "6px", border: selectedFranchise === franchise.id ? "2px solid #8B4513" : "1px solid #e9ecef", backgroundColor: selectedFranchise === franchise.id ? "#8B4513" : "white", color: selectedFranchise === franchise.id ? "white" : "#495057", fontSize: "13px", fontWeight: "500", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { if (selectedFranchise !== franchise.id) { e.currentTarget.style.borderColor = "#8B4513"; e.currentTarget.style.backgroundColor = "#f8f5f0"; } }} onMouseLeave={(e) => { if (selectedFranchise !== franchise.id) { e.currentTarget.style.borderColor = "#e9ecef"; e.currentTarget.style.backgroundColor = "white"; } }}>
-                  {franchise.name}
-                </button>
-              ))}
-            </div>
           </div>
 
-          {/* Show table only when franchise is selected */}
-          {selectedFranchise && (
-            <div style={{ backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden" }}>
-              <div style={{ overflowX: "auto" }}>
+          {/* Table */}
+          {isLoading ? (
+            <div style={{ backgroundColor: "white", padding: "60px 20px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", textAlign: "center", flexShrink: 0 }}>
+              <p style={{ color: "#6c757d", fontSize: "16px" }}>Loading...</p>
+            </div>
+          ) : filteredInventory.length > 0 ? (
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden", minHeight: 0 }}>
+              <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
@@ -224,28 +226,20 @@ export default function InventoryTable() {
                   </tr>
                 </thead>
                 <tbody style={{ borderTop: "1px solid #e9ecef" }}>
-                  {currentInventory.map((item) => {
-                    const productName = getProductName(item.product_franchise_id);
-                    const productSKU = getProductSKU(item.product_franchise_id);
-                    const franchiseName = getFranchiseName(item.product_franchise_id);
-
+                  {filteredInventory.map((item) => {
+                    const stockStatus = getStockStatus(item.quantity, item.alert_threshold);
                     return (
                       <tr key={item.id} style={{ borderBottom: "1px solid #e9ecef", transition: "background-color 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f8f9fa"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
                         <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>
-                          #{item.id}
+                          #{item.id.slice(-6)}
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                            <span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>
-                              {productName}
-                            </span>
-                            <span style={{ fontSize: "12px", color: "#6c757d" }}>
-                              SKU: {productSKU}
-                            </span>
-                          </div>
+                          <span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>
+                            {item.product_name ?? item.product_id}
+                          </span>
                         </td>
                         <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>
-                          {franchiseName}
+                          {item.franchise_name ?? item.franchise_id}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <span style={{ fontSize: "14px", fontWeight: "600", color: item.quantity <= item.alert_threshold ? "#dc3545" : "#212529" }}>{item.quantity}</span>
@@ -254,21 +248,30 @@ export default function InventoryTable() {
                           {item.alert_threshold}
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <label style={{ position: "relative", display: "inline-block", width: "44px", height: "24px", cursor: "pointer" }}>
-                            <input type="checkbox" checked={inventoryStatus[item.id]} onChange={() => setInventoryStatus(prev => ({ ...prev, [item.id]: !prev[item.id] }))} style={{ opacity: 0, width: 0, height: 0 }} />
-                            <span style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: inventoryStatus[item.id] ? "#8B4513" : "#ccc", borderRadius: "24px", transition: "background-color 0.3s" }}>
-                              <span style={{ position: "absolute", content: "", height: "18px", width: "18px", left: inventoryStatus[item.id] ? "23px" : "3px", bottom: "3px", backgroundColor: "white", borderRadius: "50%", transition: "left 0.3s" }} />
-                            </span>
-                          </label>
+                          <span style={{ fontSize: "12px", fontWeight: "600", padding: "3px 10px", borderRadius: "12px", backgroundColor: stockStatus.label === "In Stock" ? "#d4edda" : stockStatus.label === "Low Stock" ? "#fff3cd" : "#f8d7da", color: stockStatus.color }}>
+                            {stockStatus.label}
+                          </span>
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                            <button onClick={() => handleEdit(item.id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(25, 127, 230, 0.05)"; e.currentTarget.style.color = "#197fe6"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>edit_square</span>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                            {/* Adjust quantity */}
+                            <button title="Điều chỉnh số lượng" onClick={(e) => handleOpenAdjust(e, item)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)"; e.currentTarget.style.color = "#8B4513"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
                             </button>
-                            <button onClick={() => handleDelete(item.id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fee"; e.currentTarget.style.color = "#ef4444"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
+                            {/* View logs */}
+                            <button title="Xem lịch sử" onClick={() => handleViewLogs(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(25,127,230,0.07)"; e.currentTarget.style.color = "#197fe6"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>history</span>
                             </button>
+                            {/* Delete / Restore */}
+                            {item.is_deleted ? (
+                              <button title="Khôi phục" onClick={() => handleRestore(item.id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e8f5e9"; e.currentTarget.style.color = "#28a745"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>restore</span>
+                              </button>
+                            ) : (
+                              <button title="Xóa" onClick={() => handleDelete(item.id, item.product_name ?? item.product_id)} disabled={isDeleting} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: isDeleting ? "not-allowed" : "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { if (!isDeleting) { e.currentTarget.style.backgroundColor = "#fee"; e.currentTarget.style.color = "#ef4444"; } }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -283,7 +286,7 @@ export default function InventoryTable() {
               <div style={{ display: "flex", flex: 1, alignItems: "center", justifyContent: "space-between" }}>
                 <div>
                   <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
-                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredInventory.length)} of {filteredInventory.length} results
+                    Page {currentPage} of {totalPages} — {totalItems} results
                   </p>
                 </div>
                 <div>
@@ -292,35 +295,136 @@ export default function InventoryTable() {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button key={page} onClick={() => setCurrentPage(page)} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: page === currentPage ? "white" : "#495057", backgroundColor: page === currentPage ? "#8B4513" : "white", border: "1px solid #dee2e6", borderLeft: "none", cursor: "pointer", transition: "all 0.2s" }}>{page}</button>
                     ))}
-                    <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: currentPage === totalPages ? "#adb5bd" : "#495057", backgroundColor: "white", border: "1px solid #dee2e6", borderLeft: "none", borderRadius: "0 6px 6px 0", cursor: currentPage === totalPages ? "not-allowed" : "pointer", transition: "all 0.2s" }}>Next</button>
+                    <button onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: currentPage === totalPages ? "#adb5bd" : "#495057", backgroundColor: "white", border: "1px solid #dee2e6", borderLeft: "none", borderRadius: "0 6px 6px 0", cursor: currentPage === totalPages ? "not-allowed" : "pointer", transition: "all 0.2s" }}>Next</button>
                   </nav>
                 </div>
               </div>
             </div>
           </div>
-          )}
-
-          {/* Message when no franchise selected */}
-          {!selectedFranchise && (
+          ) : (
             <div style={{ backgroundColor: "white", padding: "60px 20px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", textAlign: "center" }}>
-              <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>📍</div>
+              <div style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}>📦</div>
               <h3 style={{ margin: "0 0 8px 0", fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-                Select a Franchise
+                No Inventory Items
               </h3>
               <p style={{ margin: 0, fontSize: "14px", color: "#6c757d" }}>
-                Please select a franchise above to view inventory items
+                No inventory items found. Try adjusting your filters.
               </p>
             </div>
           )}
         </div>
       </main>
 
+      {/* Adjust Quantity Modal */}
+      {adjustPopover.open && adjustPopover.item && (
+        <div onClick={() => setAdjustPopover({ open: false, item: null })} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 998, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", boxShadow: "0 20px 40px rgba(0,0,0,0.18)", width: "90%", maxWidth: "400px", padding: "0", overflow: "hidden" }}>
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #e9ecef", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#212529" }}>Điều chỉnh số lượng</h3>
+              <button onClick={() => setAdjustPopover({ open: false, item: null })} style={{ background: "none", border: "none", cursor: "pointer", color: "#6c757d", fontSize: "20px", lineHeight: 1, padding: "0 2px" }}>✕</button>
+            </div>
+            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Product info */}
+            <div style={{ backgroundColor: "#f8f9fa", borderRadius: "8px", padding: "10px 14px", fontSize: "13px" }}>
+              <span style={{ fontWeight: "600", color: "#212529" }}>{adjustPopover.item.product_name ?? adjustPopover.item.product_id}</span><br />
+              <span style={{ color: "#6c757d" }}>Hiện tại: </span>
+              <strong style={{ color: "#212529" }}>{adjustPopover.item.quantity}</strong>
+              <span style={{ color: "#6c757d" }}> · Ngưỡng: {adjustPopover.item.alert_threshold}</span>
+            </div>
+            {/* Inputs */}
+            <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#28a745", marginBottom: "6px" }}>▲ Tăng</label>
+                <input type="number" min="0" value={popoverIncrease} onChange={(e) => setPopoverIncrease(e.target.value)} placeholder="0" style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: `2px solid ${popoverIncrease ? "#28a745" : "#dee2e6"}`, fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#dc3545", marginBottom: "6px" }}>▼ Giảm</label>
+                <input type="number" min="0" value={popoverDecrease} onChange={(e) => setPopoverDecrease(e.target.value)} placeholder="0" style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: `2px solid ${popoverDecrease ? "#dc3545" : "#dee2e6"}`, fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+              </div>
+            </div>
+            {/* Preview result */}
+            {(popoverIncrease !== "" || popoverDecrease !== "") && (() => {
+              const change = (Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0);
+              const newQty = adjustPopover.item!.quantity + change;
+              return (
+                <div style={{ borderRadius: "8px", padding: "12px 14px", fontSize: "14px", fontWeight: "600", backgroundColor: change > 0 ? "#d4edda" : change < 0 ? "#f8d7da" : "#e2e3e5", color: change > 0 ? "#155724" : change < 0 ? "#721c24" : "#383d41" }}>
+                  Số lượng sau điều chỉnh: <strong>{adjustPopover.item!.quantity}</strong> → <strong style={{ fontSize: "16px" }}>{newQty}</strong>
+                  <span style={{ fontWeight: "400", marginLeft: "6px", fontSize: "13px" }}>({change > 0 ? "+" : ""}{change})</span>
+                </div>
+              );
+            })()}
+            {/* Reason */}
+            <div>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#495057", marginBottom: "6px" }}>Lý do</label>
+              <input type="text" value={popoverReason} onChange={(e) => setPopoverReason(e.target.value)} placeholder="Nhập lý do điều chỉnh..." style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #dee2e6", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+            </div>
+            </div>
+            {/* Footer */}
+            <div style={{ padding: "16px 24px", borderTop: "1px solid #e9ecef", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+              <button onClick={() => setAdjustPopover({ open: false, item: null })} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #dee2e6", backgroundColor: "white", cursor: "pointer", fontSize: "14px" }}>Hủy</button>
+              <button
+                disabled={isAdjusting || (popoverIncrease === "" && popoverDecrease === "") || ((Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0) === 0)}
+                onClick={handleAdjustSubmit}
+                style={{ padding: "8px 16px", borderRadius: "8px", border: "none", backgroundColor: "#8B4513", color: "white", cursor: isAdjusting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "600", opacity: isAdjusting ? 0.7 : 1 }}
+              >
+                {isAdjusting ? "Đang xử lý..." : "Xác nhận"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Logs Modal */}
+      {logsModal.open && (
+        <div onClick={() => setLogsModal({ open: false, inventoryId: "", productName: "" })} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", width: "90%", maxWidth: "600px", maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #e9ecef", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+              <div>
+                <h3 style={{ margin: "0 0 2px", fontSize: "18px", fontWeight: "700" }}>Lịch sử điều chỉnh</h3>
+                <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>{logsModal.productName}</p>
+              </div>
+              <button onClick={() => setLogsModal({ open: false, inventoryId: "", productName: "" })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#6c757d" }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+              {isLogsLoading ? (
+                <p style={{ color: "#6c757d", textAlign: "center", margin: 0 }}>Đang tải lịch sử...</p>
+              ) : logs.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 0" }}>
+                  <div style={{ fontSize: "40px", opacity: 0.3, marginBottom: "12px" }}>📋</div>
+                  <p style={{ color: "#6c757d", margin: 0 }}>Chưa có lịch sử điều chỉnh</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                  {logs.map((log) => (
+                    <div key={log._id} style={{ display: "flex", gap: "12px", alignItems: "flex-start", padding: "10px 0", borderBottom: "1px solid #f0f0f0" }}>
+                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, backgroundColor: log.change > 0 ? "#d4edda" : "#f8d7da", color: log.change > 0 ? "#28a745" : "#dc3545", fontWeight: "700", fontSize: "13px" }}>
+                        {log.change > 0 ? "▲" : "▼"}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                          <span style={{ fontSize: "14px", fontWeight: "700", color: log.change > 0 ? "#28a745" : "#dc3545" }}>
+                            {log.change > 0 ? "+" : ""}{log.change}
+                          </span>
+                          <span style={{ fontSize: "12px", color: "#6c757d" }}>{new Date(log.created_at).toLocaleString("vi-VN")}</span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>{log.type} · {log.reference_type}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete Modal */}
       <InventoryDelete
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, inventoryId: 0, productName: "" })}
+        onClose={() => setDeleteModal({ isOpen: false, inventoryId: "", productName: "" })}
         onConfirm={handleDeleteConfirm}
-        inventoryId={deleteModal.inventoryId.toString()}
+        inventoryId={deleteModal.inventoryId}
         productName={deleteModal.productName}
       />
     </div>
