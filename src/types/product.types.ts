@@ -16,6 +16,15 @@ export interface Product {
   updatedAt?: string;
 }
 
+export interface ProductTableItem extends Product {
+  tableRowId: string;
+  masterProductId: string;
+  displayPrice: number;
+  franchiseName?: string;
+  sizeLabel?: string;
+  sourceType: "MASTER_PRODUCT" | "PRODUCT_FRANCHISE";
+}
+
 // Create product payload
 export interface ProductCreatePayload {
   SKU: string;
@@ -36,6 +45,7 @@ export interface ProductUpdatePayload extends Partial<ProductCreatePayload> {}
 export interface ProductSearchPayload {
   searchCondition?: {
     keyword?: string;
+    franchise_id?: string;
     min_price?: number;
     max_price?: number;
     is_active?: boolean;

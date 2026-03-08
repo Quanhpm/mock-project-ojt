@@ -92,6 +92,10 @@ function MenuPage() {
 
     // Thêm hiệu ứng active cho sidebar khi cuộn đến section tương ứng
     useEffect(() => {
+        if (categories.length > 0 && !activeCategory) {
+            setActiveCategory(categories[0].category_code);
+        }
+
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -173,7 +177,7 @@ function MenuPage() {
                                     key={item.category_code}
                                     onClick={() => scrollToSection(item.category_code)}
                                     className={`group relative flex items-center mb-5 mx-5 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
-                        ${activeCategory === item.category_code
+                                        ${activeCategory === item.category_code
                                             ? 'bg-[var(--cf-primary)] !text-white'
                                             : ''
                                         }

@@ -1,10 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
-import { productApi } from "../../../../apis/endpoints/product.api";
+import { searchProducts } from "../../../../apis/endpoints/product.api";
 import type {
-  Product,
+  ProductTableItem,
   ProductSearchPayload,
 } from "../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
+import {
+  getFranchiseId,
+  getTableScope,
+  useAdminAuthStore,
+  type TableScope,
+} from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
 // Search history stored in localStorage
 const SEARCH_HISTORY_KEY = "product_search_history";
@@ -21,7 +27,7 @@ interface SearchFilters {
 
 interface UseProductSearchReturn {
   // Data
-  products: Product[];
+  products: ProductTableItem[];
   isLoading: boolean;
   error: string | null;
   totalPages: number;
@@ -51,8 +57,18 @@ interface UseProductSearchReturn {
   setIsSearchDropdownOpen: (open: boolean) => void;
 }
 
-export const useProductSearch = (): UseProductSearchReturn => {
-  const [products, setProducts] = useState<Product[]>([]);
+interface UseProductSearchOptions {
+  tableScope?: TableScope;
+}
+
+export const useProductSearch = (
+  options?: UseProductSearchOptions,
+): UseProductSearchReturn => {
+  const authTableScope = useAdminAuthStore((state) => getTableScope(state));
+  const activeFranchiseId = useAdminAuthStore((state) => getFranchiseId(state));
+  const tableScope = options?.tableScope ?? authTableScope;
+
+  const [products, setProducts] = useState<ProductTableItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
@@ -72,8 +88,17 @@ export const useProductSearch = (): UseProductSearchReturn => {
 
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const previousFranchiseIdRef = useRef<string | null | undefined>(undefined);
+  const isInitializedRef = useRef(false);
 
   const { error: showError } = useToast();
+  const effectiveFranchiseId = useMemo(() => {
+    if (tableScope === "FRANCHISE_TABLE_SCOPE") {
+      return activeFranchiseId;
+    }
+
+    return filters.franchise_id?.trim() || "";
+  }, [activeFranchiseId, filters.franchise_id, tableScope]);
 
   // Load search history from localStorage
   useEffect(() => {
@@ -130,10 +155,6 @@ export const useProductSearch = (): UseProductSearchReturn => {
         addToHistory(filters.keyword.trim());
       }
 
-      if (filters.franchise_id) {
-        searchCondition.franchise_id = filters.franchise_id;
-      }
-
       if (filters.min_price) {
         searchCondition.min_price = Number(filters.min_price);
       }
@@ -154,16 +175,84 @@ export const useProductSearch = (): UseProductSearchReturn => {
         },
       };
 
-      const response = await productApi.searchProducts(payload);
+      if (tableScope === "GLOBAL_TABLE_SCOPE") {
+        if (effectiveFranchiseId) {
+          payload.searchCondition = {
+            ...payload.searchCondition,
+            franchise_id: effectiveFranchiseId,
+          };
+        }
 
-      if (response.success && response.data) {
-        setProducts(response.data);
-        setTotalPages(response.pageInfo?.totalPages || 0);
-        setTotalItems(response.pageInfo?.totalItems || 0);
+      const response = await searchProducts(payload);
+
+        if (response.success && response.data) {
+          setProducts(
+            response.data.map((product) => ({
+              ...product,
+              tableRowId: product.id,
+              masterProductId: product.id,
+              displayPrice: product.min_price,
+              sourceType: "MASTER_PRODUCT",
+            })),
+          );
+          setTotalPages(response.pageInfo?.totalPages || 0);
+          setTotalItems(response.pageInfo?.totalItems || 0);
+        } else {
+          setProducts([]);
+          setTotalPages(0);
+          setTotalItems(0);
+        }
       } else {
-        setProducts([]);
-        setTotalPages(0);
-        setTotalItems(0);
+        const response = await searchProductFranchises({
+          searchCondition: {
+            franchise_id: effectiveFranchiseId || undefined,
+            product_id: undefined,
+            size: undefined,
+            price_from: filters.min_price ? Number(filters.min_price) : undefined,
+            price_to: filters.max_price ? Number(filters.max_price) : undefined,
+            is_active:
+              filters.is_active !== "" ? filters.is_active === "true" : undefined,
+            is_deleted: filters.is_deleted,
+          },
+          pageInfo: {
+            pageNum: currentPage,
+            pageSize,
+          },
+        });
+
+        const keyword = filters.keyword.trim().toLowerCase();
+        const normalizedProducts = response.data
+          .filter((item) => {
+            if (!keyword) return true;
+
+            return [item.product_name, item.product_sku, item.size]
+              .filter(Boolean)
+              .some((value) => value!.toLowerCase().includes(keyword));
+          })
+          .map((item) => ({
+            id: item.product_id,
+            SKU: item.product_sku || "-",
+            name: item.product_name || "Unnamed product",
+            description: "",
+            content: "",
+            image_url: "https://placehold.co/80x80?text=Product",
+            images_url: [],
+            min_price: item.price_base,
+            max_price: item.price_base,
+            is_active: item.is_active,
+            is_deleted: item.is_deleted,
+            is_have_topping: false,
+            tableRowId: item.id,
+            masterProductId: item.product_id,
+            displayPrice: item.price_base,
+            franchiseName: item.franchise_name,
+            sizeLabel: item.size,
+            sourceType: "PRODUCT_FRANCHISE",
+          }));
+
+        setProducts(normalizedProducts);
+        setTotalPages(response.pageInfo?.totalPages || 0);
+        setTotalItems(response.pageInfo?.totalItems || normalizedProducts.length);
       }
     } catch (err) {
       const errorMessage =
@@ -176,25 +265,54 @@ export const useProductSearch = (): UseProductSearchReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters, currentPage, pageSize, addToHistory, showError]);
+  }, [
+    activeFranchiseId,
+    addToHistory,
+    currentPage,
+    effectiveFranchiseId,
+    filters,
+    pageSize,
+    showError,
+    tableScope,
+  ]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
     setFilters({
       keyword: "",
-      franchise_id: "",
+      franchise_id: tableScope === "GLOBAL_TABLE_SCOPE" ? "" : activeFranchiseId || "",
       min_price: "",
       max_price: "",
       is_active: "",
       is_deleted: false,
     });
     setCurrentPage(1);
+  }, [activeFranchiseId, tableScope]);
+
+  // Load initial products on mount (only once)
+  useEffect(() => {
+    if (!isInitializedRef.current) {
+      isInitializedRef.current = true;
+      void executeSearch();
+    }
   }, []);
 
-  // Load initial products on mount
   useEffect(() => {
-    executeSearch();
-  }, []);
+    if (tableScope !== "FRANCHISE_TABLE_SCOPE") {
+      previousFranchiseIdRef.current = activeFranchiseId;
+      return;
+    }
+
+    if (previousFranchiseIdRef.current === undefined) {
+      previousFranchiseIdRef.current = activeFranchiseId;
+      return;
+    }
+
+    if (previousFranchiseIdRef.current !== activeFranchiseId) {
+      previousFranchiseIdRef.current = activeFranchiseId;
+      setCurrentPage(1);
+    }
+  }, [activeFranchiseId, tableScope]);
 
   return {
     // Data

@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import { X, FolderPlus, Settings, Save, Lock } from "lucide-react";
+import { X, FolderPlus, Settings, Save, MapPin } from "lucide-react";
 import { getCategorySelectItems } from "../api/category-franchise.api";
 import { useCreateCategory } from "./hooks/useCreateCategory";
-import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { getFranchiseId, getRoleCode, useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { useToast } from "@/hooks/use-toast.hook";
+import { getFranchisesForSelect, type FranchiseSelectItem } from "@/apis/endpoints/user.api";
 import type { CategorySelectItem } from "../api/category-franchise.types";
 
 interface CategoryCreateDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  franchiseId?: string | null;
 }
 
 export default function CategoryCreateDrawer({
@@ -17,8 +19,9 @@ export default function CategoryCreateDrawer({
   onClose,
   onSuccess,
 }: CategoryCreateDrawerProps) {
-  const { activeContext, roles } = useAdminAuthStore();
-  const franchiseId = activeContext?.franchise_id || (roles.length > 0 ? roles[0].franchise_id : null);
+  const authFranchiseId = useAdminAuthStore((state) => getFranchiseId(state));
+  const roleCode = useAdminAuthStore((state) => getRoleCode(state));
+  const isGlobalRole = roleCode === "ADMIN" || roleCode === "MANAGER";
 
   const { createCategory, isCreating } = useCreateCategory();
   const { error: showError } = useToast();
@@ -27,15 +30,24 @@ export default function CategoryCreateDrawer({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [loadCategoriesError, setLoadCategoriesError] = useState(false);
 
+  const [franchises, setFranchises] = useState<FranchiseSelectItem[]>([]);
+  const [isLoadingFranchises, setIsLoadingFranchises] = useState(false);
+  const [loadFranchisesError, setLoadFranchisesError] = useState(false);
+
   const [formData, setFormData] = useState({
+    franchise_id: "",
     category_id: "",
     display_order: 1,
   });
 
   const [errors, setErrors] = useState({
+    franchise_id: "",
     category_id: "",
     display_order: "",
   });
+
+  // Determine effective franchise ID
+  const effectiveFranchiseId = isGlobalRole ? formData.franchise_id : authFranchiseId;
 
   // Load master categories
   useEffect(() => {
@@ -46,12 +58,13 @@ export default function CategoryCreateDrawer({
         setIsLoadingCategories(true);
         setLoadCategoriesError(false);
         const data = await getCategorySelectItems();
-        // API /categories/select already returns active categories only
         setCategories(data);
       } catch (error) {
         console.error("Failed to load categories:", error);
         setLoadCategoriesError(true);
-        showError("Không thể tải danh sách danh mục");
+        if (showError) {
+          showError("Không thể tải danh sách danh mục");
+        }
       } finally {
         setIsLoadingCategories(false);
       }
@@ -60,11 +73,51 @@ export default function CategoryCreateDrawer({
     loadCategories();
   }, [isOpen]);
 
+  // Load franchises for admin/manager
+  useEffect(() => {
+    if (!isOpen || !isGlobalRole) return;
+
+    const loadFranchises = async () => {
+      try {
+        setIsLoadingFranchises(true);
+        setLoadFranchisesError(false);
+        const data = await getFranchisesForSelect();
+        setFranchises(data ?? []);
+      } catch (error) {
+        console.error("Failed to load franchises:", error);
+        setLoadFranchisesError(true);
+        if (showError) {
+          showError("Không thể tải danh sách franchise");
+        }
+      } finally {
+        setIsLoadingFranchises(false);
+      }
+    };
+
+    loadFranchises();
+  }, [isOpen, isGlobalRole]);
+
+  // Reset form when drawer opens
+  useEffect(() => {
+    if (isOpen && isGlobalRole) {
+      setFormData({
+        franchise_id: "",
+        category_id: "",
+        display_order: 1,
+      });
+    }
+  }, [isOpen, isGlobalRole]);
+
   const validateForm = () => {
     const newErrors = {
+      franchise_id: "",
       category_id: "",
       display_order: "",
     };
+
+    if (isGlobalRole && !formData.franchise_id) {
+      newErrors.franchise_id = "Please select a franchise";
+    }
 
     if (!formData.category_id) {
       newErrors.category_id = "Please select a category";
@@ -75,11 +128,11 @@ export default function CategoryCreateDrawer({
     }
 
     setErrors(newErrors);
-    return !newErrors.category_id && !newErrors.display_order;
+    return !newErrors.franchise_id && !newErrors.category_id && !newErrors.display_order;
   };
 
   const handleSave = async () => {
-    if (!franchiseId) {
+    if (!effectiveFranchiseId) {
       return;
     }
 
@@ -89,24 +142,26 @@ export default function CategoryCreateDrawer({
 
     try {
       await createCategory({
-        franchise_id: franchiseId,
+        franchise_id: effectiveFranchiseId,
         category_id: formData.category_id,
         display_order: formData.display_order,
       });
 
+      setFormData({
+        franchise_id: "",
+        category_id: "",
+        display_order: 1,
+      });
       onSuccess?.();
       handleClose();
     } catch (error) {
-      // Error already handled by hook
+      console.error("Failed to create category:", error);
     }
   };
 
   const handleClose = () => {
-    setFormData({
-      category_id: "",
-      display_order: 1,
-    });
     setErrors({
+      franchise_id: "",
       category_id: "",
       display_order: "",
     });
@@ -115,7 +170,7 @@ export default function CategoryCreateDrawer({
 
   if (!isOpen) return null;
 
-  if (!franchiseId) {
+  if (!isGlobalRole && !authFranchiseId) {
     return (
       <>
         <div
@@ -180,12 +235,74 @@ export default function CategoryCreateDrawer({
 
         {/* Drawer Body */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-          {isLoadingCategories ? (
+          {isLoadingCategories || isLoadingFranchises ? (
             <div className="flex items-center justify-center py-12">
-              <p className="text-slate-600">Loading categories...</p>
+              <p className="text-slate-600">Loading...</p>
             </div>
           ) : (
             <>
+              {/* Franchise Selection (Admin/Manager only) */}
+              {isGlobalRole && (
+                <section className="space-y-5">
+                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
+                    <MapPin className="text-[#8B5A2B]" size={20} />
+                    <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
+                      Franchise Selection
+                    </h3>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                      Franchise <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={formData.franchise_id}
+                        onChange={(e) =>
+                          setFormData({ ...formData, franchise_id: e.target.value })
+                        }
+                        disabled={isLoadingFranchises || loadFranchisesError}
+                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${
+                          errors.franchise_id
+                            ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                            : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                        } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+                      >
+                        <option value="">
+                          {isLoadingFranchises
+                            ? "Loading franchises..."
+                            : loadFranchisesError
+                            ? "Failed to load franchises"
+                            : "Select a franchise..."}
+                        </option>
+                        {franchises.map((franchise) => (
+                          <option key={franchise.value} value={franchise.value}>
+                            {franchise.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
+                        <svg
+                          className="w-5 h-5 text-slate-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    {errors.franchise_id && (
+                      <p className="text-xs text-red-500 mt-1">{errors.franchise_id}</p>
+                    )}
+                  </div>
+                </section>
+              )}
+
               {/* Category Selection */}
               <section className="space-y-5">
                 <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
@@ -248,26 +365,6 @@ export default function CategoryCreateDrawer({
                       Choose from master categories to add to this franchise.
                     </p>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Franchise
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={franchiseId || "No franchise selected"}
-                        disabled
-                        className="w-full h-11 pl-4 pr-10 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                        <Lock className="text-slate-400" size={16} />
-                      </div>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Franchise is determined by your current context.
-                    </p>
-                  </div>
                 </div>
               </section>
 
@@ -327,7 +424,7 @@ export default function CategoryCreateDrawer({
                   <div className="text-sm text-blue-800">
                     <p className="font-medium mb-1">About Category Assignment</p>
                     <p className="text-blue-700">
-                      This will add an existing category to <strong>{franchiseId || "your franchise"}</strong>'s menu.
+                      This will add an existing category to the menu of your current franchise context.
                       You can add products to this category after creation.
                     </p>
                   </div>
