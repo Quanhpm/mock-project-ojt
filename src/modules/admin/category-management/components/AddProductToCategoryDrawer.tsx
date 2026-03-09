@@ -65,7 +65,7 @@ export default function AddProductToCategoryDrawer({
             pageInfo: {
               pageNum: 1,
               pageSize: 1000,
-            },
+            },  
           }),
           searchProductCategoryFranchises({
             searchCondition: {
