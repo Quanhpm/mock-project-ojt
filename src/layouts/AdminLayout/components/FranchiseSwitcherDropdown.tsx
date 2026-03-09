@@ -29,12 +29,17 @@ const FranchiseSwitcherDropdown: React.FC = () => {
   }
 
   // Determine current selection
-  const currentFranchiseId = activeContext?.franchiseId || null;
+  const currentFranchiseId = activeContext?.franchise_id || null;
+  const globalRole = roles.find((r) => r.scope === "GLOBAL");
+  const currentRole = franchiseRoles.find((r) => r.franchise_id === currentFranchiseId);
+  const currentDisplayRole = 
+    currentFranchiseId === null && activeContext?.scope === "GLOBAL"
+      ? globalRole
+      : currentRole;
   const currentLabel =
     currentFranchiseId === null && activeContext?.scope === "GLOBAL"
       ? "Global (Toàn hệ thống)"
-      : franchiseRoles.find((r) => r.franchise_id === currentFranchiseId)
-          ?.franchise_name || "Chọn chi nhánh";
+      : currentRole?.franchise_name || "Chọn chi nhánh";
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -105,9 +110,16 @@ const FranchiseSwitcherDropdown: React.FC = () => {
             style={{ color: THEME_COLORS.primary }}
             className="flex-shrink-0"
           />
-          <span className="text-sm font-medium text-gray-800 truncate">
-            {switching ? "Đang chuyển..." : currentLabel}
-          </span>
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-sm font-medium text-gray-800 truncate">
+              {switching ? "Đang chuyển..." : currentLabel}
+            </span>
+            {currentDisplayRole && (
+              <span className="text-xs text-gray-500 truncate">
+                {currentDisplayRole.role || "Không xác định"}
+              </span>
+            )}
+          </div>
         </div>
         <ChevronDown
           size={16}
@@ -137,15 +149,20 @@ const FranchiseSwitcherDropdown: React.FC = () => {
                 }
               `}
             >
-              <span
-                className={`text-sm font-medium ${
-                  currentFranchiseId === null && activeContext?.scope === "GLOBAL"
-                    ? "text-amber-900"
-                    : "text-gray-700"
-                }`}
-              >
-                Global (Toàn hệ thống)
-              </span>
+              <div className="flex flex-col items-start">
+                <span
+                  className={`text-sm font-medium ${
+                    currentFranchiseId === null && activeContext?.scope === "GLOBAL"
+                      ? "text-amber-900"
+                      : "text-gray-700"
+                  }`}
+                >
+                  Global (Toàn hệ thống)
+                </span>
+                <span className="text-xs text-gray-500">
+                  {roles.find((r) => r.scope === "GLOBAL")?.role || "Không xác định"}
+                </span>
+              </div>
               {currentFranchiseId === null && activeContext?.scope === "GLOBAL" && (
                 <Check size={16} style={{ color: THEME_COLORS.primary }} />
               )}
@@ -172,15 +189,20 @@ const FranchiseSwitcherDropdown: React.FC = () => {
                 }
               `}
             >
-              <span
-                className={`text-sm font-medium ${
-                  currentFranchiseId === role.franchise_id
-                    ? "text-amber-900"
-                    : "text-gray-700"
-                }`}
-              >
-                {role.franchise_name || `Franchise ${role.franchise_id}`}
-              </span>
+              <div className="flex flex-col items-start">
+                <span
+                  className={`text-sm font-medium ${
+                    currentFranchiseId === role.franchise_id
+                      ? "text-amber-900"
+                      : "text-gray-700"
+                  }`}
+                >
+                  {role.franchise_name || `Franchise ${role.franchise_id}`}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {role.role || "Không xác định"}
+                </span>
+              </div>
               {currentFranchiseId === role.franchise_id && (
                 <Check size={16} style={{ color: THEME_COLORS.primary }} />
               )}
