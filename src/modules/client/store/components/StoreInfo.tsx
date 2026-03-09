@@ -60,7 +60,7 @@ export function StoreInfo({ franchise }: { franchise: FranchiseDetailResponse })
                             <Phone size={16} className="text-[var(--cf-primary)]" />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-gray-900 mb-0.5">Điện thoại</p>
+                            <p className="text-xs font-bold text-gray-900 mb-0.5">Hotline</p>
                             <p className="text-sm text-[var(--cf-secondary)]">{franchise.hotline}</p>
                         </div>
                     </div>
