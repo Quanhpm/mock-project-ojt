@@ -26,6 +26,7 @@ export function useProductFranchiseList({ franchiseId }: UseProductFranchiseList
         totalPages: 0,
     });
     const [searchQuery, setSearchQuery] = useState('');
+    const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
 
     const fetchProducts = useCallback(async (pageNum = 1) => {
         if (!franchiseId) return;
@@ -85,6 +86,8 @@ export function useProductFranchiseList({ franchiseId }: UseProductFranchiseList
         pageInfo,
         searchQuery,
         setSearchQuery,
+        appliedSearchQuery,
+        setAppliedSearchQuery,
         setCurrentPage,
         refetch: fetchProducts,
     };

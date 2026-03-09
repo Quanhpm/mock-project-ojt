@@ -10,6 +10,7 @@ interface ProductFranchiseCardProps {
     onSelect: (id: string) => void;
     showDelete?: boolean;
     isDeleted?: boolean;
+    isAlreadyAssigned?: boolean;
     onDelete?: () => void;
     onRestore?: () => void;
 }
@@ -22,6 +23,7 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
     onSelect,
     showDelete,
     isDeleted,
+    isAlreadyAssigned,
     onDelete,
     onRestore,
 }) => {
@@ -33,10 +35,11 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
     return (
         <div
             className={`group bg-white rounded-xl p-3 shadow-sm border flex flex-col h-full transition-all
-                ${disabled ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
+                ${disabled && !isAlreadyAssigned ? 'pointer-events-none opacity-40' : 'cursor-pointer'}
                 ${isSelected ? 'border-amber-700 shadow-lg ring-2 ring-amber-700/30' : 'border-gray-200'}
-                ${isDimmed ? 'opacity-40' : ''}
-                ${!disabled && !isDimmed && !isSelected ? 'hover:shadow-lg hover:border-amber-700' : ''}
+                ${isAlreadyAssigned ? 'border-emerald-500 shadow-emerald-100 ring-1 ring-emerald-500 bg-emerald-50/20' : ''}
+                ${isDimmed && !isAlreadyAssigned ? 'opacity-40' : ''}
+                ${!disabled && !isDimmed && !isSelected && !isAlreadyAssigned ? 'hover:shadow-lg hover:border-amber-700' : ''}
             `}
         >
             <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-3 bg-gray-100">
@@ -60,8 +63,15 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
                     </div>
                 )}
                 {isSelected && (
-                    <div className="absolute top-2 left-2 bg-amber-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                    <div className="absolute top-2 left-2 bg-amber-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm z-10">
                         SELECTED
+                    </div>
+                )}
+                {isAlreadyAssigned && (
+                    <div className="absolute inset-0 bg-emerald-900/40 flex items-center justify-center z-20 backdrop-blur-[1px]">
+                        <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                            ✔ ĐÃ GÁN
+                        </span>
                     </div>
                 )}
             </div>
@@ -102,7 +112,7 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
                                 <Trash2 size={18} />
                             </button>
                         )}
-                        {!showDelete && (
+                        {!showDelete && !isAlreadyAssigned && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onSelect(item.id); }}
                                 className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm
@@ -114,6 +124,11 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
                             >
                                 <Plus size={20} />
                             </button>
+                        )}
+                        {!showDelete && isAlreadyAssigned && (
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-100 text-emerald-600 cursor-not-allowed">
+                                ✔
+                            </div>
                         )}
                     </div>
                 </div>
