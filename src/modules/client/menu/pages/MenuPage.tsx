@@ -37,7 +37,14 @@ function MenuPage() {
     const fetchCategories = async (franchiseId: string) => {
         try {
             const response = await getAllCategoriesByFranchise(franchiseId);
-            setCategories(response || []);
+            const category = response;
+            if (category) {
+                const filteredCategory = category.filter(
+                    (item) => !item.category_name?.toLowerCase().includes("topping")
+                )
+                setCategories(filteredCategory)
+            }
+            else setCategories([]);
         }
         catch (error) {
             console.error("Failed to fetch categories:", error);
@@ -48,7 +55,12 @@ function MenuPage() {
     const fetchAllProducts = async (franchiseId: string) => {
         try {
             const response = await getMenuByFranchise(franchiseId, "");
-            setProducts(response || []);
+            const product = response;
+            if (product) {
+                const filteredProduct = product.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
+                setProducts(filteredProduct);
+            } else setProducts([]);
+            console.log(products);
         }
         catch (error) {
             console.error("Failed to fetch products:", error);
@@ -70,7 +82,7 @@ function MenuPage() {
     // Lấy data category và product (đổi theo franchise)
     useEffect(() => {
         if (!franchiseId) return; // Skip if franchiseId is empty
-        
+
         const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
