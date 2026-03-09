@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2, RotateCcw, Package } from "lucide-react";
 import { useFranchiseSearch } from "../hooks";
-import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
 import { useToast } from "@/hooks/use-toast.hook";
+import FranchiseDetailModal from "./FranchiseDetailModal";
+import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import type { Franchise } from "../../../../types/franchise.types";
 
 // ============================================================================
@@ -195,8 +196,12 @@ export default function FranchiseTable() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
-  const [isLoadingDetail, setIsLoadingDetail] = useState<number | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState<string | null>(null);
   const { error: showError } = useToast();
+
+  // Detail Modal State
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const { franchise: selectedFranchise, isLoading: isLoadingFranchiseDetail, fetchFranchise } = useGetFranchiseById();
 
   // Prevent body scroll
   useEffect(() => {
@@ -254,10 +259,10 @@ export default function FranchiseTable() {
   };
 
   const handleViewFranchise = async (id: string | number) => {
-    setIsLoadingDetail(id);
+    setIsLoadingDetail(String(id));
     try {
-      await franchiseApi.getFranchiseById(String(id));
-      navigate(`/admin/franchises/view/${id}`);
+      await fetchFranchise(String(id));
+      setIsDetailModalOpen(true);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Lỗi tải chi tiết nhượng quyền";
@@ -433,16 +438,16 @@ export default function FranchiseTable() {
           >
             <button
               onClick={() => handleViewFranchise(franchise.id)}
-              disabled={isLoadingDetail === franchise.id}
+              disabled={isLoadingDetail === String(franchise.id)}
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: isLoadingDetail === franchise.id ? "#c0c0c0" : "#4b5563",
-                  opacity: isLoadingDetail === franchise.id ? 0.6 : 1,
+                  color: isLoadingDetail === String(franchise.id) ? "#c0c0c0" : "#4b5563",
+                  opacity: isLoadingDetail === String(franchise.id) ? 0.6 : 1,
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
-                if (isLoadingDetail !== franchise.id) {
+                if (isLoadingDetail !== String(franchise.id)) {
                   e.currentTarget.style.backgroundColor = "#e0f2fe";
                   e.currentTarget.style.color = "#0066cc";
                 }
@@ -450,9 +455,9 @@ export default function FranchiseTable() {
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
                 e.currentTarget.style.color =
-                  isLoadingDetail === franchise.id ? "#c0c0c0" : "#4b5563";
+                  isLoadingDetail === String(franchise.id) ? "#c0c0c0" : "#4b5563";
               }}
-              title={isLoadingDetail === franchise.id ? "Đang tải..." : "View"}
+              title={isLoadingDetail === String(franchise.id) ? "Đang tải..." : "View"}
             >
               <Eye size={20} />
             </button>
@@ -1143,6 +1148,14 @@ export default function FranchiseTable() {
           )}
         </div>
       </main>
+
+      {/* Franchise Detail Modal */}
+      <FranchiseDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        franchise={selectedFranchise}
+        isLoading={isLoadingFranchiseDetail}
+      />
     </div>
   );
 }
