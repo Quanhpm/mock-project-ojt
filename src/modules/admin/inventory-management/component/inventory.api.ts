@@ -45,9 +45,8 @@ export const deleteInventory = (id: string): Promise<null> => {
 
 // Restore deleted inventory item
 export const restoreInventory = (id: string): Promise<null> => {
-  return httpClient.patch<null, { id: string }>({
-    url: "/inventories/restore",
-    data: { id },
+  return httpClient.patch<null, undefined>({
+    url: `/inventories/${id}/restore`,
   });
 };
 
