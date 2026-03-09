@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2, RefreshCw } from 'lucide-react';
 import type { EnrichedProductFranchiseItem } from '../hooks/useProductFranchiseList.hook.ts';
 
 interface ProductFranchiseCardProps {
@@ -8,6 +8,10 @@ interface ProductFranchiseCardProps {
     isDimmed: boolean;
     disabled: boolean;
     onSelect: (id: string) => void;
+    showDelete?: boolean;
+    isDeleted?: boolean;
+    onDelete?: () => void;
+    onRestore?: () => void;
 }
 
 export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
@@ -16,9 +20,14 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
     isDimmed,
     disabled,
     onSelect,
+    showDelete,
+    isDeleted,
+    onDelete,
+    onRestore,
 }) => {
     const productName = item.product?.name ?? item.product_id;
-    const productDescription = item.product?.description ?? `Size: ${item.size || 'N/A'}`;
+    const productDescription = item.product?.description ?? '';
+    const productSize = item.size ?? 'N/A';
     const imageUrl = item.product?.image_url;
 
     return (
@@ -58,28 +67,55 @@ export const ProductFranchiseCard: React.FC<ProductFranchiseCardProps> = ({
             </div>
 
             <div className="flex flex-col flex-1">
-                <h3 className={`font-bold mb-1 line-clamp-1 transition-colors ${isSelected ? 'text-amber-800' : 'text-gray-800 group-hover:text-amber-800'}`}>
-                    {productName}
-                </h3>
-                <p className="text-xs text-gray-500 mb-3 line-clamp-2">
-                    {productDescription}
+                <div className="flex items-start justify-between gap-2 mb-1">
+                    <h3 className={`font-bold line-clamp-1 transition-colors ${isSelected ? 'text-amber-800' : 'text-gray-800 group-hover:text-amber-800'}`}>
+                        {productName}
+                    </h3>
+                    <span className="shrink-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-slate-200 uppercase">
+                        {productSize}
+                    </span>
+                </div>
+                <p className="text-xs text-gray-500 mb-3 line-clamp-2 min-h-[32px]">
+                    {productDescription || 'Không có mô tả'}
                 </p>
 
                 <div className="mt-auto flex items-center justify-between">
                     <span className="text-lg font-bold text-amber-700">
                         {item.price_base.toLocaleString('vi-VN')}đ
                     </span>
-                    <button
-                        onClick={() => onSelect(item.id)}
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm
-                            ${isSelected
-                                ? 'bg-amber-700 text-white'
-                                : 'bg-gray-100 hover:bg-amber-700 text-amber-700 hover:text-white'
-                            }`}
-                        title={isSelected ? 'Selected' : 'Select for assignment'}
-                    >
-                        <Plus size={20} />
-                    </button>
+                    <div className="flex gap-2">
+                        {showDelete && isDeleted && onRestore && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onRestore(); }}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm bg-green-100 hover:bg-green-600 text-green-600 hover:text-white"
+                                title="Restore Product"
+                            >
+                                <RefreshCw size={18} />
+                            </button>
+                        )}
+                        {showDelete && !isDeleted && onDelete && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(); }}
+                                className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm bg-red-100 hover:bg-red-600 text-red-600 hover:text-white"
+                                title="Remove from Category"
+                            >
+                                <Trash2 size={18} />
+                            </button>
+                        )}
+                        {!showDelete && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onSelect(item.id); }}
+                                className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors shadow-sm
+                                    ${isSelected
+                                        ? 'bg-amber-700 text-white'
+                                        : 'bg-gray-100 hover:bg-amber-700 text-amber-700 hover:text-white'
+                                    }`}
+                                title={isSelected ? 'Selected' : 'Select for assignment'}
+                            >
+                                <Plus size={20} />
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
