@@ -67,8 +67,10 @@ export function StoreCard({ id, name, searchQuery = '' }: { id: string; name: st
     if (!matchesName && !matchesAddress) return null;
   }
 
+  const handleNavigate = () => navigate(`/location/${slugify(name)}`, { state: { franchiseId: id } });
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full cursor-pointer group" onClick={handleNavigate}>
       <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden mb-4 bg-gray-100">
         {detail.logo_url ? (
           <img
@@ -99,7 +101,7 @@ export function StoreCard({ id, name, searchQuery = '' }: { id: string; name: st
       )}
 
       <button
-        onClick={() => navigate(`/location/${slugify(name)}`, { state: { franchiseId: id } })}
+        onClick={(e) => { e.stopPropagation(); handleNavigate(); }}
         className="mt-auto flex items-center gap-2 bg-[var(--cf-dark)] text-white rounded-full px-6 py-2.5 text-sm font-semibold w-fit hover:bg-[var(--cf-primary)] transition-colors cursor-pointer"
       >
         <Map size={16} />
