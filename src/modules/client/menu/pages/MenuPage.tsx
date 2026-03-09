@@ -39,9 +39,7 @@ function MenuPage() {
             const response = await getAllCategoriesByFranchise(franchiseId);
             const category = response;
             if (category) {
-                const filteredCategory = category.filter(
-                    (item) => !item.category_name?.toLowerCase().includes("topping")
-                )
+                const filteredCategory = category.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
                 setCategories(filteredCategory)
             }
             else setCategories([]);
@@ -60,7 +58,6 @@ function MenuPage() {
                 const filteredProduct = product.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
                 setProducts(filteredProduct);
             } else setProducts([]);
-            console.log(products);
         }
         catch (error) {
             console.error("Failed to fetch products:", error);
