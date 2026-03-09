@@ -113,7 +113,7 @@ function MenuPage() {
 
                                 // Điều chỉnh vị trí cuộn để phù hợp với cả cuộn lên và cuộn xuống
                                 if (categoryOffset < sidebar.scrollTop || categoryOffset + categoryHeight > sidebar.scrollTop + sidebarHeight) {
-                                    sidebar.scrollTop = categoryOffset - 1900; // Điều chỉnh vị trí của sidebar
+                                    sidebar.scrollTop = categoryOffset - 1200; // Điều chỉnh vị trí của sidebar
                                 }
                             }
                         }
@@ -121,7 +121,7 @@ function MenuPage() {
                 });
             },
             {
-                rootMargin: "-100px 0px -60% 0px",
+                rootMargin: "-120px 0px -60% 0px",
                 threshold: 0.1,
             }
         );
@@ -164,7 +164,7 @@ function MenuPage() {
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
             {/* Sidebar Navigation - Sticky & Prominent */}
-            <aside className="w-80 shrink-0 hidden lg:block sticky top-[64px] h-full overflow-y-auto scrollbar-hide">
+            <aside className="w-80 shrink-0 hidden lg:block sticky top-[64px] h-[calc(100vh-60px)] overflow-y-auto scrollbar-hide">
                 <div className="bg-[var(--cf-surface)] shadow-xl border border-[var(--cf-primary)]/10 p-8 backdrop-blur-sm">
                     <div className="flex flex-col gap-5">
                         <div className="mb-6">
