@@ -7,7 +7,7 @@ interface UseGetFranchiseByIdReturn {
   franchise: Franchise | null;
   isLoading: boolean;
   error: string | null;
-  fetchFranchise: (id: number) => Promise<void>;
+  fetchFranchise: (id: string | number) => Promise<void>;
 }
 
 export const useGetFranchiseById = (): UseGetFranchiseByIdReturn => {
@@ -22,7 +22,16 @@ export const useGetFranchiseById = (): UseGetFranchiseByIdReturn => {
     try {
       const response = await franchiseApi.getFranchiseById(String(id));
       if (response) {
-        setFranchise(response);
+        // Set franchise data - use type assertion since API returns FranchiseItem with string id
+        setFranchise({
+          ...response,
+          logo_url: response.logo_url || '',
+          address: response.address || '',
+          is_active: response.is_active ?? false,
+          is_deleted: response.is_deleted ?? false,
+          created_at: response.created_at || '',
+          updated_at: response.updated_at || '',
+        } as unknown as Franchise);
       } else {
         setError("Franchise not found");
         showError?.("Failed to load franchise details");

@@ -131,446 +131,318 @@ export const UserCreateForm: React.FC = () => {
     password === confirmPassword
   const isStep2Valid =
     selectedRoleId && (isAdmin || selectedFranchiseId)
+return (
+  <div className="min-h-screen  py-12 flex justify-center">
 
-  return (
-    <div className="w-full flex flex-col">
-      <main className="flex flex-col flex-1">
-        {/* Page Header */}
-        <header className="w-full px-10 py-8 flex flex-col gap-6 shrink-0 z-10 bg-white border-b border-slate-200">
-          <div className="flex flex-col gap-1">
-            <nav className="flex items-center gap-2 text-sm text-slate-500">
-              <a className="hover:text-primary transition-colors" href="/admin/users">
-                Users
-              </a>
-              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-              <span className="text-slate-900 font-medium">
-                {currentStep === 1 ? 'Create User' : 'Assign Role & Franchise'}
-              </span>
-            </nav>
+    <div className="w-full max-w-6xl">
+
+      {/* HEADER */}
+      <div className="text-center mb-10">
+
+        <h1 className="text-3xl font-bold text-[#7F5539]">
+          Create New User
+        </h1>
+
+        <p className="text-sm text-slate-500 mt-2">
+          Expand your team by inviting a new member.
+        </p>
+
+      </div>
+
+      {/* STEP INDICATOR */}
+      <div className="flex items-center justify-center mb-10">
+
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold
+            ${currentStep === 1
+              ? "bg-[#7F5539] text-white"
+              : "bg-[#9C6644] text-white"}`}
+          >
+            {currentStep > 1 ? "✓" : "1"}
           </div>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                {currentStep === 1 ? 'Create New User' : 'Assign Role & Franchise'}
-              </h2>
-              <p className="text-slate-500">
-                {currentStep === 1
-                  ? 'Step 1 of 2 — Enter user information'
-                  : 'Step 2 of 2 — Assign role and franchise'}
-              </p>
-            </div>
+
+          <span className="text-sm font-medium text-slate-700">
+            User Info
+          </span>
+        </div>
+
+        <div
+          className={`w-28 h-[3px] mx-4 rounded-full
+          ${currentStep > 1 ? "bg-[#7F5539]" : "bg-slate-200"}`}
+        />
+
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold
+            ${currentStep === 2
+              ? "bg-[#7F5539] text-white"
+              : "bg-slate-200 text-slate-500"}`}
+          >
+            2
           </div>
 
-          {/* Step Indicator */}
-          <div className="flex items-center gap-0">
-            {/* Step 1 dot */}
-            <div className="flex items-center gap-2">
-              <div
-                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${currentStep === 1
-                  ? 'bg-primary text-white'
-                  : 'bg-green-500 text-white'
-                  }`}
-              >
-                {currentStep > 1 ? (
-                  <span className="material-symbols-outlined text-[18px]">
-                    check
-                  </span>
-                ) : (
-                  '1'
-                )}
-              </div>
-              <span
-                className={`text-sm font-medium ${currentStep === 1 ? 'text-gray-800' : 'text-green-600'
-                  }`}
-              >
-                Create User
-              </span>
-            </div>
+          <span className="text-sm font-medium text-slate-500">
+            Role Selection
+          </span>
+        </div>
 
-            {/* Connector */}
-            <div
-              className={`flex-1 h-0.5 mx-3 rounded transition-colors ${currentStep > 1 ? 'bg-green-500' : 'bg-gray-200'
-                }`}
+      </div>
+
+      {/* ERROR */}
+      {error && (
+        <div className="mb-6 p-4 rounded-lg border border-red-200 bg-red-50 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* STEP 1 */}
+      {currentStep === 1 && (
+        <form
+          onSubmit={onSubmitStep1}
+          className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-10"
+        >
+
+          <h2 className="text-lg font-semibold text-slate-800 mb-8">
+            Personal Information
+          </h2>
+
+          {/* AVATAR */}
+          <div className="flex justify-center mb-8">
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileChange}
             />
 
-            {/* Step 2 dot */}
-            <div className="flex items-center gap-2">
+            {avatarUrl ? (
+              <div className="relative">
+
+                <img
+                  src={avatarUrl}
+                  className="w-24 h-24 rounded-full object-cover border"
+                />
+
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-white border rounded-full p-1 shadow"
+                >
+                  <X size={14} />
+                </button>
+
+              </div>
+            ) : (
               <div
-                className={`size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${currentStep === 2
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-200 text-gray-500'
-                  }`}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-24 h-24 rounded-full border-2 border-dashed border-[#DDB892] flex items-center justify-center cursor-pointer hover:border-[#B08968] transition"
               >
-                2
+                <Upload size={20} className="text-[#B08968]" />
               </div>
-              <span
-                className={`text-sm font-medium ${currentStep === 2 ? 'text-gray-800' : 'text-gray-400'
-                  }`}
-              >
-                Assign Role
-              </span>
+            )}
+
+          </div>
+
+          {/* NAME */}
+          <div className="mb-5">
+
+            <label className="text-sm font-medium text-slate-700">
+              Full Name
+            </label>
+
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
+              placeholder="e.g. Alex Morgan"
+            />
+
+          </div>
+
+          {/* EMAIL */}
+          <div className="mb-5">
+
+            <label className="text-sm font-medium text-slate-700">
+              Email Address
+            </label>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+              placeholder="alex.morgan@company.com"
+            />
+
+          </div>
+
+          {/* PASSWORD */}
+          <div className="grid grid-cols-2 gap-5 mb-5">
+
+            <div>
+
+              <label className="text-sm font-medium text-slate-700">
+                Password
+              </label>
+
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+              />
+
             </div>
+
+            <div>
+
+              <label className="text-sm font-medium text-slate-700">
+                Confirm Password
+              </label>
+
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+              />
+
+            </div>
+
           </div>
-        </header>
 
-        {/* Content Area */}
-        <div className="px-8 pb-8 flex-1">
-          <div className="max-w-4x1 mx-auto">
-            {/* Error Banner */}
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                <span className="material-symbols-outlined text-red-500 text-[18px] mt-0.5 flex-shrink-0">
-                  error
-                </span>
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
+          {/* PHONE */}
+          <div className="mb-8">
 
-            {/* Step 1: Create User Form */}
-            {currentStep === 1 && (
-              <form onSubmit={onSubmitStep1} className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
-                <div className="space-y-5">
-                  {/* Name */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-base font-semibold text-gray-700">
-                      Full Name <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        person
-                      </span>
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        placeholder="e.g. Nguyen Van A"
-                        required
-                      />
-                    </div>
-                  </div>
+            <label className="text-sm font-medium text-slate-700">
+              Phone Number
+            </label>
 
-                  {/* Email */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Email Address <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        mail
-                      </span>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        placeholder="user@example.com"
-                        required
-                      />
-                    </div>
-                  </div>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+            />
 
-                  {/* Password */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        lock
-                      </span>
-                      <input
-                        type="text"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        placeholder="Enter password"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Confirm Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        lock
-                      </span>
-                      <input
-                        type="text"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        placeholder="Re-enter password"
-                        required
-                      />
-                    </div>
-                    {confirmPassword && confirmPassword !== password && (
-                      <p className="text-xs text-red-500">
-                        Passwords do not match
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Phone Number{' '}
-                      <span className="text-gray-500 font-normal text-xs">
-                        (optional)
-                      </span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        phone
-                      </span>
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="w-full h-12 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        placeholder="+84 xxx xxx xxxx"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Avatar Upload */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Avatar Image{' '}
-                      <span className="text-gray-500 font-normal text-xs">
-                        (optional)
-                      </span>
-                    </label>
-
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      disabled={isUploading}
-                      style={{ display: "none" }}
-                    />
-
-                    {avatarUrl ? (
-                      // Preview Mode
-                      <div className="relative border-2 border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center gap-4">
-                        <img
-                          src={avatarUrl}
-                          alt="Avatar preview"
-                          className="w-20 h-20 object-cover rounded-full border-2 border-white shadow-sm"
-                        />
-                        <div className="flex-1 overflow-hidden">
-                          <p className="text-sm font-semibold text-slate-800 m-0 mb-1">Avatar Uploaded</p>
-                          <p className="text-xs text-slate-500 m-0 truncate">{avatarUrl}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={removeImage}
-                          disabled={isUploading}
-                          className="absolute top-3 right-3 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors focus:outline-none"
-                        >
-                          <X size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      // Upload Mode
-                      <div
-                        onClick={() => !isUploading && fileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${isUploading
-                          ? 'border-slate-300 bg-slate-50 cursor-not-allowed opacity-60'
-                          : 'border-slate-300 bg-slate-50 hover:bg-white hover:border-primary cursor-pointer'
-                          }`}
-                      >
-                        <Upload
-                          size={32}
-                          className={`mx-auto mb-3 ${isUploading ? 'text-slate-400' : 'text-primary'}`}
-                        />
-                        <p className={`text-sm font-semibold m-0 mb-1 ${isUploading ? 'text-slate-500' : 'text-slate-800'}`}>
-                          {isUploading ? "Uploading..." : "Click to select avatar image"}
-                        </p>
-                        <p className="text-xs text-slate-500 m-0">
-                          JPG, PNG, WEBP (max 5MB)
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-end gap-3 mt-8 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={!isStep1Valid || isSubmitting}
-                    className="px-6 py-3 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span className="material-symbols-outlined text-[18px] animate-spin">
-                          progress_activity
-                        </span>
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        Next
-                        <span className="material-symbols-outlined text-[18px]">
-                          arrow_forward
-                        </span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Step 2: Assign Role & Franchise */}
-            {currentStep === 2 && (
-              <form onSubmit={onSubmitStep2} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <div className="space-y-6">
-                  {/* Success banner from Step 1 */}
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                    <span className="material-symbols-outlined text-green-600 text-[18px]">
-                      check_circle
-                    </span>
-                    <p className="text-sm text-green-700 font-medium">
-                      User created successfully! Now assign a role.
-                    </p>
-                  </div>
-
-                  {/* Role dropdown */}
-                  <div className="flex flex-col gap-2">
-                    <label className="text-sm font-semibold text-gray-700">
-                      Role <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        badge
-                      </span>
-                      <select
-                        value={selectedRoleId}
-                        onChange={(e) => setSelectedRoleId(e.target.value)}
-                        className="w-full h-12 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
-                        required
-                      >
-                        <option value="">
-                          {isRolesLoading ? 'Loading roles...' : '— Select a role —'}
-                        </option>
-                        {roles.map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.name} ({role.scope})
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Franchise dropdown — ẩn/disable khi chọn ADMIN */}
-                  <div
-                    className={`flex flex-col gap-2 transition-opacity ${isAdmin ? 'opacity-40 pointer-events-none' : ''
-                      }`}
-                  >
-                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                      Franchise <span className="text-red-500">*</span>
-                      {isAdmin && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-bold uppercase normal-case">
-                          <span className="material-symbols-outlined text-[12px]">
-                            info
-                          </span>
-                          Not required for Admin
-                        </span>
-                      )}
-                    </label>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                        storefront
-                      </span>
-                      <select
-                        value={selectedFranchiseId}
-                        onChange={(e) => setSelectedFranchiseId(e.target.value)}
-                        disabled={isAdmin}
-                        className="w-full h-12 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                        required={!isAdmin}
-                      >
-                        <option value="">
-                          {isFranchisesLoading
-                            ? 'Loading franchises...'
-                            : '— Select a franchise —'}
-                        </option>
-                        {franchises.map((f) => (
-                          <option key={f.value} value={f.value}>
-                            {f.name} ({f.code})
-                          </option>
-                        ))}
-                      </select>
-                      <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={handleBackStep1}
-                    className="px-4 py-2.5 rounded-lg text-gray-600 font-semibold hover:bg-gray-100 transition-colors text-sm flex items-center gap-1"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      arrow_back
-                    </span>
-                    Back
-                  </button>
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={handleCancel}
-                      className="px-6 py-3 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={!isStep2Valid || isSubmitting}
-                      className="px-6 py-3 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="material-symbols-outlined text-[18px] animate-spin">
-                            progress_activity
-                          </span>
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <span className="material-symbols-outlined text-[18px]">
-                            save
-                          </span>
-                          Save & Finish
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            )}
           </div>
-        </div>
-      </main>
+
+          {/* FOOTER */}
+          <div className="flex justify-between items-center pt-6">
+
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="text-sm text-slate-500 hover:text-slate-700"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={!isStep1Valid || isSubmitting}
+              className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition"
+            >
+              {isSubmitting ? "Creating..." : "Next Step →"}
+            </button>
+
+          </div>
+
+        </form>
+      )}
+
+      {/* STEP 2 */}
+      {currentStep === 2 && (
+        <form
+          onSubmit={onSubmitStep2}
+          className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10"
+        >
+
+          <h2 className="text-lg font-semibold text-slate-800 mb-8">
+            Role Selection
+          </h2>
+
+          {/* ROLE */}
+          <div className="mb-6">
+
+            <label className="text-sm font-medium text-slate-700">
+              Role
+            </label>
+
+            <select
+              value={selectedRoleId}
+              onChange={(e) => setSelectedRoleId(e.target.value)}
+              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 text-sm"
+            >
+              <option value="">
+                {isRolesLoading ? "Loading roles..." : "Select role"}
+              </option>
+
+              {roles.map((role) => (
+                <option key={role.value} value={role.value}>
+                  {role.name}
+                </option>
+              ))}
+
+            </select>
+
+          </div>
+
+          {/* FRANCHISE */}
+          <div className="mb-8">
+
+            <label className="text-sm font-medium text-slate-700">
+              Franchise
+            </label>
+
+            <select
+              value={selectedFranchiseId}
+              onChange={(e) => setSelectedFranchiseId(e.target.value)}
+              disabled={isAdmin}
+              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 text-sm"
+            >
+              <option value="">
+                {isFranchisesLoading ? "Loading..." : "Select franchise"}
+              </option>
+
+              {franchises.map((f) => (
+                <option key={f.value} value={f.value}>
+                  {f.name}
+                </option>
+              ))}
+
+            </select>
+
+          </div>
+
+          {/* FOOTER */}
+          <div className="flex justify-between items-center pt-6">
+
+            <button
+              type="button"
+              onClick={handleBackStep1}
+              className="text-sm text-slate-500 hover:text-slate-700"
+            >
+              Back
+            </button>
+
+            <button
+              type="submit"
+              disabled={!isStep2Valid || isSubmitting}
+              className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-sky-600 transition"
+            >
+              {isSubmitting ? "Saving..." : "Save User"}
+            </button>
+
+          </div>
+
+        </form>
+      )}
+
     </div>
-  )
+
+  </div>
+)
 }
