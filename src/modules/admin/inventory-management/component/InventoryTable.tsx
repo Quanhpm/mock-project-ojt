@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetInventories } from "./hooks/useGetInventories";
 import { useDeleteInventory } from "./hooks/useDeleteInventory";
@@ -37,23 +37,42 @@ export default function InventoryTable() {
   const [logsModal, setLogsModal] = useState<{ open: boolean; inventoryId: string; productName: string }>({
     open: false, inventoryId: "", productName: ""
   });
+  const [restoreModal, setRestoreModal] = useState<{ open: boolean; inventoryId: string; productName: string }>({
+    open: false, inventoryId: "", productName: ""
+  });
+
+  const [inputValue, setInputValue] = useState("");
+  const [franchiseFilter, setFranchiseFilter] = useState("");
+  const [showDeleted, setShowDeleted] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const itemsPerPage = 7;
 
   const { inventories, isLoading, totalItems, totalPages, refetch } = useGetInventories();
   const { deleteInventory, isDeleting } = useDeleteInventory();
-  const { restoreInventory } = useRestoreInventory();
+  const { restoreInventory, isRestoring } = useRestoreInventory();
   const { adjustInventory, isAdjusting } = useAdjustInventory();
   const { logs, isLoading: isLogsLoading, fetchLogs } = useGetInventoryLogs();
 
   const buildPayload = (page: number): InventorySearchPayload => ({
-    searchCondition: { is_deleted: false },
+    searchCondition: { is_deleted: showDeleted },
     pageInfo: { pageNum: page, pageSize: itemsPerPage },
   });
 
   useEffect(() => {
     refetch(buildPayload(currentPage));
-  }, [currentPage]);
+  }, [currentPage, showDeleted]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Client-side filter by search term and status
   const filteredInventory = inventories.filter(item => {
@@ -62,6 +81,10 @@ export default function InventoryTable() {
       searchTerm === "" ||
       productName.toLowerCase().includes(searchTerm.toLowerCase());
 
+    const matchesFranchise =
+      franchiseFilter === "" ||
+      (item.franchise_name ?? item.franchise_id) === franchiseFilter;
+
     const stockStatus = getStockStatus(item.quantity, item.alert_threshold);
     const matchesStatus =
       statusFilter === "all" ||
@@ -69,12 +92,28 @@ export default function InventoryTable() {
       (statusFilter === "low-stock" && stockStatus.label === "Low Stock") ||
       (statusFilter === "out-of-stock" && stockStatus.label === "Out of Stock");
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesFranchise;
   });
 
+  // Unique franchise names from loaded inventory for dropdown
+  const franchiseOptions = Array.from(
+    new Map(inventories.map(i => [i.franchise_id, i.franchise_name ?? i.franchise_id])).entries()
+  ).sort((a, b) => a[1].localeCompare(b[1]));
+
+  const sortedInventory = filteredInventory;
+
   const handleClearFilters = () => {
+    setInputValue("");
     setSearchTerm("");
     setStatusFilter("all");
+    setFranchiseFilter("");
+    setShowDeleted(false);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = () => {
+    setSearchTerm(inputValue);
+    setCurrentPage(1);
   };
 
   const handleOpenAdjust = (_e: React.MouseEvent<HTMLButtonElement>, item: InventoryItem) => {
@@ -113,8 +152,13 @@ export default function InventoryTable() {
     });
   };
 
-  const handleRestore = (inventoryId: string) => {
-    restoreInventory(inventoryId, () => {
+  const handleRestore = (inventoryId: string, productName: string) => {
+    setRestoreModal({ open: true, inventoryId, productName });
+  };
+
+  const handleRestoreConfirm = () => {
+    restoreInventory(restoreModal.inventoryId, () => {
+      setRestoreModal({ open: false, inventoryId: "", productName: "" });
       refetch(buildPayload(currentPage));
     });
   };
@@ -169,10 +213,10 @@ export default function InventoryTable() {
 
         {/* Content Area */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 32px 32px", gap: "16px", minHeight: 0 }}>
-          {/* Filters & Franchise Selector */}
+          {/* Filters */}
           <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", flexShrink: 0, zIndex: 20 }}>
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              {/* Search */}
+              {/* Search input */}
               <div style={{ flex: 1, position: "relative" }}>
                 <div style={{ position: "absolute", top: "50%", left: "12px", transform: "translateY(-50%)", pointerEvents: "none", color: "#6c757d" }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -180,29 +224,71 @@ export default function InventoryTable() {
                     <path d="m21 21-4.35-4.35"/>
                   </svg>
                 </div>
-                <input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search by product name or SKU..." style={{ display: "block", width: "100%", borderRadius: "8px", border: "0", padding: "10px 16px 10px 40px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", boxSizing: "border-box" }} />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSearch(); }}
+                  placeholder="Tìm kiếm theo tên, mã sản phẩm... (Ctrl+k)"
+                  style={{ display: "block", width: "100%", borderRadius: "8px", border: "0", padding: "10px 16px 10px 40px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", boxSizing: "border-box" }}
+                />
               </div>
 
+              {/* Search button */}
+              <button
+                onClick={handleSearch}
+                style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#8B4513", color: "white", padding: "10px 18px", borderRadius: "8px", border: "none", fontWeight: "600", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap", transition: "background-color 0.2s" }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="m21 21-4.35-4.35"/>
+                </svg>
+                Tìm kiếm
+              </button>
+
               {/* Status Filter */}
-              <div style={{ position: "relative", minWidth: "140px" }}>
+              <div style={{ position: "relative", minWidth: "165px" }}>
                 <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
-                  <option value="all">All Status</option>
+                  <option value="all">Tất cả trạng thái</option>
                   <option value="in-stock">In Stock</option>
                   <option value="low-stock">Low Stock</option>
                   <option value="out-of-stock">Out of Stock</option>
                 </select>
                 <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", color: "#6c757d" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
 
-              <button onClick={handleClearFilters} style={{ fontSize: "14px", fontWeight: "500", color: "#8B4513", padding: "0 8px", whiteSpace: "nowrap", cursor: "pointer", border: "none", backgroundColor: "transparent", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#6d3610"} onMouseLeave={(e) => e.currentTarget.style.color = "#8B4513"}>
-                Clear Filters
+              {/* Filter by Franchise */}
+              <div style={{ position: "relative", minWidth: "175px" }}>
+                <select value={franchiseFilter} onChange={(e) => { setFranchiseFilter(e.target.value); setCurrentPage(1); }} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
+                  <option value="">Sort by Franchise</option>
+                  {franchiseOptions.map(([id, name]) => (
+                    <option key={id} value={name}>{name}</option>
+                  ))}
+                </select>
+                <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", color: "#6c757d" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+
+              {/* Toggle current / deleted */}
+              <button
+                onClick={() => { setShowDeleted(d => !d); setCurrentPage(1); }}
+                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: showDeleted ? "1px solid #dc3545" : "1px solid #e0e0e0", fontWeight: "500", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap", backgroundColor: showDeleted ? "#fff5f5" : "white", color: showDeleted ? "#dc3545" : "#374151", transition: "all 0.2s" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>delete</span>
+                {showDeleted ? "Đã xóa" : "Hiện tại"}
+              </button>
+
+              {/* Clear filters */}
+              <button onClick={handleClearFilters} style={{ fontSize: "14px", fontWeight: "500", color: "#8B4513", padding: "10px 8px", whiteSpace: "nowrap", cursor: "pointer", border: "none", backgroundColor: "transparent", transition: "color 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.color = "#6d3610"} onMouseLeave={(e) => e.currentTarget.style.color = "#8B4513"}>
+                Xóa bộ lọc
               </button>
             </div>
-
           </div>
 
           {/* Table */}
@@ -210,7 +296,7 @@ export default function InventoryTable() {
             <div style={{ backgroundColor: "white", padding: "60px 20px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", textAlign: "center", flexShrink: 0 }}>
               <p style={{ color: "#6c757d", fontSize: "16px" }}>Loading...</p>
             </div>
-          ) : filteredInventory.length > 0 ? (
+          ) : sortedInventory.length > 0 ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden", minHeight: 0 }}>
               <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
@@ -226,7 +312,7 @@ export default function InventoryTable() {
                   </tr>
                 </thead>
                 <tbody style={{ borderTop: "1px solid #e9ecef" }}>
-                  {filteredInventory.map((item) => {
+                  {sortedInventory.map((item) => {
                     const stockStatus = getStockStatus(item.quantity, item.alert_threshold);
                     return (
                       <tr key={item.id} style={{ borderBottom: "1px solid #e9ecef", transition: "background-color 0.15s" }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#f8f9fa"} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}>
@@ -254,23 +340,25 @@ export default function InventoryTable() {
                         </td>
                         <td style={{ padding: "16px" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
-                            {/* Adjust quantity */}
-                            <button title="Điều chỉnh số lượng" onClick={(e) => handleOpenAdjust(e, item)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)"; e.currentTarget.style.color = "#8B4513"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
-                            </button>
-                            {/* View logs */}
-                            <button title="Xem lịch sử" onClick={() => handleViewLogs(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(25,127,230,0.07)"; e.currentTarget.style.color = "#197fe6"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>history</span>
-                            </button>
-                            {/* Delete / Restore */}
-                            {item.is_deleted ? (
-                              <button title="Khôi phục" onClick={() => handleRestore(item.id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e8f5e9"; e.currentTarget.style.color = "#28a745"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                            {showDeleted ? (
+                              <button title="Khôi phục" onClick={() => handleRestore(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e8f5e9"; e.currentTarget.style.color = "#28a745"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
                                 <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>restore</span>
                               </button>
                             ) : (
-                              <button title="Xóa" onClick={() => handleDelete(item.id, item.product_name ?? item.product_id)} disabled={isDeleting} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: isDeleting ? "not-allowed" : "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { if (!isDeleting) { e.currentTarget.style.backgroundColor = "#fee"; e.currentTarget.style.color = "#ef4444"; } }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
-                              </button>
+                              <>
+                                {/* Adjust quantity */}
+                                <button title="Điều chỉnh số lượng" onClick={(e) => handleOpenAdjust(e, item)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)"; e.currentTarget.style.color = "#8B4513"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
+                                </button>
+                                {/* View logs */}
+                                <button title="Xem lịch sử" onClick={() => handleViewLogs(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(25,127,230,0.07)"; e.currentTarget.style.color = "#197fe6"; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>history</span>
+                                </button>
+                                {/* Delete */}
+                                <button title="Xóa" onClick={() => handleDelete(item.id, item.product_name ?? item.product_id)} disabled={isDeleting} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: isDeleting ? "not-allowed" : "pointer", transition: "all 0.2s" }} onMouseEnter={(e) => { if (!isDeleting) { e.currentTarget.style.backgroundColor = "#fee"; e.currentTarget.style.color = "#ef4444"; } }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
+                                  <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>
@@ -427,6 +515,69 @@ export default function InventoryTable() {
         inventoryId={deleteModal.inventoryId}
         productName={deleteModal.productName}
       />
+
+      {/* Restore Confirmation Modal */}
+      {restoreModal.open && (
+        <div
+          onClick={() => setRestoreModal({ open: false, inventoryId: "", productName: "" })}
+          style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ backgroundColor: "white", borderRadius: "12px", width: "90%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}
+          >
+            {/* Header */}
+            <div style={{ padding: "20px 24px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ backgroundColor: "#d4edda", padding: "10px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "24px", color: "#28a745" }}>restore</span>
+                </div>
+                <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "#212529" }}>Khôi phục Inventory</h2>
+              </div>
+              <button
+                onClick={() => setRestoreModal({ open: false, inventoryId: "", productName: "" })}
+                style={{ backgroundColor: "transparent", border: "none", cursor: "pointer", padding: "4px", display: "flex", alignItems: "center", color: "#6c757d" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {/* Body */}
+            <div style={{ padding: "24px" }}>
+              <p style={{ margin: "0 0 16px", fontSize: "15px", color: "#495057", lineHeight: "1.6" }}>
+                Bạn có chắc chắn muốn khôi phục inventory item này không? Item sẽ được đưa trở lại danh sách hoạt động.
+              </p>
+              <div style={{ backgroundColor: "#f8f9fa", padding: "16px", borderRadius: "8px", border: "1px solid #e9ecef" }}>
+                <div style={{ marginBottom: "8px" }}>
+                  <span style={{ fontSize: "12px", color: "#6c757d", textTransform: "uppercase", fontWeight: "600" }}>Inventory ID</span>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#212529", fontWeight: "500" }}>#{restoreModal.inventoryId.slice(-6)}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "12px", color: "#6c757d", textTransform: "uppercase", fontWeight: "600" }}>Sản phẩm</span>
+                  <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#212529", fontWeight: "500" }}>{restoreModal.productName}</p>
+                </div>
+              </div>
+            </div>
+            {/* Footer */}
+            <div style={{ padding: "16px 24px", borderTop: "1px solid #f0f0f0", display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+              <button
+                onClick={() => setRestoreModal({ open: false, inventoryId: "", productName: "" })}
+                disabled={isRestoring}
+                style={{ padding: "10px 20px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "14px", fontWeight: "500", cursor: "pointer", backgroundColor: "white", color: "#374151" }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRestoreConfirm}
+                disabled={isRestoring}
+                style={{ padding: "10px 20px", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: isRestoring ? "not-allowed" : "pointer", backgroundColor: "#28a745", color: "white", opacity: isRestoring ? 0.7 : 1, display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>{isRestoring ? "sync" : "restore"}</span>
+                {isRestoring ? "Đang khôi phục..." : "Xác nhận"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

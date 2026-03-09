@@ -13,7 +13,7 @@ interface UseGetInventoriesReturn {
   updateItem: (updated: InventoryItem) => void;
 }
 
-export const useGetInventories = (): UseGetInventoriesReturn => {
+export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesReturn => {
   const [inventories, setInventories] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,10 +42,12 @@ export const useGetInventories = (): UseGetInventoriesReturn => {
   };
 
   useEffect(() => {
-    refetch({
-      searchCondition: { is_deleted: false },
-      pageInfo: { pageNum: 1, pageSize: 10 },
-    });
+    if (!skipInitialFetch) {
+      refetch({
+        searchCondition: { is_deleted: false },
+        pageInfo: { pageNum: 1, pageSize: 10 },
+      });
+    }
   }, []);
 
   const updateItem = (updated: InventoryItem) => {
