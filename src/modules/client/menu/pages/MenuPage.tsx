@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { getAllFranchises, getAllCategoriesByFranchise, getMenuByFranchise } from "@/apis/endpointsCLIENT/client.api";
-import type { FranchiseResponse, CategoryResponse, MenuByFranchise, MenuProduct, ProductSize } from "@/apis/endpointsCLIENT/client.api";
+import { type FranchiseResponse, type CategoryResponse, type MenuByFranchise, type MenuProduct, type ProductSize, getProductsByFranchiseAndCategory, type ProductByFranchiseAndCategory } from "@/apis/endpointsCLIENT/client.api";
 import ProductCard from "../components/ProductCard";
 
 function MenuPage() {
@@ -44,10 +44,10 @@ function MenuPage() {
         }
     }
 
-    const [products, setProducts] = useState<MenuByFranchise[]>([]);
+    const [products, setProducts] = useState<ProductByFranchiseAndCategory[]>([]);
     const fetchAllProducts = async (franchiseId: string) => {
         try {
-            const response = await getMenuByFranchise(franchiseId, "");
+            const response = await getProductsByFranchiseAndCategory(franchiseId, "");
             setProducts(response || []);
         }
         catch (error) {
@@ -55,10 +55,9 @@ function MenuPage() {
         }
     }
     // Lọc product theo category
-    const getProductByCategory = useMemo(() => (categoryId: string) => {
-        const category = products.find(item => item.category_id === categoryId);
-        return category ? category.products : [];
-    }, [products]);
+    const getProductByCategory = (categoryId: string): ProductByFranchiseAndCategory[] => {
+        return products.filter((item) => item.category_id === categoryId);
+    };
 
     // Lấy data franchise (chỉ lấy 1 lần)
     useEffect(() => {
@@ -78,6 +77,7 @@ function MenuPage() {
         if (franchiseId) {
             localStorage.setItem('selectedFranchiseId', franchiseId);
         }
+        console.log(products)
     }, [franchiseId]);
 
     // hiệu ứng scroll
@@ -134,33 +134,33 @@ function MenuPage() {
         return () => observer.disconnect();
     }, [categories]);
 
-    // Filter search
-    const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
-        return products.flatMap((category) =>
-            category.products.filter(
-                (product) =>
-                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-        );
-    };
+    // // Filter search
+    // const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
+    //     return products.flatMap((category) =>
+    //         category.filter(
+    //             (product) =>
+    //                 product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //                 category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
+    //         )
+    //     );
+    // };
 
     // Hàm xử lý khi người dùng nhấn Enter
-    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
-            const results = filterProductsBySearch(search);
-            setFilteredProducts(results); // Cập nhật danh sách sản phẩm đã lọc
-            setShowSearchResults(true);
-        }
-    };
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const searchTerm = e.target.value;
-        setSearch(searchTerm);
-        // Ẩn kết quả tìm kiếm khi người dùng thay đổi nội dung
-        if (searchTerm === '') {
-            setShowSearchResults(false); // Ẩn kết quả khi ô tìm kiếm trống
-        }
-    };
+    // const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    //     if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
+    //         const results = filterProductsBySearch(search);
+    //         setFilteredProducts(results); // Cập nhật danh sách sản phẩm đã lọc
+    //         setShowSearchResults(true);
+    //     }
+    // };
+    // const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const searchTerm = e.target.value;
+    //     setSearch(searchTerm);
+    //     // Ẩn kết quả tìm kiếm khi người dùng thay đổi nội dung
+    //     if (searchTerm === '') {
+    //         setShowSearchResults(false); // Ẩn kết quả khi ô tìm kiếm trống
+    //     }
+    // };
 
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
@@ -205,7 +205,7 @@ function MenuPage() {
 
                 <div className="flex flex-col md:flex-row gap-6 items-stretch mb-5">
                     {/* Search Bar */}
-                    <div className="md:w-1/3 w-full flex flex-col justify-center">
+                    {/* <div className="md:w-1/3 w-full flex flex-col justify-center">
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--cf-dark)] mb-2 tracking-wide">
                             <span className="material-icons-outlined text-[18px] text-[var(--cf-secondary)]">
                                 search
@@ -224,7 +224,7 @@ function MenuPage() {
                         focus:ring-2 focus:ring-[var(--cf-primary)]/20 
                         shadow-sm transition-all"
                         />
-                    </div>
+                    </div> */}
 
                     {/* Franchise Selection */}
                     <div className="md:w-2/3 w-full flex flex-col justify-center">
@@ -296,8 +296,8 @@ function MenuPage() {
 
                                 {/* Product List */}
                                 <div className="grid grid-cols-1 gap-4">
-                                    {categoryProducts.length > 0 ? (
-                                        categoryProducts.map((product: MenuProduct) => (
+                                    {categoryProducts && categoryProducts.length > 0 ? (
+                                        categoryProducts.map((product: ProductByFranchiseAndCategory) => (
                                             <ProductCard
                                                 key={product.product_id}
                                                 product={product}
