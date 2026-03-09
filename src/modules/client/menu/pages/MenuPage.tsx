@@ -69,14 +69,14 @@ function MenuPage() {
     }, []);
     // Lấy data category và product (đổi theo franchise)
     useEffect(() => {
+        if (!franchiseId) return; // Skip if franchiseId is empty
+        
         const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
         };
         fetchData();
-        if (franchiseId) {
-            localStorage.setItem('selectedFranchiseId', franchiseId);
-        }
+        localStorage.setItem('selectedFranchiseId', franchiseId);
     }, [franchiseId]);
 
     // hiệu ứng scroll
@@ -131,7 +131,7 @@ function MenuPage() {
         });
 
         return () => observer.disconnect();
-    }, [franchiseId]);
+    }, [categories]);
 
     // Filter search
     const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
@@ -164,7 +164,7 @@ function MenuPage() {
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
             {/* Sidebar Navigation - Sticky & Prominent */}
-            <aside className="w-80 shrink-0 hidden lg:block sticky top-[64px] h-[calc(100vh-60px)] overflow-y-auto scrollbar-hide">
+            <aside className="w-80 shrink-0 hidden lg:block sticky top-[64px] h-full overflow-y-auto scrollbar-hide">
                 <div className="bg-[var(--cf-surface)] shadow-xl border border-[var(--cf-primary)]/10 p-8 backdrop-blur-sm">
                     <div className="flex flex-col gap-5">
                         <div className="mb-6">
