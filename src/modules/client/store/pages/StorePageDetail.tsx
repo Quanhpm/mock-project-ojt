@@ -7,6 +7,16 @@ import { StoreInfo, StoreNotFound } from '../components/StoreInfo';
 import { StoreAmenities } from '../components/StoreAmenities';
 import { StoreQuote } from '../components/StoreQuote';
 
+// Module-level cache — promise survives Suspense unmount/remount cycles
+const promiseCache = new Map<string, Promise<FranchiseDetailResponse | null>>();
+
+function getOrFetchFranchise(id: string) {
+    if (!promiseCache.has(id)) {
+        promiseCache.set(id, getFranchiseDetail(id));
+    }
+    return promiseCache.get(id)!;
+}
+
 function FranchiseDetail({ promise }: { promise: Promise<FranchiseDetailResponse | null> }) {
     const franchise = use(promise);
 
@@ -51,7 +61,7 @@ function FranchiseDetail({ promise }: { promise: Promise<FranchiseDetailResponse
 export default function StorePageDetail() {
     const location = useLocation();
     const franchiseId = (location.state as { franchiseId?: string })?.franchiseId ?? '';
-    const promise = getFranchiseDetail(franchiseId);
+    const promise = getOrFetchFranchise(franchiseId);
 
     return (
         <Suspense
