@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { inventoryApi } from "../inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import type { InventoryAdjustPayload } from "../inventory.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
@@ -23,10 +23,11 @@ export const useAdjustInventory = () => {
         `Số lượng đã được ${payload.change > 0 ? "tăng" : "giảm"} ${Math.abs(payload.change)}.`,
       );
       if (onSuccess) onSuccess();
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage =
-        err.response?.data?.message ||
-        "Không thể điều chỉnh số lượng lúc này. Vui lòng thử lại!";
+        err instanceof Error
+          ? err.message
+          : "Không thể điều chỉnh số lượng lúc này. Vui lòng thử lại!";
       setError(errorMessage);
       showErrorToast("Điều chỉnh thất bại", errorMessage);
       if (onError) onError(errorMessage);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { inventoryApi } from "../inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import type { InventoryItem, InventorySearchPayload } from "../inventory.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
@@ -48,6 +48,7 @@ export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesRe
         pageInfo: { pageNum: 1, pageSize: 10 },
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const updateItem = (updated: InventoryItem) => {
