@@ -7,7 +7,7 @@ import {
   searchProductFranchises,
   type ProductFranchiseItem,
 } from "@/apis/endpoints/product-franchise.api";
-import { createInventory } from "./inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 
 export default function InventoryForm() {
   const navigate = useNavigate();
@@ -29,13 +29,11 @@ export default function InventoryForm() {
   const [alertThreshold, setAlertThreshold] = useState<number>(10);
 
   // Loading states
-  const [isLoadingFranchises, setIsLoadingFranchises] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Step 1: Click "Create" → fetch franchises → reveal form
   const handleClickCreate = async () => {
-    setIsLoadingFranchises(true);
     try {
       const res = await franchiseApi.searchFranchises({
         searchCondition: { is_deleted: false, is_active: true },
@@ -45,8 +43,6 @@ export default function InventoryForm() {
       setFormVisible(true);
     } catch {
       alert("Không thể tải danh sách Franchise. Vui lòng thử lại.");
-    } finally {
-      setIsLoadingFranchises(false);
     }
   };
 
@@ -88,7 +84,7 @@ export default function InventoryForm() {
 
     setIsSubmitting(true);
     try {
-      await createInventory({
+      await inventoryApi.createInventory({
         product_franchise_id: selectedProductFranchiseId,
         quantity,
         alert_threshold: alertThreshold,
@@ -120,7 +116,6 @@ export default function InventoryForm() {
   // Auto-fetch franchises on mount — no confirmation step needed
   useEffect(() => {
     handleClickCreate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

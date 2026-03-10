@@ -5,6 +5,7 @@ import type {
   InventoryAdjustPayload,
   InventorySearchPayload,
   InventorySearchResponse,
+  BulkAdjustPayload,
   LowStockItem,
   InventoryLog,
 } from "./inventory.types";
@@ -60,6 +61,16 @@ export const adjustInventory = (
   });
 };
 
+// Bulk adjust inventory items (POST /inventories/adjust/bulk)
+export const bulkAdjustInventory = (
+  payload: BulkAdjustPayload,
+): Promise<null> => {
+  return httpClient.post<null, BulkAdjustPayload>({
+    url: "/inventories/adjust/bulk",
+    data: payload,
+  });
+};
+
 // Get low stock items by franchise
 export const getLowStockByFranchise = (
   franchiseId: string
@@ -78,7 +89,7 @@ export const getInventoryLogs = (
   });
 };
 
-// Bundle export (giống productApi pattern)
+// Bundle export
 export const inventoryApi = {
   searchInventories,
   getInventoryById,
@@ -86,6 +97,7 @@ export const inventoryApi = {
   deleteInventory,
   restoreInventory,
   adjustInventory,
+  bulkAdjustInventory,
   getLowStockByFranchise,
   getInventoryLogs,
 };
