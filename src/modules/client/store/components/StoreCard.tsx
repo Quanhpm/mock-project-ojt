@@ -5,6 +5,23 @@ import { slugify } from '@/utils/slugify.util';
 import { getFranchiseDetail, type FranchiseDetailResponse } from '@/apis/endpointsCLIENT/franchiseDetail.api';
 
 const CACHE_PREFIX = 'franchise_detail_';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCached(key: string): FranchiseDetailResponse | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { data, expiresAt } = JSON.parse(raw) as { data: FranchiseDetailResponse; expiresAt: number };
+    if (Date.now() > expiresAt) { localStorage.removeItem(key); return null; }
+    return data;
+  } catch { return null; }
+}
+
+function setCached(key: string, data: FranchiseDetailResponse): void {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, expiresAt: Date.now() + CACHE_TTL_MS }));
+  } catch { /* quota exceeded — skip silently */ }
+}
 
 // ── Card skeleton ─────────────────────────────────────────────────────────────
 export function StoreCardSkeleton() {
@@ -19,7 +36,7 @@ export function StoreCardSkeleton() {
   );
 }
 
-// ── Self-fetching card with sessionStorage cache ───────────────────────────────
+// ── Self-fetching card with localStorage cache (TTL 24h) ────────────────────────
 export function StoreCard({ id, name, searchQuery = '' }: { id: string; name: string; searchQuery?: string }) {
   const navigate = useNavigate();
   const [detail, setDetail] = useState<FranchiseDetailResponse | null>(null);
@@ -29,9 +46,9 @@ export function StoreCard({ id, name, searchQuery = '' }: { id: string; name: st
     let isMounted = true;
 
     const cacheKey = `${CACHE_PREFIX}${id}`;
-    const cached = sessionStorage.getItem(cacheKey);
+    const cached = getCached(cacheKey);
     if (cached) {
-      setDetail(JSON.parse(cached));
+      setDetail(cached);
       setLoading(false);
       return;
     }
@@ -40,7 +57,7 @@ export function StoreCard({ id, name, searchQuery = '' }: { id: string; name: st
       .then((data) => {
         if (!isMounted) return;
         if (data) {
-          sessionStorage.setItem(cacheKey, JSON.stringify(data));
+          setCached(cacheKey, data);
           setDetail(data);
         }
       })
