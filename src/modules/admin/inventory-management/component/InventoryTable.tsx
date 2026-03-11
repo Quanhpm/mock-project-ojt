@@ -37,10 +37,11 @@ export default function InventoryTable() {
   const [franchiseFilter, setFranchiseFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const itemsPerPage = 7;
+  const itemsPerPage = 10;
 
   // === Data hooks ===
-  const { inventories, isLoading, totalItems, totalPages, refetch } = useGetInventories();
+  // skipInitialFetch = true: tắt auto-fetch trong hook, để useEffect bên dưới quản lý duy nhất 1 lần gọi
+  const { inventories, isLoading, totalItems, totalPages, refetch } = useGetInventories(true);
   const { deleteInventory, isDeleting } = useDeleteInventory();
   const { restoreInventory, isRestoring } = useRestoreInventory();
   const { adjustInventory, isAdjusting } = useAdjustInventory();
