@@ -233,7 +233,6 @@ export default function CategoryTable() {
   // ========================================================================
   const {
     data: categories,
-    isLoading,
     filters,
     setFilters,
     currentPage,
@@ -549,101 +548,22 @@ export default function CategoryTable() {
         <div style={styles.contentArea}>
           {/* Filters */}
           <div style={styles.filterContainer}>
-            {/* Search Bar + Button */}
-            <div style={{ display: "flex", gap: "8px", flex: 1, minWidth: "400px", alignItems: "flex-end" }}>
-              <div style={{ flex: 1, position: "relative" }}>
-                {/* Search Icon */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "12px",
-                    transform: "translateY(-50%)",
-                    pointerEvents: "none",
-                    color: "#9ca3af",
-                  }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                </div>
-
-                {/* Search Input */}
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search by title or location..."
-                  value={filters.keyword}
-                  onChange={(e) => {
-                    setFilters((prev) => ({
-                      ...prev,
-                      keyword: e.target.value,
-                    }));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      refetch();
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px 10px 44px",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontFamily: "inherit",
-                    backgroundColor: "#f8fafc",
-                    transition: "all 0.2s",
-                    color: "#1e293b",
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                    e.currentTarget.style.borderColor = "#8B5A2B";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f8fafc";
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                  }}
-                />
-              </div>
-
-              {/* Search Button */}
-              <button
-                onClick={() => refetch()}
+            {/* Search Bar */}
+            <div style={{ flex: 1, minWidth: "400px", position: "relative" }}>
+              {/* Search Icon */}
+              <div
                 style={{
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#8b5a2b",
-                  color: "white",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  whiteSpace: "nowrap",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6d4522";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#8b5a2b";
+                  position: "absolute",
+                  top: "50%",
+                  left: "12px",
+                  transform: "translateY(-50%)",
+                  pointerEvents: "none",
+                  color: "#9ca3af",
                 }}
               >
                 <svg
-                  width="16"
-                  height="16"
+                  width="18"
+                  height="18"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -652,8 +572,47 @@ export default function CategoryTable() {
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.35-4.35" />
                 </svg>
-                Tìm kiếm
-              </button>
+              </div>
+
+              {/* Search Input */}
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search by title or location..."
+                value={filters.keyword}
+                onChange={(e) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    keyword: e.target.value,
+                  }));
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    setCurrentPage(1);
+                    setTimeout(() => refetch(), 0);
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px 10px 44px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                  backgroundColor: "#f8fafc",
+                  transition: "all 0.2s",
+                  color: "#1e293b",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                  e.currentTarget.style.borderColor = "#8B5A2B";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = "#f8fafc";
+                  e.currentTarget.style.borderColor = "#e5e7eb";
+                }}
+              />
             </div>
 
             {/* Status Filter */}
@@ -680,7 +639,7 @@ export default function CategoryTable() {
                 }}
               >
                 <option value="">All Status</option>
-                <option value="true">Published</option>
+                <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
             </div>
@@ -713,7 +672,7 @@ export default function CategoryTable() {
                     paddingRight: "36px",
                   }}
                 >
-                  <option value="">Sort by Franchise</option>
+                  <option value="">All Franchise</option>
                   {franchiseOptions.map((franchise) => (
                     <option key={franchise.value} value={franchise.value}>
                       {franchise.name}
@@ -754,36 +713,53 @@ export default function CategoryTable() {
             >
               Clear Filters
             </button>
+
+            {/* Search Button */}
+            <button
+              onClick={() => {
+                setCurrentPage(1);
+                setTimeout(() => refetch(), 0);
+              }}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "8px",
+                border: "none",
+                backgroundColor: "#8b5a2b",
+                color: "white",
+                fontWeight: "600",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#6d4522";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#8b5a2b";
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              Tìm kiếm
+            </button>
           </div>
 
           {/* Table */}
           <div style={styles.tableContainer}>
-            {isLoading ? (
-              <div
-                style={{
-                  padding: "80px 20px",
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "16px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    border: "4px solid #f3f4f6",
-                    borderTop: "4px solid #8B5A2B",
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }}
-                />
-                <p style={{ fontSize: "16px", color: "#6b7280", margin: 0 }}>
-                  Loading categories...
-                </p>
-              </div>
-            ) : categories.length === 0 ? (
+            {categories.length === 0 ? (
               <div
                 style={{
                   padding: "80px 20px",

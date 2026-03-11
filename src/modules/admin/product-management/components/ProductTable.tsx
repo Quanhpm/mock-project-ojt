@@ -807,7 +807,7 @@ export default function ProductTable() {
                       minWidth: "220px",
                     }}
                   >
-                    <option value="">Sort by Franchise</option>
+                    <option value="">All Franchise</option>
                     {franchiseOptions.map((franchise) => (
                       <option key={franchise.value} value={franchise.value}>
                         {franchise.name}

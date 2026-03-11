@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { inventoryApi } from "../inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useRestoreInventory = () => {
@@ -19,10 +19,11 @@ export const useRestoreInventory = () => {
       await inventoryApi.restoreInventory(id);
       success("Khôi phục thành công", "Inventory item đã được khôi phục.");
       if (onSuccess) onSuccess();
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage =
-        err.response?.data?.message ||
-        "Không thể khôi phục inventory lúc này. Vui lòng thử lại!";
+        err instanceof Error
+          ? err.message
+          : "Không thể khôi phục inventory lúc này. Vui lòng thử lại!";
       setError(errorMessage);
       showErrorToast("Khôi phục thất bại", errorMessage);
       if (onError) onError(errorMessage);

@@ -5,7 +5,7 @@ import type { Order, OrderItem, MenuItem, ItemOptions } from '../types/order.typ
 
 export const OrderManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('1');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('CO-1');
 
   const [order, setOrder] = useState<Order>({
@@ -26,18 +26,8 @@ export const OrderManagementPage: React.FC = () => {
     let products = mockMenuItems;
 
     // Filter by category
-    if (selectedCategory !== '1') {
-      const categoryMap: Record<string, string> = {
-        '2': 'coffee',
-        '3': 'food',
-        '4': 'dessert',
-        '5': 'beverage',
-        '6': 'addon',
-      };
-      const categoryName = categoryMap[selectedCategory];
-      if (categoryName) {
-        products = products.filter((p) => p.category === categoryName);
-      }
+    if (selectedCategory !== 'all') {
+      products = products.filter((p) => p.category === selectedCategory);
     }
 
     // Filter by search query

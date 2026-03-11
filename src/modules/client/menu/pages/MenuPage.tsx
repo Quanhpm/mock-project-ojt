@@ -37,7 +37,12 @@ function MenuPage() {
     const fetchCategories = async (franchiseId: string) => {
         try {
             const response = await getAllCategoriesByFranchise(franchiseId);
-            setCategories(response || []);
+            const category = response;
+            if (category) {
+                const filteredCategory = category.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
+                setCategories(filteredCategory)
+            }
+            else setCategories([]);
         }
         catch (error) {
             console.error("Failed to fetch categories:", error);
@@ -48,7 +53,11 @@ function MenuPage() {
     const fetchAllProducts = async (franchiseId: string) => {
         try {
             const response = await getProductsByFranchiseAndCategory(franchiseId, "");
-            setProducts(response || []);
+            const product = response;
+            if (product) {
+                const filteredProduct = product.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
+                setProducts(filteredProduct);
+            } else setProducts([]);
         }
         catch (error) {
             console.error("Failed to fetch products:", error);
@@ -68,16 +77,14 @@ function MenuPage() {
     }, []);
     // Lấy data category và product (đổi theo franchise)
     useEffect(() => {
-        if (!franchiseId) return;
+        if (!franchiseId) return; // Skip if franchiseId is empty
+
         const fetchData = async () => {
             await fetchCategories(franchiseId);
             await fetchAllProducts(franchiseId);
         };
         fetchData();
-        if (franchiseId) {
-            localStorage.setItem('selectedFranchiseId', franchiseId);
-        }
-        console.log(products)
+        localStorage.setItem('selectedFranchiseId', franchiseId);
     }, [franchiseId]);
 
     // hiệu ứng scroll
@@ -114,7 +121,7 @@ function MenuPage() {
 
                                 // Điều chỉnh vị trí cuộn để phù hợp với cả cuộn lên và cuộn xuống
                                 if (categoryOffset < sidebar.scrollTop || categoryOffset + categoryHeight > sidebar.scrollTop + sidebarHeight) {
-                                    sidebar.scrollTop = categoryOffset - 1900; // Điều chỉnh vị trí của sidebar
+                                    sidebar.scrollTop = categoryOffset - 1200; // Điều chỉnh vị trí của sidebar
                                 }
                             }
                         }
@@ -122,7 +129,7 @@ function MenuPage() {
                 });
             },
             {
-                rootMargin: "-100px 0px -60% 0px",
+                rootMargin: "-120px 0px -60% 0px",
                 threshold: 0.1,
             }
         );

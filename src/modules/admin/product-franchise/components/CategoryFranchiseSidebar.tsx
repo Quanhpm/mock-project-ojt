@@ -4,6 +4,7 @@ import type { EnrichedCategoryFranchiseItem } from '../hooks/useCategoryFranchis
 
 interface CategoryFranchiseSidebarProps {
     categories: EnrichedCategoryFranchiseItem[];
+    categoryItemCounts?: Record<string, number>;
     isLoading: boolean;
     selectedCategory: EnrichedCategoryFranchiseItem | null;
     onSelectCategory: (cat: EnrichedCategoryFranchiseItem | null) => void;
@@ -16,9 +17,10 @@ interface CategoryFranchiseSidebarProps {
 
 export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> = ({
     categories,
+    categoryItemCounts = {},
     isLoading,
     selectedCategory,
-    onSelectCategory,
+    onSelectCategory, 
     canAssign,
     isAssigning,
     onAssign,
@@ -114,7 +116,7 @@ export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> =
                                         </span>
                                     </div>
                                     <span className="text-xs text-gray-400">
-                                        {cat.display_order} Items
+                                        {categoryItemCounts?.[cat.id] || 0} Items
                                     </span>
                                 </label>
                             );

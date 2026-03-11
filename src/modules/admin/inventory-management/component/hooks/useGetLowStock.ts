@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { inventoryApi } from "../inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import type { LowStockItem } from "../inventory.types";
 import { useToast } from "@/hooks/use-toast.hook";
 

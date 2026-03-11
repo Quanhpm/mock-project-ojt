@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ShoppingCart, Minus, Plus, Trash2, User, Edit2 } from 'lucide-react';
 import type { OrderItem, Order, ItemOptions } from '../types/order.types.ts';
 import { EditItemModal } from './EditItemModal.tsx';
+import { QRPaymentModal } from './QRPaymentModal.tsx';
 
 interface OrderSidebarProps {
   order: Order;
@@ -23,6 +24,7 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
 }) => {
   const TAX_RATE = 0.05;
   const [editingItem, setEditingItem] = useState<OrderItem | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   return (
     <aside className="w-96 shrink-0 bg-white flex flex-col z-10 shadow-xl border-l border-gray-100">
@@ -152,12 +154,23 @@ export const OrderSidebar: React.FC<OrderSidebarProps> = ({
             <span>Total</span>
             <span>{order.total.toLocaleString('vi-VN')}đ</span>
           </div>
-          <button className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-700/20 flex items-center justify-between px-6 transition-all active:scale-[0.99] ring-offset-2 ring-offset-white focus:ring-2 focus:ring-amber-700">
+          <button
+            onClick={() => setShowQRModal(true)}
+            className="w-full bg-amber-700 hover:bg-amber-800 text-white font-bold py-4 rounded-xl shadow-lg shadow-amber-700/20 flex items-center justify-between px-6 transition-all active:scale-[0.99] ring-offset-2 ring-offset-white focus:ring-2 focus:ring-amber-700"
+          >
             <span className="text-lg">Pay</span>
             <span className="text-lg">{order.total.toLocaleString('vi-VN')}đ</span>
           </button>
         </div>
       )}
+
+      {/* QR Payment Modal */}
+      <QRPaymentModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        total={order.total}
+        orderNumber={order.orderNumber}
+      />
 
       {/* Edit Item Modal */}
       {editingItem && (
