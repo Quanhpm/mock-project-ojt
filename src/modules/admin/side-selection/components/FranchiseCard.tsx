@@ -16,7 +16,6 @@ const getRoleName = (role: string): string => {
 
 export const FranchiseCard = ({ userRole, switching, onSelect }: FranchiseCardProps) => {
   const franchiseId = userRole.franchise_id!
-  const isLoading = switching === franchiseId
 
   const handleClick = () => {
     onSelect(franchiseId)
@@ -56,17 +55,8 @@ export const FranchiseCard = ({ userRole, switching, onSelect }: FranchiseCardPr
           disabled={!!switching}
           className="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white text-base font-semibold transition-all shadow-md group-hover:translate-x-1 disabled:opacity-70 disabled:cursor-not-allowed disabled:translate-x-0"
         >
-          {isLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Đang chọn...
-            </>
-          ) : (
-            <>
-              Chọn chi nhánh
-              <span className="material-symbols-outlined text-xl ml-2">arrow_forward</span>
-            </>
-          )}
+          Chọn chi nhánh
+          <span className="material-symbols-outlined text-xl ml-2">arrow_forward</span>
         </button>
       </div>
     </div>

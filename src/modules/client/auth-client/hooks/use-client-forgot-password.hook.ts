@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { forgotPassword } from "@/apis/endpointsCLIENT";
+import { useLoadingStore } from "@/stores/loading.store";
 import { HttpError } from "@/apis";
 
 export const useClientForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore();
 
   const sendResetEmail = async (email: string) => {
     setIsLoading(true);
     setError(null);
+    incrementGlobalLoading();
 
     try {
       await forgotPassword(email);
@@ -31,6 +34,7 @@ export const useClientForgotPassword = () => {
       };
     } finally {
       setIsLoading(false);
+      decrementGlobalLoading();
     }
   };
 

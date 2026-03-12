@@ -4,6 +4,7 @@ import { login, getProfile } from "@/apis/endpoints/auth.api";
 import { HttpError } from "@/apis/http.types";
 import { resetAuthRedirecting } from "@/apis";
 import { useAdminAuthStore } from "../stores/admin-auth.store";
+import { useLoadingStore } from "@/stores/loading.store";
 import { useToast } from "@/hooks/use-toast.hook";
 import { ROUTER_URL } from "@/routes/router.const";
 import type { AdminLoginFormValues } from "../schemas/admin-login.schema";
@@ -11,6 +12,7 @@ import type { AdminLoginFormValues } from "../schemas/admin-login.schema";
 export function useAdminLogin() {
   const navigate = useNavigate();
   const setProfile = useAdminAuthStore((s) => s.setProfile);
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore();
   const { success, error: showError } = useToast();
 
   const [loading, setLoading] = useState(false);
@@ -20,6 +22,7 @@ export function useAdminLogin() {
     async (data: AdminLoginFormValues) => {
       setLoading(true);
       setErrorMessage("");
+      incrementGlobalLoading();
 
       try {
         // Reset cờ redirect trước khi login (user đang ở trang login = hợp lệ)
@@ -62,9 +65,10 @@ export function useAdminLogin() {
         showError(message, "Đăng nhập thất bại");
       } finally {
         setLoading(false);
+        decrementGlobalLoading();
       }
     },
-    [navigate, setProfile, success, showError],
+    [navigate, setProfile, incrementGlobalLoading, decrementGlobalLoading, success, showError],
   );
 
   return { handleLogin, loading, errorMessage };

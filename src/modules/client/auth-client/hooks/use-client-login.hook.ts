@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { loginCustomer, getCustomerProfile } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
+import { useLoadingStore } from "@/stores/loading.store";
 import { HttpError } from "@/apis";
 import type { CustomerLoginRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
 
@@ -8,10 +9,12 @@ export const useClientLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setUser, setAuthLoading } = useClientAuthStore();
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore();
 
   const login = async (data: CustomerLoginRequest) => {
     setIsLoading(true);
     setAuthLoading(true);
+    incrementGlobalLoading();
     setError(null);
 
     try {
@@ -46,6 +49,7 @@ export const useClientLogin = () => {
     } finally {
       setIsLoading(false);
       setAuthLoading(false);
+      decrementGlobalLoading();
     }
   };
 
