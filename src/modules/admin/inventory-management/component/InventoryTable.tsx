@@ -36,6 +36,7 @@ export default function InventoryTable() {
   const [inputValue, setInputValue] = useState("");
   const [franchiseFilter, setFranchiseFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
+  const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const itemsPerPage = 7;
 
@@ -90,6 +91,22 @@ export default function InventoryTable() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // ── Handle pagination after deletion ────────────────────────────
+  // If page is empty after deletion and we're not on page 1, go back to page 1
+  useEffect(() => {
+    if (
+      shouldCheckPagination &&
+      inventories.length === 0 &&
+      currentPage > 1 &&
+      !isLoading
+    ) {
+      setShouldCheckPagination(false);
+      setCurrentPage(1);
+    } else if (shouldCheckPagination && !isLoading) {
+      setShouldCheckPagination(false);
+    }
+  }, [shouldCheckPagination, inventories.length, currentPage, isLoading]);
 
   // === Watched values for selected count ===
   const watchedItems = watch("items");
@@ -208,7 +225,7 @@ export default function InventoryTable() {
   };
   const handleViewLogs = (inventoryId: string, productName: string) => { setLogsModal({ open: true, inventoryId, productName }); fetchLogs(inventoryId); };
   const handleDelete = (inventoryId: string, productName: string) => { setDeleteModal({ isOpen: true, inventoryId, productName }); };
-  const handleDeleteConfirm = () => { deleteInventory(deleteModal.inventoryId, () => { setDeleteModal({ isOpen: false, inventoryId: "", productName: "" }); refetch(buildPayload(currentPage)); }); };
+  const handleDeleteConfirm = () => { deleteInventory(deleteModal.inventoryId, () => { setDeleteModal({ isOpen: false, inventoryId: "", productName: "" }); setShouldCheckPagination(true); refetch(buildPayload(currentPage)); }); };
   const handleRestore = (inventoryId: string, productName: string) => { setRestoreModal({ open: true, inventoryId, productName }); };
   const handleRestoreConfirm = () => { restoreInventory(restoreModal.inventoryId, () => { setRestoreModal({ open: false, inventoryId: "", productName: "" }); refetch(buildPayload(currentPage)); }); };
 

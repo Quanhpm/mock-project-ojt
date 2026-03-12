@@ -41,7 +41,7 @@ export default function ForgotPasswordPage() {
 
       <AdminForgotPasswordForm
         onSubmit={handleSubmit}
-        isLoading={isLoading}
+        isLoading={false}
         error={errorMessage || ""}
       />
 

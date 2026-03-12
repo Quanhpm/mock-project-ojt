@@ -13,12 +13,13 @@ export default function AdminLoginPage() {
   const store = useAdminAuthStore();
   const roleCode = getRoleCode(store);
   const isLoggedIn = !!(store.admin && roleCode);
+  const isLoading = store.isLoading;
   
   const activeContext = store.activeContext;
 
-  // ✅ Auto-redirect if already logged in
+  // ✅ Auto-redirect if already logged in AND hydrate is done
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && !isLoading) {
       // Nếu đã có active_context (session cũ còn sống) → vào dashboard thẳng
       // Nếu chưa có context → bắt buộc chọn franchise
       if (activeContext) {
@@ -33,11 +34,11 @@ export default function AdminLoginPage() {
         );
       }
     }
-  }, [isLoggedIn, activeContext, navigate]);
+  }, [isLoggedIn, isLoading, activeContext, navigate]);
 
-  // ✅ Don't render login form if already logged in
-  if (isLoggedIn) {
-    return null; // hoặc có thể return loading spinner
+  // ✅ Don't render login form if already logged in AND hydrate done
+  if (isLoggedIn && !isLoading) {
+    return null;
   }
 
   return (
@@ -49,7 +50,7 @@ export default function AdminLoginPage() {
 
       <AdminLoginForm 
         onSubmit={handleLogin} 
-        isLoading={loading} 
+        isLoading={false}
         error={errorMessage} 
       />
 
