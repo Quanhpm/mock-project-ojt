@@ -91,6 +91,13 @@ function UserManagement() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
 
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
+
   // ──────── Search Handlers ────────
   const handleSearch = () => {
     setIsSearchDropdownOpen(false);

@@ -1,4 +1,4 @@
-import React from 'react'
+import { useState } from 'react'
 
 interface PaginationProps {
   currentPage: number
@@ -8,45 +8,33 @@ interface PaginationProps {
   onPageChange: (page: number) => void
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
+export const Pagination = ({
   currentPage,
   totalPages,
   totalItems,
   itemsPerPage,
   onPageChange,
-}) => {
+}: PaginationProps) => {
+  const [pageInput, setPageInput] = useState('')
+
+  if (totalPages <= 1) return null
+
   const startItem = (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
-  const getPageNumbers = () => {
+  const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = []
-    
-    if (totalPages <= 7) {
-      // Show all pages if total is 7 or less
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
-      // Always show first page
-      pages.push(1)
-      
-      if (currentPage > 3) {
-        pages.push('...')
-      }
-      
-      // Show pages around current page
-      for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
-        pages.push(i)
-      }
-      
-      if (currentPage < totalPages - 2) {
-        pages.push('...')
-      }
-      
-      // Always show last page
-      pages.push(totalPages)
+      const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2))
+      const we = ws + 2
+      if (ws > 2) { pages.push(1, '...') } else { for (let i = 1; i < ws; i++) pages.push(i) }
+      for (let i = ws; i <= we; i++) pages.push(i)
+      if (we < totalPages - 1) { pages.push('...', totalPages) } else { for (let i = we + 1; i <= totalPages; i++) pages.push(i) }
     }
-    
+
     return pages
   }
 
@@ -60,7 +48,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             <span className="font-medium">{totalItems}</span> results
           </p>
         </div>
-        <div>
+        <div className="flex items-center gap-3">
           <nav
             aria-label="Pagination"
             className="isolate inline-flex -space-x-px rounded-md shadow-sm"
@@ -81,7 +69,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 return (
                   <span
                     key={`ellipsis-${index}`}
-                    className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300 focus:outline-offset-0"
+                    className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-inset ring-slate-300"
                   >
                     ...
                   </span>
@@ -116,6 +104,27 @@ export const Pagination: React.FC<PaginationProps> = ({
               <span className="material-symbols-outlined text-[20px]">chevron_right</span>
             </button>
           </nav>
+
+          {/* Go to page */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 whitespace-nowrap">Đến trang</span>
+            <input
+              type="number"
+              min={1}
+              max={totalPages}
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const n = Number.parseInt(pageInput, 10)
+                  if (!Number.isNaN(n) && n >= 1 && n <= totalPages) onPageChange(n)
+                  setPageInput('')
+                }
+              }}
+              placeholder={String(currentPage)}
+              className="w-14 h-9 border border-slate-300 rounded-md text-center text-sm font-semibold outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            />
+          </div>
         </div>
       </div>
     </div>
