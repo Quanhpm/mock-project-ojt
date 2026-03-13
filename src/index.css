@@ -96,6 +96,15 @@
   }
 }
 
+/* Cursor pointer for all interactive elements */
+button:not(:disabled),
+select:not(:disabled),
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"] {
+  cursor: pointer;
+}
+
 /* Sonner toast - click to dismiss */
 [data-sonner-toast] {
   cursor: pointer !important;

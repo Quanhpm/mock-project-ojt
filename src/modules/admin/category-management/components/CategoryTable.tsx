@@ -1117,6 +1117,13 @@ export default function CategoryTable() {
               </div>
               <div
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+              <div
+                style={{
                   display: "inline-flex",
                   borderRadius: "6px",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
@@ -1163,7 +1170,7 @@ export default function CategoryTable() {
 
                 {(() => {
                   const pages: (number | "...")[] = [];
-                  if (totalPages <= 5) {
+                  if (totalPages <= 3) {
                     for (let i = 1; i <= totalPages; i++) pages.push(i);
                   } else {
                     const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
@@ -1247,7 +1254,8 @@ export default function CategoryTable() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
+              </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
                   <input
                     type="number" min={1} max={totalPages}
