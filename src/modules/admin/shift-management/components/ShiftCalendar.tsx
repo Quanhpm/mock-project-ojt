@@ -74,7 +74,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
         {calendarDays.map((day, index) => {
           const dayKey = formatDateKey(day.date)
           const isSelected = selectedKey === dayKey
-          const maxVisible = 3
+          const maxVisible = 2
           const hiddenCount = Math.max(day.assignments.length - maxVisible, 0)
 
           return (
@@ -103,7 +103,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                 {day.assignments.slice(0, maxVisible).map((assignment) => (
                   <span
                     key={assignment.id}
-                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset ${
+                    className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ring-1 ring-inset truncate ${
                       getStatusClass(assignment)
                     }`}
                   >
@@ -111,7 +111,9 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                   </span>
                 ))}
                 {hiddenCount > 0 && (
-                  <span className="text-[10px] text-slate-400">+{hiddenCount} more</span>
+                  <span className="text-[12px] text-slate-500 font-bold block text-center tracking-[0.2em] mt-1">
+                    ...
+                  </span>
                 )}
               </div>
             </button>

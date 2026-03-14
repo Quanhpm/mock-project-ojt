@@ -14,13 +14,7 @@ const formatPrice = (price: number) => {
 
 const cleanHTML = (html: string) => {
   if (!html) return "";
-
-  return html
-    .replace(/<span[^>]*>/g, "")
-    .replace(/<\/span>/g, "")
-    .replace(/<b>/g, "<strong>")
-    .replace(/<\/b>/g, "</strong>")
-    .replace(/style="[^"]*"/g, "");
+  return html;
 };
 
 export default function ProductDetailsModal({
@@ -281,12 +275,13 @@ export default function ProductDetailsModal({
     </div>
 
     <div
+      className="ck-content-preview"
       style={{
         padding: "14px",
         borderRadius: "10px",
         border: "1px solid #e5e7eb",
         background: "#f9fafb",
-        maxHeight: "200px",
+        maxHeight: "300px",
         overflow: "auto",
         lineHeight: "1.7",
         fontSize: "14px",

@@ -1,20 +1,20 @@
-import { useMemo, useState } from 'react'
-import { franchises, shiftAssignments, shifts, users } from '@/mockdata'
-import type { Franchise, Shift, ShiftAssignment } from '@/types'
+import { useEffect, useMemo, useState } from 'react'
+import { shiftApi, searchUsers, franchiseApi } from '@/apis/endpoints'
+import type { ShiftAssignmentItem, UserItem, ShiftItem, FranchiseItem } from '@/apis/endpoints'
 import type { ShiftFilters } from './useShiftFilters.hook'
 
 export interface ShiftAssignmentView {
-  id: number
+  id: string
   workDate: string
-  status: ShiftAssignment['status']
-  shiftId: number
+  status: 'ASSIGNED' | 'COMPLETED' | 'ABSENT'
+  shiftId: string
   shiftName: string
   startTime: string
   endTime: string
-  staffId: number
+  staffId: string
   staffName: string
   staffAvatar: string
-  franchiseId: number
+  franchiseId: string | number
   franchiseName: string
 }
 
@@ -32,88 +32,134 @@ const formatDateKey = (date: Date) => {
   return `${year}-${month}-${day}`
 }
 
-const parseWorkDate = (workDate: string) => new Date(`${workDate}T00:00:00`)
-
-const getInitialMonthDate = () => {
-  if (shiftAssignments.length === 0) {
-    return new Date()
-  }
-
-  let earliest = parseWorkDate(shiftAssignments[0].work_date)
-  shiftAssignments.forEach((assignment) => {
-    const date = parseWorkDate(assignment.work_date)
-    if (date < earliest) {
-      earliest = date
-    }
-  })
-
-  return new Date(earliest.getFullYear(), earliest.getMonth(), 1)
-}
-
 export const useShiftCalendar = (filters: ShiftFilters) => {
-  const [monthDate, setMonthDate] = useState<Date>(getInitialMonthDate)
+  const [monthDate, setMonthDate] = useState<Date>(new Date())
+  
+  // States to hold API data
+  const [assignmentRawData, setAssignmentRawData] = useState<ShiftAssignmentItem[]>([])
+  const [usersMap, setUsersMap] = useState<Map<string, UserItem>>(new Map())
+  const [shiftsMap, setShiftsMap] = useState<Map<string, ShiftItem>>(new Map())
+  const [franchisesMap, setFranchisesMap] = useState<Map<string, FranchiseItem>>(new Map())
 
-  const staffOptions = useMemo(() => {
-    return users
-      .filter((user) => user.role === 'STAFF')
-      .map((user) => ({
-        id: user.id,
-        name: user.name,
-        avatarUrl: user.avatar_url,
-        franchiseId: user.franchise_id ?? null,
-      }))
-  }, [])
+  // Raw arrays for dropdown options
+  const [shiftsData, setShiftsData] = useState<ShiftItem[]>([])
+  const [franchisesData, setFranchisesData] = useState<FranchiseItem[]>([])
 
-  const franchiseOptions = useMemo(() => {
-    return franchises.map((franchise: Franchise) => ({
-      id: franchise.id,
-      name: franchise.name,
-    }))
-  }, [])
+  // ===== Load Data from APIs =====
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // 1. Search assignments
+        const assignResponse = await shiftApi.searchShiftAssignments({
+          searchCondition: {
+            is_deleted: false,
+          },
+          pageInfo: { pageNum: 1, pageSize: 1000 },
+        })
+        const assignments = assignResponse?.data || []
+        setAssignmentRawData(assignments)
 
-  const shiftOptions = useMemo(() => {
-    return shifts.filter((shift: Shift) => !shift.is_deleted)
-  }, [])
+        if (assignments.length > 0) {
+          let earliestDateStr = assignments[0].work_date
+          assignments.forEach((a) => {
+            if (a.work_date < earliestDateStr) earliestDateStr = a.work_date
+          })
+          const [year, month] = earliestDateStr.split('-')
+          if (year && month) {
+            setMonthDate(new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1))
+          }
+        }
 
+        // 2. Search users (lấy staff info + avatar)
+        const usersResponse = await searchUsers({
+          searchCondition: {
+            is_deleted: false,
+          },
+          pageInfo: { pageNum: 1, pageSize: 1000 },
+        })
+        const usersData = usersResponse?.data || []
+        setUsersMap(new Map(usersData.map((user: UserItem) => [user.id, user])))
+
+        // 3. Search shifts (để lấy tên ca + giờ nếu cần)
+        const shiftResponse = await shiftApi.searchShifts({
+          searchCondition: {
+            is_deleted: false,
+            franchise_id:
+              filters.franchiseFilter !== 'all' ? filters.franchiseFilter : undefined,
+          },
+          pageInfo: { pageNum: 1, pageSize: 1000 },
+        })
+        const shifts = shiftResponse?.data || []
+        setShiftsData(shifts)
+        setShiftsMap(new Map(shifts.map((shift: ShiftItem) => [(shift.id || shift._id) as string, shift])))
+
+        // 4. Search franchises (để lấy tên chi nhánh)
+        const franchiseResponse = await franchiseApi.searchFranchises({
+          searchCondition: {
+            is_deleted: false,
+          },
+          pageInfo: { pageNum: 1, pageSize: 1000 },
+        })
+        const franchises = franchiseResponse?.data || []
+        setFranchisesData(franchises)
+        setFranchisesMap(new Map(franchises.map((f: FranchiseItem) => [f.id as string, f])))
+
+      } catch (error) {
+        console.error('Failed to load shift management data:', error)
+      }
+    }
+
+    loadData()
+  }, [filters.franchiseFilter])
+
+  // ===== Transform raw data =====
   const assignmentsView = useMemo(() => {
-    const shiftById = new Map<number, Shift>(
-      shifts.map((shift: Shift) => [shift.id, shift])
-    )
-    const staffById = new Map(users.map((user) => [user.id, user]))
-    const franchiseById = new Map<number, Franchise>(
-      franchises.map((franchise: Franchise) => [franchise.id, franchise])
-    )
+    return assignmentRawData.map((assignment) => {
+      const shift = shiftsMap.get(assignment.shift_id)
+      const user = usersMap.get(assignment.user_id)
+      const franchiseId = shift?.franchise_id
+      const franchise = franchiseId ? franchisesMap.get(franchiseId.toString()) : null
 
-    return shiftAssignments
-      .filter((assignment) => !assignment.is_deleted)
-      .map((assignment) => {
-        const shift = shiftById.get(assignment.shift_id)
-        const staff = staffById.get(assignment.user_id)
+      return {
+        id: assignment.id,
+        workDate: assignment.work_date,
+        status: assignment.status as 'ASSIGNED' | 'COMPLETED' | 'ABSENT',
+        shiftId: assignment.shift_id,
+        shiftName: shift?.name || assignment.shift_name || 'Unknown Shift',
+        startTime: assignment.start_time || shift?.start_time || '',
+        endTime: assignment.end_time || shift?.end_time || '',
+        staffId: assignment.user_id,
+        staffName: assignment.user_name || user?.name || 'Unknown Staff',
+        staffAvatar: user?.avatar_url || '',
+        franchiseId: franchiseId || '',
+        franchiseName: franchise?.name || 'Unknown Franchise',
+      }
+    }).filter(Boolean) as ShiftAssignmentView[]
+  }, [assignmentRawData, usersMap, shiftsMap, franchisesMap])
 
-        if (!shift || !staff) {
-          return null
-        }
+  // ===== Staff Options =====
+  const staffOptions = useMemo(() => {
+    return Array.from(usersMap.values()).map((user: UserItem) => ({
+      id: user.id,
+      name: user.name,
+      avatarUrl: user.avatar_url,
+    }))
+  }, [usersMap])
 
-        const franchise = franchiseById.get(shift.franchise_id)
+  // ===== Franchise Options =====
+  const franchiseOptions = useMemo(() => {
+    return franchisesData.map((f) => ({
+      id: f.id as string,
+      name: f.name,
+    }))
+  }, [franchisesData])
 
-        return {
-          id: assignment.id,
-          workDate: assignment.work_date,
-          status: assignment.status,
-          shiftId: shift.id,
-          shiftName: shift.name,
-          startTime: shift.start_time,
-          endTime: shift.end_time,
-          staffId: staff.id,
-          staffName: staff.name,
-          staffAvatar: staff.avatar_url,
-          franchiseId: shift.franchise_id,
-          franchiseName: franchise?.name || 'N/A',
-        }
-      })
-      .filter(Boolean) as ShiftAssignmentView[]
-  }, [])
+  // ===== Shift Options =====
+  const shiftOptions = useMemo(() => {
+    return shiftsData
+  }, [shiftsData])
 
+  // ===== Filter assignments =====
   const filteredAssignments = useMemo(() => {
     return assignmentsView.filter((assignment) => {
       const matchesSearch =
@@ -121,18 +167,16 @@ export const useShiftCalendar = (filters: ShiftFilters) => {
         assignment.staffName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
         assignment.shiftName.toLowerCase().includes(filters.searchTerm.toLowerCase())
 
-      const matchesFranchise =
-        filters.franchiseFilter === 'all' ||
-        assignment.franchiseId.toString() === filters.franchiseFilter
-
       const matchesStaff =
-        filters.staffFilter === 'all' ||
-        assignment.staffId.toString() === filters.staffFilter
+        filters.staffFilter === 'all' || assignment.staffId === filters.staffFilter
 
       const matchesStatus =
         filters.statusFilter === 'all' || assignment.status === filters.statusFilter
 
-      return matchesSearch && matchesFranchise && matchesStaff && matchesStatus
+      const matchesFranchise =
+        filters.franchiseFilter === 'all' || assignment.franchiseId.toString() === filters.franchiseFilter
+
+      return matchesSearch && matchesStaff && matchesStatus && matchesFranchise
     })
   }, [assignmentsView, filters])
 

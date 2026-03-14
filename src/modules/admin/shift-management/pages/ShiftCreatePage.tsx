@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, CalendarDays, ClipboardList, Info, Save, UserRound } from 'lucide-react'
-import { franchises, shifts, users } from '@/mockdata'
-import type { Shift } from '@/types'
+import { shiftApi, franchiseApi, searchUsers } from '@/apis/endpoints'
+import type { FranchiseItem, ShiftItem, UserItem } from '@/apis/endpoints'
+import { toast } from 'sonner'
 
 type AssignmentStatus = 'ASSIGNED' | 'COMPLETED' | 'ABSENT'
 
@@ -15,52 +16,90 @@ export default function ShiftCreatePage() {
   const [staffId, setStaffId] = useState('')
   const [status, setStatus] = useState<AssignmentStatus>('ASSIGNED')
   const [note, setNote] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Data states
+  const [franchisesData, setFranchisesData] = useState<FranchiseItem[]>([])
+  const [shiftsData, setShiftsData] = useState<ShiftItem[]>([])
+  const [usersData, setUsersData] = useState<UserItem[]>([])
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [franRes, shiftRes, userRes] = await Promise.all([
+          franchiseApi.searchFranchises({
+            searchCondition: { is_deleted: false },
+            pageInfo: { pageNum: 1, pageSize: 1000 },
+          }),
+          shiftApi.searchShifts({
+            searchCondition: { is_deleted: false },
+            pageInfo: { pageNum: 1, pageSize: 1000 },
+          }),
+          searchUsers({
+            searchCondition: { is_deleted: false },
+            pageInfo: { pageNum: 1, pageSize: 1000 },
+          }),
+        ])
+
+        setFranchisesData(franRes?.data || [])
+        setShiftsData(shiftRes?.data || [])
+        setUsersData(userRes?.data || [])
+      } catch (err) {
+        console.error(err)
+        toast.error('Gặp lỗi khi tải dữ liệu. Vui lòng thử lại.')
+      }
+    }
+    fetchData()
+  }, [])
 
   const franchiseOptions = useMemo(
-    () => franchises.map((franchise) => ({ id: franchise.id, name: franchise.name })),
-    []
+    () => franchisesData.map((franchise) => ({ id: franchise.id, name: franchise.name })),
+    [franchisesData]
   )
 
   const staffOptions = useMemo(
-    () =>
-      users
-        .filter((user) => user.role === 'STAFF')
-        .map((user) => ({
-          id: user.id,
-          name: user.name,
-          franchiseId: user.franchise_id ?? null,
-        })),
-    []
+    () => usersData.map((user) => ({ id: user.id, name: user.name })),
+    [usersData]
   )
 
-  const shiftOptions = useMemo(() => shifts.filter((shift: Shift) => !shift.is_deleted), [])
+  const shiftOptions = useMemo(() => shiftsData, [shiftsData])
 
   const filteredShifts = useMemo(() => {
     if (franchiseId === 'all') return shiftOptions
-    return shiftOptions.filter((shift) => shift.franchise_id.toString() === franchiseId)
+    return shiftOptions.filter((shift) => shift.franchise_id?.toString() === franchiseId)
   }, [franchiseId, shiftOptions])
 
   const filteredStaff = useMemo(() => {
-    if (franchiseId === 'all') return staffOptions
-    return staffOptions.filter((member) => member.franchiseId?.toString() === franchiseId)
-  }, [franchiseId, staffOptions])
+    return staffOptions // In real scenario, staff might be filtered by franchise via user-role, but we just display all users now
+  }, [staffOptions])
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!workDate || !shiftId || !staffId) return
-
-    const payload = {
-      workDate,
-      shiftId: Number(shiftId),
-      staffId: Number(staffId),
-      status,
-      note,
+    if (!workDate || !shiftId || !staffId) {
+      toast.error('Vui lòng chọn đầy đủ Work Date, Shift và Staff')
+      return
     }
 
-    console.log('New assignment', payload)
-    alert('Shift assignment created successfully!')
-    navigate('/admin/shifts')
+    try {
+      setIsSubmitting(true)
+      await shiftApi.assignShiftToUser({
+        work_date: workDate,
+        shift_id: shiftId,
+        user_id: staffId,
+        note: note || undefined,
+      })
+
+      toast.success('Shift assignment created successfully!')
+      navigate('/admin/shifts')
+      
+    } catch (error: unknown) {
+      console.error(error)
+      const errMessage = error instanceof Error ? error.message : 'Error'
+      toast.error('Lỗi khi tạo assignment: ' + errMessage)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -140,7 +179,7 @@ export default function ShiftCreatePage() {
             }}
           >
             <Save size={18} />
-            Save Assignment
+            {isSubmitting ? 'Saving...' : 'Save Assignment'}
           </button>
         </div>
       </div>
