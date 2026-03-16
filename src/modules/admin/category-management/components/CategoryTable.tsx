@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, RotateCcw, FileText, FolderPlus } from "lucide-react";
+import { Edit2, Trash2, RotateCcw, Plus, FolderPlus } from "lucide-react";
 import { useCategorySearch } from "../hooks/useCategorySearch.hook";
 import { useDeleteCategory } from "./hooks/useDeleteCategory";
 import { useRestoreCategory } from "./hooks/useRestoreCategory";
@@ -26,6 +26,11 @@ styleSheet.textContent = `
     to {
       transform: rotate(360deg);
     }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .animate-spin {
@@ -87,7 +92,6 @@ const styles = {
     gap: "28px",
     flexShrink: 0,
     zIndex: 10,
-    backgroundColor: "#ffffff",
   },
   contentArea: {
     flex: 1,
@@ -233,6 +237,7 @@ export default function CategoryTable() {
   // ========================================================================
   const {
     data: categories,
+    isLoading,
     filters,
     setFilters,
     currentPage,
@@ -504,7 +509,7 @@ export default function CategoryTable() {
               >
                 Category Management
               </h1>
-              <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
+              <p style={{ color: "#391b03", margin: 0, fontSize: "15px" }}>
                 Total Categories: {totalItems || 0}
               </p>
             </div>
@@ -513,18 +518,18 @@ export default function CategoryTable() {
                 onClick={handleCreateMaster}
                 style={{
                   ...getButtonStyles.primary,
-                  backgroundColor: "#6366f1",
-                  boxShadow: "0 2px 4px rgba(99, 102, 241, 0.2)",
+                  backgroundColor: "#614309",
+                  boxShadow: "0 2px 4px rgba(65, 38, 3, 0.3)",
                 } as React.CSSProperties}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#4f46e5";
+                  e.currentTarget.style.backgroundColor = "#3e1b04";
                   e.currentTarget.style.boxShadow =
-                    "0 4px 8px rgba(99, 102, 241, 0.3)";
+                    "0 4px 8px rgba(65, 38, 3, 0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6366f1";
+                  e.currentTarget.style.backgroundColor = "#614309";
                   e.currentTarget.style.boxShadow =
-                    "0 2px 4px rgba(99, 102, 241, 0.2)";
+                    "0 2px 4px rgba(65, 38, 3, 0.3)";
                 }}
                 title="Create Master Category"
               >
@@ -546,7 +551,7 @@ export default function CategoryTable() {
                 }}
               >
                 <span style={{ fontSize: "20px" }}>+</span>
-                <span>Add Category</span>
+                <span>Assign Category</span>
               </button>
             </div>
           </div>
@@ -767,7 +772,7 @@ export default function CategoryTable() {
 
           {/* Table */}
           <div style={styles.tableContainer}>
-            {categories.length === 0 ? (
+            {!isLoading && categories.length === 0 ? (
               <div
                 style={{
                   padding: "80px 20px",
@@ -887,7 +892,46 @@ export default function CategoryTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {categories.map((category, index) => (
+                  {isLoading
+                    ? Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} style={{ borderBottom: "1px solid #f8f9fa" }}>
+                          <td colSpan={6} style={{ padding: "16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                              <div
+                                style={{
+                                  width: "40px",
+                                  height: "40px",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#e0e0e0",
+                                  animation: "pulse 1.5s ease-in-out infinite",
+                                }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <div
+                                  style={{
+                                    height: "16px",
+                                    backgroundColor: "#e0e0e0",
+                                    borderRadius: "4px",
+                                    marginBottom: "8px",
+                                    width: "60%",
+                                    animation: "pulse 1.5s ease-in-out infinite",
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    height: "12px",
+                                    backgroundColor: "#f0f0f0",
+                                    borderRadius: "4px",
+                                    width: "40%",
+                                    animation: "pulse 1.5s ease-in-out infinite",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    : categories.map((category, index) => (
                     <tr
                       key={category.id}
                       style={{
@@ -1018,7 +1062,7 @@ export default function CategoryTable() {
                               e.currentTarget.style.color = "#64748b";
                             }}
                           >
-                            <FileText size={18} />
+                            <Plus size={18} />
                           </button>
                           <button
                             onClick={() => handleEdit(category.id)}

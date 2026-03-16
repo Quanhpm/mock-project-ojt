@@ -149,18 +149,7 @@ export default function ProductsByCategoryPage() {
     item.product_name?.toLowerCase().includes(keyword.toLowerCase())
   );
 
-  if (isLoading || isLoadingCategoryContext) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B5A2B] mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!categoryContext.categoryFranchiseId) {
+  if (!isLoading && !isLoadingCategoryContext && !categoryContext.categoryFranchiseId) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -249,7 +238,27 @@ export default function ProductsByCategoryPage() {
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length === 0 ? (
+            {isLoading || isLoadingCategoryContext ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {Array.from({ length: 6 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 flex flex-col"
+                  >
+                    <div className="h-64 w-full bg-slate-100 animate-pulse" />
+                    <div className="p-6 flex flex-col gap-3">
+                      <div className="h-5 bg-slate-200 rounded-md w-3/4 animate-pulse" />
+                      <div className="h-4 bg-slate-100 rounded-md w-1/2 animate-pulse" />
+                      <div className="h-3 bg-slate-100 rounded-md w-1/3 animate-pulse" />
+                      <div className="mt-4 flex gap-3">
+                        <div className="flex-1 h-10 bg-slate-100 rounded-xl animate-pulse" />
+                        <div className="w-11 h-10 bg-slate-100 rounded-xl animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="text-center py-16">
                 <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-slate-900 mb-2">
