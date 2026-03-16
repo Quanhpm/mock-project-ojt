@@ -125,6 +125,7 @@ export default function ProductTable() {
     productId: "",
     productName: "",
   });
+  const [pageInput, setPageInput] = useState("");
 
   // Track if we need to check pagination after deletion
   const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
@@ -201,6 +202,13 @@ export default function ProductTable() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
+
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
 
   // Handle search input keyboard navigation
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -1534,7 +1542,7 @@ export default function ProductTable() {
                       sản phẩm)
                     </p>
                   </div>
-                  <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <nav
                       aria-label="Pagination"
                       style={{ display: "inline-flex" }}
@@ -1573,26 +1581,24 @@ export default function ProductTable() {
                       >
                         Trước
                       </button>
-                      {Array.from(
-                        { length: Math.min(3, totalPages) },
-                        (_, i) => {
-                          let pageNum;
-                          if (totalPages <= 3) {
-                            pageNum = i + 1;
-                          } else {
-                            if (currentPage === 1) {
-                              pageNum = i + 1;
-                            } else if (currentPage === totalPages) {
-                              pageNum = totalPages - 2 + i;
-                            } else {
-                              pageNum = currentPage - 1 + i;
-                            }
-                          }
-
-                          return (
+                      {(() => {
+                        const pages: (number | "...")[] = [];
+                        if (totalPages <= 5) {
+                          for (let i = 1; i <= totalPages; i++) pages.push(i);
+                        } else {
+                          const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                          const we = ws + 2;
+                          if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
+                          for (let i = ws; i <= we; i++) pages.push(i);
+                          if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
+                        }
+                        return pages.map((page, idx) =>
+                          page === "..." ? (
+                            <span key={`e-${idx}`} style={{ display: "inline-flex", alignItems: "center", padding: "0 4px", fontSize: "14px", color: "#6b7280" }}>...</span>
+                          ) : (
                             <button
-                              key={pageNum}
-                              onClick={() => setCurrentPage(pageNum)}
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
                               style={{
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -1600,45 +1606,36 @@ export default function ProductTable() {
                                 minWidth: "40px",
                                 padding: "8px 12px",
                                 fontSize: "14px",
-                                fontWeight:
-                                  currentPage === pageNum ? "600" : "500",
-                                color:
-                                  currentPage === pageNum ? "white" : "#374151",
-                                backgroundColor:
-                                  currentPage === pageNum ? "#8B4513" : "white",
+                                fontWeight: currentPage === page ? "600" : "500",
+                                color: currentPage === page ? "white" : "#374151",
+                                backgroundColor: currentPage === page ? "#8B4513" : "white",
                                 border: "1px solid",
-                                borderColor:
-                                  currentPage === pageNum
-                                    ? "#8B4513"
-                                    : "#e5e7eb",
+                                borderColor: currentPage === page ? "#8B4513" : "#e5e7eb",
                                 borderRight: "none",
                                 cursor: "pointer",
                                 transition: "all 0.2s",
                               }}
                               onMouseEnter={(e) => {
-                                if (currentPage !== pageNum) {
-                                  e.currentTarget.style.backgroundColor =
-                                    "#f9fafb";
+                                if (currentPage !== page) {
+                                  e.currentTarget.style.backgroundColor = "#f9fafb";
                                   e.currentTarget.style.borderColor = "#d1d5db";
                                 }
                               }}
                               onMouseLeave={(e) => {
-                                if (currentPage !== pageNum) {
-                                  e.currentTarget.style.backgroundColor =
-                                    "white";
+                                if (currentPage !== page) {
+                                  e.currentTarget.style.backgroundColor = "white";
                                   e.currentTarget.style.borderColor = "#e5e7eb";
                                 } else {
-                                  e.currentTarget.style.backgroundColor =
-                                    "#8B4513";
+                                  e.currentTarget.style.backgroundColor = "#8B4513";
                                   e.currentTarget.style.borderColor = "#8B4513";
                                 }
                               }}
                             >
-                              {pageNum}
+                              {page}
                             </button>
-                          );
-                        },
-                      )}
+                          )
+                        );
+                      })()}
                       <button
                         onClick={() =>
                           setCurrentPage(Math.min(totalPages, currentPage + 1))
@@ -1677,6 +1674,23 @@ export default function ProductTable() {
                         Sau
                       </button>
                     </nav>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                      <input
+                        type="number" min={1} max={totalPages}
+                        value={pageInput}
+                        onChange={(e) => setPageInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const n = parseInt(pageInput, 10);
+                            if (!isNaN(n) && n >= 1 && n <= totalPages) setCurrentPage(n);
+                            setPageInput("");
+                          }
+                        }}
+                        placeholder={String(currentPage)}
+                        style={{ width: "52px", height: "34px", border: "1px solid #e5e7eb", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

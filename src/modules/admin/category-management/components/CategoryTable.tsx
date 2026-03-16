@@ -274,6 +274,7 @@ export default function CategoryTable() {
   const [createMasterModal, setCreateMasterModal] = useState<CreateMasterModal>({
     isOpen: false,
   });
+  const [pageInput, setPageInput] = useState("");
 
   // ========================================================================
   // EFFECTS
@@ -286,6 +287,13 @@ export default function CategoryTable() {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
 
   // Keyboard shortcuts (Ctrl+K)
   useEffect(() => {
@@ -1109,6 +1117,13 @@ export default function CategoryTable() {
               </div>
               <div
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+              <div
+                style={{
                   display: "inline-flex",
                   borderRadius: "6px",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
@@ -1153,42 +1168,48 @@ export default function CategoryTable() {
                   </svg>
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={{
-                        position: "relative",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "8px 16px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color:
-                          page === currentPage ? "white" : "#1e293b",
-                        backgroundColor:
-                          page === currentPage ? "#8B5A2B" : "white",
-                        border: "1px solid #e2e8f0",
-                        borderLeft: "none",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (page !== currentPage) {
-                          e.currentTarget.style.backgroundColor = "#f8fafc";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (page !== currentPage) {
-                          e.currentTarget.style.backgroundColor = "white";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
+                {(() => {
+                  const pages: (number | "...")[] = [];
+                  if (totalPages <= 3) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                    const we = ws + 2;
+                    if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
+                    for (let i = ws; i <= we; i++) pages.push(i);
+                    if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
+                  }
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span key={`e-${idx}`} style={{ padding: "0 4px", fontSize: "14px", color: "#6b7280", display: "inline-flex", alignItems: "center" }}>...</span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={{
+                          position: "relative",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "8px 16px",
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: page === currentPage ? "white" : "#1e293b",
+                          backgroundColor: page === currentPage ? "#8B5A2B" : "white",
+                          border: "1px solid #e2e8f0",
+                          borderLeft: "none",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          minWidth: "40px",
+                          textAlign: "center" as const,
+                        }}
+                        onMouseEnter={(e) => { if (page !== currentPage) e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                        onMouseLeave={(e) => { if (page !== currentPage) e.currentTarget.style.backgroundColor = "white"; }}
+                      >
+                        {page}
+                      </button>
+                    )
+                  );
+                })()}
 
                 <button
                   onClick={() =>
@@ -1233,6 +1254,24 @@ export default function CategoryTable() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
+              </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <input
+                    type="number" min={1} max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const n = parseInt(pageInput, 10);
+                        if (!isNaN(n) && n >= 1 && n <= totalPages) setCurrentPage(n);
+                        setPageInput("");
+                      }
+                    }}
+                    placeholder={String(currentPage)}
+                    style={{ width: "52px", height: "36px", border: "1px solid #e2e8f0", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
+                  />
+                </div>
               </div>
             </div>
           )}
