@@ -9,6 +9,7 @@ import {
   Clock,
   Building2,
   Folder,
+  Ticket,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -147,6 +148,29 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Warehouse size={18} />,
     component: React.lazy(() => import("@/modules/admin/inventory-management/pages/InventoryActionPage")),
     module: "inventory",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Vouchers",
+    path: ROUTER_URL.ADMIN_ROUTER.VOUCHER,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherListPage")),
+    module: "vouchers",
+  },
+  {
+    label: "Create Voucher",
+    path: `${ROUTER_URL.ADMIN_ROUTER.VOUCHER}/create`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherCreatePage")),
+    module: "vouchers",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Edit Voucher",
+    path: `${ROUTER_URL.ADMIN_ROUTER.VOUCHER}/edit/:id`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherActionPage")),
+    module: "vouchers",
     hideFromSidebar: true,
   },
   {

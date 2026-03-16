@@ -1,15 +1,18 @@
 import { useState } from "react";
 import { registerCustomer } from "@/apis/endpointsCLIENT";
+import { useLoadingStore } from "@/stores/loading.store";
 import { HttpError } from "@/apis";
 import type { CustomerRegisterRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
 
 export const useClientRegister = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore();
 
   const register = async (data: CustomerRegisterRequest) => {
     setIsLoading(true);
     setError(null);
+    incrementGlobalLoading();
 
     try {
       const userData = await registerCustomer(data);
@@ -34,6 +37,7 @@ export const useClientRegister = () => {
       };
     } finally {
       setIsLoading(false);
+      decrementGlobalLoading();
     }
   };
 

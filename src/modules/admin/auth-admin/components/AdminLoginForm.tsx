@@ -46,7 +46,6 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
           {...register("email")}
           className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white text-black focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
           placeholder="admin@example.com"
-          disabled={isLoading}
         />
         {errors.email && <p className="text-xs text-red-600 mt-1 ml-1">{errors.email.message}</p>}
       </div>
@@ -63,17 +62,15 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
           type="password"
           className="w-full px-4 py-2.5 rounded-lg border border-[var(--cf-secondary)] bg-white text-black focus:ring-2 focus:ring-[var(--cf-accent-light)] focus:outline-none transition-all placeholder:text-[var(--cf-secondary)]/50"
           placeholder="••••••••"
-          disabled={isLoading}
         />
         {errors.password && <p className="text-xs text-red-600 mt-1 ml-1">{errors.password.message}</p>}
       </div>
 
       <button
         type="submit"
-        disabled={isLoading}
-        className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer"
       >
-        {isLoading ? "Đang đăng nhập..." : "Login"}
+        Login
       </button>
     </form>
     </>
