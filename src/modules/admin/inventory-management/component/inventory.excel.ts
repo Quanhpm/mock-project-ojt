@@ -7,15 +7,6 @@ import type {
 } from "./inventory.types";
 import { FIELD_TO_HEADER_MAP, EXCEL_HEADER_MAP } from "./inventory.types";
 
-// ============================================================
-// Export — Xuất dữ liệu inventory ra file Excel
-// ============================================================
-
-/**
- * Export inventory data ra file .xlsx
- * @param data - Toàn bộ rows trong RHF form
- * @param mode - "all" = toàn bộ, "selected" = chỉ các row đã tick checkbox
- */
 export function exportInventoryToExcel(
     data: InventoryTableRow[],
     mode: "all" | "selected",
@@ -61,11 +52,6 @@ export function exportInventoryToExcel(
     return true;
 }
 
-
-// ============================================================
-// Parse — Đọc file Excel/CSV thành mảng JSON
-// ============================================================
-
 export interface ParsedImportResult {
     success: true;
     rows: Record<string, unknown>[];
@@ -76,10 +62,7 @@ export interface ParsedImportError {
     error: string;
 }
 
-/**
- * Parse file .xlsx/.xls/.csv thành mảng JSON đã map header.
- * Trim headers để chống dư khoảng trắng.
- */
+
 export async function parseImportFile(
     file: File,
 ): Promise<ParsedImportResult | ParsedImportError> {
@@ -117,7 +100,7 @@ export async function parseImportFile(
         // === Validate headers (BẮT BUỘC trim) ===
         const firstRow = rawRows[0];
         const rawHeaders = Object.keys(firstRow);
-        const expectedHeaders = Object.keys(EXCEL_HEADER_MAP);
+        const expectedHeaders = Object.keys(EXCEL_HEADER_MAP);  
 
         const trimmedHeaders = rawHeaders.map((h) => h.trim());
         const missingHeaders = expectedHeaders.filter(
@@ -153,14 +136,6 @@ export async function parseImportFile(
     }
 }
 
-// ============================================================
-// Validate — Row-by-row validation (TRÁI → PHẢI)
-// ============================================================
-
-/**
- * Validate từng row import theo thứ tự: quantity (trái) → alert_threshold (phải).
- * Thu thập TẤT CẢ lỗi vào mảng, sau khi check xong mới quyết định.
- */
 export function validateImportRows(
     rows: Record<string, unknown>[],
 ): ImportValidationError[] {
@@ -234,10 +209,6 @@ export function validateImportRows(
 
     return errors;
 }
-
-// ============================================================
-// Map parsed Excel rows → InventoryExcelRow[]
-// ============================================================
 
 /**
  * Convert mapped JSON rows sang typed InventoryExcelRow[].

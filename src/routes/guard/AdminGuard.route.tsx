@@ -16,4 +16,4 @@ const AdminGuard = () => {
   return <Outlet />;
 };
 
-export default AdminGuard;
+export default AdminGuard;  
