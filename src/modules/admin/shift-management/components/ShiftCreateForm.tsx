@@ -1,10 +1,34 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import { useCreateShift } from '../hooks/useCreateShift.hook'
 import type { CreateShiftRequest } from '@/apis/endpoints'
+import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+
+interface Step1FormValues {
+  shiftName: string
+  franchiseId: string
+  startTime: string
+  endTime: string
+}
+
+interface Step2FormValues {
+  userId: string
+  workDate: string
+  note: string
+}
 
 export const ShiftCreateForm: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const { activeContext, roles } = useAdminAuthStore()
+  const routeFranchiseId = searchParams.get('franchiseId') || ''
+  const currentRoleCode = activeContext?.role ?? roles[0]?.role ?? null
+  const currentFranchiseId = activeContext?.franchise_id ?? roles[0]?.franchise_id ?? ''
+  const isManagerContext = currentRoleCode === 'MANAGER' && Boolean(currentFranchiseId)
+  const returnToCalendarPath = `/admin/shifts/calendar?franchiseId=${
+    isManagerContext ? currentFranchiseId : routeFranchiseId || currentFranchiseId
+  }`
 
   const {
     currentStep,
@@ -12,57 +36,106 @@ export const ShiftCreateForm: React.FC = () => {
     error,
     franchises,
     staffList,
+    isFranchisesLoading,
     isUsersLoading,
     handleCreateShift,
     handleAssignStaff,
     goBackToStep1,
   } = useCreateShift(() => {
-    navigate('/admin/shifts')
+    navigate(
+      isManagerContext || routeFranchiseId || currentFranchiseId
+        ? returnToCalendarPath
+        : '/admin/shifts',
+    )
   })
 
-  // ──────── Step 1 fields ────────
-  const [shiftName, setShiftName] = useState('')
-  const [franchiseId, setFranchiseId] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
+  const managerFranchiseName = useMemo(() => {
+    const roleFranchiseName =
+      roles.find((role) => role.franchise_id === currentFranchiseId)?.franchise_name ?? null
 
-  // ──────── Step 2 fields ────────
-  const [userId, setUserId] = useState('')
-  const [workDate, setWorkDate] = useState('')
-  const [note, setNote] = useState('')
+    if (roleFranchiseName) return roleFranchiseName
+
+    return franchises.find((franchise) => franchise.value === currentFranchiseId)?.name ?? ''
+  }, [currentFranchiseId, franchises, roles])
+
+  const {
+    register: registerStep1,
+    handleSubmit: handleSubmitStep1,
+    setValue: setStep1Value,
+    formState: { errors: step1Errors, isValid: isStep1Valid },
+  } = useForm<Step1FormValues>({
+    mode: 'onChange',
+    defaultValues: {
+      shiftName: '',
+      franchiseId: '',
+      startTime: '',
+      endTime: '',
+    },
+  })
+
+  const {
+    register: registerStep2,
+    handleSubmit: handleSubmitStep2,
+    reset: resetStep2Form,
+    formState: { errors: step2Errors, isValid: isStep2Valid },
+  } = useForm<Step2FormValues>({
+    mode: 'onChange',
+    defaultValues: {
+      userId: '',
+      workDate: '',
+      note: '',
+    },
+  })
 
   // ──────── Navigation ────────
   const handleCancel = () => {
-    navigate('/admin/shifts')
+    navigate(
+      isManagerContext || routeFranchiseId || currentFranchiseId
+        ? returnToCalendarPath
+        : '/admin/shifts',
+    )
   }
 
   const handleBackStep1 = () => {
     goBackToStep1()
   }
 
+  useEffect(() => {
+    const defaultFranchiseId = isManagerContext ? currentFranchiseId : routeFranchiseId
+
+    if (!defaultFranchiseId) return
+
+    setStep1Value('franchiseId', defaultFranchiseId, {
+      shouldValidate: true,
+      shouldDirty: false,
+    })
+  }, [currentFranchiseId, isManagerContext, routeFranchiseId, setStep1Value])
+
+  useEffect(() => {
+    if (currentStep === 2) {
+      resetStep2Form({
+        userId: '',
+        workDate: '',
+        note: '',
+      })
+    }
+  }, [currentStep, resetStep2Form])
+
   // ──────── Step 1 submit ────────
-  const onSubmitStep1 = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmitStep1 = async (values: Step1FormValues) => {
     const payload: CreateShiftRequest = {
-      name: shiftName,
-      franchise_id: franchiseId,
-      start_time: startTime,
-      end_time: endTime,
+      name: values.shiftName.trim(),
+      franchise_id: isManagerContext ? currentFranchiseId : values.franchiseId,
+      start_time: values.startTime,
+      end_time: values.endTime,
     }
     await handleCreateShift(payload)
   }
 
   // ──────── Step 2 submit ────────
-  const onSubmitStep2 = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await handleAssignStaff(userId, workDate, note || undefined)
+  const onSubmitStep2 = async (values: Step2FormValues) => {
+    await handleAssignStaff(values.userId, values.workDate, values.note || undefined)
   }
-
-  // ──────── Validate ────────
-  const isStep1Valid =
-    shiftName.trim() && franchiseId && startTime && endTime
-
-  const isStep2Valid = userId && workDate
 
   return (
     <div className="min-h-screen py-12 flex justify-center">
@@ -127,7 +200,7 @@ export const ShiftCreateForm: React.FC = () => {
         {/* STEP 1 */}
         {currentStep === 1 && (
           <form
-            onSubmit={onSubmitStep1}
+            onSubmit={handleSubmitStep1(onSubmitStep1)}
             className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-10"
           >
             <h2 className="text-lg font-semibold text-slate-800 mb-8">
@@ -140,11 +213,17 @@ export const ShiftCreateForm: React.FC = () => {
                 Shift Name
               </label>
               <input
-                value={shiftName}
-                onChange={(e) => setShiftName(e.target.value)}
+                {...registerStep1('shiftName', {
+                  required: 'Shift name is required',
+                  validate: (value) =>
+                    value.trim().length > 0 || 'Shift name is required',
+                })}
                 className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
                 placeholder="e.g. Morning Shift, Evening Shift"
               />
+              {step1Errors.shiftName && (
+                <p className="mt-1 text-xs text-red-500">{step1Errors.shiftName.message}</p>
+              )}
             </div>
 
             {/* FRANCHISE */}
@@ -152,18 +231,42 @@ export const ShiftCreateForm: React.FC = () => {
               <label className="text-sm font-medium text-slate-700">
                 Franchise
               </label>
-              <select
-                value={franchiseId}
-                onChange={(e) => setFranchiseId(e.target.value)}
-                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] text-sm"
-              >
-                <option value="">Select franchise</option>
-                {franchises.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
+              {isManagerContext ? (
+                <>
+                  <input
+                    value={managerFranchiseName || 'Loading franchise...'}
+                    disabled
+                    readOnly
+                    className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 text-sm cursor-not-allowed"
+                  />
+                  <input
+                    type="hidden"
+                    {...registerStep1('franchiseId', {
+                      required: 'Franchise is required',
+                    })}
+                  />
+                </>
+              ) : (
+                <select
+                  {...registerStep1('franchiseId', {
+                    required: 'Franchise is required',
+                  })}
+                  className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] text-sm"
+                  disabled={isFranchisesLoading}
+                >
+                  <option value="">
+                    {isFranchisesLoading ? 'Loading franchises...' : 'Select franchise'}
                   </option>
-                ))}
-              </select>
+                  {franchises.map((f) => (
+                    <option key={f.value} value={f.value}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {step1Errors.franchiseId && (
+                <p className="mt-1 text-xs text-red-500">{step1Errors.franchiseId.message}</p>
+              )}
             </div>
 
             {/* TIME RANGE */}
@@ -174,10 +277,14 @@ export const ShiftCreateForm: React.FC = () => {
                 </label>
                 <input
                   type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
+                  {...registerStep1('startTime', {
+                    required: 'Start time is required',
+                  })}
                   className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
                 />
+                {step1Errors.startTime && (
+                  <p className="mt-1 text-xs text-red-500">{step1Errors.startTime.message}</p>
+                )}
               </div>
 
               <div>
@@ -186,10 +293,14 @@ export const ShiftCreateForm: React.FC = () => {
                 </label>
                 <input
                   type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
+                  {...registerStep1('endTime', {
+                    required: 'End time is required',
+                  })}
                   className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
                 />
+                {step1Errors.endTime && (
+                  <p className="mt-1 text-xs text-red-500">{step1Errors.endTime.message}</p>
+                )}
               </div>
             </div>
 
@@ -217,7 +328,7 @@ export const ShiftCreateForm: React.FC = () => {
         {/* STEP 2 */}
         {currentStep === 2 && (
           <form
-            onSubmit={onSubmitStep2}
+            onSubmit={handleSubmitStep2(onSubmitStep2)}
             className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10"
           >
             <h2 className="text-lg font-semibold text-slate-800 mb-8">
@@ -230,12 +341,18 @@ export const ShiftCreateForm: React.FC = () => {
                 Staff Member
               </label>
               <select
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                {...registerStep2('userId', {
+                  required: 'Staff member is required',
+                })}
                 className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 text-sm"
+                disabled={isUsersLoading || staffList.length === 0}
               >
                 <option value="">
-                  {isUsersLoading ? 'Loading staff...' : 'Select staff member'}
+                  {isUsersLoading
+                    ? 'Loading staff...'
+                    : staffList.length === 0
+                      ? 'No staff available'
+                      : 'Select staff member'}
                 </option>
                 {staffList.map((staff) => (
                   <option key={staff.userId} value={staff.userId}>
@@ -243,6 +360,9 @@ export const ShiftCreateForm: React.FC = () => {
                   </option>
                 ))}
               </select>
+              {step2Errors.userId && (
+                <p className="mt-1 text-xs text-red-500">{step2Errors.userId.message}</p>
+              )}
             </div>
 
             {/* WORK DATE */}
@@ -252,10 +372,14 @@ export const ShiftCreateForm: React.FC = () => {
               </label>
               <input
                 type="date"
-                value={workDate}
-                onChange={(e) => setWorkDate(e.target.value)}
+                {...registerStep2('workDate', {
+                  required: 'Work date is required',
+                })}
                 className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
               />
+              {step2Errors.workDate && (
+                <p className="mt-1 text-xs text-red-500">{step2Errors.workDate.message}</p>
+              )}
             </div>
 
             {/* NOTE */}
@@ -264,8 +388,7 @@ export const ShiftCreateForm: React.FC = () => {
                 Note (Optional)
               </label>
               <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
+                {...registerStep2('note')}
                 className="mt-2 w-full px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
                 rows={4}
                 placeholder="Add any additional notes or instructions..."

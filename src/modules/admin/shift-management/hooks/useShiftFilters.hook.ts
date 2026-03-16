@@ -7,15 +7,21 @@ export interface ShiftFilters {
   statusFilter: string
 }
 
-export const useShiftFilters = () => {
+export const useShiftFilters = (lockedFranchiseId?: string | null) => {
   const [searchTerm, setSearchTerm] = useState('')
-  const [franchiseFilter, setFranchiseFilter] = useState('all')
+  const [localFranchiseFilter, setLocalFranchiseFilter] = useState('all')
   const [staffFilter, setStaffFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const franchiseFilter = lockedFranchiseId || localFranchiseFilter
+
+  const setFranchiseFilter = (value: string) => {
+    if (lockedFranchiseId) return
+    setLocalFranchiseFilter(value)
+  }
 
   const handleClearFilters = () => {
     setSearchTerm('')
-    setFranchiseFilter('all')
+    setLocalFranchiseFilter('all')
     setStaffFilter('all')
     setStatusFilter('all')
   }
@@ -32,5 +38,6 @@ export const useShiftFilters = () => {
     setStaffFilter,
     setStatusFilter,
     handleClearFilters,
+    isFranchiseLocked: Boolean(lockedFranchiseId),
   }
 }

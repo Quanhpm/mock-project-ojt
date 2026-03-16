@@ -1,6 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
-import { shiftApi, franchiseApi, searchUserFranchiseRoles, searchUsers } from '@/apis/endpoints'
-import type { CreateShiftRequest, FranchiseItem, UserFranchiseRoleItem, UserItem } from '@/apis/endpoints'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { shiftApi, getFranchisesSelect, searchUserFranchiseRoles } from '@/apis/endpoints'
+import type {
+  CreateShiftRequest,
+  FranchiseOptionItem,
+  UserFranchiseRoleItem,
+} from '@/apis/endpoints'
 
 // ======================== Types ========================
 
@@ -13,7 +17,7 @@ export interface UseCreateShiftReturn {
   selectedFranchiseId: string | null
   isSubmitting: boolean
   error: string | null
-  franchises: FranchiseItem[]
+  franchises: FranchiseOptionItem[]
   staffList: Array<{ userId: string; userName: string }>
   isFranchisesLoading: boolean
   isUsersLoading: boolean
@@ -35,9 +39,8 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
   const [error, setError] = useState<string | null>(null)
 
   // Franchise and User data
-  const [franchises, setFranchises] = useState<FranchiseItem[]>([])
+  const [franchises, setFranchises] = useState<FranchiseOptionItem[]>([])
   const [userFranchiseRoles, setUserFranchiseRoles] = useState<UserFranchiseRoleItem[]>([])
-  const [userList, setUserList] = useState<UserItem[]>([])
   const [isFranchisesLoading, setIsFranchisesLoading] = useState(false)
   const [isUsersLoading, setIsUsersLoading] = useState(false)
 
@@ -48,13 +51,10 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
     const fetchFranchises = async () => {
       setIsFranchisesLoading(true)
       try {
-        const franchiseRes = await franchiseApi.searchFranchises({
-          searchCondition: { is_deleted: false },
-          pageInfo: { pageNum: 1, pageSize: 1000 },
-        })
+        const franchiseRes = await getFranchisesSelect()
 
         if (!cancelled) {
-          setFranchises(franchiseRes?.data || [])
+          setFranchises(franchiseRes || [])
         }
       } catch (err) {
         if (err === null) return // bị cancel — bỏ qua
@@ -83,30 +83,22 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
     const fetchUserOptions = async () => {
       setIsUsersLoading(true)
       try {
-        const [rolesRes, usersRes] = await Promise.all([
-          searchUserFranchiseRoles({
-            searchCondition: {
-              franchise_id: selectedFranchiseId,
-              is_deleted: false,
-            },
-            pageInfo: { pageNum: 1, pageSize: 1000 },
-          }),
-          searchUsers({
-            searchCondition: { is_deleted: false },
-            pageInfo: { pageNum: 1, pageSize: 1000 },
-          }),
-        ])
+        const rolesRes = await searchUserFranchiseRoles({
+          searchCondition: {
+            franchise_id: selectedFranchiseId,
+            is_deleted: false,
+          },
+          pageInfo: { pageNum: 1, pageSize: 1000 },
+        })
 
         if (!cancelled) {
           setUserFranchiseRoles(rolesRes?.data || [])
-          setUserList(usersRes?.data || [])
         }
       } catch (err) {
         if (err === null) return // bị cancel — bỏ qua
         if (!cancelled) {
           console.error('Failed to fetch user franchise roles:', err)
           setUserFranchiseRoles([])
-          setUserList([])
         }
       } finally {
         if (!cancelled) {
@@ -121,16 +113,22 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
     }
   }, [currentStep, selectedFranchiseId])
 
-  // ──────── Build staff list dari merge userFranchiseRoles + userList ────────
-  const staffList = userFranchiseRoles
-    .map((ufr) => {
-      const user = userList.find((u) => u.id === ufr.user_id)
-      return {
-        userId: ufr.user_id,
-        userName: user?.name || `User ${ufr.user_id}`,
+  const staffList = useMemo(() => {
+    const seenUserIds = new Set<string>()
+
+    return userFranchiseRoles.reduce<Array<{ userId: string; userName: string }>>((acc, role) => {
+      if (seenUserIds.has(role.user_id) || role.is_active === false) {
+        return acc
       }
-    })
-    .filter((staff, index, self) => self.findIndex((s) => s.userId === staff.userId) === index) // Remove duplicates
+
+      seenUserIds.add(role.user_id)
+      acc.push({
+        userId: role.user_id,
+        userName: role.user_name || `User ${role.user_id}`,
+      })
+      return acc
+    }, [])
+  }, [userFranchiseRoles])
 
   // ──────── Step 1: Tạo shift ────────
   const handleCreateShift = useCallback(async (payload: CreateShiftRequest) => {
@@ -184,6 +182,8 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
   // ──────── Navigation ────────
   const goBackToStep1 = useCallback(() => {
     setCurrentStep(1)
+    setCreatedShiftId(null)
+    setSelectedFranchiseId(null)
     setError(null)
   }, [])
 
