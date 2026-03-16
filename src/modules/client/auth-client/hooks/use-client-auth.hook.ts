@@ -1,12 +1,14 @@
 import { useState, useCallback } from "react";
 import { getCustomerProfile, logoutCustomer } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
+import { useLoadingStore } from "@/stores/loading.store";
 import { HttpError } from "@/apis";
 
 export const useClientAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { user, isLoggedIn, setUser, clearAuth, setIsInitialized } =
     useClientAuthStore();
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore();
 
   /**
    * Initialize auth by fetching user profile
@@ -14,6 +16,7 @@ export const useClientAuth = () => {
    */
   const initializeAuth = useCallback(async () => {
     setIsLoading(true);
+    incrementGlobalLoading();
 
     try {
       const user = await getCustomerProfile();
@@ -26,14 +29,16 @@ export const useClientAuth = () => {
     } finally {
       setIsInitialized(true);
       setIsLoading(false);
+      decrementGlobalLoading();
     }
-  }, [setUser, clearAuth, setIsInitialized]);
+  }, [setUser, clearAuth, setIsInitialized, incrementGlobalLoading, decrementGlobalLoading]);
 
   /**
    * Logout user
    */
   const logout = useCallback(async () => {
     setIsLoading(true);
+    incrementGlobalLoading();
 
     try {
       await logoutCustomer();
@@ -58,8 +63,9 @@ export const useClientAuth = () => {
       };
     } finally {
       setIsLoading(false);
+      decrementGlobalLoading();
     }
-  }, [clearAuth]);
+  }, [clearAuth, incrementGlobalLoading, decrementGlobalLoading]);
 
   /**
    * Refresh user profile

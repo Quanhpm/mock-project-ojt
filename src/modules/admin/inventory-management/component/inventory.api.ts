@@ -5,6 +5,7 @@ import type {
   InventoryAdjustPayload,
   InventorySearchPayload,
   InventorySearchResponse,
+  BulkAdjustPayload,
   LowStockItem,
   InventoryLog,
 } from "./inventory.types";
@@ -45,9 +46,8 @@ export const deleteInventory = (id: string): Promise<null> => {
 
 // Restore deleted inventory item
 export const restoreInventory = (id: string): Promise<null> => {
-  return httpClient.patch<null, { id: string }>({
-    url: "/inventories/restore",
-    data: { id },
+  return httpClient.patch<null, undefined>({
+    url: `/inventories/${id}/restore`,
   });
 };
 
@@ -57,6 +57,16 @@ export const adjustInventory = (
 ): Promise<null> => {
   return httpClient.post<null, InventoryAdjustPayload>({
     url: "/inventories/adjust",
+    data: payload,
+  });
+};
+
+// Bulk adjust inventory items (POST /inventories/adjust/bulk)
+export const bulkAdjustInventory = (
+  payload: BulkAdjustPayload,
+): Promise<null> => {
+  return httpClient.post<null, BulkAdjustPayload>({
+    url: "/inventories/adjust/bulk",
     data: payload,
   });
 };
@@ -79,7 +89,7 @@ export const getInventoryLogs = (
   });
 };
 
-// Bundle export (giống productApi pattern)
+// Bundle export
 export const inventoryApi = {
   searchInventories,
   getInventoryById,
@@ -87,6 +97,7 @@ export const inventoryApi = {
   deleteInventory,
   restoreInventory,
   adjustInventory,
+  bulkAdjustInventory,
   getLowStockByFranchise,
   getInventoryLogs,
 };

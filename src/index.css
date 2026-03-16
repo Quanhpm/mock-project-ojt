@@ -118,3 +118,28 @@ label[for],
   -ms-overflow-style: none;  /* Ẩn scrollbar trên Internet Explorer */
   scrollbar-width: none;      /* Ẩn scrollbar trên Firefox */
 }
+
+/* ============================================================
+   CKEditor content preview — render đúng HTML từ CKEditor
+   ============================================================ */
+.ck-content-preview h1 { font-size: 2em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h2 { font-size: 1.5em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h3 { font-size: 1.17em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h4 { font-size: 1em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview p  { margin: 0.5em 0; }
+.ck-content-preview strong, .ck-content-preview b { font-weight: 700; }
+.ck-content-preview em, .ck-content-preview i { font-style: italic; }
+.ck-content-preview u  { text-decoration: underline; }
+.ck-content-preview s  { text-decoration: line-through; }
+.ck-content-preview ul { list-style: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.ck-content-preview ol { list-style: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.ck-content-preview li { margin: 0.25em 0; }
+.ck-content-preview a  { color: #8B4513; text-decoration: underline; }
+.ck-content-preview blockquote { border-left: 4px solid #dee2e6; padding-left: 1em; color: #6c757d; margin: 0.5em 0; }
+.ck-content-preview pre { background: #f1f3f5; padding: 12px; border-radius: 6px; font-family: monospace; overflow-x: auto; }
+.ck-content-preview code { background: #f1f3f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+.ck-content-preview img { max-width: 100%; height: auto; border-radius: 4px; }
+.ck-content-preview table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+.ck-content-preview table td,
+.ck-content-preview table th { border: 1px solid #dee2e6; padding: 8px 12px; }
+.ck-content-preview table th { background: #f8f9fa; font-weight: 700; }

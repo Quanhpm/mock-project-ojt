@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useAssignProductFranchise } from "../hooks/useAssignProductFranchise.hook";
 import { useProductFranchiseAssignments } from "../hooks/useProductFranchiseAssignments.hook";
-import { SIZE_OPTIONS } from "@/types/product-option.type";
+import { productApi, type ProductItem } from "@/apis/endpoints/product.api";
+import { formatCurrency } from "@/utils/format.util";
 
 // ======================== Props ========================
 
@@ -16,6 +18,35 @@ interface AssignFranchiseModalProps {
   productId?: string;
   productName?: string;
 }
+
+interface AssignFranchiseFormValues {
+  franchise_id: string;
+  size: string;
+  price_base_input: string;
+  use_default_product: boolean;
+}
+
+const DEFAULT_FORM_VALUES: AssignFranchiseFormValues = {
+  franchise_id: "",
+  size: "",
+  price_base_input: "",
+  use_default_product: false,
+};
+
+const formatPriceInput = (value: string): string => {
+  const digitsOnly = value.replace(/\D/g, "");
+
+  if (!digitsOnly) {
+    return "";
+  }
+
+  return new Intl.NumberFormat("vi-VN").format(Number(digitsOnly));
+};
+
+const parsePriceInput = (value: string): number => {
+  const digitsOnly = value.replace(/\D/g, "");
+  return digitsOnly ? Number(digitsOnly) : 0;
+};
 
 // ======================== Component ========================
 
@@ -36,15 +67,86 @@ export default function AssignFranchiseModal({
     initWithProductId,
     resetFlow,
   } = useAssignProductFranchise(undefined);
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [isProductLoading, setIsProductLoading] = useState(false);
+  const lastManualSizeRef = useRef<string>("");
+  const hasSuccessfulSubmitRef = useRef(false);
 
-  // ──────── Form fields ────────
-  const [selectedFranchiseId, setSelectedFranchiseId] = useState("");
-  const [selectedSize, setSelectedSize] = useState("");
-  const [priceBase, setPriceBase] = useState<number>(0);
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    clearErrors,
+    setError,
+    formState: { errors, isValid },
+  } = useForm<AssignFranchiseFormValues>({
+    defaultValues: DEFAULT_FORM_VALUES,
+    mode: "onChange",
+  });
 
   // ──────── Assigned franchises for this product ────────
   const { assignments, isLoading: isAssignmentsLoading, refresh: refreshAssignments } =
     useProductFranchiseAssignments(productId);
+
+  const selectedFranchiseId = watch("franchise_id");
+  const selectedSize = watch("size");
+  const priceBaseInput = watch("price_base_input");
+  const useDefaultProduct = watch("use_default_product");
+  const priceBase = parsePriceInput(priceBaseInput);
+
+  const assignedSizes = useMemo(
+    () => new Set(assignments.map((item) => item.size.toLowerCase())),
+    [assignments],
+  );
+
+  const validatePriceBase = (value: string) => {
+    const numericValue = parsePriceInput(value);
+
+    if (numericValue <= 0) {
+      return "Price must be greater than 0";
+    }
+
+    if (
+      product &&
+      typeof product.min_price === "number" &&
+      typeof product.max_price === "number"
+    ) {
+      if (numericValue < product.min_price || numericValue > product.max_price) {
+        return `Price must be between ${formatCurrency(product.min_price)} and ${formatCurrency(product.max_price)}`;
+      }
+    }
+
+    return true;
+  };
+
+  const franchiseField = register("franchise_id", {
+    required: "Please select a franchise",
+  });
+
+  const sizeField = register("size", {
+    validate: (value) => {
+      if (useDefaultProduct) {
+        return true;
+      }
+
+      if (!value) {
+        return "Please enter a size";
+      }
+
+      const normalizedSize = value.toLowerCase();
+      if (assignedSizes.has(normalizedSize)) {
+        return `Size "${value}" has already been assigned for this product`;
+      }
+
+      return true;
+    },
+  });
+
+  const priceBaseField = register("price_base_input", {
+    validate: validatePriceBase,
+  });
 
   // ──────── Init cho Luồng 2 (từ Table) ────────
   useEffect(() => {
@@ -53,40 +155,112 @@ export default function AssignFranchiseModal({
     }
   }, [isOpen, productId, initWithProductId]);
 
+  useEffect(() => {
+    if (!isOpen || !productId) {
+      setProduct(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchProduct = async () => {
+      setIsProductLoading(true);
+
+      try {
+        const response = await productApi.getProductById(productId);
+        if (!cancelled) {
+          setProduct(response);
+        }
+      } catch (fetchError) {
+        if (!cancelled) {
+          console.error("Failed to fetch product detail for assign franchise modal:", fetchError);
+          setProduct(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsProductLoading(false);
+        }
+      }
+    };
+
+    fetchProduct();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, productId]);
+
   // ──────── Reset khi đóng modal ────────
   const handleClose = () => {
-    setSelectedFranchiseId("");
-    setSelectedSize("");
-    setPriceBase(0);
+    const shouldNotifySuccess = hasSuccessfulSubmitRef.current;
+
+    hasSuccessfulSubmitRef.current = false;
+    lastManualSizeRef.current = "";
+    reset(DEFAULT_FORM_VALUES);
+    setProduct(null);
     resetFlow();
-    onSuccess?.();
+    if (shouldNotifySuccess) {
+      onSuccess?.();
+    }
     onClose();
   };
 
   if (!isOpen || currentStep !== 2) return null;
 
-  // ──────── Validate ────────
-  const isFormValid =
-    selectedFranchiseId.trim() !== "" &&
-    selectedSize.trim() !== "" &&
-    priceBase > 0;
+  const isSubmitDisabled =
+    !isValid ||
+    isSubmitting ||
+    isProductLoading ||
+    selectedFranchiseId.trim() === "" ||
+    (!useDefaultProduct && selectedSize.trim() === "") ||
+    priceBase <= 0;
 
-  // ──────── Submit ────────
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDefaultProductToggle = () => {
+    const nextValue = !useDefaultProduct;
+
+    if (nextValue) {
+      lastManualSizeRef.current = selectedSize;
+      clearErrors("size");
+      setValue("use_default_product", true, { shouldDirty: true });
+      setValue("size", "DEFAULT", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    setValue("use_default_product", false, { shouldDirty: true });
+    setValue("size", lastManualSizeRef.current, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const onSubmit = async (formValues: AssignFranchiseFormValues) => {
     try {
+      if (!useDefaultProduct) {
+        const normalizedSize = formValues.size.toLowerCase();
+        if (assignedSizes.has(normalizedSize)) {
+          setError("size", {
+            type: "manual",
+            message: `Size "${formValues.size}" has already been assigned for this product`,
+          });
+          return;
+        }
+      }
+
       await handleAssignFranchise({
-        franchise_id: selectedFranchiseId,
-        size: selectedSize,
+        franchise_id: formValues.franchise_id,
+        size: formValues.size,
         price_base: priceBase,
       });
-      // Reset form fields but keep modal open — refresh list to show new assignment
-      setSelectedFranchiseId("");
-      setSelectedSize("");
-      setPriceBase(0);
+
+      hasSuccessfulSubmitRef.current = true;
+      lastManualSizeRef.current = "";
+      reset(DEFAULT_FORM_VALUES);
       refreshAssignments();
     } catch {
-      // Error đã được handle trong hook
+      // Error is already handled in the hook.
     }
   };
 
@@ -126,8 +300,8 @@ export default function AssignFranchiseModal({
         )}
 
         {/* ═══════════ Form ═══════════ */}
-        <form onSubmit={onSubmit} className="flex flex-col flex-1">
-          <div className="overflow-y-auto p-6 space-y-5 flex-1">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+          <div className="p-6 space-y-5">
             {/* Franchise Dropdown */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -138,10 +312,10 @@ export default function AssignFranchiseModal({
                   storefront
                 </span>
                 <select
-                  value={selectedFranchiseId}
-                  onChange={(e) => setSelectedFranchiseId(e.target.value)}
-                  className="w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
-                  required
+                  {...franchiseField}
+                  className={`w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer ${
+                    errors.franchise_id ? "border-red-300" : "border-gray-200"
+                  }`}
                 >
                   <option value="">
                     {isFranchisesLoading
@@ -158,35 +332,73 @@ export default function AssignFranchiseModal({
                   expand_more
                 </span>
               </div>
+              {errors.franchise_id && (
+                <p className="text-xs text-red-600">{errors.franchise_id.message}</p>
+              )}
             </div>
 
-            {/* Size Dropdown */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                Size <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
-                  straighten
-                </span>
-                <select
-                  value={selectedSize}
-                  onChange={(e) => setSelectedSize(e.target.value)}
-                  className="w-full h-10 pl-9 pr-8 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer"
-                  required
-                >
-                  <option value="">— Select a size —</option>
-                  {SIZE_OPTIONS.map((s) => (
-                    <option key={s.code} value={s.code}>
-                      {s.label} ({s.code})
-                    </option>
-                  ))}
-                </select>
-                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[18px] pointer-events-none">
-                  expand_more
-                </span>
+            {/* Default Size Button - Fixed Position */}
+            <button
+              type="button"
+              onClick={handleDefaultProductToggle}
+              aria-pressed={useDefaultProduct}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-all ${
+                useDefaultProduct
+                  ? "bg-primary text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                {useDefaultProduct ? "lock" : "lock_open"}
+              </span>
+              Default Size
+            </button>
+
+            {/* Size Input (hidden when useDefaultProduct) */}
+            {!useDefaultProduct && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Size <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">
+                    straighten
+                  </span>
+                  <input
+                    name={sizeField.name}
+                    ref={sizeField.ref}
+                    onBlur={sizeField.onBlur}
+                    type="text"
+                    autoComplete="off"
+                    value={selectedSize}
+                    onChange={(event) => {
+                      const nextSize = event.target.value;
+                      lastManualSizeRef.current = nextSize;
+                      setValue("size", nextSize, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                    placeholder="e.g., S, M, L, XL"
+                    className={`w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm ${
+                      errors.size ? "border-red-300" : "border-gray-200"
+                    }`}
+                  />
+                </div>
+                {errors.size && (
+                  <p className="text-xs text-red-600">{errors.size.message}</p>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Default Product Info (shown when useDefaultProduct) */}
+            {useDefaultProduct && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                  Size <span className="text-primary">default</span>
+                </label>
+              </div>
+            )}
 
             {/* Price Base */}
             <div className="flex flex-col gap-1.5">
@@ -198,18 +410,108 @@ export default function AssignFranchiseModal({
                   payments
                 </span>
                 <input
-                  type="number"
-                  value={priceBase || ""}
-                  onChange={(e) =>
-                    setPriceBase(parseFloat(e.target.value) || 0)
-                  }
-                  placeholder="e.g. 35000"
-                  step="1000"
-                  min="0"
-                  className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                  required
+                  name={priceBaseField.name}
+                  ref={priceBaseField.ref}
+                  onBlur={priceBaseField.onBlur}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  value={priceBaseInput}
+                  onChange={(event) => {
+                    setValue(
+                      "price_base_input",
+                      formatPriceInput(event.target.value),
+                      {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      },
+                    );
+                  }}
+                  placeholder="e.g. 30.000 (VND)"
+                  className={`w-full h-10 pl-9 pr-16 rounded-lg bg-gray-50 border text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm ${
+                    errors.price_base_input ? "border-red-300" : "border-gray-200"
+                  }`}
                 />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  VND
+                </span>
               </div>
+              {product &&
+                typeof product.min_price === "number" &&
+                typeof product.max_price === "number" && (
+                <p className="text-xs text-gray-500">
+                  Allowed range: {formatCurrency(product.min_price)} to {formatCurrency(product.max_price)}
+                </p>
+              )}
+              {errors.price_base_input && (
+                <p className="text-xs text-red-600">{errors.price_base_input.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* ═══════════ Assigned Franchises ═══════════ */}
+          <div className="px-6 pb-5 pt-1">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-white">
+                <span className="material-symbols-outlined text-primary text-[20px]">
+                  badge
+                </span>
+                <h3 className="text-sm font-semibold text-gray-700">
+                  Assigned Roles &amp; Franchises
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-3 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-white">
+                <span>Size</span>
+                <span>Franchise</span>
+                <span className="text-right">Price</span>
+              </div>
+
+              {isAssignmentsLoading ? (
+                <div className="flex items-center justify-center py-6 gap-2 text-gray-400 bg-white">
+                  <span className="material-symbols-outlined text-[18px] animate-spin">
+                    progress_activity
+                  </span>
+                  <span className="text-sm">Loading...</span>
+                </div>
+              ) : assignments.length === 0 ? (
+                <div className="flex items-center justify-center py-6 text-sm text-gray-400 bg-white">
+                  No franchises assigned yet
+                </div>
+              ) : (
+                <div
+                  className={assignments.length > 3 ? "max-h-[192px] overflow-y-auto" : ""}
+                >
+                  {assignments.map((item) => (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-3 items-center px-4 py-3 border-b border-gray-100 last:border-b-0 bg-white hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="inline-flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold">
+                        {item.size}
+                      </span>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <span className="material-symbols-outlined text-gray-400 text-[16px]">
+                          storefront
+                        </span>
+                        <span className="font-medium">
+                          {item.franchise_name ?? item.franchise_id}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <span className="text-sm font-semibold text-gray-700">
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                          }).format(item.price_base)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -224,7 +526,7 @@ export default function AssignFranchiseModal({
             </button>
             <button
               type="submit"
-              disabled={!isFormValid || isSubmitting}
+              disabled={isSubmitDisabled}
               className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -245,74 +547,6 @@ export default function AssignFranchiseModal({
             </button>
           </div>
         </form>
-
-        {/* ═══════════ Assigned Franchises ═══════════ */}
-        <div className="px-6 pb-6 pt-2">
-          <div className="rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
-            {/* Section header */}
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-100 bg-white">
-              <span className="material-symbols-outlined text-primary text-[20px]">
-                badge
-              </span>
-              <h3 className="text-sm font-semibold text-gray-700">
-                Assigned Roles &amp; Franchises
-              </h3>
-            </div>
-
-            {/* Table header */}
-            <div className="grid grid-cols-3 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100 bg-white">
-              <span>Size</span>
-              <span>Franchise</span>
-              <span className="text-right">Price</span>
-            </div>
-
-            {/* Rows */}
-            {isAssignmentsLoading ? (
-              <div className="flex items-center justify-center py-6 gap-2 text-gray-400">
-                <span className="material-symbols-outlined text-[18px] animate-spin">
-                  progress_activity
-                </span>
-                <span className="text-sm">Loading...</span>
-              </div>
-            ) : assignments.length === 0 ? (
-              <div className="flex items-center justify-center py-6 text-sm text-gray-400">
-                No franchises assigned yet
-              </div>
-            ) : (
-              assignments.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-3 items-center px-4 py-3 border-b border-gray-100 last:border-b-0 bg-white hover:bg-gray-50 transition-colors"
-                >
-                  {/* Size badge */}
-                  <span className="inline-flex items-center gap-1.5 w-fit px-2.5 py-1 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-semibold">
-                    {item.size}
-                  </span>
-
-                  {/* Franchise name */}
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="material-symbols-outlined text-gray-400 text-[16px]">
-                      storefront
-                    </span>
-                    <span className="font-medium">
-                      {item.franchise_name ?? item.franchise_id}
-                    </span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex justify-end">
-                    <span className="text-sm font-semibold text-gray-700">
-                      {new Intl.NumberFormat("vi-VN", {
-                        style: "currency",
-                        currency: "VND",
-                      }).format(item.price_base)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

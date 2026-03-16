@@ -127,6 +127,9 @@ export default function ProductTable() {
   });
   const [pageInput, setPageInput] = useState("");
 
+  // Track if we need to check pagination after deletion
+  const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
+
   // Remove page scroll
   React.useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -134,6 +137,22 @@ export default function ProductTable() {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  // ── Handle pagination after deletion ────────────────────────────
+  // If page is empty after deletion and we're not on page 1, go back to page 1
+  React.useEffect(() => {
+    if (
+      shouldCheckPagination &&
+      products.length === 0 &&
+      currentPage > 1 &&
+      !isLoading
+    ) {
+      setShouldCheckPagination(false);
+      setCurrentPage(1);
+    } else if (shouldCheckPagination && !isLoading) {
+      setShouldCheckPagination(false);
+    }
+  }, [shouldCheckPagination, products.length, currentPage, isLoading]);
 
   useEffect(() => {
     if (!isGlobalScope) {
@@ -270,6 +289,7 @@ export default function ProductTable() {
 
     deleteProductAPI(deleteModal.productId, async () => {
       setDeleteModal({ isOpen: false, productId: "", productName: "" });
+      setShouldCheckPagination(true);
       await executeSearch();
     });
   };

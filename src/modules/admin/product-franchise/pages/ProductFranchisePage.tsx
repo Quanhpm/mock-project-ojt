@@ -36,8 +36,13 @@ export const ProductFranchisePage: React.FC = () => {
         isLoading: productsLoading,
         searchQuery,
         setSearchQuery,
+        appliedSearchQuery,
+        setAppliedSearchQuery,
         refetch: refetchProducts,
     } = useProductFranchiseList({ franchiseId: franchiseId || '' });
+
+    const [selectedSize, setSelectedSize] = useState<string>('all');
+    const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
     const {
         categories,
@@ -116,6 +121,56 @@ export const ProductFranchisePage: React.FC = () => {
             .finally(() => setIsCategoryTabLoading(false));
     }, [selectedCategoryTab, franchiseId, showDeletedInCategory, categoryDataRefreshKey]);
 
+    // ── Sidebar "Already Assigned" tracking (only for 'all' tab) ──────
+    const [assignedSidebarProductIds, setAssignedSidebarProductIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (selectedCategoryTab !== 'all' || !selectedCategoryFranchise) {
+            setAssignedSidebarProductIds(new Set());
+            return;
+        }
+
+        searchProductCategoryFranchises({
+            searchCondition: {
+                franchise_id: franchiseId,
+                category_id: selectedCategoryFranchise.category_id,
+                is_deleted: false,
+            },
+            pageInfo: { pageNum: 1, pageSize: 200 },
+        })
+            .then((response) => {
+                const ids = new Set(
+                    (response?.data ?? []).map((item) => item.product_franchise_id)
+                );
+                setAssignedSidebarProductIds(ids);
+            })
+            .catch(() => setAssignedSidebarProductIds(new Set()));
+    }, [selectedCategoryTab, selectedCategoryFranchise, franchiseId, categoryDataRefreshKey]);
+
+    // ── Category Item Counts tracking ─────────────────────────────────
+    const [categoryItemCounts, setCategoryItemCounts] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        if (!franchiseId) return;
+
+        searchProductCategoryFranchises({
+            searchCondition: {
+                franchise_id: franchiseId,
+                is_deleted: false,
+            },
+            pageInfo: { pageNum: 1, pageSize: 5000 },
+        })
+            .then((response) => {
+                const counts: Record<string, number> = {};
+                (response?.data ?? []).forEach((item) => {
+                    const catId = item.category_franchise_id;
+                    counts[catId] = (counts[catId] || 0) + 1;
+                });
+                setCategoryItemCounts(counts);
+            })
+            .catch(() => setCategoryItemCounts({}));
+    }, [franchiseId, categoryDataRefreshKey]);
+
     // ── Derived flags ─────────────────────────────────────────────────
     const categorySelected = selectedCategoryFranchise !== null;
     const canAssign = categorySelected && selectedProductFranchiseId !== null;
@@ -148,6 +203,9 @@ export const ProductFranchisePage: React.FC = () => {
             // Re-trigger category tab filter to reflect new assignment
             if (selectedCategoryTab !== 'all') {
                 setSelectedCategoryTab((prev) => prev); // triggers useEffect
+            } else {
+                // If we are on 'all' tab, we want to refresh the assigned highlights
+                refetchCategoryProducts();
             }
             refetchProducts();
         } catch (err) {
@@ -167,9 +225,9 @@ export const ProductFranchisePage: React.FC = () => {
             result = result.filter((p) => categoryTabItems.has(p.id));
         }
 
-        // 2. Filter by search query
-        if (searchQuery) {
-            const q = searchQuery.toLowerCase();
+        // 2. Filter by applied search query
+        if (appliedSearchQuery) {
+            const q = appliedSearchQuery.toLowerCase();
             result = result.filter(
                 (p) =>
                     (p.product?.name ?? p.product_id).toLowerCase().includes(q) ||
@@ -177,8 +235,19 @@ export const ProductFranchisePage: React.FC = () => {
             );
         }
 
+        // 3. Filter by size
+        if (selectedSize !== 'all') {
+            result = result.filter((p) => p.size.toLowerCase() === selectedSize.toLowerCase());
+        }
+
+        // 4. Filter by status (is_active)
+        if (selectedStatus !== 'all') {
+            const isActive = selectedStatus === 'active';
+            result = result.filter((p) => p.is_active === isActive);
+        }
+
         return result;
-    }, [products, categoryTabItems, searchQuery]);
+    }, [products, categoryTabItems, appliedSearchQuery, selectedSize, selectedStatus]);
 
     // ── Category tabs ─────────────────────────────────────────────────
     const categoryTabs = useMemo(() => {
@@ -200,6 +269,11 @@ export const ProductFranchisePage: React.FC = () => {
                     franchiseName={franchiseName}
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
+                    onSearchSubmit={() => setAppliedSearchQuery(searchQuery)}
+                    selectedSize={selectedSize}
+                    onSizeChange={setSelectedSize}
+                    selectedStatus={selectedStatus}
+                    onStatusChange={setSelectedStatus}
                 />
 
                 {/* Category Tabs */}
@@ -223,8 +297,8 @@ export const ProductFranchisePage: React.FC = () => {
                             <button
                                 onClick={() => setShowDeletedInCategory(!showDeletedInCategory)}
                                 className={`px-4 py-2 text-sm font-bold rounded-lg border flex items-center gap-2 transition-colors ${showDeletedInCategory
-                                        ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                                    : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                                     }`}
                                 title="Lọc sản phẩm bị xoá khỏi danh mục"
                             >
@@ -257,6 +331,7 @@ export const ProductFranchisePage: React.FC = () => {
                             {filteredProducts.length > 0 ? (
                                 filteredProducts.map((item) => {
                                     const categoryFranchiseItem = categoryTabItems?.get(item.id);
+                                    const isAlreadyAssigned = selectedCategoryTab === 'all' && assignedSidebarProductIds.has(item.id);
 
                                     return (
                                         <ProductFranchiseCard
@@ -268,6 +343,7 @@ export const ProductFranchisePage: React.FC = () => {
                                                 selectedProductFranchiseId !== null &&
                                                 selectedProductFranchiseId !== item.id
                                             }
+                                            isAlreadyAssigned={isAlreadyAssigned}
                                             onSelect={handleSelectProduct}
                                             showDelete={selectedCategoryTab !== 'all'}
                                             isDeleted={categoryFranchiseItem?.is_deleted}
@@ -294,6 +370,7 @@ export const ProductFranchisePage: React.FC = () => {
             {selectedCategoryTab === 'all' && (
                 <CategoryFranchiseSidebar
                     categories={categories}
+                    categoryItemCounts={categoryItemCounts}
                     isLoading={categoriesLoading}
                     selectedCategory={selectedCategoryFranchise}
                     onSelectCategory={handleSelectCategory}

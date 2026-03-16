@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { inventoryApi } from "../inventory.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useDeleteInventory = () => {
@@ -19,10 +19,11 @@ export const useDeleteInventory = () => {
       await inventoryApi.deleteInventory(id);
       success("Xóa thành công", "Inventory item đã được xóa.");
       if (onSuccess) onSuccess();
-    } catch (err: any) {
+    } catch (err) {
       const errorMessage =
-        err.response?.data?.message ||
-        "Không thể xóa inventory lúc này. Vui lòng thử lại!";
+        err instanceof Error
+          ? err.message
+          : "Không thể xóa inventory lúc này. Vui lòng thử lại!";
       setError(errorMessage);
       showErrorToast("Xóa thất bại", errorMessage);
       if (onError) onError(errorMessage);
