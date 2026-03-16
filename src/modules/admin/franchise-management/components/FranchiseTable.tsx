@@ -197,6 +197,7 @@ export default function FranchiseTable() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
   const [isLoadingDetail, setIsLoadingDetail] = useState<string | null>(null);
+  const [pageInput, setPageInput] = useState("");
   const { error: showError } = useToast();
 
   // Detail Modal State
@@ -246,6 +247,13 @@ export default function FranchiseTable() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
+
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
 
   const handleSearch = () => {
     setIsSearchDropdownOpen(false);
@@ -1103,32 +1111,35 @@ export default function FranchiseTable() {
                 >
                   Previous
                 </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page =
-                    currentPage <= 3
-                      ? i + 1
-                      : currentPage >= totalPages - 2
-                        ? totalPages - 4 + i
-                        : currentPage - 2 + i;
-                  return (
-                    page >= 1 &&
-                    page <= totalPages && (
+                {(() => {
+                  const pages: (number | "...")[] = [];
+                  if (totalPages <= 5) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                    const we = ws + 2;
+                    if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
+                    for (let i = ws; i <= we; i++) pages.push(i);
+                    if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
+                  }
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span key={`e-${idx}`} style={{ padding: "0 6px", color: "#6b7280", fontWeight: "600", lineHeight: "36px" }}>...</span>
+                    ) : (
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
                         style={{
                           ...getButtonStyles.pagination,
-                          backgroundColor:
-                            page === currentPage ? "#8B5A2B" : "white",
-                          color:
-                            page === currentPage ? "white" : "#374151",
+                          backgroundColor: page === currentPage ? "#8B5A2B" : "white",
+                          color: page === currentPage ? "white" : "#374151",
                         } as React.CSSProperties}
                       >
                         {page}
                       </button>
                     )
                   );
-                })}
+                })()}
                 <button
                   onClick={() =>
                     setCurrentPage(Math.min(totalPages, currentPage + 1))
@@ -1143,6 +1154,23 @@ export default function FranchiseTable() {
                 >
                   Next
                 </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <input
+                    type="number" min={1} max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const n = Number.parseInt(pageInput, 10);
+                        if (!Number.isNaN(n) && n >= 1 && n <= totalPages) setCurrentPage(n);
+                        setPageInput("");
+                      }
+                    }}
+                    placeholder={String(currentPage)}
+                    style={{ width: "52px", height: "36px", border: "1px solid #e5e7eb", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
+                  />
+                </div>
               </div>
             </div>
           )}

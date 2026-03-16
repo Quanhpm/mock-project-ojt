@@ -20,7 +20,8 @@ export type AdminMenuItem = {
   label: string;
   path: string;
   icon: React.ReactNode;
-  component: React.LazyExoticComponent<React.FC<object>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component: React.LazyExoticComponent<React.ComponentType<any>>;
   isEnd?: boolean;
   module: string;
   hideFromSidebar?: boolean;
@@ -215,8 +216,24 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Shifts",
     path: ROUTER_URL.ADMIN_ROUTER.SHIFT,
     icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftEntryPage")),
+    module: "shifts",
+  },
+  {
+    label: "Shift Franchise Selection",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/select-franchise`,
+    icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftFranchiseSelectionPage")),
+    module: "shifts",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Shift Calendar",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/calendar`,
+    icon: <Clock size={18} />,
     component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftManagement")),
     module: "shifts",
+    hideFromSidebar: true,
   },
   {
     label: "Create Shift",
