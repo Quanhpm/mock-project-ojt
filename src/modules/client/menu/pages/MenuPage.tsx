@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useMemo } from "react";
 import { getAllFranchises, getAllCategoriesByFranchise, getMenuByFranchise } from "@/apis/endpointsCLIENT/client.api";
 import { type FranchiseResponse, type CategoryResponse, type MenuByFranchise, type MenuProduct, type ProductSize, getProductsByFranchiseAndCategory, type ProductByFranchiseAndCategory } from "@/apis/endpointsCLIENT/client.api";
 import ProductCard from "../components/ProductCard";
+import { useStore } from "../hooks/useStore"
 
 function MenuPage() {
     // Cho phần cuộn
@@ -14,7 +15,7 @@ function MenuPage() {
     const [showSearchResults, setShowSearchResults] = useState<boolean>(false); // Hiển thị kết quả tìm kiếm
 
     // Lưu franchise
-    const [franchiseId, setFranchiseId] = useState<string>('');
+    const { franchiseId, setFranchiseId } = useStore();
     const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
 
     // fetch api
@@ -22,7 +23,7 @@ function MenuPage() {
         try {
             const response = await getAllFranchises();
             setFranchises(response || []);
-            const savedFranchiseId = localStorage.getItem('selectedFranchiseId');
+            const savedFranchiseId = franchiseId;
             if (savedFranchiseId) {
                 setFranchiseId(savedFranchiseId);
             } else {
@@ -49,10 +50,10 @@ function MenuPage() {
         }
     }
 
-    const [products, setProducts] = useState<ProductByFranchiseAndCategory[]>([]);
+    const [products, setProducts] = useState<MenuByFranchise[]>([]);
     const fetchAllProducts = async (franchiseId: string) => {
         try {
-            const response = await getProductsByFranchiseAndCategory(franchiseId, "");
+            const response = await getMenuByFranchise(franchiseId, "");
             const product = response;
             if (product) {
                 const filteredProduct = product.filter((item) => !item.category_name?.toLowerCase().includes("topping"))
@@ -64,9 +65,13 @@ function MenuPage() {
         }
     }
     // Lọc product theo category
-    const getProductByCategory = (categoryId: string): ProductByFranchiseAndCategory[] => {
-        return products.filter((item) => item.category_id === categoryId);
-    };
+    const getProductByCategory = useMemo(() => (categoryId: string) => {
+        const category = products.find(item => item.category_id === categoryId);
+        return category ? category.products : [];
+    }, [products])
+    const isHaveProduct = (categoryId: string): boolean => {
+        return products.some(item => item.category_id === categoryId);
+    }
 
     // Lấy data franchise (chỉ lấy 1 lần)
     useEffect(() => {
@@ -84,7 +89,6 @@ function MenuPage() {
             await fetchAllProducts(franchiseId);
         };
         fetchData();
-        localStorage.setItem('selectedFranchiseId', franchiseId);
     }, [franchiseId]);
 
     // hiệu ứng scroll
@@ -142,32 +146,32 @@ function MenuPage() {
     }, [categories]);
 
     // // Filter search
-    // const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
-    //     return products.flatMap((category) =>
-    //         category.filter(
-    //             (product) =>
-    //                 product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //                 category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
-    //         )
-    //     );
-    // };
+    const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
+        return products.flatMap((category) =>
+            category.products.filter(
+                (product) =>
+                    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    category.category_name.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        );
+    };
 
     // Hàm xử lý khi người dùng nhấn Enter
-    // const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    //     if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
-    //         const results = filterProductsBySearch(search);
-    //         setFilteredProducts(results); // Cập nhật danh sách sản phẩm đã lọc
-    //         setShowSearchResults(true);
-    //     }
-    // };
-    // const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     const searchTerm = e.target.value;
-    //     setSearch(searchTerm);
-    //     // Ẩn kết quả tìm kiếm khi người dùng thay đổi nội dung
-    //     if (searchTerm === '') {
-    //         setShowSearchResults(false); // Ẩn kết quả khi ô tìm kiếm trống
-    //     }
-    // };
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === 'Enter') { // Kiểm tra xem phím nhấn có phải là Enter
+            const results = filterProductsBySearch(search);
+            setFilteredProducts(results); // Cập nhật danh sách sản phẩm đã lọc
+            setShowSearchResults(true);
+        }
+    };
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const searchTerm = e.target.value;
+        setSearch(searchTerm);
+        // Ẩn kết quả tìm kiếm khi người dùng thay đổi nội dung
+        if (searchTerm === '') {
+            setShowSearchResults(false); // Ẩn kết quả khi ô tìm kiếm trống
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[var(--cf-bg)] flex gap-8">
@@ -180,21 +184,27 @@ function MenuPage() {
                             <div className="h-1.5 w-20 bg-gradient-to-r from-[var(--cf-primary)] to-[var(--cf-accent-light)] rounded-full"></div>
                         </div>
                         <div className="flex flex-col overflow-y-auto h-full scrollbar-hide">
-                            {(categories as CategoryResponse[]).map((item: CategoryResponse) => (
-                                <button
-                                    key={item.category_code}
-                                    onClick={() => scrollToSection(item.category_code)}
-                                    className={`group relative flex items-center mb-5 mx-5 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover: shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
-                                        ${activeCategory === item.category_code
-                                            ? 'bg-[var(--cf-primary)] !text-white'
-                                            : ''
-                                        }
-                    `}>
-                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
-                                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                    <span className="pl-5 relative z-10 tracking-wide">{item.category_name}</span>
-                                </button>
-                            ))}
+                            {(categories as CategoryResponse[]).map((item: CategoryResponse) => {
+                                const categoryProducts = getProductByCategory(item.category_id); // category -> item
+
+                                if (!categoryProducts || categoryProducts.length === 0) return null;
+
+                                return (
+                                    <button
+                                        key={item.category_code}
+                                        onClick={() => scrollToSection(item.category_code)}
+                                        className={`group relative flex items-center mb-5 mx-5 py-5 rounded-xl text-left text-lg font-bold text-[var(--cf-dark)] hover:text-white bg-gradient-to-r from-transparent to-transparent hover:from-[var(--cf-primary)] hover:to-[var(--cf-dark)] transition-all duration-300 shadow-sm hover:shadow-lg hover:scale-105 active:scale-100 border border-transparent hover:border-[var(--cf-primary)]/20 overflow-hidden
+                                            ${activeCategory === item.category_code
+                                                ? 'bg-[var(--cf-primary)] !text-white'
+                                                : ''
+                                            }
+                `}>
+                                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--cf-primary)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-r-full"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[var(--cf-accent-light)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                        <span className="pl-5 relative z-10 tracking-wide">{item.category_name}</span>
+                                    </button>
+                                );
+                            })} 
                         </div>
                     </div>
                 </div>
@@ -212,7 +222,7 @@ function MenuPage() {
 
                 <div className="flex flex-col md:flex-row gap-6 items-stretch mb-5">
                     {/* Search Bar */}
-                    {/* <div className="md:w-1/3 w-full flex flex-col justify-center">
+                    <div className="md:w-1/3 w-full flex flex-col justify-center">
                         <h3 className="flex items-center gap-2 text-sm font-semibold text-[var(--cf-dark)] mb-2 tracking-wide">
                             <span className="material-icons-outlined text-[18px] text-[var(--cf-secondary)]">
                                 search
@@ -231,7 +241,7 @@ function MenuPage() {
                         focus:ring-2 focus:ring-[var(--cf-primary)]/20 
                         shadow-sm transition-all"
                         />
-                    </div> */}
+                    </div>
 
                     {/* Franchise Selection */}
                     <div className="md:w-2/3 w-full flex flex-col justify-center">
@@ -285,6 +295,10 @@ function MenuPage() {
                 {!showSearchResults && (
                     (categories as CategoryResponse[]).map((category: CategoryResponse) => {
                         const categoryProducts = getProductByCategory(category.category_id);
+
+                        // Early return null nếu không có sản phẩm
+                        if (!categoryProducts || categoryProducts.length === 0) return null;
+
                         return (
                             <div
                                 key={category.category_code}
@@ -303,24 +317,13 @@ function MenuPage() {
 
                                 {/* Product List */}
                                 <div className="grid grid-cols-1 gap-4">
-                                    {categoryProducts && categoryProducts.length > 0 ? (
-                                        categoryProducts.map((product: ProductByFranchiseAndCategory) => (
-                                            <ProductCard
-                                                key={product.product_id}
-                                                product={product}
-                                                franchiseId={franchiseId}
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="px-6 py-10 text-center bg-[var(--cf-surface)] rounded-xl">
-                                            <span className="material-icons-outlined text-4xl text-[var(--cf-secondary)]/30 mb-2">
-                                                inventory_2
-                                            </span>
-                                            <p className="text-[var(--cf-secondary)] text-base">
-                                                Chưa có sản phẩm trong danh mục này
-                                            </p>
-                                        </div>
-                                    )}
+                                    {categoryProducts.map((product: MenuProduct) => (
+                                        <ProductCard
+                                            key={product.product_id}
+                                            product={product}
+                                            franchiseId={franchiseId}
+                                        />
+                                    ))}
                                 </div>
                             </div>
                         );
