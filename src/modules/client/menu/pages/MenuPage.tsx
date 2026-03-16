@@ -26,7 +26,9 @@ function MenuPage() {
                         <div className="flex flex-col overflow-y-auto h-full scrollbar-hide">
                             {(categories as CategoryResponse[]).map((item: CategoryResponse) => {
                                 const categoryProducts = getProductByCategory(item.category_id); // category -> item
+
                                 if (!categoryProducts || categoryProducts.length === 0) return null;
+
                                 return (
                                     <CategorySideBar
                                         key={item.category_code}
@@ -38,6 +40,8 @@ function MenuPage() {
                             })}
                         </div>
                     </div>
+
+
                 </div>
             </aside >
 
@@ -50,6 +54,27 @@ function MenuPage() {
                         Khám phá bộ sưu tập sản phẩm cao cấp của chúng tôi. Sự xuất sắc được chế tác thủ công trong từng món.
                     </p>
                 </div >
+
+                {/* category mobile */}
+                <div className="lg:hidden sticky top-[64px] z-10 bg-[var(--cf-bg)] py-3 -mx-4 px-4 md:-mx-10 md:px-10 border-b border-[var(--cf-secondary)]/10">
+                    <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                        {categories
+                            .filter(cat => getProductByCategory(cat.category_id).length > 0)
+                            .map(cat => (
+                                <button
+                                    key={cat.category_code}
+                                    onClick={() => scrollToSection(cat.category_code)}
+                                    className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all
+                                        ${activeCategory === cat.category_code
+                                            ? 'bg-[var(--cf-primary)] text-white shadow-md'
+                                            : 'bg-white/70 text-[var(--cf-secondary)] border border-[var(--cf-secondary)]/20'
+                                        }`}
+                                >
+                                    {cat.category_name}
+                                </button>
+                            ))}
+                    </div>
+                </div>
 
                 <div className="flex flex-col md:flex-row gap-6 items-stretch mb-5">
                     {/* Search Bar */}
@@ -98,7 +123,8 @@ function MenuPage() {
                 </div>
 
                 {/* Product Sections */}
-                {showSearchResults && (
+                {
+                    showSearchResults && (
                         <div className="mb-8">
                             <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
                                 Kết quả tìm kiếm cho "{search}"
@@ -124,10 +150,14 @@ function MenuPage() {
                 }
 
                 {/* Category Sections */}
-                {!showSearchResults && (
+                {
+                    !showSearchResults && (
                         (categories as CategoryResponse[]).map((category: CategoryResponse) => {
                             const categoryProducts = getProductByCategory(category.category_id);
+
+                            // Early return null nếu không có sản phẩm
                             if (!categoryProducts || categoryProducts.length === 0) return null;
+
                             return (
                                 <div
                                     key={category.category_code}
@@ -158,6 +188,7 @@ function MenuPage() {
                     )
                 }
             </section >
+
         </div >
     );
 }
