@@ -5,6 +5,7 @@ import { httpClient } from "../httpClient";
 //     success: boolean;
 //     data: T;
 // }
+type Size = "S" | "M" | "L" | "DEFAULT"
 
 export interface FranchiseResponse {
     id: string;
@@ -24,7 +25,7 @@ export interface CategoryResponse {
 
 export interface ProductSize {
     product_franchise_id: string;
-    size: string;
+    size: Size;
     price: number;
     is_available: boolean;
 }
@@ -45,7 +46,7 @@ export interface MenuByFranchise {
     products: MenuProduct[];
 }
 
-interface ProductByFranchiseAndCategory {
+export interface ProductByFranchiseAndCategory {
     product_id: string;
     category_id: string;
     category_name: string;
@@ -96,7 +97,7 @@ export const getMenuByFranchise = (franchiseId: string, categoryId?: string): Pr
 
 export const getProductsByFranchiseAndCategory = (franchiseId: string, categoryId?: string): Promise<ProductByFranchiseAndCategory[] | null> => {
     return httpClient.get<ProductByFranchiseAndCategory[]>({
-        url: `clients/franchises/products?franchise_id=${franchiseId}&category_id=${categoryId}`,
+        url: `clients/products?franchiseId=${franchiseId}&categoryId=${categoryId}`,
     });
 }
 
