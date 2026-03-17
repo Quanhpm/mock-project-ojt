@@ -51,7 +51,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
   const selectedKey = selectedDate ? formatDateKey(selectedDate) : ''
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
         <div className="flex items-center gap-2">
           <button
@@ -83,12 +83,12 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7">
+      <div className="grid flex-1 grid-cols-7 auto-rows-fr">
         {calendarDays.map((day, index) => {
           const dayKey = formatDateKey(day.date)
           const isSelected = selectedKey === dayKey
           const visibleItems = viewMode === 'assignment' ? day.assignments : day.shifts
-          const maxVisible = viewMode === 'assignment' ? 2 : 3
+          const maxVisible = 2
           const hiddenCount = Math.max(visibleItems.length - maxVisible, 0)
 
           return (
@@ -103,11 +103,11 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                   onSelectDate(day.date)
                 }
               }}
-              className={`min-h-[132px] border-b border-r border-slate-200 p-3 text-left transition-colors last:border-r-0 ${
+              className={`h-full min-h-0 overflow-hidden border-b border-r border-slate-200 p-2 text-left transition-colors last:border-r-0 xl:p-2.5 ${
                 day.isCurrentMonth ? 'bg-white' : 'bg-slate-50 text-slate-400'
               } ${isSelected ? 'ring-2 ring-inset ring-primary' : 'hover:bg-slate-50'}`}
             >
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-1 flex items-center justify-between gap-2">
                 <span
                   className={`text-sm font-semibold ${
                     day.isToday ? 'text-primary' : 'text-slate-900'
@@ -116,7 +116,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                   {day.date.getDate()}
                 </span>
                 {visibleItems.length > 0 && (
-                  <span className="text-[10px] text-slate-400">
+                  <span className="shrink-0 text-[10px] text-slate-400">
                     {viewMode === 'assignment'
                       ? `${day.assignments.length} assignments`
                       : `${day.shifts.length} shifts`}
@@ -124,7 +124,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                 )}
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1">
                 {viewMode === 'assignment' &&
                   day.assignments.slice(0, maxVisible).map((assignment) => (
                     <span

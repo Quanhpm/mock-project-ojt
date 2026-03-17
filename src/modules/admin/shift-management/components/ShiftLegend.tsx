@@ -18,11 +18,11 @@ export const ShiftLegend: React.FC = () => {
   ]
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex max-w-[420px] flex-wrap justify-start gap-2 lg:justify-end">
       {items.map((item) => (
         <span
           key={item.status}
-          className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
+          className={`inline-flex items-center whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${
             STATUS_STYLES[item.status]
           }`}
         >

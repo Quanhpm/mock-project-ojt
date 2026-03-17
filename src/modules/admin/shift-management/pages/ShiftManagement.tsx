@@ -235,7 +235,6 @@ function ShiftManagement() {
 
     if (isSuccess) {
       reloadCalendarData()
-      closeDailyAssignment()
     }
   }
 
@@ -425,8 +424,8 @@ function ShiftManagement() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-            <div className="xl:col-span-2">
+          <div className="grid grid-cols-1 items-stretch gap-6 xl:h-[calc(100vh-250px)] xl:grid-cols-3">
+            <div className="xl:col-span-2 xl:min-h-0">
               <ShiftCalendar
                 monthLabel={monthLabel}
                 calendarDays={calendarDays}
@@ -438,7 +437,7 @@ function ShiftManagement() {
                 onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
               />
             </div>
-            <div className="xl:col-span-1">
+            <div className="xl:col-span-1 xl:min-h-0">
               <ShiftDayPanel
                 viewMode={viewMode}
                 selectedDate={selectedDate}
