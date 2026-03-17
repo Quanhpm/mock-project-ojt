@@ -181,7 +181,7 @@ export default function CategoryCreateDrawer({
         <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col border-l border-slate-200">
           <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
             <div>
-              <h2 className="text-xl font-semibold text-slate-900">Add Category</h2>
+              <h2 className="text-xl font-semibold text-slate-900">Assign Category</h2>
               <p className="text-sm text-slate-500 mt-1">
                 Please select a franchise first
               </p>
@@ -221,7 +221,7 @@ export default function CategoryCreateDrawer({
         {/* Drawer Header */}
         <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Add Category</h2>
+            <h2 className="text-xl font-semibold text-slate-900">Assign Category</h2>
             <p className="text-sm text-slate-500 mt-1">
               Assign a category to your franchise menu.
             </p>
@@ -447,7 +447,7 @@ export default function CategoryCreateDrawer({
             className="px-5 py-2.5 text-sm font-medium text-white bg-[#8B5A2B] border border-transparent rounded-lg hover:bg-[#8B5A2B]/90 focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/50 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save size={18} />
-            {isCreating ? "Creating..." : "Add Category"}
+            {isCreating ? "Creating..." : "Assign Category"}
           </button>
         </div>
       </div>

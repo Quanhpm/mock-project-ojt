@@ -49,7 +49,7 @@ function LoginPage() {
           <p className="text-sm text-yellow-200">⚠️ Vui lòng đăng nhập để tiếp tục</p>
         </div>
       )}
-      <LoginForm onSubmit={handleLogin} isLoading={isLoading} error={errorMessage || ''} />
+      <LoginForm onSubmit={handleLogin} isLoading={false} error={errorMessage || ''} />
     </AuthCard>
   );
 }

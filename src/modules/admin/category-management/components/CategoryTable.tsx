@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, RotateCcw, FileText, FolderPlus } from "lucide-react";
+import { Edit2, Trash2, RotateCcw, Plus, FolderPlus } from "lucide-react";
 import { useCategorySearch } from "../hooks/useCategorySearch.hook";
 import { useDeleteCategory } from "./hooks/useDeleteCategory";
 import { useRestoreCategory } from "./hooks/useRestoreCategory";
@@ -26,6 +26,11 @@ styleSheet.textContent = `
     to {
       transform: rotate(360deg);
     }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .animate-spin {
@@ -87,7 +92,6 @@ const styles = {
     gap: "28px",
     flexShrink: 0,
     zIndex: 10,
-    backgroundColor: "#ffffff",
   },
   contentArea: {
     flex: 1,
@@ -233,6 +237,7 @@ export default function CategoryTable() {
   // ========================================================================
   const {
     data: categories,
+    isLoading,
     filters,
     setFilters,
     currentPage,
@@ -274,6 +279,7 @@ export default function CategoryTable() {
   const [createMasterModal, setCreateMasterModal] = useState<CreateMasterModal>({
     isOpen: false,
   });
+  const [pageInput, setPageInput] = useState("");
 
   // ========================================================================
   // EFFECTS
@@ -286,6 +292,13 @@ export default function CategoryTable() {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
 
   // Keyboard shortcuts (Ctrl+K)
   useEffect(() => {
@@ -496,7 +509,7 @@ export default function CategoryTable() {
               >
                 Category Management
               </h1>
-              <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
+              <p style={{ color: "#391b03", margin: 0, fontSize: "15px" }}>
                 Total Categories: {totalItems || 0}
               </p>
             </div>
@@ -505,18 +518,18 @@ export default function CategoryTable() {
                 onClick={handleCreateMaster}
                 style={{
                   ...getButtonStyles.primary,
-                  backgroundColor: "#6366f1",
-                  boxShadow: "0 2px 4px rgba(99, 102, 241, 0.2)",
+                  backgroundColor: "#614309",
+                  boxShadow: "0 2px 4px rgba(65, 38, 3, 0.3)",
                 } as React.CSSProperties}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#4f46e5";
+                  e.currentTarget.style.backgroundColor = "#3e1b04";
                   e.currentTarget.style.boxShadow =
-                    "0 4px 8px rgba(99, 102, 241, 0.3)";
+                    "0 4px 8px rgba(65, 38, 3, 0.3)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#6366f1";
+                  e.currentTarget.style.backgroundColor = "#614309";
                   e.currentTarget.style.boxShadow =
-                    "0 2px 4px rgba(99, 102, 241, 0.2)";
+                    "0 2px 4px rgba(65, 38, 3, 0.3)";
                 }}
                 title="Create Master Category"
               >
@@ -538,7 +551,7 @@ export default function CategoryTable() {
                 }}
               >
                 <span style={{ fontSize: "20px" }}>+</span>
-                <span>Add Category</span>
+                <span>Assign Category</span>
               </button>
             </div>
           </div>
@@ -759,7 +772,7 @@ export default function CategoryTable() {
 
           {/* Table */}
           <div style={styles.tableContainer}>
-            {categories.length === 0 ? (
+            {!isLoading && categories.length === 0 ? (
               <div
                 style={{
                   padding: "80px 20px",
@@ -879,7 +892,46 @@ export default function CategoryTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {categories.map((category, index) => (
+                  {isLoading
+                    ? Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} style={{ borderBottom: "1px solid #f8f9fa" }}>
+                          <td colSpan={6} style={{ padding: "16px" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                              <div
+                                style={{
+                                  width: "40px",
+                                  height: "40px",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#e0e0e0",
+                                  animation: "pulse 1.5s ease-in-out infinite",
+                                }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <div
+                                  style={{
+                                    height: "16px",
+                                    backgroundColor: "#e0e0e0",
+                                    borderRadius: "4px",
+                                    marginBottom: "8px",
+                                    width: "60%",
+                                    animation: "pulse 1.5s ease-in-out infinite",
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    height: "12px",
+                                    backgroundColor: "#f0f0f0",
+                                    borderRadius: "4px",
+                                    width: "40%",
+                                    animation: "pulse 1.5s ease-in-out infinite",
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    : categories.map((category, index) => (
                     <tr
                       key={category.id}
                       style={{
@@ -1010,7 +1062,7 @@ export default function CategoryTable() {
                               e.currentTarget.style.color = "#64748b";
                             }}
                           >
-                            <FileText size={18} />
+                            <Plus size={18} />
                           </button>
                           <button
                             onClick={() => handleEdit(category.id)}
@@ -1109,6 +1161,13 @@ export default function CategoryTable() {
               </div>
               <div
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+              <div
+                style={{
                   display: "inline-flex",
                   borderRadius: "6px",
                   boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
@@ -1153,42 +1212,48 @@ export default function CategoryTable() {
                   </svg>
                 </button>
 
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={{
-                        position: "relative",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "8px 16px",
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color:
-                          page === currentPage ? "white" : "#1e293b",
-                        backgroundColor:
-                          page === currentPage ? "#8B5A2B" : "white",
-                        border: "1px solid #e2e8f0",
-                        borderLeft: "none",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (page !== currentPage) {
-                          e.currentTarget.style.backgroundColor = "#f8fafc";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (page !== currentPage) {
-                          e.currentTarget.style.backgroundColor = "white";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  )
-                )}
+                {(() => {
+                  const pages: (number | "...")[] = [];
+                  if (totalPages <= 3) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                    const we = ws + 2;
+                    if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
+                    for (let i = ws; i <= we; i++) pages.push(i);
+                    if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
+                  }
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span key={`e-${idx}`} style={{ padding: "0 4px", fontSize: "14px", color: "#6b7280", display: "inline-flex", alignItems: "center" }}>...</span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={{
+                          position: "relative",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "8px 16px",
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: page === currentPage ? "white" : "#1e293b",
+                          backgroundColor: page === currentPage ? "#8B5A2B" : "white",
+                          border: "1px solid #e2e8f0",
+                          borderLeft: "none",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          minWidth: "40px",
+                          textAlign: "center" as const,
+                        }}
+                        onMouseEnter={(e) => { if (page !== currentPage) e.currentTarget.style.backgroundColor = "#f8fafc"; }}
+                        onMouseLeave={(e) => { if (page !== currentPage) e.currentTarget.style.backgroundColor = "white"; }}
+                      >
+                        {page}
+                      </button>
+                    )
+                  );
+                })()}
 
                 <button
                   onClick={() =>
@@ -1233,6 +1298,24 @@ export default function CategoryTable() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
+              </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <input
+                    type="number" min={1} max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const n = parseInt(pageInput, 10);
+                        if (!isNaN(n) && n >= 1 && n <= totalPages) setCurrentPage(n);
+                        setPageInput("");
+                      }
+                    }}
+                    placeholder={String(currentPage)}
+                    style={{ width: "52px", height: "36px", border: "1px solid #e2e8f0", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
+                  />
+                </div>
               </div>
             </div>
           )}

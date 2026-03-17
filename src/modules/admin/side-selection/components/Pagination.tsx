@@ -1,37 +1,31 @@
+import { useState } from 'react'
+
 interface PaginationProps {
   currentPage: number
   totalPages: number
   onPageChange: (page: number) => void
+  totalItems?: number
+  itemsPerPage?: number
 }
 
 export const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+  const [pageInput, setPageInput] = useState('')
+
   if (totalPages <= 1) return null
 
-  // Tạo mảng số trang với logic ellipsis thông minh
   const getPageNumbers = (): (number | string)[] => {
     const pages: (number | string)[] = []
-    
-    if (totalPages <= 7) {
-      // Nếu ≤7 trang: hiển thị tất cả
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i)
-      }
+
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
     } else {
-      // >7 trang: hiển thị với ellipsis
-      pages.push(1)
-      
-      if (currentPage <= 3) {
-        // Gần đầu: 1 2 3 4 ... 10
-        pages.push(2, 3, 4, '...', totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        // Gần cuối: 1 ... 7 8 9 10
-        pages.push('...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
-      } else {
-        // Ở giữa: 1 ... 4 5 6 ... 10
-        pages.push('...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages)
-      }
+      const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2))
+      const we = ws + 2
+      if (ws > 2) { pages.push(1, '...') } else { for (let i = 1; i < ws; i++) pages.push(i) }
+      for (let i = ws; i <= we; i++) pages.push(i)
+      if (we < totalPages - 1) { pages.push('...', totalPages) } else { for (let i = we + 1; i <= totalPages; i++) pages.push(i) }
     }
-    
+
     return pages
   }
 
@@ -91,6 +85,27 @@ export const Pagination = ({ currentPage, totalPages, onPageChange }: Pagination
       >
         <span className="material-symbols-outlined text-xl">chevron_right</span>
       </button>
+
+      {/* Go to page */}
+      <div className="flex items-center gap-2 ml-2">
+        <span className="text-sm text-gray-500 whitespace-nowrap">Đến trang</span>
+        <input
+          type="number"
+          min={1}
+          max={totalPages}
+          value={pageInput}
+          onChange={(e) => setPageInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              const n = Number.parseInt(pageInput, 10)
+              if (!Number.isNaN(n) && n >= 1 && n <= totalPages) onPageChange(n)
+              setPageInput('')
+            }
+          }}
+          placeholder={String(currentPage)}
+          className="w-14 h-10 border-2 border-border-brown rounded-lg text-center text-sm font-semibold outline-none focus:border-primary transition-colors"
+        />
+      </div>
     </div>
   )
 }

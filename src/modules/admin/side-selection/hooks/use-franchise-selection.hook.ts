@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
 import type { UserRoleItem } from '@/apis/endpoints/auth.api'
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+import { useLoadingStore } from '@/stores/loading.store'
 import { ROUTER_URL } from '@/routes/router.const'
 
 const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
@@ -30,7 +31,8 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const storeRoles = useAdminAuthStore((s) => s.roles)
   const storeActiveContext = useAdminAuthStore((s) => s.activeContext)
   const setProfile = useAdminAuthStore((s) => s.setProfile)
-  const logout = useAdminAuthStore((s) => s.logout)
+  const storeLogout = useAdminAuthStore((s) => s.logout)
+  const { increment: incrementGlobalLoading, decrement: decrementGlobalLoading } = useLoadingStore()
   const [loading, setLoading] = useState(true)
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -81,6 +83,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     if (!isMountedRef.current) return
     
     setSwitching(franchiseId)
+    incrementGlobalLoading()
     try {
       await switchContext(franchiseId)
       
@@ -102,6 +105,8 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
         setError('Không thể chọn chi nhánh, vui lòng thử lại')
         setSwitching(null)
       }
+    } finally {
+      decrementGlobalLoading()
     }
   }
 
@@ -109,6 +114,7 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     if (!isMountedRef.current) return
     
     setSwitching('GLOBAL')
+    incrementGlobalLoading()
     try {
       // Gọi API với franchise_id = null để switch sang GLOBAL
       await switchContext(null)
@@ -132,12 +138,19 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
         setError('Không thể chuyển sang quyền toàn cục, vui lòng thử lại')
         setSwitching(null)
       }
+    } finally {
+      decrementGlobalLoading()
     }
   }
 
   const handleLogout = async () => {
-    await logout()
-    navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
+    incrementGlobalLoading()
+    try {
+      await storeLogout()
+      navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true })
+    } finally {
+      decrementGlobalLoading()
+    }
   }
 
   // Lấy trực tiếp từ store → luôn sync, không cần local state

@@ -4,6 +4,8 @@ import { GlobalRoleCard } from '../components/GlobalRoleCard'
 import { LoadingScreen } from '../components/LoadingScreen'
 import { ErrorScreen } from '../components/ErrorScreen'
 import { Pagination } from '../components/Pagination'
+import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay'
+import { useLoadingStore } from '@/stores/loading.store'
 
 function FranchiseSelectionPage() {
   const {
@@ -21,6 +23,7 @@ function FranchiseSelectionPage() {
     handleLogout,
     handlePageChange,
   } = useFranchiseSelection()
+  const globalLoading = useLoadingStore((state) => state.isLoading)
 
   if (loading) {
     return <LoadingScreen />
@@ -68,8 +71,7 @@ function FranchiseSelectionPage() {
           {/* Global Role Card */}
           {hasGlobalRole && (
             <GlobalRoleCard 
-              onSelect={handleSelectGlobal} 
-              isLoading={switching === 'GLOBAL'}
+              onSelect={handleSelectGlobal}
             />
           )}
 
@@ -104,6 +106,9 @@ function FranchiseSelectionPage() {
           </button>
         </div>
       </main>
+
+      {/* Global Loading Overlay */}
+      {globalLoading && <GlobalLoadingOverlay forceShow />}
     </div>
   )
 }

@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle, Menu, X, House, CupSoda, MapPin, Info, LogIn, UserPlus, Globe, Share2 } from 'lucide-react';
+import { useClientLogout } from '@/modules/client/auth-client/hooks/use-client-logout.hook';
+import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
 
 /**
@@ -10,9 +12,10 @@ import logo2 from '@/assets/img/logo2.png';
  * - Đã đăng nhập: Cart, Avatar, Dropdown (Profile, Change Password, Logout)
  */
 const ClientHeader = () => {
-  const { isLoggedIn, user, clearAuth } = useClientAuthStore();
+  const { isLoggedIn, user } = useClientAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout } = useClientLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -46,10 +49,9 @@ const ClientHeader = () => {
 
   const handleLogout = () => {
     setIsDropdownOpen(false);
+    await logout();
+    // Redirect sau khi logout thành công (store đã clear)
     navigate('/', { replace: true });
-    setTimeout(() => {
-      clearAuth();
-    }, 50);
   };
 
   return (

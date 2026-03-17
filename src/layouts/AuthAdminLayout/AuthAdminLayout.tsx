@@ -1,9 +1,11 @@
 import { Outlet } from 'react-router-dom';
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store';
+import { useLoadingStore } from '@/stores/loading.store';
 import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 
 const AuthAdminLayout = () => {
-  const authLoading = useAdminAuthStore((state) => state.isLoading);
+  const hydrationLoading = useAdminAuthStore((state) => state.isLoading);
+  const globalLoading = useLoadingStore((state) => state.isLoading);
 
   return (
     <div className="min-h-screen flex">
@@ -49,7 +51,7 @@ const AuthAdminLayout = () => {
       </div>
 
       {/* Loading overlay — đè lên layout thay vì thay thế layout */}
-      {authLoading && <GlobalLoadingOverlay forceShow />}
+      {(hydrationLoading || globalLoading) && <GlobalLoadingOverlay forceShow />}
     </div>
   );
 };

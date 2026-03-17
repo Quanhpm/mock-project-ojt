@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
 import { useAdminAuthStore, getRoleCode, getFranchiseId } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { useAdminLogout } from "@/modules/admin/auth-admin/hooks/use-admin-logout.hook";
 import { ROUTER_URL } from "@/routes/router.const";
 import FranchiseSwitcherDropdown from "./FranchiseSwitcherDropdown";
 
@@ -34,12 +35,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const store = useAdminAuthStore();
+  const { logout } = useAdminLogout();
   const roleCode = getRoleCode(store);
   const franchiseId = getFranchiseId(store);
-  const { admin, logout } = store;
+  const { admin } = store;
 
   const handleLogout = async () => {
-    await logout(); // Gọi API logout + clear store
+    await logout();
     navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
   };
 

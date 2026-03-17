@@ -9,6 +9,7 @@ import {
   Clock,
   Building2,
   Folder,
+  Ticket,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -19,7 +20,8 @@ export type AdminMenuItem = {
   label: string;
   path: string;
   icon: React.ReactNode;
-  component: React.LazyExoticComponent<React.FC<object>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  component: React.LazyExoticComponent<React.ComponentType<any>>;
   isEnd?: boolean;
   module: string;
   hideFromSidebar?: boolean;
@@ -150,6 +152,52 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
+    label: "Vouchers",
+    path: ROUTER_URL.ADMIN_ROUTER.VOUCHER,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherListPage")),
+    module: "vouchers",
+  },
+  {
+    label: "Create Voucher",
+    path: `${ROUTER_URL.ADMIN_ROUTER.VOUCHER}/create`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherCreatePage")),
+    module: "vouchers",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Edit Voucher",
+    path: `${ROUTER_URL.ADMIN_ROUTER.VOUCHER}/edit/:id`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherActionPage")),
+    module: "vouchers",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Promotions",
+    path: ROUTER_URL.ADMIN_ROUTER.PROMOTION,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionListPage")),
+    module: "promotions",
+  },
+  {
+    label: "Create Promotion",
+    path: `${ROUTER_URL.ADMIN_ROUTER.PROMOTION}/create`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionCreatePage")),
+    module: "promotions",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Edit Promotion",
+    path: `${ROUTER_URL.ADMIN_ROUTER.PROMOTION}/edit/:id`,
+    icon: <Ticket size={18} />,
+    component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionActionPage")),
+    module: "promotions",
+    hideFromSidebar: true,
+  },
+  {
     label: "Customers",
     path: ROUTER_URL.ADMIN_ROUTER.CUSTOMER,
     icon: <UserCircle size={18} />,
@@ -191,8 +239,24 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     label: "Shifts",
     path: ROUTER_URL.ADMIN_ROUTER.SHIFT,
     icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftEntryPage")),
+    module: "shifts",
+  },
+  {
+    label: "Shift Franchise Selection",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/select-franchise`,
+    icon: <Clock size={18} />,
+    component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftFranchiseSelectionPage")),
+    module: "shifts",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Shift Calendar",
+    path: `${ROUTER_URL.ADMIN_ROUTER.SHIFT}/calendar`,
+    icon: <Clock size={18} />,
     component: React.lazy(() => import("@/modules/admin/shift-management/pages/ShiftManagement")),
     module: "shifts",
+    hideFromSidebar: true,
   },
   {
     label: "Create Shift",

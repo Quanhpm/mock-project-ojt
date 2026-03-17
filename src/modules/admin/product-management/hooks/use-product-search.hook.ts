@@ -90,6 +90,7 @@ export const useProductSearch = (
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const previousFranchiseIdRef = useRef<string | null | undefined>(undefined);
   const isInitializedRef = useRef(false);
+  const pageChangeInitRef = useRef(false);
 
   const { error: showError } = useToast();
   const effectiveFranchiseId = useMemo(() => {
@@ -286,6 +287,16 @@ export const useProductSearch = (
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Re-fetch when currentPage changes (skip first render)
+  useEffect(() => {
+    if (!pageChangeInitRef.current) {
+      pageChangeInitRef.current = true;
+      return;
+    }
+    void executeSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   useEffect(() => {
     if (tableScope !== "FRANCHISE_TABLE_SCOPE") {

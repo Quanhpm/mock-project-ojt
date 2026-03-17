@@ -50,6 +50,8 @@ export const ROUTER_URL = {
     LOYALTY: `loyalty`,
     PAYMENT: `payments`,
     INVENTORY: `inventory`,
+    VOUCHER: `vouchers`,
+    PROMOTION: `promotions`,
     SHIFT: `shifts`,
     ACCOUNT: `account`,
     SECURITY: `account/security`,

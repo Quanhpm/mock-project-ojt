@@ -225,6 +225,7 @@ export default function CustomerTable() {
     customerId: "",
     customerName: "",
   });
+  const [pageInput, setPageInput] = useState("");
 
   // ========================================================================
   // EFFECTS
@@ -267,6 +268,13 @@ export default function CustomerTable() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
+
+  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage, setCurrentPage]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -1163,42 +1171,69 @@ export default function CustomerTable() {
                 </button>
 
                 {/* Page Numbers */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      style={
-                        {
-                          ...getButtonStyles.pagination,
-                          backgroundColor:
-                            currentPage === page ? "#8B5A2B" : "#ffffff",
-                          color: currentPage === page ? "#ffffff" : "#374151",
-                          fontWeight:
-                            currentPage === page
-                              ? ("700" as const)
-                              : ("600" as const),
-                          minWidth: "40px",
-                          textAlign: "center" as const,
-                        } as React.CSSProperties
-                      }
-                      onMouseEnter={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#f9fafb";
-                          e.currentTarget.style.borderColor = "#d1d5db";
+                {(() => {
+                  const pages: (number | "...")[] = [];
+
+                  if (totalPages <= 4) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    const windowStart = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                    const windowEnd = windowStart + 2;
+                    for (let i = windowStart; i <= windowEnd; i++) pages.push(i);
+                    if (windowEnd < totalPages - 1) pages.push("...");
+                    if (windowEnd < totalPages) pages.push(totalPages);
+                  }
+
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          padding: "0 4px",
+                          color: "#6b7280",
+                          fontWeight: "600",
+                          userSelect: "none",
+                          lineHeight: "36px",
+                        }}
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={
+                          {
+                            ...getButtonStyles.pagination,
+                            backgroundColor:
+                              currentPage === page ? "#8B5A2B" : "#ffffff",
+                            color: currentPage === page ? "#ffffff" : "#374151",
+                            fontWeight:
+                              currentPage === page
+                                ? ("700" as const)
+                                : ("600" as const),
+                            minWidth: "40px",
+                            textAlign: "center" as const,
+                          } as React.CSSProperties
                         }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (currentPage !== page) {
-                          e.currentTarget.style.backgroundColor = "#ffffff";
-                          e.currentTarget.style.borderColor = "#e5e7eb";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ),
-                )}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                            e.currentTarget.style.borderColor = "#d1d5db";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#ffffff";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
+                          }
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  );
+                })()}
 
                 {/* Next Button */}
                 <button
@@ -1231,6 +1266,42 @@ export default function CustomerTable() {
                 >
                   ›
                 </button>
+
+                {/* Go to page */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const num = parseInt(pageInput, 10);
+                        if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                          setCurrentPage(num);
+                        }
+                        setPageInput("");
+                      }
+                    }}
+                    placeholder={String(currentPage)}
+                    style={{
+                      width: "52px",
+                      height: "36px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "6px",
+                      textAlign: "center",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#374151",
+                      outline: "none",
+                      padding: "0 4px",
+                    }}
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "#8B5A2B"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                  />
+                </div>
               </div>
             </div>
           )}
