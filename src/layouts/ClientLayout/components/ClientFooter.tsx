@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Facebook, Youtube, MapPin, Phone, Mail, Clock, Coffee, ChevronRight, Building2, } from 'lucide-react';
+import { Instagram, Facebook, Youtube, MapPin, Phone, Mail, Clock, Coffee, ChevronRight, ChevronDown, Building2, } from 'lucide-react';
 
 const Logo = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1772263251/logo_kmr23x.png';
 
@@ -20,12 +21,15 @@ const SOCIAL_LINKS = [
  * ClientFooter - Footer cho GUEST (chưa đăng nhập)
  */
 const ClientFooter = () => {
+  const [isMobileQuickLinksOpen, setIsMobileQuickLinksOpen] = useState(false);
+  const [isMobileContactOpen, setIsMobileContactOpen] = useState(false);
+
   return (
     <footer className="mt-auto">
       {/* Main Footer */}
       <div className="bg-[var(--cf-secondary)] text-[var(--cf-text)]">
-        <div className="container mx-auto px-6 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="container mx-auto px-5 py-9 md:px-6 md:py-14">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-10">
 
             {/* Col 1 - Brand */}
             <div className="lg:col-span-1">
@@ -48,11 +52,31 @@ const ClientFooter = () => {
 
             {/* Col 2 - Quick Links */}
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[var(--cf-primary)] mb-5">Điều hướng</h4>
-              <ul className="space-y-3">
+              <h4 className="hidden md:block text-sm font-bold uppercase tracking-widest text-[var(--cf-primary)] mb-5">Điều hướng</h4>
+              <button
+                type="button"
+                onClick={() => setIsMobileQuickLinksOpen(prev => !prev)}
+                className="md:hidden w-full flex items-center justify-between text-xs font-bold uppercase tracking-wide text-[var(--cf-primary)] rounded-lg px-2.5 py-2"
+                aria-expanded={isMobileQuickLinksOpen}
+                aria-controls="mobile-footer-quick-links"
+              >
+                <span>Điều hướng</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isMobileQuickLinksOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <ul
+                id="mobile-footer-quick-links"
+                className={`space-y-1.5 overflow-hidden transition-all duration-300 md:space-y-3 md:overflow-visible md:max-h-none md:opacity-100 md:mt-0 ${isMobileQuickLinksOpen ? 'max-h-44 opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'} md:block`}
+              >
                 {QUICK_LINKS.map(l => (
                   <li key={l.to}>
-                    <Link to={l.to} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-2 text-sm text-[var(--cf-text-muted)] hover:text-[var(--cf-primary)] transition-colors group">
+                    <Link
+                      to={l.to}
+                      onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setIsMobileQuickLinksOpen(false);
+                      }}
+                      className="flex items-center gap-2 text-[13px] md:text-sm text-[var(--cf-text-muted)] hover:text-[var(--cf-primary)] transition-colors group"
+                    >
                       <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                       {l.label}
                     </Link>
@@ -63,21 +87,34 @@ const ClientFooter = () => {
 
             {/* Col 3 - Contact */}
             <div>
-              <h4 className="text-sm font-bold uppercase tracking-widest text-[var(--cf-primary)] mb-5">Liên hệ</h4>
-              <ul className="space-y-3 text-sm text-[var(--cf-text-muted)]">
-                <li className="flex items-start gap-3">
+              <h4 className="hidden md:block text-sm font-bold uppercase tracking-widest text-[var(--cf-primary)] mb-5">Liên hệ</h4>
+              <button
+                type="button"
+                onClick={() => setIsMobileContactOpen(prev => !prev)}
+                className="md:hidden w-full flex items-center justify-between text-xs font-bold uppercase tracking-wide text-[var(--cf-primary)] rounded-lg px-2.5 py-2"
+                aria-expanded={isMobileContactOpen}
+                aria-controls="mobile-footer-contact"
+              >
+                <span>Liên hệ</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isMobileContactOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <ul
+                id="mobile-footer-contact"
+                className={`space-y-1.5 text-[13px] md:text-sm text-[var(--cf-text-muted)] overflow-hidden transition-all duration-300 md:space-y-3 md:overflow-visible md:max-h-none md:opacity-100 md:mt-0 ${isMobileContactOpen ? 'max-h-52 opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'} md:block`}
+              >
+                <li className="flex items-start gap-2 md:gap-3">
                   <MapPin size={16} className="text-[var(--cf-primary)] mt-0.5 shrink-0" />
                   <span>FPT Software, Hà Nội, Việt Nam</span>
                 </li>
-                <li className="flex items-center gap-3">
+                <li className="flex items-center gap-2 md:gap-3">
                   <Phone size={16} className="text-[var(--cf-primary)] shrink-0" />
                   <span>+84 123 456 789</span>
                 </li>
-                <li className="flex items-center gap-3">
+                <li className="flex items-center gap-2 md:gap-3">
                   <Mail size={16} className="text-[var(--cf-primary)] shrink-0" />
                   <span>hello@boutiquebrews.vn</span>
                 </li>
-                <li className="flex items-center gap-3">
+                <li className="flex items-center gap-2 md:gap-3">
                   <Clock size={16} className="text-[var(--cf-primary)] shrink-0" />
                   <span>07:00 – 22:00, T2 – CN</span>
                 </li>
