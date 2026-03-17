@@ -1,10 +1,11 @@
 import { useGenericSearch } from "@/hooks";
+import type { GenericSearchPayload, GenericSearchResponse } from "@/hooks";
 import { customerApi } from "@/apis";
-import type { Customer } from "../../../../types/customer.types";
-
-// ============================================================================
-// CUSTOMER SEARCH FILTERS
-// ============================================================================
+import type {
+  Customer,
+  CustomerSearchCondition,
+  CustomerSearchPayload,
+} from "@/types/customer.types";
 
 export interface CustomerSearchFilters {
   keyword: string;
@@ -12,14 +13,6 @@ export interface CustomerSearchFilters {
   is_deleted: boolean;
 }
 
-// ============================================================================
-// CUSTOMER SEARCH HOOK
-// ============================================================================
-
-/**
- * Hook for searching customers with filters, pagination, and search history
- * Uses the generic search hook with customer-specific configuration
- */
 export const useCustomerSearch = () => {
   const defaultFilters: CustomerSearchFilters = {
     keyword: "",
@@ -27,26 +20,23 @@ export const useCustomerSearch = () => {
     is_deleted: false,
   };
 
-  // Wrapper function to handle API call with correct types
-  const searchCustomersWrapper = async (payload: any) => {
-    return customerApi.searchCustomers(payload);
-  };
+  // buildSearchCondition transforms CustomerSearchFilters → CustomerSearchCondition
+  // before the payload is built, so the cast is safe at runtime.
+  const searchCustomersWrapper = (
+    payload: GenericSearchPayload<CustomerSearchFilters>,
+  ): Promise<GenericSearchResponse<Customer>> =>
+    customerApi.searchCustomers(payload as unknown as CustomerSearchPayload);
 
   return useGenericSearch<Customer, CustomerSearchFilters>({
     apiSearchFn: searchCustomersWrapper,
     defaultFilters,
     storageKey: "customer_search_history",
-    buildSearchCondition: (filters) => {
-      const condition: any = {
+    buildSearchCondition: (filters): CustomerSearchCondition => {
+      const condition: CustomerSearchCondition = {
+        keyword: filters.keyword.trim(),
         is_deleted: filters.is_deleted,
       };
 
-      // Add keyword if present
-      if (filters.keyword.trim()) {
-        condition.keyword = filters.keyword.trim();
-      }
-
-      // Add is_active filter if selected (convert string to boolean)
       if (filters.is_active !== "") {
         condition.is_active = filters.is_active === "true";
       }

@@ -1,199 +1,88 @@
-import { X, MapPin, Clock, Calendar, Store } from "lucide-react";
-import type { Franchise } from "../../../../types/common.type";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Edit2 } from "lucide-react";
+import CustomerDetail from "../components/CustomerDetail";
+import { useGetCustomer } from "../components/hooks/useGetCustomer";
+import { ROUTER_URL } from "@/routes/router.const";
 
-interface FranchiseDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  franchise: Franchise | null;
-  isLoading?: boolean;
-  error?: string | null;
-}
+const CUSTOMER_LIST_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.CUSTOMER}`;
 
-export default function FranchiseDetailModal({
-  isOpen,
-  onClose,
-  franchise,
-  isLoading = false,
-  error = null,
-}: FranchiseDetailModalProps) {
-  if (!isOpen) return null;
+export default function CustomerDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { customer, isLoading, error, fetchCustomer } = useGetCustomer();
+
+  useEffect(() => {
+    if (id) fetchCustomer(id);
+  }, [id, fetchCustomer]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-3">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-amber-700" />
+        <p className="text-sm font-semibold text-amber-700">
+          Đang tải thông tin khách hàng...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 px-6">
+        <p className="text-lg font-semibold text-red-500">❌ Có lỗi xảy ra</p>
+        <p className="text-sm text-red-400">{error}</p>
+        <button
+          onClick={() => navigate(CUSTOMER_LIST_PATH)}
+          className="flex items-center gap-2 px-5 py-2.5 bg-amber-700 hover:bg-amber-800 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Quay lại danh sách
+        </button>
+      </div>
+    );
+  }
+
+  if (!customer) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="min-h-screen bg-gray-50 px-6 py-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+        <span
+          className="hover:text-amber-700 cursor-pointer transition-colors"
+          onClick={() => navigate(CUSTOMER_LIST_PATH)}
+        >
+          Khách hàng
+        </span>
+        <span>›</span>
+        <span className="text-gray-700 font-medium">
+          {customer.name || customer.email}
+        </span>
+      </nav>
 
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden animate-[fadeIn_.25s_ease]">
-
-        {/* HEADER */}
-        <div className="relative bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 p-8 text-white">
-
+      {/* Header */}
+      <div className="flex items-start justify-between mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Chi tiết khách hàng</h1>
+        <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/20 transition"
+            onClick={() => navigate(CUSTOMER_LIST_PATH)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
           >
-            <X size={20} />
+            <ArrowLeft className="w-4 h-4" />
+            Quay lại
           </button>
-
-          <div className="flex items-center gap-6">
-
-            <img
-              src={
-                franchise?.logo_url ||
-                `https://ui-avatars.com/api/?name=${franchise?.name}&background=f59e0b&color=fff`
-              }
-              alt={franchise?.name}
-              className="w-20 h-20 rounded-2xl border-4 border-white/30 object-cover shadow-md"
-            />
-
-            <div>
-              <h2 className="text-2xl font-bold">{franchise?.name}</h2>
-              <p className="text-sm opacity-90 mt-1">
-                Franchise Code: {franchise?.code}
-              </p>
-
-              {franchise && (
-                <span
-                  className={`inline-block mt-3 px-4 py-1.5 text-sm font-semibold rounded-full ${
-                    franchise.is_active
-                      ? "bg-green-400/20 text-green-100"
-                      : "bg-red-400/20 text-red-100"
-                  }`}
-                >
-                  {franchise.is_active
-                    ? "Đang hoạt động"
-                    : "Ngừng hoạt động"}
-                </span>
-              )}
-            </div>
-
-          </div>
-        </div>
-
-        {/* BODY */}
-        <div className="p-8">
-
-          {isLoading && (
-            <div className="flex flex-col items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">
-                Đang tải dữ liệu...
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {franchise && !isLoading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              {/* Address */}
-              <InfoCard
-                icon={<MapPin size={20} />}
-                title="Địa chỉ"
-                value={franchise.address || "Chưa cập nhật"}
-              />
-
-              {/* Open Time */}
-              <InfoCard
-                icon={<Clock size={20} />}
-                title="Giờ mở cửa"
-                value={new Date(franchise.opened_at).toLocaleTimeString(
-                  "vi-VN",
-                  { hour: "2-digit", minute: "2-digit" }
-                )}
-              />
-
-              {/* Close Time */}
-              <InfoCard
-                icon={<Clock size={20} />}
-                title="Giờ đóng cửa"
-                value={
-                  franchise.closed_at
-                    ? new Date(franchise.closed_at).toLocaleTimeString(
-                        "vi-VN",
-                        { hour: "2-digit", minute: "2-digit" }
-                      )
-                    : "Chưa cập nhật"
-                }
-              />
-
-              {/* Created */}
-              <InfoCard
-                icon={<Calendar size={20} />}
-                title="Ngày tạo"
-                value={new Date(
-                  franchise.created_at
-                ).toLocaleDateString("vi-VN")}
-              />
-
-              {/* Updated */}
-              <InfoCard
-                icon={<Calendar size={20} />}
-                title="Cập nhật"
-                value={new Date(
-                  franchise.updated_at
-                ).toLocaleDateString("vi-VN")}
-              />
-
-              {/* Code */}
-              <InfoCard
-                icon={<Store size={20} />}
-                title="Mã Franchise"
-                value={franchise.code}
-              />
-
-            </div>
-          )}
-        </div>
-
-        {/* FOOTER */}
-        <div className="border-t px-8 py-5 flex justify-end bg-gray-50">
           <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition font-medium"
+            onClick={() => navigate(`${CUSTOMER_LIST_PATH}/edit/${customer.id}`)}
+            className="flex items-center gap-2 px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white text-sm font-semibold rounded-lg transition-colors"
           >
-            Đóng
+            <Edit2 className="w-4 h-4" />
+            Chỉnh sửa
           </button>
         </div>
-
       </div>
 
-      <style>
-        {`
-        @keyframes fadeIn {
-          from { opacity:0; transform:translateY(8px); }
-          to { opacity:1; transform:translateY(0); }
-        }
-        `}
-      </style>
-    </div>
-  );
-}
-
-/* INFO CARD COMPONENT */
-
-function InfoCard({
-  icon,
-  title,
-  value,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-3 p-5 bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition">
-
-      <div className="text-amber-600 mt-0.5">{icon}</div>
-
-      <div>
-        <p className="text-xs text-gray-500 mb-1">{title}</p>
-        <p className="font-semibold text-gray-800">{value}</p>
-      </div>
-
+      <CustomerDetail customer={customer} />
     </div>
   );
 }

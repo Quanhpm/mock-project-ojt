@@ -75,10 +75,6 @@ export default function CustomerDetail({
               )}
             </div>
 
-            <p className="text-sm text-gray-500 flex items-center justify-center sm:justify-start gap-1.5">
-              <Shield className="w-4 h-4" />
-              Khách hàng VIP
-            </p>
           </div>
         </div>
       </div>

@@ -1,2 +1,2 @@
-// Customer store (placeholder for future state management)
-export const customerStore = {};
+// Reserved for future customer-related global state
+

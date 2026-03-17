@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2 } from "lucide-react";
+import { Eye, Edit2, Trash2, RotateCcw } from "lucide-react";
 import CustomerDelete from "./CustomerDelete";
 import { useCustomerSearch } from "../hooks";
 import { useCustomerStatus } from "./hooks/useCustomerStatus";
 import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
+import { useRestoreCustomer } from "./hooks/useRestoreCustomer";
+import { useToast } from "@/hooks/use-toast.hook";
 import type { Customer } from "../../../../types/customer.types";
 
 // ============================================================================
@@ -213,6 +215,8 @@ export default function CustomerTable() {
   // ========================================================================
   const { toggleStatus, updatingId } = useCustomerStatus();
   const { deleteCustomer, isDeleting } = useDeleteCustomer();
+  const { restoreCustomer, isRestoring } = useRestoreCustomer();
+  const { success, error: toastError } = useToast();
 
   // ========================================================================
   // LOCAL STATE
@@ -390,17 +394,40 @@ export default function CustomerTable() {
     if (isDeleting) return;
 
     // Call API to delete customer
-    deleteCustomer(deleteModal.customerId, () => {
-      // onSuccess: Close modal and refresh data
-      setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
-
-      // Refresh customer list by executing search again
-      executeSearch();
-    });
+    deleteCustomer(
+      deleteModal.customerId,
+      () => {
+        setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
+        success(
+          "Xóa thành công",
+          `Khách hàng "${deleteModal.customerName}" đã được xóa.`,
+        );
+        executeSearch();
+      },
+      (errMsg) => {
+        toastError("Xóa thất bại", errMsg);
+      },
+    );
   };
 
   const handleCloseDeleteModal = () => {
     setDeleteModal({ isOpen: false, customerId: "", customerName: "" });
+  };
+
+  const handleRestoreCustomer = (customerId: string, customerName: string) => {
+    restoreCustomer(
+      customerId,
+      () => {
+        success(
+          "Khôi phục thành công",
+          `Khách hàng "${customerName}" đã được khôi phục.`,
+        );
+        executeSearch();
+      },
+      (errMsg) => {
+        toastError("Khôi phục thất bại", errMsg);
+      },
+    );
   };
 
   // ========================================================================
@@ -500,73 +527,104 @@ export default function CustomerTable() {
           <div
             style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
           >
-            {/* View Button */}
-            <button
-              onClick={() => navigate(`/admin/customers/${customer.id}`)}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e0f2fe";
-                e.currentTarget.style.color = "#0066cc";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
-              title="View"
-            >
-              <Eye size={20} />
-            </button>
+            {customer.is_deleted ? (
+              // Restore Button (only for deleted customers)
+              <button
+                onClick={() => handleRestoreCustomer(customer.id, customer.name)}
+                disabled={isRestoring}
+                style={
+                  {
+                    ...getButtonStyles.actionButton,
+                    color: "#4b5563",
+                    opacity: isRestoring ? 0.5 : 1,
+                    cursor: isRestoring ? "not-allowed" : "pointer",
+                  } as React.CSSProperties
+                }
+                onMouseEnter={(e) => {
+                  if (!isRestoring) {
+                    e.currentTarget.style.backgroundColor = "#d1fae5";
+                    e.currentTarget.style.color = "#065f46";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#4b5563";
+                }}
+                title="Khôi phục"
+              >
+                <RotateCcw size={20} />
+              </button>
+            ) : (
+              <>
+                {/* View Button */}
+                <button
+                  onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                  style={
+                    {
+                      ...getButtonStyles.actionButton,
+                      color: "#4b5563",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#e0f2fe";
+                    e.currentTarget.style.color = "#0066cc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="View"
+                >
+                  <Eye size={20} />
+                </button>
 
-            {/* Edit Button */}
-            <button
-              onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fef3c7";
-                e.currentTarget.style.color = "#92400e";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
-              title="Edit"
-            >
-              <Edit2 size={20} />
-            </button>
+                {/* Edit Button */}
+                <button
+                  onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+                  style={
+                    {
+                      ...getButtonStyles.actionButton,
+                      color: "#4b5563",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fef3c7";
+                    e.currentTarget.style.color = "#92400e";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="Edit"
+                >
+                  <Edit2 size={20} />
+                </button>
 
-            {/* Delete Button */}
-            <button
-              onClick={() =>
-                handleDeleteClick(customer.id.toString(), customer.name)
-              }
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fee2e2";
-                e.currentTarget.style.color = "#dc2626";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
-              title="Delete"
-            >
-              <Trash2 size={20} />
-            </button>
+                {/* Delete Button */}
+                <button
+                  onClick={() =>
+                    handleDeleteClick(customer.id.toString(), customer.name)
+                  }
+                  style={
+                    {
+                      ...getButtonStyles.actionButton,
+                      color: "#4b5563",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fee2e2";
+                    e.currentTarget.style.color = "#dc2626";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="Delete"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </>
+            )}
           </div>
         </td>
       </tr>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Upload, User, X } from "lucide-react";
+import { Eye, EyeOff, Upload, User, X } from "lucide-react";
 import { useCreateCustomer } from "./hooks/useCreateCustomer";
 import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import type { Customer } from "../../../../types/customer.types";
@@ -20,25 +20,61 @@ interface CustomerFormProps {
 // ============================================================================
 const createValidationSchema = (isEditMode: boolean) =>
   yup.object().shape({
+
     email: yup
       .string()
+      .trim()
       .required("Email là bắt buộc")
-      .email("Email không đúng định dạng"),
-    phone: yup.string().required("Số điện thoại là bắt buộc"),
-    name: yup.string().default(""),
+      .matches(/^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/, "Email không đúng định dạng")
+      .max(50, "Email không được vượt quá 50 ký tự")
+      .min(8, "Email phải có ít nhất 8 ký tự"),
+
+    phone: yup
+      .string()
+      .required("Số điện thoại là bắt buộc")
+      .matches(
+        /^(\+84|0)(3[2-9]|5[2689]|7[06-9]|8\d|9\d)\d{7}$/,
+        "Số điện thoại không hợp lệ ",
+      ),
+
+    name: yup
+      .string()
+      .trim()
+      .required("Tên là bắt buộc")
+      .min(5, "Tên phải có ít nhất 5 ký tự")
+      .matches(/^[a-zA-Z0-9. ]+$/, "Tên chỉ được chứa chữ thường, chữ hoa, số, dấu chấm và khoảng trắng")
+      .test(
+        "no-consecutive-dots",
+        "Không được chứa hai dấu chấm liên tiếp",
+        (value) => !value || !value.includes("..")
+      )
+      .test(
+        "no-multiple-spaces",
+        "Không được chứa nhiều khoảng trắng liên tiếp",
+        (value) => !value || !/ {2,}/.test(value)
+      )
+      .test(
+        "no-edge-dot",
+        "Không được bắt đầu hoặc kết thúc bằng dấu chấm",
+        (value) => !value || (!value.startsWith(".") && !value.endsWith("."))
+      )
+      .default(""),
+
     avatarUrl: yup.string().default(""),
+
     password: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Mật khẩu là bắt buộc")
-          .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+        .string()
+        .required("Mật khẩu là bắt buộc")
+        .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+
     confirmPassword: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Xác nhận mật khẩu là bắt buộc")
-          .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp"),
+        .string()
+        .required("Xác nhận mật khẩu là bắt buộc")
+        .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp"),
     isActive: yup.boolean().default(true),
   });
 
@@ -63,6 +99,12 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ============================================================================
+  // PASSWORD VISIBILITY STATE
+  // ============================================================================
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // ============================================================================
   // REACT HOOK FORM SETUP
@@ -112,10 +154,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         confirmPassword: "",
         isActive: customer.is_active ?? true,
       });
-      // Set preview if avatar exists
-      if (customer.avatar_url) {
-        setPreviewUrl(customer.avatar_url);
-      }
+      // Always sync previewUrl with customer avatar
+      setPreviewUrl(customer.avatar_url || "");
     }
   }, [customer, reset]);
 
@@ -466,7 +506,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   Email <span style={{ color: "red" }}>*</span>
                 </label>
                 <input
-                  type="email"
+                  type="text"
                   {...register("email")}
                   placeholder="customer@example.com"
                   style={{
@@ -546,19 +586,41 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   >
                     Password <span style={{ color: "red" }}>*</span>
                   </label>
-                  <input
-                    type="password"
-                    {...register("password")}
-                    placeholder="Enter password (min 8 characters)"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: `1px solid ${errors.password ? "#dc3545" : "#dee2e6"}`,
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontFamily: "inherit",
-                    }}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      {...register("password")}
+                      placeholder="Enter password (min 8 characters)"
+                      style={{
+                        width: "100%",
+                        padding: "10px 40px 10px 12px",
+                        border: `1px solid ${errors.password ? "#dc3545" : "#dee2e6"}`,
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontFamily: "inherit",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      style={{
+                        position: "absolute",
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#6c757d",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p
                       style={{
@@ -588,19 +650,41 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   >
                     Confirm Password <span style={{ color: "red" }}>*</span>
                   </label>
-                  <input
-                    type="password"
-                    {...register("confirmPassword")}
-                    placeholder="Confirm password"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: `1px solid ${errors.confirmPassword ? "#dc3545" : "#dee2e6"}`,
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      fontFamily: "inherit",
-                    }}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      {...register("confirmPassword")}
+                      placeholder="Confirm password"
+                      style={{
+                        width: "100%",
+                        padding: "10px 40px 10px 12px",
+                        border: `1px solid ${errors.confirmPassword ? "#dc3545" : "#dee2e6"}`,
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontFamily: "inherit",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      style={{
+                        position: "absolute",
+                        right: "10px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "#6c757d",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
                     <p
                       style={{
@@ -642,7 +726,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
               />
 
               {/* Upload Area / Preview */}
-              {previewUrl ? (
+              {(previewUrl || avatarUrl) ? (
                 // Preview Mode
                 <div
                   style={{
@@ -657,7 +741,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   }}
                 >
                   <img
-                    src={previewUrl}
+                    src={previewUrl || avatarUrl}
                     alt="Avatar preview"
                     style={{
                       width: "120px",
@@ -832,7 +916,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       width: 0,
                       height: 0,
                     }}
-                    onChange={(e) => setValue("isActive", e.target.checked)}
                   />
                   <span
                     style={{
@@ -846,7 +929,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       transition: ".3s",
                       borderRadius: "24px",
                     }}
-                    onClick={() => setValue("isActive", !isActive)}
                   />
                   <span
                     style={{

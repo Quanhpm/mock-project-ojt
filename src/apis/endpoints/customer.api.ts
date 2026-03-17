@@ -76,6 +76,16 @@ export const customerApi = {
   },
 
   /**
+   * CUSTOMER-07: Khôi phục khách hàng đã bị xóa mềm
+   */
+  restoreCustomer: async (id: string): Promise<Customer> => {
+    const data = await httpClient.patch<Customer>({
+      url: `/customers/${id}/restore`,
+    });
+    return data!;
+  },
+
+  /**
    * CUSTOMER-08: Thay đổi trạng thái Active/Inactive
    * Sử dụng PATCH để partial update (chỉ cập nhật is_active, không cần các field khác)
    */

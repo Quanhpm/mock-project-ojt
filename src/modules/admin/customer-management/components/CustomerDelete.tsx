@@ -25,176 +25,58 @@ export default function CustomerDelete({
   };
 
   return (
-    <>
-      {/* Backdrop */}
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50"
+      onClick={onClose}
+    >
       <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        className="relative w-[90%] max-w-[480px] rounded-xl bg-white p-8 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            width: "90%",
-            maxWidth: "480px",
-            padding: "32px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            position: "relative",
-          }}
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 flex items-center justify-center rounded-md p-2 text-gray-500 transition-colors hover:text-gray-900"
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#6c757d",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#212529";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#6c757d";
-            }}
-          >
-            <X size={20} />
-          </button>
+          <X size={20} />
+        </button>
 
-          {/* Icon */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
-            <div
-              style={{
-                backgroundColor: "#fff3cd",
-                borderRadius: "50%",
-                padding: "12px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <AlertTriangle size={32} style={{ color: "#ff9800" }} />
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2
-            style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              color: "#212529",
-              margin: 0,
-              marginBottom: "8px",
-              textAlign: "center",
-            }}
-          >
-            Delete Customer
-          </h2>
-
-          {/* Description */}
-          <p
-            style={{
-              fontSize: "14px",
-              color: "#6c757d",
-              margin: 0,
-              marginBottom: "16px",
-              textAlign: "center",
-            }}
-          >
-            Are you sure you want to delete <strong>{customerName}</strong> (ID:{" "}
-            {customerId})? This action cannot be undone.
-          </p>
-
-          {/* Actions */}
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              marginTop: "24px",
-            }}
-          >
-            <button
-              onClick={onClose}
-              style={{
-                flex: 1,
-                padding: "10px 16px",
-                backgroundColor: "white",
-                border: "1px solid #dee2e6",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "#495057",
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f8f9fa";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={isDeleting}
-              style={{
-                flex: 1,
-                padding: "10px 16px",
-                backgroundColor: isDeleting ? "#ffc1c8" : "#dc3545",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "white",
-                cursor: isDeleting ? "not-allowed" : "pointer",
-                transition: "all 0.2s",
-                opacity: isDeleting ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isDeleting) {
-                  e.currentTarget.style.backgroundColor = "#c82333";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isDeleting) {
-                  e.currentTarget.style.backgroundColor = "#dc3545";
-                }
-              }}
-            >
-              {isDeleting ? "Deleting..." : "Delete Customer"}
-            </button>
+        {/* Warning Icon */}
+        <div className="mb-4 flex justify-center">
+          <div className="flex items-center justify-center rounded-full bg-amber-50 p-3">
+            <AlertTriangle size={32} className="text-amber-500" />
           </div>
         </div>
+
+        {/* Title */}
+        <h2 className="mb-2 text-center text-xl font-semibold text-gray-900">
+          Xóa khách hàng
+        </h2>
+
+        {/* Description */}
+        <p className="mb-4 text-center text-sm text-gray-500">
+          Bạn có chắc chắn muốn xóa{" "}
+          <strong>{customerName}</strong> (ID: {customerId})? Hành động này không
+          thể hoàn tác.
+        </p>
+
+        {/* Actions */}
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:bg-gray-50"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={isDeleting}
+            className="flex-1 rounded-lg border-0 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300 disabled:opacity-70"
+          >
+            {isDeleting ? "Đang xóa..." : "Xóa khách hàng"}
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

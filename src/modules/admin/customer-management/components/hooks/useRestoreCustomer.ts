@@ -2,35 +2,35 @@ import { useState } from "react";
 import { customerApi, HttpError } from "@/apis";
 import { useToast } from "@/hooks/use-toast.hook";
 
-export const useDeleteCustomer = () => {
+export const useRestoreCustomer = () => {
   const { success, error: showErrorToast } = useToast();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const deleteCustomer = async (
+  const restoreCustomer = async (
     id: string,
     onSuccess?: () => void,
     onError?: (errorMessage: string) => void,
   ) => {
-    setIsDeleting(true);
+    setIsRestoring(true);
     setError(null);
 
     try {
-      await customerApi.deleteCustomer(id);
-      success("Đã xóa khách hàng", "Đã xóa khách hàng thành công!");
+      await customerApi.restoreCustomer(id);
+      success("Đã khôi phục khách hàng", "Đã khôi phục khách hàng thành công!");
       onSuccess?.();
     } catch (err: unknown) {
       const message =
         err instanceof HttpError
           ? err.message
-          : "Không thể xóa khách hàng lúc này. Vui lòng thử lại!";
+          : "Không thể khôi phục khách hàng lúc này. Vui lòng thử lại!";
       setError(message);
-      showErrorToast("Xóa thất bại", message);
+      showErrorToast("Khôi phục thất bại", message);
       onError?.(message);
     } finally {
-      setIsDeleting(false);
+      setIsRestoring(false);
     }
   };
 
-  return { deleteCustomer, isDeleting, error };
+  return { restoreCustomer, isRestoring, error };
 };
