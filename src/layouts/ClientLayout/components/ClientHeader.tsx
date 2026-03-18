@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle, Menu, X, House, CupSoda, MapPin, Info, LogIn, UserPlus, Globe, Share2 } from 'lucide-react';
 import { useClientLogout } from '@/modules/client/auth-client/hooks/use-client-logout.hook';
-import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
 
 /**
@@ -47,7 +46,7 @@ const ClientHeader = () => {
     };
   }, [isMobileMenuOpen]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsDropdownOpen(false);
     await logout();
     // Redirect sau khi logout thành công (store đã clear)
