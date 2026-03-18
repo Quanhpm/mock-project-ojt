@@ -1,8 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
+import { normalizeOrdersPayload } from '@/modules/client/order-history/order.utils';
 import { useCartStore } from '@/stores/cart.store';
+import { useLoadingStore } from '@/stores/loading.store';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2 } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
@@ -10,12 +13,17 @@ import logo2 from '@/assets/img/logo2.png';
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
   const profile = useClientAuthStore((state) => state.user);
-  const cartItems = useCartStore((state) => state.items);  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const cartItems = useCartStore((state) => state.items);
+  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [processingOrdersCount, setProcessingOrdersCount] = useState(0);
+  const [isProcessingOrdersLoading, setIsProcessingOrdersLoading] = useState(false);
+  const incrementLoading = useLoadingStore((state) => state.increment);
+  const decrementLoading = useLoadingStore((state) => state.decrement);
   const { success, error } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +53,53 @@ const HomeHeader: React.FC = () => {
     };
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    const customerId = profile?.id;
+
+    if (!customerId) {
+      setProcessingOrdersCount(0);
+      setIsProcessingOrdersLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchProcessingOrders = async () => {
+      if (isMounted) {
+        setIsProcessingOrdersLoading(true);
+      }
+
+      try {
+        const response = await getOrdersByCustomerId(String(customerId));
+        const normalized = normalizeOrdersPayload(response);
+        const count = normalized.orders.filter(
+          (order) =>
+            order.status.code === 'PREPARING' ||
+            order.status.code === 'CONFIRMED' ||
+            order.status.code === 'READY_FOR_PICKUP',
+        ).length;
+
+        if (isMounted) {
+          setProcessingOrdersCount(count);
+        }
+      } catch {
+        if (isMounted) {
+          setProcessingOrdersCount(0);
+        }
+      } finally {
+        if (isMounted) {
+          setIsProcessingOrdersLoading(false);
+        }
+      }
+    };
+
+    fetchProcessingOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile?.id]);
+
   const handleLogout = async () => {
     setIsDropdownOpen(false);
     closeMobileMenu();
@@ -57,6 +112,23 @@ const HomeHeader: React.FC = () => {
       setIsLoggingOut(false);
       error(result.message || 'Đăng xuất thất bại');
     }
+  };
+
+  const navigateWithLoading = (path: string, options?: { closeDropdown?: boolean; closeMenu?: boolean }) => {
+    if (options?.closeDropdown) {
+      setIsDropdownOpen(false);
+    }
+
+    if (options?.closeMenu) {
+      closeMobileMenu();
+    }
+
+    incrementLoading();
+    navigate(path);
+
+    window.setTimeout(() => {
+      decrementLoading();
+    }, 350);
   };
 
   if (isLoggingOut) {
@@ -146,15 +218,24 @@ const HomeHeader: React.FC = () => {
             {/* Order History Link */}
             <Link
               to="/order-history"
-              className="flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ClipboardClock />
+              {processingOrdersCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
+                  {processingOrdersCount}
+                </span>
+              )}
             </Link>
 
             {/* Mobile: avatar link to profile */}
             <Link
               to="/profile"
               className="md:hidden inline-flex items-center justify-center p-1 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
+              onClick={(event) => {
+                event.preventDefault();
+                navigateWithLoading('/profile', { closeMenu: true });
+              }}
             >
               <img
                 src={profile?.avatar_url || 'https://i.pravatar.cc/150'}
@@ -191,7 +272,10 @@ const HomeHeader: React.FC = () => {
                   <Link
                     to="/profile"
                     className="flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
-                    onClick={() => setIsDropdownOpen(false)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigateWithLoading('/profile', { closeDropdown: true });
+                    }}
                   >
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
