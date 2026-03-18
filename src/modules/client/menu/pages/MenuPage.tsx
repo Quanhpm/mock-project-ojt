@@ -123,8 +123,7 @@ function MenuPage() {
                 </div>
 
                 {/* Product Sections */}
-                {
-                    showSearchResults && (
+                {showSearchResults && (
                         <div className="mb-8">
                             <h2 className="text-2xl font-bold text-[var(--cf-dark)] mb-4">
                                 Kết quả tìm kiếm cho "{search}"
@@ -150,8 +149,7 @@ function MenuPage() {
                 }
 
                 {/* Category Sections */}
-                {
-                    !showSearchResults && (
+                {!showSearchResults && (
                         (categories as CategoryResponse[]).map((category: CategoryResponse) => {
                             const categoryProducts = getProductByCategory(category.category_id);
 

@@ -9,6 +9,7 @@ import { ProfilePage } from "@/modules/client/auth-client";
 const OrderHistoryPage = React.lazy(() => import("@/modules/client/order-history"));
 const CartPage = React.lazy(() => import("@/modules/client/cart/pages/Cart"));
 const FranchisePage = React.lazy(() => import("@/modules/client/franchise"));
+// const PaymentPage = React.lazy(() => import("@/modules/client/payment/pages/Payment"))
 
 /**
  * HomePrivateRoutes - Các route PRIVATE (cần đăng nhập)
@@ -24,7 +25,7 @@ export const HomePrivateRoutes = (
       <Route path={ROUTER_URL.HOME_ROUTER.ORDER_HISTORY} element={<OrderHistoryPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.PROFILE} element={<ProfilePage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.CHANGE_PASSWORD} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Change Password Page</h1></div>} />
-      <Route path={ROUTER_URL.HOME_ROUTER.CHECKOUT} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Checkout Page</h1></div>} />
+      {/* <Route path={ROUTER_URL.HOME_ROUTER.CHECKOUT} element={<PaymentPage />} /> */}
       <Route path={ROUTER_URL.HOME_ROUTER.SELECT_FRANCHISE} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Select Franchise Page</h1></div>} />
     </Route>
   </Route>

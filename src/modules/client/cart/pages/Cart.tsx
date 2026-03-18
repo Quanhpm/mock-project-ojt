@@ -19,9 +19,11 @@ function Cart() {
     productName: string;
   }>({ show: false, itemId: null, productName: '' });
 
+  // Xóa sau khi gắn cart API
+  const orderId = ""
   const handleCheckout = () => {
     // TODO: Navigate to checkout page
-    navigate(ROUTER_URL.HOME_ROUTER.CHECKOUT);
+    navigate(ROUTER_URL.HOME_ROUTER.CHECKOUT, { state: {orderId}});
   };
 
   const handleClearCart = () => {
