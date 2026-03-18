@@ -17,9 +17,15 @@ export const statusConfig = {
   },
   CONFIRMED: {
     label: 'Đã xác nhận',
-    color: 'bg-blue-500 text-white',
-    textColor: 'text-blue-500',
-    bgLight: 'bg-blue-500/10',
+    color: 'bg-cyan-500 text-white',
+    textColor: 'text-cyan-500',
+    bgLight: 'bg-cyan-500/10',
+  },
+  READY_FOR_PICKUP: {
+    label: 'Chờ lấy hàng',
+    color: 'bg-blue-600 text-white',
+    textColor: 'text-blue-600',
+    bgLight: 'bg-blue-600/10',
   },
   CANCELLED: {
     label: 'Đã huỷ',

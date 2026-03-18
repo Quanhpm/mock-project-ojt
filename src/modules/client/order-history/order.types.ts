@@ -1,25 +1,48 @@
 
+export interface OrderItemOptionData {
+  id: string;
+  name: string;
+  quantity: number;
+  priceSnapshot: number;
+  finalLineTotal: number;
+}
+
+export interface OrderItemData {
+  id: string;
+  productName: string;
+  productImageUrl: string;
+  quantity: number;
+  priceSnapshot: number;
+  finalLineTotal: number;
+  options: OrderItemOptionData[];
+}
+
 export interface OrderData {
-  id: number;
+  id: string | number;
   code: string;
   store: {
-    id: number;
+    id: string | number;
     name: string;
   };
   channel: string;
   status: {
-    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'DRAFT';
+    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'DRAFT';
     label: string;
     color: string;
   };
   pricing: {
     total: number;
     currency: string;
+    subtotal?: number;
+    promotionDiscount?: number;
+    voucherDiscount?: number;
+    finalAmount?: number;
   };
   meta: {
     items_count: number;
     created_at: string;
   };
+  orderItems: OrderItemData[];
 }
 
 export interface OrdersResponse {
