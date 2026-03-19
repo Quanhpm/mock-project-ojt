@@ -10,6 +10,7 @@ import {
   Building2,
   Folder,
   Ticket,
+  Award,
 } from "lucide-react";
 import React from "react";
 import { ROUTER_URL } from "../router.const";
@@ -180,6 +181,29 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <Ticket size={18} />,
     component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionListPage")),
     module: "promotions",
+  },
+  {
+    label: "Loyalty Rules",
+    path: ROUTER_URL.ADMIN_ROUTER.LOYALTY,
+    icon: <Award size={18} />,
+    component: React.lazy(() => import("@/modules/admin/loyalty-rule/pages/LoyaltyRuleListPage")),
+    module: "loyalty-rules",
+  },
+  {
+    label: "Create Loyalty Rule",
+    path: `${ROUTER_URL.ADMIN_ROUTER.LOYALTY}/create`,
+    icon: <Award size={18} />,
+    component: React.lazy(() => import("@/modules/admin/loyalty-rule/pages/LoyaltyRuleCreatePage")),
+    module: "loyalty-rules",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Edit Loyalty Rule",
+    path: `${ROUTER_URL.ADMIN_ROUTER.LOYALTY}/edit/:id`,
+    icon: <Award size={18} />,
+    component: React.lazy(() => import("@/modules/admin/loyalty-rule/pages/LoyaltyRuleActionPage")),
+    module: "loyalty-rules",
+    hideFromSidebar: true,
   },
   {
     label: "Create Promotion",
