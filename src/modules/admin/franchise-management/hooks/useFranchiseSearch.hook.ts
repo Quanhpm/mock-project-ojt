@@ -6,37 +6,13 @@ import { useToast } from "@/hooks/use-toast.hook";
 const SEARCH_HISTORY_KEY = "franchise_search_history";
 const MAX_HISTORY_ITEMS = 5;
 
-interface SearchFilters {
+export interface SearchFilters {
   keyword: string;
   is_active?: boolean | null;
   is_deleted: boolean;
 }
 
-interface UseFranchiseSearchReturn {
-  franchises: Franchise[];
-  isLoading: boolean;
-  error: string | null;
-  totalPages: number;
-  totalItems: number;
-  filters: SearchFilters;
-  setFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
-  currentPage: number;
-  setCurrentPage: (page: number) => void;
-  pageSize: number;
-  setPageSize: (size: number) => void;
-  executeSearch: () => Promise<void>;
-  clearFilters: () => void;
-  searchHistory: string[];
-  addToHistory: (keyword: string) => void;
-  clearHistory: () => void;
-  isSearchDropdownOpen: boolean;
-  setIsSearchDropdownOpen: (open: boolean) => void;
-  deleteFranchise: (id: number | string) => Promise<void>;
-  toggleFranchiseStatus: (id: number | string, isActive: boolean) => Promise<void>;
-  restoreFranchise: (id: number | string) => Promise<void>;
-}
-
-export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
+export const useFranchiseSearch = () => {
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -243,3 +219,6 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
     restoreFranchise,
   };
 };
+
+export type UseFranchiseSearchReturn = ReturnType<typeof useFranchiseSearch>;
+

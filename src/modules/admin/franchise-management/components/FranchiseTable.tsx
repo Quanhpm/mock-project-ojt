@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2, RotateCcw, Package } from "lucide-react";
 import { useFranchiseSearch } from "../hooks";
@@ -7,6 +7,7 @@ import FranchiseDetailModal from "./FranchiseDetailModal";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import type { Franchise } from "../../../../types/franchise.types";
 import FranchiseDelete from "./FranchiseDelete";
+import { FranchiseSearch } from "./FranchiseSearch";
 
 // ============================================================================
 // STYLES
@@ -169,18 +170,13 @@ const getButtonStyles = {
 export default function FranchiseTable() {
   const navigate = useNavigate();
 
+  const searchState = useFranchiseSearch();
   const {
     franchises,
     isLoading,
     error,
-    filters,
-    setFilters,
     executeSearch,
     clearFilters,
-    searchHistory,
-    clearHistory,
-    isSearchDropdownOpen,
-    setIsSearchDropdownOpen,
     currentPage,
     setCurrentPage,
     pageSize,
@@ -189,14 +185,12 @@ export default function FranchiseTable() {
     deleteFranchise,
     toggleFranchiseStatus,
     restoreFranchise,
-  } = useFranchiseSearch();
+  } = searchState;
+
   useEffect(() => {
     executeSearch();
   }, [currentPage]);
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
   const [isLoadingDetail, setIsLoadingDetail] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState("");
   const { error: showError } = useToast();
@@ -220,59 +214,12 @@ export default function FranchiseTable() {
     };
   }, []);
 
-  // Keyboard shortcuts (Ctrl+K)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        setIsSearchDropdownOpen(true);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setIsSearchDropdownOpen]);
-
-  const handleDeletedFilterChange = (value: boolean) => {
-    setFilters((prev) => ({ ...prev, is_deleted: value }));
-    setCurrentPage(1);
-    setTimeout(() => executeSearch(), 0);
-  };
-
-  // Click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsSearchDropdownOpen(false);
-        setSelectedHistoryIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setIsSearchDropdownOpen]);
-
   // Auto-correct currentPage if it exceeds totalPages after deletion
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [totalPages, currentPage, setCurrentPage]);
-
-  const handleSearch = () => {
-    setIsSearchDropdownOpen(false);
-    setSelectedHistoryIndex(-1);
-    executeSearch();
-  };
-
-  const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, keyword: "" }));
-    searchInputRef.current?.focus();
-  };
 
   const handleViewFranchise = async (id: string | number) => {
     setIsLoadingDetail(String(id));
@@ -286,61 +233,6 @@ export default function FranchiseTable() {
     } finally {
       setIsLoadingDetail(null);
     }
-  };
-
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isSearchDropdownOpen || searchHistory.length === 0) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleSearch();
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedHistoryIndex((prev) =>
-          prev < searchHistory.length - 1 ? prev + 1 : prev,
-        );
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedHistoryIndex((prev) => (prev > 0 ? prev - 1 : -1));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (selectedHistoryIndex >= 0) {
-          setFilters((prev) => ({
-            ...prev,
-            keyword: searchHistory[selectedHistoryIndex],
-          }));
-          setIsSearchDropdownOpen(false);
-          setSelectedHistoryIndex(-1);
-        } else {
-          handleSearch();
-        }
-        break;
-      case "Escape":
-        e.preventDefault();
-        setIsSearchDropdownOpen(false);
-        setSelectedHistoryIndex(-1);
-        break;
-    }
-  };
-
-  const handleStatusFilterChange = (value: string) => {
-    let is_active: boolean | null;
-    if (value === "null") {
-      is_active = null;
-    } else if (value === "true") {
-      is_active = true;
-    } else {
-      is_active = false;
-    }
-    setFilters((prev) => ({ ...prev, is_active }));
-    setCurrentPage(1);
-    setTimeout(() => executeSearch(), 0);
   };
 
   const renderTableRow = (franchise: Franchise, index: number) => {
@@ -649,286 +541,14 @@ export default function FranchiseTable() {
         </header>
 
         <div style={styles.contentArea}>
-          <div style={styles.filterContainer}>
-            <div
-              style={{ flex: 1, minWidth: "300px", position: "relative" }}
-              ref={dropdownRef}
-            >
-              <div style={{ position: "relative" }}>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "12px",
-                    transform: "translateY(-50%)",
-                    pointerEvents: "none",
-                    color: "#9ca3af",
-                  }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
-                </div>
-
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Tìm kiếm theo tên, mã, địa chỉ... (Ctrl+K)"
-                  value={filters.keyword}
-                  onChange={(e) => {
-                    setFilters((prev) => ({
-                      ...prev,
-                      keyword: e.target.value,
-                    }));
-                    if (e.target.value.trim()) {
-                      setIsSearchDropdownOpen(false);
-                    }
-                  }}
-                  onFocus={() => {
-                    if (!filters.keyword.trim() && searchHistory.length > 0) {
-                      setIsSearchDropdownOpen(true);
-                    }
-                  }}
-                  onKeyDown={handleSearchKeyDown}
-                  style={
-                    {
-                      ...getButtonStyles.filterInput,
-                      paddingLeft: "40px",
-                      paddingRight: filters.keyword ? "40px" : "14px",
-                      flex: 1,
-                    } as React.CSSProperties
-                  }
-                  onFocusCapture={(e) => {
-                    e.currentTarget.style.borderColor = "#8B5A2B";
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                  }}
-                  onBlurCapture={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }}
-                />
-
-                {filters.keyword && (
-                  <button
-                    onClick={handleClearSearch}
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      right: "12px",
-                      transform: "translateY(-50%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                      backgroundColor: "#e0e0e0",
-                      color: "#6c757d",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#bdbdbd";
-                      e.currentTarget.style.color = "#212529";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#e0e0e0";
-                      e.currentTarget.style.color = "#6c757d";
-                    }}
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {isSearchDropdownOpen &&
-                searchHistory.length > 0 &&
-                !filters.keyword && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "calc(100% + 4px)",
-                      left: 0,
-                      right: 0,
-                      backgroundColor: "white",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                      zIndex: 50,
-                      maxHeight: "250px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        borderBottom: "1px solid #f0f0f0",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#6c757d",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Tìm kiếm gần đây
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearHistory();
-                          setIsSearchDropdownOpen(false);
-                        }}
-                        style={{
-                          fontSize: "11px",
-                          color: "#ef4444",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "#fee")
-                        }
-                        onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor =
-                          "transparent")
-                        }
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                    {searchHistory.map((item, index) => (
-                      <div
-                        key={index}
-                        onClick={() => {
-                          setFilters((prev) => ({ ...prev, keyword: item }));
-                          setIsSearchDropdownOpen(false);
-                          setSelectedHistoryIndex(-1);
-                        }}
-                        style={{
-                          padding: "10px 12px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          backgroundColor:
-                            selectedHistoryIndex === index
-                              ? "#f3f4f6"
-                              : "transparent",
-                          transition: "background-color 0.2s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "#f9fafb")
-                        }
-                        onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor =
-                          selectedHistoryIndex === index
-                            ? "#f3f4f6"
-                            : "transparent")
-                        }
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          style={{ color: "#9ca3af" }}
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                        <span style={{ fontSize: "14px", color: "#374151" }}>
-                          {item}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSearch}
-              style={{
-                ...getButtonStyles.primary,
-                minWidth: "110px",
-                height: "42px",
-              }}
-            >
-              Tìm kiếm
-            </button>
-
-            <div style={{ minWidth: "140px" }}>
-              <select
-                value={filters.is_active === null ? "null" : String(filters.is_active)}
-                onChange={(e) => handleStatusFilterChange(e.target.value)}
-                style={getButtonStyles.filterInput as React.CSSProperties}
-              >
-                <option value="null">Tất cả trạng thái</option>
-                <option value="true">Đang hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
-              </select>
-            </div>
-
-            {/* Deleted Filter */}
-            <div style={{ minWidth: "140px" }}>
-              <select
-                value={filters.is_deleted ? "true" : "false"}
-                onChange={(e) =>
-                  handleDeletedFilterChange(e.target.value === "true")
-                }
-                style={getButtonStyles.filterInput as React.CSSProperties}
-              >
-                <option value="false">Chưa xóa</option>
-                <option value="true">Đã xóa</option>
-              </select>
-            </div>
-
-            <button
-              onClick={() => {
-                clearFilters();
-                setCurrentPage(1);
-              }}
-              style={getButtonStyles.clearFilter as React.CSSProperties}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e5e7eb";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-              }}
-            >
-              Xóa bộ lọc
-            </button>
-          </div>
+          <FranchiseSearch
+            searchState={searchState}
+            onSearch={executeSearch}
+            onClearFilters={() => {
+              clearFilters();
+              setCurrentPage(1);
+            }}
+          />
 
           <div style={styles.tableContainer}>
             <table style={styles.table}>
