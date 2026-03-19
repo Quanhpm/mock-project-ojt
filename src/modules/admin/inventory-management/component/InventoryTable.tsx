@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useGetInventories } from "./hooks/useGetInventories";
 import { useDeleteInventory } from "./hooks/useDeleteInventory";
@@ -11,6 +12,11 @@ import { useInventoryExcel } from "./hooks/useInventoryExcel";
 import type { InventoryItem, InventorySearchPayload, InventoryTableRow, BulkAdjustPayload } from "./inventory.types";
 import InventoryDelete from "./InventoryDelete";
 import { useToast } from "@/hooks/use-toast.hook";
+import {
+  getInventoryImportFieldPath,
+  getInventoryTableFieldPath,
+  inventoryTableFormSchema,
+} from "./inventory-table.validation";
 
 const getStockStatus = (quantity: number, alertThreshold: number) => {
   if (quantity === 0) return { label: "Out of Stock", color: "#dc3545" };
@@ -37,6 +43,8 @@ export default function InventoryTable() {
   const [franchiseFilter, setFranchiseFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
+  const [activeTooltipKey, setActiveTooltipKey] = useState<string | null>(null);
+  const [mappedImportErrorPaths, setMappedImportErrorPaths] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const itemsPerPage = 10;
 
@@ -50,16 +58,64 @@ export default function InventoryTable() {
   const { bulkAdjust, isAdjusting: isBulkAdjusting } = useBulkAdjustInventory();
 
   // === React Hook Form + useFieldArray ===
-  const methods = useForm<{ items: InventoryTableRow[] }>({ defaultValues: { items: [] } });
-  const { control, register, getValues, watch } = methods;
+  const methods = useForm<{ items: InventoryTableRow[] }>({
+    defaultValues: { items: [] },
+    resolver: zodResolver(inventoryTableFormSchema) as any,
+    mode: "onSubmit",
+  });
+  const { control, register, getValues, watch, trigger, setError, clearErrors, formState: { errors } } = methods;
   const { fields, replace, update } = useFieldArray({ control, name: "items" });
+
+  const clearMappedImportErrors = useCallback(() => {
+    if (mappedImportErrorPaths.length > 0) {
+      clearErrors(mappedImportErrorPaths as any);
+      setMappedImportErrorPaths([]);
+    }
+  }, [clearErrors, mappedImportErrorPaths]);
 
   // === Excel hook ===
   const {
     handleExportAll, handleExportSelected,
     fileInputRef, handleImportClick, handleFileChange,
     isParsingFile, importErrors, setImportErrors,
-  } = useInventoryExcel({ getValues, replace });
+  } = useInventoryExcel({
+    getValues,
+    replace,
+    onImportStart: () => {
+      clearMappedImportErrors();
+    },
+    onImportSuccess: () => {
+      clearMappedImportErrors();
+    },
+    onImportValidationErrors: (validationErrors, mappedRows) => {
+      clearMappedImportErrors();
+
+      const nextPaths: string[] = [];
+      validationErrors.forEach((error) => {
+        if (error.field !== "quantity" && error.field !== "alert_threshold") {
+          return;
+        }
+
+        const row = mappedRows[error.row - 1];
+        const productFranchiseId = String(row?.product_franchise_id ?? "").trim();
+        if (!productFranchiseId) return;
+
+        const targetIndex = getValues("items").findIndex(
+          (item) => item.product_franchise_id === productFranchiseId,
+        );
+        if (targetIndex === -1) return;
+
+        const path = getInventoryImportFieldPath(targetIndex, error.field);
+        setError(path, {
+          type: "import",
+          message: error.message.replace(/^Row \d{2}:\s*/, ""),
+        });
+        nextPaths.push(path);
+      });
+
+      setMappedImportErrorPaths(nextPaths);
+    },
+  });
 
   // === Sync API data → RHF form ===
   useEffect(() => {
@@ -171,46 +227,53 @@ export default function InventoryTable() {
   // === Update Selected → API ===
   const handleUpdateSelected = useCallback(() => {
     const currentItems = getValues("items");
-    const selectedRows = currentItems.filter(r => r._selected);
+    const selectedIndexes = currentItems
+      .map((row, index) => (row._selected ? index : -1))
+      .filter((index) => index >= 0);
+    const selectedRows = selectedIndexes.map((index) => currentItems[index]);
 
     if (selectedRows.length === 0) {
       toastError("Lỗi", "Vui lòng chọn ít nhất 1 row để update");
       return;
     }
 
-    // === NaN Guard + Validation trước khi gọi API ===
-    const invalidRows: string[] = [];
-    selectedRows.forEach((row, i) => {
-      const qty = row._editQuantity;
-      const threshold = row._editAlertThreshold;
-      const label = row.product_name ?? row.product_id ?? `Row ${i + 1}`;
+    const selectedPaths = selectedIndexes.flatMap((index) => [
+      getInventoryTableFieldPath(index, "_editQuantity"),
+      getInventoryTableFieldPath(index, "_editAlertThreshold"),
+    ]);
 
-      if (isNaN(qty) || qty < 0 || !Number.isInteger(qty)) {
-        invalidRows.push(`"${label}": quantity không hợp lệ (${isNaN(qty) ? "trống/NaN" : qty < 0 ? "âm" : "không phải số nguyên"})`);
+    void trigger(selectedPaths as any).then((isValid) => {
+      if (!isValid) {
+        const firstInvalidPath = selectedPaths.find(
+          (path) => !!methods.getFieldState(path).error,
+        );
+        if (firstInvalidPath) {
+          const firstInvalidInput = document.querySelector<HTMLInputElement>(
+            `input[name="${firstInvalidPath}"]`,
+          );
+          if (firstInvalidInput) {
+            firstInvalidInput.scrollIntoView({ behavior: "smooth", block: "center" });
+            firstInvalidInput.focus();
+          }
+        }
+        toastError("Dữ liệu không hợp lệ", "Vui lòng kiểm tra các ô đang được tô đỏ.");
+        return;
       }
-      if (isNaN(threshold) || threshold < 0 || !Number.isInteger(threshold)) {
-        invalidRows.push(`"${label}": alert_threshold không hợp lệ (${isNaN(threshold) ? "trống/NaN" : threshold < 0 ? "âm" : "không phải số nguyên"})`);
-      }
+
+      const payload: BulkAdjustPayload = {
+        items: selectedRows.map(row => ({
+          product_franchise_id: row.product_franchise_id,
+          change: row._editQuantity - row._originalQuantity,
+          alert_threshold: row._editAlertThreshold,
+          reason: "",
+        })),
+      };
+
+      bulkAdjust(payload, () => {
+        refetch(buildPayload(currentPage));
+      });
     });
-
-    if (invalidRows.length > 0) {
-      toastError("Dữ liệu không hợp lệ", invalidRows.join(" | "));
-      return;
-    }
-
-    const payload: BulkAdjustPayload = {
-      items: selectedRows.map(row => ({
-        product_franchise_id: row.product_franchise_id,
-        change: row._editQuantity - row._originalQuantity,
-        alert_threshold: row._editAlertThreshold,
-        reason: "",
-      })),
-    };
-
-    bulkAdjust(payload, () => {
-      refetch(buildPayload(currentPage));
-    });
-  }, [getValues, bulkAdjust, refetch, currentPage, toastError]);
+  }, [getValues, bulkAdjust, refetch, currentPage, toastError, trigger, methods]);
 
   // === Legacy handlers (adjust, logs, delete, restore) ===
   const handleOpenAdjust = (_e: React.MouseEvent<HTMLButtonElement>, item: InventoryItem) => {
@@ -234,6 +297,78 @@ export default function InventoryTable() {
   const btnOutline: React.CSSProperties = { display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #8B4513", backgroundColor: "white", color: "#8B4513", fontWeight: "600", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s" };
   const btnPrimary: React.CSSProperties = { ...btnOutline, backgroundColor: "#8B4513", color: "white", border: "none" };
   const editInputStyle: React.CSSProperties = { width: "80px", padding: "6px 8px", borderRadius: "6px", border: "1px solid #dee2e6", fontSize: "14px", textAlign: "center", outline: "none", transition: "border-color 0.2s", boxSizing: "border-box" };
+  const errorInputStyle: React.CSSProperties = {
+    borderColor: "#dc2626",
+    backgroundColor: "#fef2f2",
+    color: "#991b1b",
+    boxShadow: "0 0 0 1px rgba(220,38,38,0.12)",
+  };
+  const tooltipStyle: React.CSSProperties = {
+    position: "absolute",
+    bottom: "calc(100% + 8px)",
+    left: "50%",
+    transform: "translateX(-50%)",
+    backgroundColor: "#7f1d1d",
+    color: "white",
+    padding: "8px 10px",
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontWeight: "600",
+    lineHeight: 1.4,
+    whiteSpace: "nowrap",
+    boxShadow: "0 8px 18px rgba(127,29,29,0.25)",
+    zIndex: 50,
+    pointerEvents: "none",
+  };
+
+  const handleEditableFieldChange = useCallback((path: `items.${number}._editQuantity` | `items.${number}._editAlertThreshold`) => {
+    window.setTimeout(() => {
+      void trigger(path as any).then((isValid) => {
+        if (isValid) {
+          clearErrors(path as any);
+          setMappedImportErrorPaths((prev) => prev.filter((item) => item !== path));
+          if (activeTooltipKey === path) {
+            setActiveTooltipKey(null);
+          }
+        }
+      });
+    }, 0);
+  }, [activeTooltipKey, clearErrors, trigger]);
+
+  const handleNumericKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    const allowedControlKeys = new Set([
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Escape",
+      "Enter",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Home",
+      "End",
+    ]);
+
+    if (e.ctrlKey || e.metaKey) {
+      return;
+    }
+
+    if (allowedControlKeys.has(e.key)) {
+      return;
+    }
+
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+    }
+  }, []);
+
+  const handleNumericPaste = useCallback((e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text");
+    if (!/^\d+$/.test(pastedText.trim())) {
+      e.preventDefault();
+    }
+  }, []);
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
@@ -334,7 +469,7 @@ export default function InventoryTable() {
             <div style={{ backgroundColor: "#fff5f5", border: "1px solid #fed7d7", borderRadius: "8px", padding: "16px", flexShrink: 0 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <h4 style={{ margin: 0, color: "#c53030", fontSize: "14px", fontWeight: "700" }}>⚠️ Import Errors ({importErrors.length} lỗi):</h4>
-                <button onClick={() => setImportErrors([])} style={{ background: "none", border: "none", cursor: "pointer", color: "#c53030", fontSize: "18px", lineHeight: 1, padding: "0 4px" }}>✕</button>
+                <button onClick={() => { setImportErrors([]); setActiveTooltipKey(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#c53030", fontSize: "18px", lineHeight: 1, padding: "0 4px" }}>✕</button>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 {importErrors.map((err, i) => (
@@ -375,6 +510,10 @@ export default function InventoryTable() {
                       const item = watchedItems?.[index];
                       if (!item) return null;
                       const stockStatus = getStockStatus(item._editQuantity, item._editAlertThreshold);
+                      const quantityPath = getInventoryTableFieldPath(index, "_editQuantity");
+                      const thresholdPath = getInventoryTableFieldPath(index, "_editAlertThreshold");
+                      const quantityError = errors.items?.[index]?._editQuantity;
+                      const thresholdError = errors.items?.[index]?._editAlertThreshold;
                       return (
                         <tr key={field.id} style={{ borderBottom: "1px solid #e9ecef", backgroundColor: item._selected ? "#fff8f2" : "transparent", transition: "background-color 0.15s" }}
                           onMouseEnter={e => { if (!item._selected) e.currentTarget.style.backgroundColor = "#f8f9fa"; }}
@@ -387,14 +526,58 @@ export default function InventoryTable() {
                           <td style={{ padding: "16px" }}><span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>{item.product_name ?? item.product_id}</span></td>
                           <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>{item.franchise_name ?? item.franchise_id}</td>
                           <td style={{ padding: "16px" }}>
-                            <input type="number" min={0} {...register(`items.${index}._editQuantity` as const, { valueAsNumber: true })}
-                              style={{ ...editInputStyle, borderColor: item._editQuantity !== item._originalQuantity ? "#8B4513" : "#dee2e6", fontWeight: item._editQuantity !== item._originalQuantity ? "700" : "400" }}
-                              onFocus={e => e.currentTarget.style.borderColor = "#8B4513"} onBlur={e => { if (item._editQuantity === item._originalQuantity) e.currentTarget.style.borderColor = "#dee2e6"; }} />
+                            <div
+                              style={{ position: "relative", display: "inline-block" }}
+                              onMouseEnter={() => quantityError?.message && setActiveTooltipKey(quantityPath)}
+                              onMouseLeave={() => activeTooltipKey === quantityPath && setActiveTooltipKey(null)}
+                            >
+                              <input type="number" min={0} {...register(quantityPath, { valueAsNumber: true, onChange: () => handleEditableFieldChange(quantityPath) })}
+                                style={{
+                                  ...editInputStyle,
+                                  borderColor: item._editQuantity !== item._originalQuantity ? "#8B4513" : "#dee2e6",
+                                  fontWeight: item._editQuantity !== item._originalQuantity ? "700" : "400",
+                                  ...(quantityError ? errorInputStyle : {}),
+                                }}
+                                onKeyDown={handleNumericKeyDown}
+                                onPaste={handleNumericPaste}
+                                onFocus={e => { e.currentTarget.style.borderColor = quantityError ? "#dc2626" : "#8B4513"; if (quantityError?.message) setActiveTooltipKey(quantityPath); }}
+                                onBlur={e => {
+                                  window.setTimeout(() => {
+                                    if (activeTooltipKey === quantityPath) setActiveTooltipKey(null);
+                                  }, 0);
+                                  if (!quantityError && item._editQuantity === item._originalQuantity) e.currentTarget.style.borderColor = "#dee2e6";
+                                }} />
+                              {quantityError?.message && activeTooltipKey === quantityPath && (
+                                <div style={tooltipStyle}>{quantityError.message}</div>
+                              )}
+                            </div>
                           </td>
                           <td style={{ padding: "16px" }}>
-                            <input type="number" min={0} {...register(`items.${index}._editAlertThreshold` as const, { valueAsNumber: true })}
-                              style={{ ...editInputStyle, borderColor: item._editAlertThreshold !== item._originalAlertThreshold ? "#8B4513" : "#dee2e6", fontWeight: item._editAlertThreshold !== item._originalAlertThreshold ? "700" : "400" }}
-                              onFocus={e => e.currentTarget.style.borderColor = "#8B4513"} onBlur={e => { if (item._editAlertThreshold === item._originalAlertThreshold) e.currentTarget.style.borderColor = "#dee2e6"; }} />
+                            <div
+                              style={{ position: "relative", display: "inline-block" }}
+                              onMouseEnter={() => thresholdError?.message && setActiveTooltipKey(thresholdPath)}
+                              onMouseLeave={() => activeTooltipKey === thresholdPath && setActiveTooltipKey(null)}
+                            >
+                              <input type="number" min={0} {...register(thresholdPath, { valueAsNumber: true, onChange: () => handleEditableFieldChange(thresholdPath) })}
+                                style={{
+                                  ...editInputStyle,
+                                  borderColor: item._editAlertThreshold !== item._originalAlertThreshold ? "#8B4513" : "#dee2e6",
+                                  fontWeight: item._editAlertThreshold !== item._originalAlertThreshold ? "700" : "400",
+                                  ...(thresholdError ? errorInputStyle : {}),
+                                }}
+                                onKeyDown={handleNumericKeyDown}
+                                onPaste={handleNumericPaste}
+                                onFocus={e => { e.currentTarget.style.borderColor = thresholdError ? "#dc2626" : "#8B4513"; if (thresholdError?.message) setActiveTooltipKey(thresholdPath); }}
+                                onBlur={e => {
+                                  window.setTimeout(() => {
+                                    if (activeTooltipKey === thresholdPath) setActiveTooltipKey(null);
+                                  }, 0);
+                                  if (!thresholdError && item._editAlertThreshold === item._originalAlertThreshold) e.currentTarget.style.borderColor = "#dee2e6";
+                                }} />
+                              {thresholdError?.message && activeTooltipKey === thresholdPath && (
+                                <div style={tooltipStyle}>{thresholdError.message}</div>
+                              )}
+                            </div>
                           </td>
                           <td style={{ padding: "16px" }}>
                             <span style={{ fontSize: "12px", fontWeight: "600", padding: "3px 10px", borderRadius: "12px", backgroundColor: stockStatus.label === "In Stock" ? "#d4edda" : stockStatus.label === "Low Stock" ? "#fff3cd" : "#f8d7da", color: stockStatus.color }}>{stockStatus.label}</span>
