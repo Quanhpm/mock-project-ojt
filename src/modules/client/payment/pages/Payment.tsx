@@ -1,4 +1,14 @@
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import { useLocation } from "react-router-dom";
+import { getOrderbyId } from "@/apis/endpointsCLIENT/payment.api";
+import { getPaymentByOrderId, confirmPayment } from "@/apis/endpointsCLIENT/payment.api";
+import type { GetOrdersByCustomerIdResponse, ClientOrder } from "@/apis";
+import type { PaymentResponse, OrderResponse, OrderItem } from "@/apis/endpointsCLIENT/payment.api";
+import { getFranchiseDetail } from "@/apis";
+import type { OrdersResponse } from "../../order-history/order.types";
+import { toast } from "sonner";
+import useToast from "@/hooks/use-toast.hook";
+import { useNavigate } from "react-router-dom";
 
 type Product = {
   id: number;
@@ -31,57 +41,112 @@ const products: Product[] = [
   },
 ];
 
-const paymentMethods: PaymentMethod[] = [
+const paymentMethods = [
   {
     id: "CASH",
     label: "Tiền mặt",
     icon: (
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M17 9V7a4 4 0 00-8 0v2M5 9h14l1 12H4L5 9z"
-        />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a4 4 0 00-8 0v2M5 9h14l1 12H4L5 9z" />
+      </svg>
+    ),
+  },
+  {
+    id: "MOMO",
+    label: "Ví MoMo",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
       </svg>
     ),
   },
   {
     id: "CARD",
-    label: "Chuyển khoản",
+    label: "Thẻ",
     icon: (
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.8}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-        />
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    ),
+  },
+  {
+    id: "VNPAY",
+    label: "VNPay",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
   },
 ];
 
-const fmt = (n: number): string =>
-  n.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+const fmt = (n: number | undefined): string => {
+  if (n !== undefined && n !== null) {
+    return n.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+  }
+  return "0 ₫"; // Hoặc "" tùy bạn muốn hiển thị khi không có data
+};
 
 export default function Payment() {
+  const { success, error } = useToast();
+  const navigate = useNavigate();
+
   const [paying, setPaying] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<string>("CASH");
 
   const subtotal = products.reduce((s, p) => s + p.price * p.qty, 0);
   const discount = 15000;
   const total = subtotal - discount;
+
+  const location = useLocation();
+  const orderId: string = (location.state as { orderId?: string })?.orderId ?? '';
+
+  const [orderData, setOrderData] = useState<OrderResponse>();
+  const fetchOrderData = async () => {
+    try {
+      const response = await getOrderbyId(orderId);
+      if (response) setOrderData(response)
+    }
+    catch (error) {
+      console.error("Failed to fetch order data:", error)
+    }
+  }
+  const [paymentData, setPaymentData] = useState<PaymentResponse>()
+  const fetchPaymentData = async () => {
+    try {
+      const response = await getPaymentByOrderId(orderId);
+      if (response) setPaymentData(response)
+    }
+    catch (error) {
+      console.error("Failed to fetch payment data:", error)
+    }
+  }
+  useEffect(() => {
+    const fetch = async () => {
+      await fetchOrderData();
+      await fetchPaymentData();
+    }
+    fetch();
+  }, [])
+
+  const handleConfirmPayment = async () => {
+    try {
+      setPaying(true);
+
+      const res = await confirmPayment(paymentData?._id ?? "", {
+        method: selectedPayment,
+      });
+      success("Thanh toán thành công");
+      setTimeout(() => {
+      navigate("/"); // đổi route bạn muốn
+    }, 3000);
+    } catch (e) {
+      console.error("Payment error:", e);
+      error("Thanh toán thất bại")
+    } finally {
+      setPaying(false);
+    }
+  };
 
   return (
     <div className="h-full w-full bg-[var(--cf-bg)] px-4 py-6">
@@ -110,7 +175,7 @@ export default function Payment() {
                 <div>
                   <p className="mb-0.5 text-[10px] text-[var(--cf-secondary)]">Đặt tại</p>
                   <p className="text-sm font-semibold text-[var(--cf-primary)]">
-                    Highlands Coffee – Nguyễn Huệ
+                    {orderData?.franchise_name}
                   </p>
                 </div>
               </div>
@@ -127,7 +192,7 @@ export default function Payment() {
                 <div>
                   <p className="mb-0.5 text-[10px] text-[var(--cf-secondary)]">Giao đến</p>
                   <p className="text-sm font-semibold text-[var(--cf-primary)]">
-                    123 Lê Lợi, Quận 1, TP.HCM
+                    {orderData?.address}
                   </p>
                 </div>
               </div>
@@ -137,36 +202,37 @@ export default function Payment() {
           {/* ── Block 2: Đơn hàng ── */}
           <div className="rounded-2xl border border-[var(--cf-accent-light)] bg-[var(--cf-surface)] p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-secondary)]">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-primary)]">
                 Đơn hàng
               </p>
 
               <span className="rounded-full bg-[var(--cf-accent-light)] px-2 py-0.5 text-[10px] font-bold text-[var(--cf-primary)]">
-                {products.length} món
+                {orderData?.order_items.length} món
               </span>
             </div>
 
             <div className="flex flex-col gap-2">
-              {products.map((p) => (
+              {orderData?.order_items.map((p) => (
                 <div
-                  key={p.id}
+                  key={p.order_item_id}
                   className="flex items-start gap-3 rounded-xl border border-[var(--cf-accent-light)] bg-[var(--cf-bg)] p-3"
                 >
                   <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--cf-primary)] text-xs font-bold text-white">
-                    {p.qty}
+                    {p.quantity}
                   </span>
 
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold leading-tight text-[var(--cf-primary)]">
-                      {p.name}
+                      {p.product_name}
                     </p>
-                    <p className="mt-0.5 truncate text-[11px] text-[var(--cf-secondary)]">
-                      {p.note}
-                    </p>
+                    {p.options.length > 0 && p.options.map((op) => (
+                      <p key={op.product_franchise_id} className="mt-0.5 truncate text-[11px] text-[var(--cf-secondary)]">
+                        {op.product_name} - {fmt(op.final_price)}
+                      </p>
+                    ))}
                   </div>
-
                   <p className="flex-shrink-0 text-sm font-bold text-[var(--cf-dark)]">
-                    {fmt(p.price * p.qty)}
+                    {fmt(p.price_snapshot * p.quantity)}
                   </p>
                 </div>
               ))}
@@ -178,27 +244,41 @@ export default function Payment() {
         <div className="flex flex-col gap-4 lg:sticky lg:top-6">
           {/* ── Block 3: Tóm tắt giá ── */}
           <div className="rounded-2xl border border-[var(--cf-accent-light)] bg-[var(--cf-surface)] p-4 shadow-sm">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-secondary)]">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-primary)]">
               Chi tiết thanh toán
             </p>
 
             <div className="flex flex-col gap-2">
               <div className="flex justify-between text-sm text-[var(--cf-secondary)]">
                 <span>Giá gốc</span>
-                <span>{fmt(subtotal)}</span>
+                <span>{fmt(orderData?.subtotal_amount)}</span>
               </div>
 
-              <div className="flex justify-between text-sm">
-                <span className="font-medium text-[#4A7C59]">Giảm giá</span>
-                <span className="font-semibold text-[#4A7C59]">− {fmt(discount)}</span>
-              </div>
+              {orderData !== undefined && orderData?.promotion_discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-[#4A7C59]">Giảm giá từ promotion</span>
+                  <span className="font-semibold text-[#4A7C59]">− {fmt(orderData.promotion_discount)}</span>
+                </div>
+              )}
+              {orderData !== undefined && orderData?.voucher_discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-[#4A7C59]">Giảm giá từ voucher</span>
+                  <span className="font-semibold text-[#4A7C59]">− {fmt(orderData.voucher_discount)}</span>
+                </div>
+              )}
+              {orderData !== undefined && orderData?.loyalty_discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium text-[#4A7C59]">Giảm giá từ điểm thành viên</span>
+                  <span className="font-semibold text-[#4A7C59]">− {fmt(orderData.loyalty_discount)}</span>
+                </div>
+              )}
 
               <div className="my-1 h-px bg-[var(--cf-accent-light)]" />
 
               <div className="flex justify-between">
                 <span className="text-base font-bold text-[var(--cf-primary)]">Tổng cộng</span>
                 <span className="text-base font-extrabold text-[var(--cf-dark)]">
-                  {fmt(total)}
+                  {fmt(orderData?.final_amount)}
                 </span>
               </div>
             </div>
@@ -206,11 +286,11 @@ export default function Payment() {
 
           {/* ── Block 4: Phương thức thanh toán ── */}
           <div className="rounded-2xl border border-[var(--cf-accent-light)] bg-[var(--cf-surface)] p-4 shadow-sm">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-secondary)]">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-primary)]">
               Phương thức thanh toán
             </p>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2">
               {paymentMethods.map((method) => {
                 const isSelected = selectedPayment === method.id;
 
@@ -218,11 +298,10 @@ export default function Payment() {
                   <button
                     key={method.id}
                     onClick={() => setSelectedPayment(method.id)}
-                    className={`flex items-center gap-2.5 rounded-xl border-2 px-3 py-3 text-left transition-all duration-200 ${
-                      isSelected
-                        ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white"
-                        : "border-[var(--cf-accent-light)] bg-[var(--cf-bg)] text-[var(--cf-primary)]"
-                    }`}
+                    className={`flex items-center gap-2.5 rounded-xl border-2 px-3 py-3 text-left transition-all duration-200 ${isSelected
+                      ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white"
+                      : "border-[var(--cf-accent-light)] bg-[var(--cf-bg)] text-[var(--cf-primary)]"
+                      }`}
                   >
                     <span className="flex-shrink-0">{method.icon}</span>
                     <span className="text-sm font-semibold leading-tight">{method.label}</span>
@@ -246,14 +325,10 @@ export default function Payment() {
 
           {/* ── Nút Thanh toán ── */}
           <button
-            onClick={() => {
-              setPaying(true);
-              setTimeout(() => setPaying(false), 2000);
-            }}
+            onClick={handleConfirmPayment}
             disabled={paying}
-            className={`w-full rounded-2xl py-4 text-sm font-bold uppercase tracking-widest text-white shadow-sm transition-all duration-300 ${
-              paying ? "bg-[#4A7C59] opacity-90" : "bg-[var(--cf-primary)] opacity-100"
-            }`}
+            className={`w-full rounded-2xl py-4 text-sm font-bold uppercase tracking-widest text-white shadow-sm transition-all duration-300 ${paying ? "bg-[#4A7C59] opacity-90" : "bg-[var(--cf-primary)] opacity-100"
+              }`}
           >
             {paying ? (
               <span className="flex items-center justify-center gap-2">

@@ -1,5 +1,54 @@
 import { httpClient } from "../httpClient";
-import type { GetOrdersByCustomerIdResponse } from "../endpointsCLIENT/order.api"
+
+export interface OrderOption {
+  product_franchise_id: string;
+  product_name: string;
+  product_image_url: string;
+  quantity: number;
+  price_snapshot: number;
+  discount_amount: number;
+  final_price: number;
+}
+
+export interface OrderItem {
+  order_item_id: string;
+  product_franchise_id: string;
+  product_name: string;
+  product_image_url: string;
+  quantity: number;
+  price_snapshot: number;
+  discount_amount: number;
+  line_total: number;
+  final_line_total: number;
+  options_hash: string;
+  options: OrderOption[];
+}
+
+export interface OrderResponse {
+  _id: string;
+  customer_id: string;
+  franchise_id: string;
+  cart_id: string;
+  code: string;
+  status: string;
+  address: string;
+  phone: string;
+  message: string;
+  promotion_discount: number;
+  voucher_discount: number;
+  loyalty_discount: number;
+  subtotal_amount: number;
+  final_amount: number;
+  promotion_id: string;
+  promotion_type: string;
+  promotion_value: number;
+  voucher_type: string;
+  voucher_value: number;
+  loyalty_points_used: number;
+  franchise_name: string;
+  customer_name: string;
+  order_items: OrderItem[];
+}
 
 export interface PaymentResponse {
     _id: string;
@@ -24,15 +73,15 @@ export interface RefundPaymentResponse extends PaymentResponse {
 
 interface ConfirmPaymentRequest {
     method: string;
-    providerTxnId: string;
+    providerTxnId?: string;
 }
 
 interface RefundPaymentRequest {
     refund_reason: string;
 }
 
-export const getPaymentByOrderId = (orderId: string): Promise<PaymentResponse[] | null> => {
-    return httpClient.get<PaymentResponse[]>({
+export const getPaymentByOrderId = (orderId: string): Promise<PaymentResponse | null> => {
+    return httpClient.get<PaymentResponse>({
         url: `payments/order/${orderId}`
     })
 }
@@ -60,7 +109,7 @@ export const confirmPayment = (
     data: ConfirmPaymentRequest,
 ): Promise<PaymentResponse[] | null> => {
     return httpClient.put<PaymentResponse[], ConfirmPaymentRequest>({
-        url: `payments/${id}`,
+        url: `payments/${id}/confirm`,
         data,
     });
 }
@@ -75,8 +124,8 @@ export const refundPayment = (
     });
 }
 
-export const getOrderbyId = (id: string): Promise<GetOrdersByCustomerIdResponse | null> => {
-    return httpClient.get<GetOrdersByCustomerIdResponse>({
+export const getOrderbyId = (id: string): Promise<OrderResponse | null> => {
+    return httpClient.get<OrderResponse>({
         url: `orders/${id}`
     })
 }

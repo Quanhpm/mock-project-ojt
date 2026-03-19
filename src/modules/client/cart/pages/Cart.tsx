@@ -20,7 +20,7 @@ function Cart() {
   }>({ show: false, itemId: null, productName: '' });
 
   // Xóa sau khi gắn cart API
-  const orderId = ""
+  const orderId = "69bb7e9fe1d19ff0cdb25cd1"
   const handleCheckout = () => {
     // TODO: Navigate to checkout page
     navigate(ROUTER_URL.HOME_ROUTER.CHECKOUT, { state: {orderId}});
