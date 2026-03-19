@@ -1,6 +1,6 @@
 // Franchise type definition - aligned with DBML schema
 export interface Franchise {
-  id: number
+  id: string | number
   code: string
   name: string
   logo_url: string
