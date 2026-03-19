@@ -9,37 +9,16 @@ import type { OrdersResponse } from "../../order-history/order.types";
 import { toast } from "sonner";
 import useToast from "@/hooks/use-toast.hook";
 import { useNavigate } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
+import { QRPaymentModal } from "../component/QRPaymentModal";
 
-type Product = {
-  id: number;
-  name: string;
-  note: string;
-  price: number;
-  qty: number;
-};
+const QR_METHODS = ["momo", "banking", "zalopay"];
 
 type PaymentMethod = {
   id: string;
   label: string;
   icon: ReactNode;
 };
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Cà phê sữa đá",
-    note: "Ít đường, nhiều đá",
-    price: 45000,
-    qty: 2,
-  },
-  {
-    id: 2,
-    name: "Bánh mì thịt",
-    note: "Không hành, thêm bơ",
-    price: 35000,
-    qty: 1,
-  },
-];
 
 const paymentMethods = [
   {
@@ -93,10 +72,8 @@ export default function Payment() {
 
   const [paying, setPaying] = useState<boolean>(false);
   const [selectedPayment, setSelectedPayment] = useState<string>("CASH");
-
-  const subtotal = products.reduce((s, p) => s + p.price * p.qty, 0);
-  const discount = 15000;
-  const total = subtotal - discount;
+  const [showQr, setShowQr] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const location = useLocation();
   const orderId: string = (location.state as { orderId?: string })?.orderId ?? '';
@@ -132,14 +109,17 @@ export default function Payment() {
   const handleConfirmPayment = async () => {
     try {
       setPaying(true);
+      if (selectedPayment !== "CASH" && selectedPayment !== "CARD") {
+        setShowQr(true);
+      }
 
       const res = await confirmPayment(paymentData?._id ?? "", {
         method: selectedPayment,
       });
       success("Thanh toán thành công");
       setTimeout(() => {
-      navigate("/"); // đổi route bạn muốn
-    }, 3000);
+        navigate("/"); // đổi route bạn muốn
+      }, 5000);
     } catch (e) {
       console.error("Payment error:", e);
       error("Thanh toán thất bại")
@@ -149,7 +129,7 @@ export default function Payment() {
   };
 
   return (
-    <div className="h-full w-full bg-[var(--cf-bg)] px-4 py-6">
+    <div className="min-h-screen w-full bg-[var(--cf-bg)] px-4 py-6">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr] lg:items-start">
         {/* Cột trái */}
         <div className="flex flex-col gap-4">
@@ -346,11 +326,22 @@ export default function Payment() {
                 Đang xử lý...
               </span>
             ) : (
-              `Thanh toán · ${fmt(total)}`
+              `Thanh toán`
             )}
           </button>
         </div>
       </div>
+
+      <QRPaymentModal
+        isOpen={showQr}
+        onClose={() => setShowQr(false)}
+        onConfirm={() => {
+          setConfirmed(true);
+          setTimeout(() => setConfirmed(false), 2000);
+        }}
+        total={orderData ? orderData.final_amount : 0}
+        qrValue={`payment:${selectedPayment}:amount:${orderData ? orderData.final_amount : 0}`}
+      />
     </div>
   );
 }
