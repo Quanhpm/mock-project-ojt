@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast.hook";
 import FranchiseDetailModal from "./FranchiseDetailModal";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import type { Franchise } from "../../../../types/franchise.types";
+import FranchiseDelete from "./FranchiseDelete";
 
 // ============================================================================
 // STYLES
@@ -203,6 +204,13 @@ export default function FranchiseTable() {
   // Detail Modal State
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const { franchise: selectedFranchise, isLoading: isLoadingFranchiseDetail, fetchFranchise } = useGetFranchiseById();
+
+  // Delete Modal State
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; franchiseId: string | number; franchiseName: string }>({
+    isOpen: false,
+    franchiseId: "",
+    franchiseName: "",
+  });
 
   // Prevent body scroll
   useEffect(() => {
@@ -523,13 +531,11 @@ export default function FranchiseTable() {
                     restoreFranchise(franchise.id);
                   }
                 } else {
-                  if (
-                    window.confirm(
-                      `Bạn có chắc chắn muốn xóa nhượng quyền "${franchise.name}"?`
-                    )
-                  ) {
-                    deleteFranchise(franchise.id);
-                  }
+                  setDeleteModal({
+                    isOpen: true,
+                    franchiseId: franchise.id,
+                    franchiseName: franchise.name
+                  });
                 }
               }}
               style={
@@ -1183,6 +1189,15 @@ export default function FranchiseTable() {
         onClose={() => setIsDetailModalOpen(false)}
         franchise={selectedFranchise}
         isLoading={isLoadingFranchiseDetail}
+      />
+
+      {/* Delete Franchise Modal */}
+      <FranchiseDelete
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => deleteFranchise(deleteModal.franchiseId)}
+        franchiseId={deleteModal.franchiseId}
+        franchiseName={deleteModal.franchiseName}
       />
     </div>
   );
