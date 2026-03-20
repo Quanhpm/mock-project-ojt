@@ -33,6 +33,7 @@ export const AdminRoutes = (
             element={
               <ProtectedRoute 
                 requiredModule={item.module}
+                allowedRoles={item.allowedRoles}
                 element={<item.component />}
               />
             } 
@@ -59,6 +60,7 @@ export const AdminRoutes = (
         element={
           <ProtectedRoute 
             requiredModule={item.module}
+            allowedRoles={item.allowedRoles}
             element={<item.component />}
           />
         } 

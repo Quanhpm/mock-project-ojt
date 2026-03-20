@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    searchProductFranchises,
-    type ProductFranchiseItem,
-    type SearchProductFranchisesRequest,
-} from '@/apis/endpoints/product-franchise.api';
+    getProductsByFranchiseWithCategory,
+    type ProductWithCategoriesApiItem,
+} from '@/apis/endpoints/product-category-franchise.api';
 import { productApi, type ProductItem } from '@/apis/endpoints/product.api';
-import type { PageInfo } from '@/apis/http.types';
 
-export interface EnrichedProductFranchiseItem extends ProductFranchiseItem {
+export interface EnrichedProductFranchiseItem extends ProductWithCategoriesApiItem {
     product?: ProductItem;
+    image_url?: string;
+    description?: string;
 }
 
 interface UseProductFranchiseListParams {
@@ -19,50 +19,48 @@ export function useProductFranchiseList({ franchiseId }: UseProductFranchiseList
     const [products, setProducts] = useState<EnrichedProductFranchiseItem[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [pageInfo, setPageInfo] = useState<PageInfo>({
-        pageNum: 1,
-        pageSize: 20,
-        totalItems: 0,
-        totalPages: 0,
-    });
     const [searchQuery, setSearchQuery] = useState('');
     const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
 
-    const fetchProducts = useCallback(async (pageNum = 1) => {
-        if (!franchiseId) return;
+    const fetchProducts = useCallback(async () => {
+        if (!franchiseId) {
+            setProducts([]);
+            return;
+        }
 
         setIsLoading(true);
         setError(null);
 
         try {
-            const request: SearchProductFranchisesRequest = {
-                searchCondition: {
-                    franchise_id: franchiseId,
-                    is_deleted: false,
-                },
-                pageInfo: {
-                    pageNum,
-                    pageSize: 20,
-                },
-            };
+            const [productFranchises, masterProducts] = await Promise.all([
+                getProductsByFranchiseWithCategory(franchiseId),
+                productApi.searchProducts({
+                    searchCondition: {
+                        is_deleted: false,
+                    },
+                    pageInfo: {
+                        pageNum: 1,
+                        pageSize: 1000,
+                    },
+                }),
+            ]);
 
-            const response = await searchProductFranchises(request);
+            const productById = new Map(
+                (masterProducts.data ?? []).map((product) => [product.id, product] as const),
+            );
 
-            if (response?.data) {
-                // Batch-fetch product details in parallel to get names, images, descriptions
-                const enriched = await Promise.all(
-                    response.data.map(async (pf) => {
-                        try {
-                            const product = await productApi.getProductById(pf.product_id);
-                            return { ...pf, product: product ?? undefined };
-                        } catch {
-                            return { ...pf };
-                        }
-                    })
-                );
-                setProducts(enriched);
-                setPageInfo(response.pageInfo);
-            }
+            const enriched = (productFranchises ?? []).map((item) => {
+                const product = productById.get(item.product_id);
+
+                return {
+                    ...item,
+                    product,
+                    image_url: product?.image_url,
+                    description: product?.description ?? product?.content ?? '',
+                };
+            });
+
+            setProducts(enriched);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to load products';
             setError(message);
@@ -75,20 +73,27 @@ export function useProductFranchiseList({ franchiseId }: UseProductFranchiseList
         fetchProducts();
     }, [fetchProducts]);
 
-    const setCurrentPage = (page: number) => {
-        fetchProducts(page);
-    };
+    const sizeOptions = useMemo(
+        () =>
+            Array.from(
+                new Set(
+                    products
+                        .map((item) => item.size)
+                        .filter((size): size is string => Boolean(size)),
+                ),
+            ),
+        [products],
+    );
 
     return {
         products,
         isLoading,
         error,
-        pageInfo,
         searchQuery,
         setSearchQuery,
         appliedSearchQuery,
         setAppliedSearchQuery,
-        setCurrentPage,
+        sizeOptions,
         refetch: fetchProducts,
     };
 }

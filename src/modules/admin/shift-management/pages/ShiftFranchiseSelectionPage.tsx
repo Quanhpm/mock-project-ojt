@@ -16,16 +16,25 @@ function ShiftFranchiseSelectionPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const isFranchiseScopedShiftRole = roleCode === 'MANAGER' || roleCode === 'STAFF'
 
   useEffect(() => {
-    if (roleCode === 'MANAGER' && activeContext?.franchise_id) {
+    if (isFranchiseScopedShiftRole && activeContext?.franchise_id) {
+      setSelectedFranchiseId(activeContext.franchise_id)
       navigate(`/admin/shifts/calendar?franchiseId=${activeContext.franchise_id}`, {
         replace: true,
       })
     }
-  }, [activeContext?.franchise_id, navigate, roleCode])
+  }, [activeContext?.franchise_id, isFranchiseScopedShiftRole, navigate, setSelectedFranchiseId])
 
   useEffect(() => {
+    if (isFranchiseScopedShiftRole) {
+      setLoading(false)
+      setError(null)
+      setFranchises([])
+      return
+    }
+
     let cancelled = false
 
     const loadFranchises = async () => {
@@ -57,7 +66,7 @@ function ShiftFranchiseSelectionPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isFranchiseScopedShiftRole])
 
   const filteredFranchises = useMemo(() => {
     if (!searchTerm.trim()) return franchises

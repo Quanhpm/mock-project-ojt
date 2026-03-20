@@ -16,6 +16,7 @@ import type {
 import type { ShiftFilters } from './useShiftFilters.hook'
 import type { ShiftImportReferenceData } from '../utils/shift-import.excel'
 import type { ShiftCalendarViewMode } from '../stores/shift-management.store'
+import { getRoleCode, useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
 
 export type ShiftAssignmentStatus = ApiShiftAssignmentStatus
 
@@ -231,6 +232,10 @@ export const useShiftCalendar = (
   franchiseId?: string | null,
   viewMode: ShiftCalendarViewMode = 'assignment',
 ) => {
+  const authStore = useAdminAuthStore()
+  const authRoles = useAdminAuthStore((state) => state.roles)
+  const roleCode = getRoleCode(authStore)
+  const isStaff = roleCode === 'STAFF'
   const [monthDate, setMonthDate] = useState<Date>(new Date())
   const [assignmentRawData, setAssignmentRawData] = useState<ShiftAssignmentItem[]>([])
   const [usersMap, setUsersMap] = useState<Map<string, UserItem>>(new Map())
@@ -242,8 +247,19 @@ export const useShiftCalendar = (
   const [error, setError] = useState<string | null>(null)
   const initializedMonthRef = useRef(false)
   const snapshotCacheRef = useRef<Map<string, CalendarSnapshot>>(new Map())
-  const cacheKey = franchiseId || 'all'
+  const lookupMode = isStaff ? 'staff' : 'full'
+  const cacheKey = `${franchiseId || 'all'}::${lookupMode}`
   const [reloadVersion, setReloadVersion] = useState(0)
+
+  const franchiseNameById = useMemo(() => {
+    return authRoles.reduce<Map<string, string>>((acc, role) => {
+      if (role.franchise_id && role.franchise_name) {
+        acc.set(role.franchise_id, role.franchise_name)
+      }
+
+      return acc
+    }, new Map())
+  }, [authRoles])
 
   const applySnapshot = useCallback((snapshot: CalendarSnapshot) => {
     setAssignmentRawData(snapshot.assignmentRawData)
@@ -299,13 +315,15 @@ export const useShiftCalendar = (
                   pageInfo: { pageNum: 1, pageSize: 1000 },
                 })
                 .then((response) => response?.data || []),
-          searchUsers({
-            searchCondition: {
-              is_deleted: false,
-            },
-            pageInfo: { pageNum: 1, pageSize: 1000 },
-          }).then((response) => response?.data || []),
-          franchiseId
+          isStaff
+            ? Promise.resolve([])
+            : searchUsers({
+                searchCondition: {
+                  is_deleted: false,
+                },
+                pageInfo: { pageNum: 1, pageSize: 1000 },
+              }).then((response) => response?.data || []),
+          !isStaff && franchiseId
             ? searchUserFranchiseRoles({
                 searchCondition: {
                   franchise_id: franchiseId,
@@ -323,7 +341,7 @@ export const useShiftCalendar = (
               pageInfo: { pageNum: 1, pageSize: 1000 },
             })
             .then((response) => response?.data || []),
-          getFranchisesSelect().then((response) => response || []),
+          isStaff ? Promise.resolve([]) : getFranchisesSelect().then((response) => response || []),
         ])
 
         if (cancelled) return
@@ -370,7 +388,7 @@ export const useShiftCalendar = (
     return () => {
       cancelled = true
     }
-  }, [applySnapshot, cacheKey, franchiseId, reloadVersion])
+  }, [applySnapshot, cacheKey, franchiseId, isStaff, reloadVersion])
 
   const assignmentsView = useMemo(() => {
     return assignmentRawData.map((assignment) => {
@@ -402,10 +420,13 @@ export const useShiftCalendar = (
         staffName: assignment.user_name || user?.name || `User ${assignment.user_id}`,
         staffAvatar: user?.avatar_url || '',
         franchiseId: resolvedFranchiseId,
-        franchiseName: franchise?.name || 'Unknown Franchise',
+        franchiseName:
+          franchise?.name ||
+          franchiseNameById.get(resolvedFranchiseId.toString()) ||
+          'Unknown Franchise',
       }
     })
-  }, [assignmentRawData, franchiseId, franchisesMap, shiftsMap, usersMap])
+  }, [assignmentRawData, franchiseId, franchiseNameById, franchisesMap, shiftsMap, usersMap])
 
   const staffOptions = useMemo<OptionItem[]>(() => {
     if (!franchiseId) {
@@ -520,22 +541,71 @@ export const useShiftCalendar = (
     const todayKey = formatDateKey(new Date())
     const days: CalendarDay[] = []
 
+    const normalizedSearch = filters.searchTerm.trim().toLowerCase()
+    const shouldInjectEmpty = filters.staffFilter === 'all' && filters.statusFilter === 'all'
+    
+    const activeFilteredShifts = Array.from(shiftsMap.values())
+      .filter((shift) => {
+        const shiftId = shift.id ?? shift._id
+        if (!shiftId || shift.is_deleted || shift.is_active === false) return false
+        
+        const franchiseId = shift.franchise_id || ''
+        
+        const matchesSearch = normalizedSearch === '' || shift.name.toLowerCase().includes(normalizedSearch)
+        const matchesFranchise = filters.franchiseFilter === 'all' || franchiseId === filters.franchiseFilter
+        
+        return matchesSearch && matchesFranchise
+      })
+
     for (let index = 0; index < 42; index += 1) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + index)
       const dateKey = formatDateKey(currentDate)
+      
+      const assignmentsForDay = assignmentByDate[dateKey] || []
+      const existingShifts = visibleShiftGroupsByDate[dateKey] || []
+      
+      const allShiftsForDay = [...existingShifts]
+      
+      if (shouldInjectEmpty) {
+        activeFilteredShifts.forEach((shift) => {
+          const shiftId = (shift.id ?? shift._id) as string
+          if (!allShiftsForDay.some((s) => s.shiftId === shiftId)) {
+            const franchiseId = shift.franchise_id || ''
+            const franchiseName = franchisesMap.get(franchiseId)?.name || ''
+            allShiftsForDay.push({
+               id: `${dateKey}__${shiftId}`,
+               workDate: dateKey,
+               shiftId,
+               shiftName: shift.name,
+               startTime: shift.start_time,
+               endTime: shift.end_time,
+               assignmentCount: 0,
+               franchiseId,
+               franchiseName,
+               assignments: []
+            })
+          }
+        })
+      }
+      
+      allShiftsForDay.sort((left, right) => {
+        const timeCompare = compareTimeValue(left.startTime, right.startTime)
+        if (timeCompare !== 0) return timeCompare
+        return left.shiftName.localeCompare(right.shiftName)
+      })
 
       days.push({
         date: currentDate,
         isCurrentMonth: currentDate.getMonth() === monthDate.getMonth(),
         isToday: dateKey === todayKey,
-        assignments: assignmentByDate[dateKey] || [],
-        shifts: visibleShiftGroupsByDate[dateKey] || [],
+        assignments: assignmentsForDay,
+        shifts: allShiftsForDay,
       })
     }
 
     return days
-  }, [assignmentByDate, monthDate, visibleShiftGroupsByDate])
+  }, [assignmentByDate, monthDate, visibleShiftGroupsByDate, shiftsMap, franchisesMap, filters.searchTerm, filters.franchiseFilter, filters.staffFilter, filters.statusFilter])
 
   const monthLabel = monthDate.toLocaleDateString('en-US', {
     month: 'long',
@@ -544,8 +614,8 @@ export const useShiftCalendar = (
 
   const selectedFranchiseName = useMemo(() => {
     if (!franchiseId) return ''
-    return franchisesMap.get(franchiseId)?.name || ''
-  }, [franchiseId, franchisesMap])
+    return franchisesMap.get(franchiseId)?.name || franchiseNameById.get(franchiseId) || ''
+  }, [franchiseId, franchiseNameById, franchisesMap])
 
   const shiftImportReferenceData = useMemo<ShiftImportReferenceData>(() => {
     const shifts = Array.from(shiftsMap.values())
