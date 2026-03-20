@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { franchiseApi } from "../../../../../apis/endpoints/franchise.api";
 import type { Franchise } from "../../../../../types/franchise.types";
 import { useToast } from "@/hooks/use-toast.hook";
@@ -16,13 +16,14 @@ export const useGetFranchiseById = (): UseGetFranchiseByIdReturn => {
   const [error, setError] = useState<string | null>(null);
   const { error: showError } = useToast();
 
-  const fetchFranchise = async (id: number | string) => {
+  // useCallback prevents a new function reference being created on every render,
+  // which would cause useEffect([id, fetchFranchise]) to fire in an infinite loop.
+  const fetchFranchise = useCallback(async (id: number | string) => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await franchiseApi.getFranchiseById(String(id));
       if (response) {
-        // Set franchise data - use type assertion since API returns FranchiseItem with string id
         setFranchise({
           ...response,
           logo_url: response.logo_url || '',
@@ -43,7 +44,8 @@ export const useGetFranchiseById = (): UseGetFranchiseByIdReturn => {
     } finally {
       setIsLoading(false);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     franchise,

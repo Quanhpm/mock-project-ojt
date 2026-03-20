@@ -77,7 +77,7 @@ export default function FranchiseDelete({
                 fontWeight: "600",
                 color: "#212529"
               }}>
-                Xóa Nhượng Quyền
+                Delete Franchise
               </h2>
             </div>
             <button
@@ -105,7 +105,7 @@ export default function FranchiseDelete({
               color: "#495057",
               lineHeight: "1.6"
             }}>
-              Bạn có chắc chắn muốn xóa nhượng quyền này? Hành động này không thể hoàn tác.
+              Are you sure you want to delete this franchise? This action cannot be undone.
             </p>
             
             <div style={{
@@ -139,7 +139,7 @@ export default function FranchiseDelete({
                   textTransform: "uppercase",
                   fontWeight: "600"
                 }}>
-                  Tên nhượng quyền
+                  Franchise Name
                 </span>
                 <p style={{
                   margin: "4px 0 0 0",
@@ -174,7 +174,7 @@ export default function FranchiseDelete({
                 color: "#374151"
               }}
             >
-              Hủy
+              Cancel
             </button>
             <button
               onClick={handleConfirm}
@@ -189,7 +189,7 @@ export default function FranchiseDelete({
                 color: "white"
               }}
             >
-              Xóa Nhượng Quyền
+              Delete Franchise
             </button>
           </div>
         </div>
