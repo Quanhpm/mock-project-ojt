@@ -28,7 +28,13 @@ const createVoucherSchema = z.object({
     return new Date(data.start_date) < new Date(data.end_date);
   }
   return true;
-}, { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] });
+}, { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] })
+.refine((data) => {
+  if (data.type === "PERCENT" && data.value > 100) {
+    return false;
+  }
+  return true;
+}, { message: "Phần trăm không được vượt quá 100%", path: ["value"] });
 
 type CreateVoucherFormValues = z.infer<typeof createVoucherSchema>;
 
@@ -88,6 +94,32 @@ export default function VoucherForm() {
   });
 
   const selectedFranchiseId = watch("franchise_id");
+  const selectedType = watch("type");
+  const currentValue = watch("value");
+
+  // Format value display based on type
+  const formatValueDisplay = (value: number) => {
+    if (selectedType === "PERCENT") {
+      return value.toString();
+    }
+    // FIXED: format as Vietnamese currency
+    return value.toLocaleString("vi-VN");
+  };
+
+  const getValuePlaceholder = () => {
+    return selectedType === "PERCENT" ? "0-100" : "0";
+  };
+
+  const getValueSuffix = () => {
+    return selectedType === "PERCENT" ? " %" : " VND";
+  };
+
+  // Handle value input with formatting
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric
+    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
+    setValue("value", numValue, { shouldValidate: true });
+  };
 
   // Load franchises on mount
   useEffect(() => {
@@ -219,13 +251,25 @@ export default function VoucherForm() {
             </div>
             <div>
               <label style={labelStyle}>Giá trị <span style={{ color: "#ef4444" }}>*</span></label>
-              <input
-                type="text"
-                inputMode="numeric"
-                {...register("value", { valueAsNumber: true })}
-                placeholder="0"
-                style={inputStyle}
-              />
+              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatValueDisplay(currentValue)}
+                  onChange={handleValueChange}
+                  placeholder={getValuePlaceholder()}
+                  style={inputStyle}
+                />
+                <span style={{
+                  position: "absolute",
+                  right: "12px",
+                  color: "#9ca3af",
+                  fontSize: "14px",
+                  pointerEvents: "none",
+                }}>
+                  {getValueSuffix()}
+                </span>
+              </div>
               {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
             </div>
           </div>

@@ -31,6 +31,15 @@ const createPromotionSchema = z
       return true;
     },
     { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
+  )
+  .refine(
+    (data) => {
+      if (data.type === "PERCENT" && data.value > 100) {
+        return false;
+      }
+      return true;
+    },
+    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
   );
 
 type CreatePromotionFormValues = z.infer<typeof createPromotionSchema>;
@@ -96,6 +105,31 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
   });
 
   const selectedFranchiseId = watch("franchise_id");
+  const selectedType = watch("type");
+  const currentValue = watch("value");
+
+  // Format value display based on type
+  const formatValueDisplay = (value: number) => {
+    if (selectedType === "PERCENT") {
+      return value.toString();
+    }
+    // FIXED: format as Vietnamese currency
+    return value.toLocaleString("vi-VN");
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
+    setValue("value", numValue, { shouldValidate: true });
+  };
+
+  const getValuePlaceholder = () => {
+    return selectedType === "PERCENT" ? "0-100" : "0";
+  };
+
+  const getValueSuffix = () => {
+    return selectedType === "PERCENT" ? " %" : " VND";
+  };
 
   // Reset form khi mở modal
   useEffect(() => {
@@ -317,14 +351,25 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                   <label style={labelStyle}>
                     Giá trị <span style={{ color: "#ef4444" }}>*</span>
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={1}
-                    {...register("value", { valueAsNumber: true })}
-                    placeholder="0"
-                    style={inputStyle}
-                  />
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={formatValueDisplay(currentValue)}
+                      onChange={handleValueChange}
+                      placeholder={getValuePlaceholder()}
+                      style={inputStyle}
+                    />
+                    <span style={{
+                      position: "absolute",
+                      right: "12px",
+                      color: "#9ca3af",
+                      fontSize: "14px",
+                      pointerEvents: "none",
+                    }}>
+                      {getValueSuffix()}
+                    </span>
+                  </div>
                   {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
                 </div>
               </div>
