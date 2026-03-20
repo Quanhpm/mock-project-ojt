@@ -1,8 +1,5 @@
 import { httpClient } from "../httpClient";
 
-<<<<<<< HEAD
-// ======================== Types ========================
-
 export interface AddCartItemRequest {
   franchise_id: string;
   product_franchise_id: string;
@@ -42,9 +39,6 @@ export interface CountCustomerCartsResponse {
   count: number;
 }
 
-// ======================== API Functions ========================
-
-// ADD ITEM TO CART
 export const addCartItem = (
   data: AddCartItemRequest,
 ): Promise<null> => {
@@ -54,7 +48,6 @@ export const addCartItem = (
   });
 };
 
-// GET CUSTOMER CARTS
 export const getCustomerCarts = (
   customerId: string,
   status: string = 'ACTIVE',
@@ -64,7 +57,6 @@ export const getCustomerCarts = (
   });
 };
 
-// GET CART DETAIL
 export const getCartDetail = (
   cartId: string,
 ): Promise<null> => {
@@ -73,7 +65,6 @@ export const getCartDetail = (
   });
 };
 
-// COUNT CUSTOMER CARTS
 export const countCustomerCarts = (
   customerId: string,
   status: string = 'ACTIVE',
@@ -83,7 +74,6 @@ export const countCustomerCarts = (
   });
 };
 
-// COUNT CART ITEMS
 export const countCartItems = (
   cartId: string,
 ): Promise<null> => {
@@ -92,7 +82,6 @@ export const countCartItems = (
   });
 };
 
-// UPDATE CART
 export const updateCart = (
   cartId: string,
   data: UpdateCartRequest,
@@ -103,7 +92,6 @@ export const updateCart = (
   });
 };
 
-// DELETE CART ITEM
 export const deleteCartItem = (
   cartItemId: string,
 ): Promise<null> => {
@@ -112,7 +100,6 @@ export const deleteCartItem = (
   });
 };
 
-// UPDATE CART ITEM OPTION QUANTITY
 export const updateCartItemOption = (
   data: UpdateCartItemOptionRequest,
 ): Promise<null> => {
@@ -122,7 +109,6 @@ export const updateCartItemOption = (
   });
 };
 
-// REMOVE CART ITEM OPTION
 export const removeCartItemOption = (
   data: RemoveCartItemOptionRequest,
 ): Promise<null> => {
@@ -132,7 +118,6 @@ export const removeCartItemOption = (
   });
 };
 
-// APPLY VOUCHER
 export const applyVoucher = (
   cartId: string,
   data: ApplyVoucherRequest,
@@ -143,7 +128,6 @@ export const applyVoucher = (
   });
 };
 
-// REMOVE VOUCHER
 export const removeVoucher = (
   cartId: string,
 ): Promise<null> => {
@@ -152,7 +136,6 @@ export const removeVoucher = (
   });
 };
 
-// CHECKOUT CART
 export const checkoutCart = (
   cartId: string,
 ): Promise<null> => {
@@ -161,7 +144,6 @@ export const checkoutCart = (
   });
 };
 
-// CANCEL CART
 export const cancelCart = (
   cartId: string,
 ): Promise<null> => {
@@ -169,60 +151,3 @@ export const cancelCart = (
     url: `/carts/${cartId}/cancel`,
   });
 };
-=======
-type Status = "ACTIVE" | "DEACTIVE"
-type Size = "S" | "M" | "L" | "DEFAULT"
-
-interface Option {
-    product_franchise_id: string;
-    quantity: number;
-}
-
-interface AddToCartRequest {
-    franchise_id: string;
-    product_franchise_id: string;
-    quantity: number;
-    address: string;
-    phone: string;
-    option: Option
-}
-
-interface ProductFranchise {
-    _id: string;
-    product_id: string;
-    franchise_id: string;
-    price_base: number;
-    size: Size;
-    is_active: boolean;
-    is_delete: boolean
-}
-
-interface CartItem {
-    cart_item_id: string;
-    quantity: number;
-    product_cart_price: number;
-    discount_amount: number;
-    line_total: number;
-    final_line_total: number;
-    options_hash: string;
-    product_franchise_id: {
-
-    }
-}
-
-interface GetCartResponse {
-    _id: string;
-    customer_id: string
-    franchise_id: string
-    status: Status;
-    address: string;
-    phone: string;
-    loyalty_points_used: number;
-    promotion_discount: number;
-    voucher_discount: number;
-    loyalty_discount: number;
-    subtotal_amount: number;
-    final_amount: number;
-    cart_items:
-}
->>>>>>> dev

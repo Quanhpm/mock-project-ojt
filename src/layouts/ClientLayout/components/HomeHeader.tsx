@@ -1,54 +1,36 @@
-<<<<<<< HEAD
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/modules/client/auth-client/context/useAuth';
-import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
-=======
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
+import { countCustomerCarts } from '@/apis/endpointsCLIENT/cart.api';
+import { useToast } from '@/hooks/use-toast.hook';
+import logo2 from '@/assets/img/logo2.png';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { normalizeOrdersPayload } from '@/modules/client/order-history/order.utils';
-import { useCartStore } from '@/stores/cart.store';
 import { useLoadingStore } from '@/stores/loading.store';
->>>>>>> dev
-import { useToast } from '@/hooks/use-toast.hook';
 import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2 } from 'lucide-react';
-import logo2 from '@/assets/img/logo2.png';
-import { countCustomerCarts } from '@/apis/endpointsCLIENT/cart.api';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
   const profile = useClientAuthStore((state) => state.user);
-<<<<<<< HEAD
   const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
-  const location = useLocation();
-=======
-  const cartItems = useCartStore((state) => state.items);
-  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
->>>>>>> dev
   const navigate = useNavigate();
   const location = useLocation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-<<<<<<< HEAD
   const [cartCount, setCartCount] = useState(0);
-=======
   const [processingOrdersCount, setProcessingOrdersCount] = useState(0);
-  const [isProcessingOrdersLoading, setIsProcessingOrdersLoading] = useState(false);
   const incrementLoading = useLoadingStore((state) => state.increment);
   const decrementLoading = useLoadingStore((state) => state.decrement);
->>>>>>> dev
   const { success, error } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mobileMenuItems = [
-    { to: '/', label: 'Trang Chủ', icon: House },
-    { to: '/menu', label: 'Sản Phẩm', icon: CupSoda },
-    { to: '/location', label: 'Địa Điểm', icon: MapPin },
-    { to: '/franchise', label: 'Nhượng Quyền', icon: Building2 },
+    { to: '/', label: 'Trang Chá»§', icon: House },
+    { to: '/menu', label: 'Sáº£n Pháº©m', icon: CupSoda },
+    { to: '/location', label: 'Äá»‹a Äiá»ƒm', icon: MapPin },
+    { to: '/franchise', label: 'NhÆ°á»£ng Quyá»n', icon: Building2 },
   ];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -75,17 +57,12 @@ const HomeHeader: React.FC = () => {
 
     if (!customerId) {
       setProcessingOrdersCount(0);
-      setIsProcessingOrdersLoading(false);
       return;
     }
 
     let isMounted = true;
 
     const fetchProcessingOrders = async () => {
-      if (isMounted) {
-        setIsProcessingOrdersLoading(true);
-      }
-
       try {
         const response = await getOrdersByCustomerId(String(customerId));
         const normalized = normalizeOrdersPayload(response);
@@ -102,10 +79,6 @@ const HomeHeader: React.FC = () => {
       } catch {
         if (isMounted) {
           setProcessingOrdersCount(0);
-        }
-      } finally {
-        if (isMounted) {
-          setIsProcessingOrdersLoading(false);
         }
       }
     };
@@ -124,7 +97,6 @@ const HomeHeader: React.FC = () => {
         return;
       }
 
-      // Avoid duplicate fetch with Cart page itself, which already calls getCustomerCarts.
       if (location.pathname.startsWith('/cart')) {
         return;
       }
@@ -146,11 +118,11 @@ const HomeHeader: React.FC = () => {
     setIsLoggingOut(true);
     const result = await logout();
     if (result.success) {
-      success(result.message || 'Đăng xuất thành công');
+      success(result.message || 'ÄÄƒng xuáº¥t thÃ nh cÃ´ng');
       navigate('/', { replace: true });
     } else {
       setIsLoggingOut(false);
-      error(result.message || 'Đăng xuất thất bại');
+      error(result.message || 'ÄÄƒng xuáº¥t tháº¥t báº¡i');
     }
   };
 
@@ -179,28 +151,26 @@ const HomeHeader: React.FC = () => {
     <header className="bg-white shadow-sm md:sticky md:top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="relative flex items-center justify-between h-16">
-          {/* Left: Mobile hamburger + Logo */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
               className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[var(--cf-primary)]/20 text-[var(--cf-primary)] hover:bg-[var(--cf-secondary)]/10 transition-colors"
-              aria-label={isMobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-label={isMobileMenuOpen ? 'ÄÃ³ng menu' : 'Má»Ÿ menu'}
               aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
 
             <Link to="/" className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center gap-2" onClick={closeMobileMenu}>
-            <img 
-              src={logo2} 
-              alt="Boutique Brews Logo" 
-              className="h-12 md:h-16 w-auto"
-            />
+              <img
+                src={logo2}
+                alt="Boutique Brews Logo"
+                className="h-12 md:h-16 w-auto"
+              />
             </Link>
           </div>
 
-          {/* Navigation - Logged-in User */}
           <nav className="hidden md:flex items-center gap-8">
             <Link
               to="/"
@@ -214,18 +184,6 @@ const HomeHeader: React.FC = () => {
             >
               Sản Phẩm
             </Link>
-            {/* <Link
-              to="/about"
-              className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
-            >
-              Về Chúng Tôi
-            </Link>
-            <Link
-              to="/contact"
-              className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
-            >
-              Liên Hệ
-            </Link> */}
             <Link
               to="/location"
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
@@ -240,9 +198,7 @@ const HomeHeader: React.FC = () => {
             </Link>
           </nav>
 
-          {/* Right Side - User Menu */}
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Cart Link */}
             <Link
               to="/cart"
               className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
@@ -255,7 +211,6 @@ const HomeHeader: React.FC = () => {
               )}
             </Link>
 
-            {/* Order History Link */}
             <Link
               to="/order-history"
               className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
@@ -268,7 +223,6 @@ const HomeHeader: React.FC = () => {
               )}
             </Link>
 
-            {/* Mobile: avatar link to profile */}
             <Link
               to="/profile"
               className="md:hidden inline-flex items-center justify-center p-1 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
@@ -284,7 +238,6 @@ const HomeHeader: React.FC = () => {
               />
             </Link>
 
-            {/* Desktop: dropdown user menu */}
             <div className="relative hidden md:block" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -306,7 +259,6 @@ const HomeHeader: React.FC = () => {
                 </svg>
               </button>
 
-              {/* Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2">
                   <Link
@@ -319,13 +271,6 @@ const HomeHeader: React.FC = () => {
                   >
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
-                  {/* <Link
-                    to="/client/change-password"
-                    className="w-full flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <KeyRound className="w-4 h-4" /> Đổi mật khẩu
-                  </Link> */}
                   <hr className="my-2" />
                   <button
                     onClick={handleLogout}
@@ -340,7 +285,6 @@ const HomeHeader: React.FC = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <div
         className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         aria-hidden={!isMobileMenuOpen}
@@ -356,7 +300,7 @@ const HomeHeader: React.FC = () => {
               type="button"
               onClick={closeMobileMenu}
               className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-[var(--cf-secondary)]"
-              aria-label="Đóng menu"
+              aria-label="ÄÃ³ng menu"
             >
               <X size={18} />
             </button>
@@ -417,7 +361,7 @@ const HomeHeader: React.FC = () => {
               <Globe size={16} />
               <Share2 size={16} />
             </div>
-            <p className="text-[11px] tracking-widest font-semibold">© 2024 BOUTIQUE BREWS CO.</p>
+            <p className="text-[11px] tracking-widest font-semibold">Â© 2024 BOUTIQUE BREWS CO.</p>
           </div>
         </div>
       </div>
