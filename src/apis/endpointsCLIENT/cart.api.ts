@@ -31,6 +31,19 @@ export interface RemoveCartItemOptionRequest {
   option_product_franchise_id: string;
 }
 
+export interface UpdateCartItemOptionsRequest {
+  cart_item_id: string;
+  options: Array<{
+    product_franchise_id: string;
+    quantity: number;
+  }>;
+}
+
+export interface UpdateCartItemQuantityRequest {
+  cart_item_id: string;
+  quantity: number;
+}
+
 export interface ApplyVoucherRequest {
   voucher_code: string;
 }
@@ -114,6 +127,24 @@ export const removeCartItemOption = (
 ): Promise<null> => {
   return httpClient.patch<null, RemoveCartItemOptionRequest>({
     url: '/carts/items/remove-option',
+    data,
+  });
+};
+
+export const updateCartItemOptions = (
+  data: UpdateCartItemOptionsRequest,
+): Promise<null> => {
+  return httpClient.put<null, UpdateCartItemOptionsRequest>({
+    url: '/carts/items/update-options-cart-item',
+    data,
+  });
+};
+
+export const updateCartItemQuantity = (
+  data: UpdateCartItemQuantityRequest,
+): Promise<null> => {
+  return httpClient.patch<null, UpdateCartItemQuantityRequest>({
+    url: '/carts/items/update-cart-item',
     data,
   });
 };

@@ -1,30 +1,101 @@
-import { Pencil, ShoppingBag, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Minus, Pencil, Plus, ShoppingBag, X } from 'lucide-react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
 import type { CartDetailItemView } from '../hook/cartApiMapper';
+
+const rowQuantitySchema = z.object({
+  quantityInput: z
+    .string()
+    .trim()
+    .min(1, 'Vui lòng nhập số lượng.')
+    .regex(/^\d+$/, 'Số lượng chỉ được nhập số nguyên dương.')
+    .refine((value) => {
+      const parsed = Number(value);
+      return parsed >= 1 && parsed <= 999;
+    }, 'Số lượng hợp lệ từ 1 đến 999.'),
+});
+
+type RowQuantityFormValues = z.infer<typeof rowQuantitySchema>;
 
 interface CartDetailItemCardProps {
   item: CartDetailItemView;
   isDeleting: boolean;
+  isUpdatingQuantity: boolean;
   onDelete: (itemId: string) => void;
   onEdit: (item: CartDetailItemView) => void;
+  onDecreaseQty: (itemId: string) => void;
+  onIncreaseQty: (itemId: string) => void;
+  onSubmitQty: (itemId: string, nextQty: number) => void;
   formatCurrency: (amount: number) => string;
 }
 
 function CartDetailItemCard({
   item,
   isDeleting,
+  isUpdatingQuantity,
   onDelete,
   onEdit,
+  onDecreaseQty,
+  onIncreaseQty,
+  onSubmitQty,
   formatCurrency,
 }: CartDetailItemCardProps) {
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<RowQuantityFormValues>({
+    resolver: zodResolver(rowQuantitySchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      quantityInput: String(item.quantity),
+    },
+  });
+
+  useEffect(() => {
+    setValue('quantityInput', String(item.quantity), {
+      shouldValidate: false,
+      shouldDirty: false,
+      shouldTouch: false,
+    });
+  }, [item.quantity, setValue]);
+
   const optionText = item.options.map((o) => `${o.productName} x${o.quantity}`).join(', ');
+  const hasQuantityError = Boolean(errors.quantityInput?.message);
+
+  const commitQty = handleSubmit(
+    (values) => {
+      const normalized = Math.max(1, Math.min(999, Math.floor(Number(values.quantityInput.trim()))));
+      setValue('quantityInput', String(normalized), {
+        shouldValidate: false,
+        shouldDirty: false,
+        shouldTouch: false,
+      });
+      onSubmitQty(item.id, normalized);
+    },
+  );
 
   return (
     <article
-      className="bg-white p-4 rounded-lg shadow-sm border border-[var(--cf-primary)]/10 grid grid-cols-1 md:grid-cols-12 gap-4 items-center"
+      className="bg-white rounded-2xl shadow-[0px_12px_32px_rgba(28,27,27,0.05)] border border-[var(--cf-primary)]/10 p-5 grid grid-cols-1 md:grid-cols-12 gap-4 items-center hover:shadow-[0px_20px_44px_rgba(28,27,27,0.09)] transition-all cursor-pointer"
       key={item.id}
+      onClick={() => onEdit(item)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onEdit(item);
+        }
+      }}
     >
       <div className="col-span-1 md:col-span-5 flex gap-4">
-        <div className="w-20 h-20 md:w-24 md:h-24 rounded-lg overflow-hidden bg-[var(--cf-bg)] flex-shrink-0">
+        <div className="w-[90px] h-[90px] md:w-[100px] md:h-[100px] rounded-xl overflow-hidden bg-[var(--cf-bg)] border border-[var(--cf-primary)]/10 flex-shrink-0">
           {item.imageUrl ? (
             <img alt={item.name} className="w-full h-full object-cover" src={item.imageUrl} />
           ) : (
@@ -35,49 +106,123 @@ function CartDetailItemCard({
         </div>
 
         <div className="flex flex-col justify-center">
-          <h3 className="font-semibold text-[var(--cf-dark)]">{item.name}</h3>
+          <h3 className="font-bold text-lg leading-tight text-[var(--cf-dark)]">{item.name}</h3>
           {optionText && (
-            <p className="text-xs text-[var(--cf-primary)]/70 mt-1 italic">Topping: {optionText}</p>
+            <p className="text-xs text-[var(--cf-primary)]/65 mt-1">Topping: {optionText}</p>
           )}
           {item.note && (
-            <p className="text-xs text-[var(--cf-primary)]/70 mt-1 italic">Ghi chú: {item.note}</p>
+            <p className="text-xs text-[var(--cf-primary)]/55 mt-1 italic">Ghi chú: {item.note}</p>
           )}
-
-          <button
-            className="mt-3 text-xs inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[var(--cf-primary)]/20 text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            disabled={isDeleting}
-            onClick={() => onEdit(item)}
-          >
-            <Pencil size={12} />
-            Chỉnh sửa món
-          </button>
         </div>
       </div>
 
-      <div className="col-span-1 md:col-span-2 text-center text-[var(--cf-primary)]/80">
-        <span className="md:hidden text-xs text-[var(--cf-primary)]/50 block uppercase">Giá:</span>
+      <div className="col-span-1 md:col-span-2 text-center text-[var(--cf-primary)]/75 font-medium">
+        <span className="md:hidden text-xs text-[var(--cf-primary)]/50 block uppercase tracking-wider">Giá:</span>
         {formatCurrency(item.unitPrice)}
       </div>
 
-      <div className="col-span-1 md:col-span-2 flex justify-center items-center">
-        <span className="inline-flex min-w-10 justify-center rounded-full bg-[var(--cf-bg)] border border-[var(--cf-primary)]/20 px-3 py-1.5 text-sm font-semibold text-[var(--cf-dark)]">
-          {item.quantity}
-        </span>
+      <div className="col-span-1 md:col-span-2 flex flex-col justify-center items-center">
+        <div
+          className={`inline-flex items-center bg-[var(--cf-bg)] rounded-full px-2 py-1 gap-3 border ${hasQuantityError ? 'border-red-400 bg-red-50/40' : 'border-[var(--cf-primary)]/15'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="w-7 h-7 rounded-full bg-white border border-[var(--cf-primary)]/10 text-[var(--cf-primary)]/70 hover:text-[var(--cf-primary)] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            disabled={isDeleting || isUpdatingQuantity || item.quantity <= 1}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDecreaseQty(item.id);
+              setValue('quantityInput', String(Math.max(1, item.quantity - 1)), {
+                shouldValidate: false,
+                shouldDirty: false,
+                shouldTouch: false,
+              });
+            }}
+            type="button"
+          >
+            <Minus size={13} />
+          </button>
+          <Controller
+            control={control}
+            name="quantityInput"
+            render={({ field }) => (
+              <input
+                className={`w-12 bg-white rounded-md text-sm font-bold text-center text-[var(--cf-dark)] focus:outline-none focus:ring-2 ${hasQuantityError ? 'border border-red-400 focus:ring-red-200' : 'border border-[var(--cf-primary)]/15 focus:ring-[var(--cf-primary)]/25'}`}
+                disabled={isDeleting || isUpdatingQuantity}
+                inputMode="numeric"
+                max={999}
+                min={1}
+                onBlur={() => {
+                  field.onBlur();
+                  void commitQty();
+                }}
+                onChange={field.onChange}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    void commitQty();
+                  }
+                }}
+                pattern="[0-9]*"
+                ref={field.ref}
+                type="text"
+                value={field.value}
+              />
+            )}
+          />
+          <button
+            className="w-7 h-7 rounded-full bg-white border border-[var(--cf-primary)]/10 text-[var(--cf-primary)]/70 hover:text-[var(--cf-primary)] flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            disabled={isDeleting || isUpdatingQuantity || item.quantity >= 999}
+            onClick={(e) => {
+              e.stopPropagation();
+              onIncreaseQty(item.id);
+              setValue('quantityInput', String(Math.min(999, item.quantity + 1)), {
+                shouldValidate: false,
+                shouldDirty: false,
+                shouldTouch: false,
+              });
+            }}
+            type="button"
+          >
+            <Plus size={13} />
+          </button>
+        </div>
+        {errors.quantityInput?.message && (
+          <p className="mt-2 text-[11px] text-red-500 font-medium text-center max-w-[170px] leading-4">{errors.quantityInput.message}</p>
+        )}
       </div>
 
-      <div className="col-span-1 md:col-span-2 text-right font-semibold text-[var(--cf-dark)]">
-        <span className="md:hidden text-xs text-[var(--cf-primary)]/50 block uppercase">Thành tiền:</span>
+      <div className="col-span-1 md:col-span-2 text-right pr-0 md:pr-4 font-extrabold text-[var(--cf-primary)] text-lg">
+        <span className="md:hidden text-xs text-[var(--cf-primary)]/50 block uppercase tracking-wider">Thành tiền:</span>
         {formatCurrency(item.finalLineTotal)}
       </div>
 
-      <div className="col-span-1 flex justify-end md:justify-center">
+      <div className="col-span-1 flex justify-end md:justify-center gap-2" onClick={(e) => e.stopPropagation()}>
         <button
-          className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--cf-primary)]/40 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
-          disabled={isDeleting}
-          onClick={() => onDelete(item.id)}
-          title="Xóa khỏi giỏ"
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--cf-primary)]/45 hover:bg-[var(--cf-bg)] hover:text-[var(--cf-primary)] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          disabled={isDeleting || isUpdatingQuantity}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(item);
+          }}
+          title="Chỉnh sửa món"
+          type="button"
         >
-          <X size={16} />
+          <Pencil size={18} />
+        </button>
+        <button
+          className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--cf-primary)]/40 hover:bg-red-50 hover:text-red-500 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          disabled={isDeleting}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item.id);
+          }}
+          title="Xóa khỏi giỏ"
+          type="button"
+        >
+          <X size={18} />
         </button>
       </div>
     </article>
