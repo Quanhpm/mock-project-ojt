@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 // Stores & Hooks
-import { useCartStore } from "@/stores/cart.store";
 import { useToast } from "@/hooks/use-toast.hook";
 import { useProductDetail } from "../hooks/useProductDetail";
+import { addCartItem } from "@/apis/endpointsCLIENT/cart.api";
+import { HttpError } from "@/apis";
 
 // API types
 import { ROUTER_URL } from "@/routes/router.const";
@@ -17,23 +18,41 @@ function Item() {
     const productId: string = (location.state as { franchiseId?: string; productId?: string })?.productId ?? '';
     const navigate = useNavigate();
     const { success, error } = useToast();
-    const addItem = useCartStore((s) => s.addItem);
     const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+    const user = useClientAuthStore((state) => state.user);
 
-    const { product, loading, selectedSize, setSelectedSize } = useProductDetail(franchiseId, productId ?? '');
+    const { product, loading, selectedSize, toppingOptions, setSelectedSize } = useProductDetail(franchiseId, productId ?? '');
 
     // Option State
     const [qty, setQty] = useState(1);
+    const [selectedToppings, setSelectedToppings] = useState<typeof toppingOptions>([]);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
 
     const [activeImg, setActiveImg] = useState(0);
     const images = product
         ? [product.image_url, ...(product.images_url ?? []).filter(u => u !== product.image_url)]
         : [];
 
+    const toppingsPrice = useMemo(() => {
+        return selectedToppings.reduce((sum, topping) => sum + topping.price, 0);
+    }, [selectedToppings]);
+
     const totalPrice = useMemo(() => {
         if (!selectedSize) return 0;
-        return selectedSize.price * qty;
-    }, [selectedSize, qty]);
+        return (selectedSize.price + toppingsPrice) * qty;
+    }, [selectedSize, toppingsPrice, qty]);
+
+    const toggleTopping = (productFranchiseId: string) => {
+        setSelectedToppings((current) => {
+            const exists = current.some((item) => item.product_franchise_id === productFranchiseId);
+            if (exists) {
+                return current.filter((item) => item.product_franchise_id !== productFranchiseId);
+            }
+
+            const topping = toppingOptions.find((item) => item.product_franchise_id === productFranchiseId);
+            return topping ? [...current, topping] : current;
+        });
+    };
 
     if (loading) {
         return (
@@ -51,8 +70,10 @@ function Item() {
         );
     }
 
-    const handleAddToCart = (e: React.MouseEvent) => {
+    const handleAddToCart = async (e: React.MouseEvent) => {
         e.stopPropagation();
+
+        if (isAddingToCart) return;
 
         if (!isLoggedIn) {
             error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
@@ -66,24 +87,49 @@ function Item() {
 
         if (!product || !selectedSize) return;
 
-        addItem({
-            productId: product.product_id,
-            franchiseId: franchiseId,
-            name: product.name,
-            price: selectedSize.price,
-            image_url: product.image_url,
-            SKU: product.SKU,
-            options: {
-                size: { code: selectedSize.size as "S" | "M" | "L", label: `Size ${selectedSize.size}`, bonusPrice: 0 },
-                sugar: { value: 100, label: '100%' },
-                ice: { value: 100, label: '100%' },
-                toppings: [],
-            },
-            extras_total: 0,
-        });
+        if (!franchiseId) {
+            error('Thiếu thông tin cửa hàng', 'Không xác định được chi nhánh để thêm vào giỏ hàng');
+            return;
+        }
 
-        success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
-        navigate("/menu");
+        const address = user?.address?.trim() ?? '';
+        const phone = user?.phone?.trim() ?? '';
+
+        if (!address || !phone) {
+            error('Thiếu thông tin giao hàng', 'Vui lòng cập nhật địa chỉ và số điện thoại trong hồ sơ');
+            return;
+        }
+
+        setIsAddingToCart(true);
+
+        try {
+            await addCartItem({
+                franchise_id: franchiseId,
+                product_franchise_id: selectedSize.product_franchise_id,
+                quantity: qty,
+                address,
+                phone,
+                options: selectedToppings.map((topping) => ({
+                    product_franchise_id: topping.product_franchise_id,
+                    quantity: 1,
+                })),
+                message: selectedToppings.length
+                    ? `Topping: ${selectedToppings.map((topping) => topping.name).join(', ')}`
+                    : undefined,
+            });
+
+            success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
+            navigate("/menu");
+        } catch (err) {
+            const errorMessage =
+                err instanceof HttpError
+                    ? err.message
+                    : 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.';
+
+            error('Thêm vào giỏ hàng thất bại', errorMessage);
+        } finally {
+            setIsAddingToCart(false);
+        }
     };
 
     return (
@@ -179,6 +225,32 @@ function Item() {
                                 </div>
                             </section>
 
+                            {product.is_have_topping && toppingOptions.length > 0 && (
+                                <section className="space-y-2">
+                                    <h3 className="font-bold text-[var(--cf-primary)] uppercase text-sm tracking-wider">
+                                        Topping
+                                    </h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {toppingOptions.map((topping) => {
+                                            const active = selectedToppings.some((item) => item.product_franchise_id === topping.product_franchise_id);
+
+                                            return (
+                                                <button
+                                                    key={topping.product_franchise_id}
+                                                    onClick={() => toggleTopping(topping.product_franchise_id)}
+                                                    className={`px-6 py-2.5 rounded-full font-medium transition-all cursor-pointer ${active
+                                                        ? "bg-[var(--cf-primary)] text-white shadow-md"
+                                                        : "bg-white/60 border border-[var(--cf-primary)] text-[var(--cf-primary)] hover:bg-white"
+                                                        }`}
+                                                >
+                                                    {topping.name} + {topping.price.toLocaleString('vi-VN')}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </section>
+                            )}
+
 
                         </div>
 
@@ -220,9 +292,10 @@ function Item() {
                             {/* Add to Cart Button */}
                             <button
                                 onClick={handleAddToCart}
-                                className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer"
+                                disabled={isAddingToCart}
+                                className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                Thêm vào giỏ hàng
+                                {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
                             </button>
                         </footer>
                     </div>
