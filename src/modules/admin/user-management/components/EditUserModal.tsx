@@ -63,11 +63,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       )
 
       setAvatarUrl(response.data.secure_url)
-      showSuccess('Tải ảnh lên thành công', 'Ảnh đại diện đã được cập nhật.')
+      showSuccess('Avatar uploaded successfully', 'Profile picture has been updated.')
     } catch (err: any) {
       console.error('Avatar Upload Error:', err)
-      showError('Upload thất bại', err.message || 'Không thể tải ảnh.')
-      setError('Upload ảnh thất bại. Tệp tin có thể quá lớn hoặc lỗi kết nối.')
+      showError('Upload failed', err.message || 'Unable to upload image.')
+      setError('Image upload failed. The file may be too large or there is a connection error.')
     } finally {
       setIsUploading(false)
     }
@@ -77,11 +77,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        showError('Lỗi file', 'Vui lòng chọn file ảnh hợp lệ.')
+        showError('Invalid file', 'Please select a valid image file.')
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        showError('Quá dung lượng', 'Kích thước ảnh tối đa là 5MB.')
+        showError('File too large', 'Maximum image size is 5MB.')
         return
       }
       handleImageUpload(file)

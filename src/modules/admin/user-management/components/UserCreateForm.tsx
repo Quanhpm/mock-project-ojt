@@ -121,10 +121,10 @@ export const UserCreateForm: React.FC = () => {
       )
 
       setValue('avatar_url', response.data.secure_url)
-      showSuccess('Tải ảnh lên thành công', 'Ảnh đại diện đã được tải lên.')
+      showSuccess('Avatar uploaded successfully', 'Profile picture has been uploaded.')
     } catch (err: any) {
       console.error('Avatar Upload Error:', err)
-      showError('Upload thất bại', err.message || 'Không thể tải ảnh.')
+      showError('Upload failed', err.message || 'Unable to upload image.')
     } finally {
       setIsUploading(false)
     }
@@ -134,11 +134,11 @@ export const UserCreateForm: React.FC = () => {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        showError('File không hợp lệ', 'Vui lòng chọn file ảnh.')
+        showError('Invalid file', 'Please select an image file.')
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        showError('File quá lớn', 'Kích thước tối đa 5MB.')
+        showError('File too large', 'Maximum size is 5MB.')
         return
       }
       handleImageUpload(file)

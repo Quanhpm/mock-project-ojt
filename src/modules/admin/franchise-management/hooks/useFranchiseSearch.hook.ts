@@ -112,9 +112,9 @@ export const useFranchiseSearch = () => {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải dữ liệu nhượng quyền";
+        err instanceof Error ? err.message : "Failed to load franchise data";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
       setFranchises([]);
       setTotalPages(0);
       setTotalItems(0);
@@ -139,12 +139,12 @@ export const useFranchiseSearch = () => {
       setIsLoading(true);
       try {
         await franchiseApi.deleteFranchise(String(id));
-        showSuccess("Thành công", "Xóa nhượng quyền thành công");
+        showSuccess("Success", "Franchise deleted successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi xóa nhượng quyền";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to delete franchise";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -158,12 +158,12 @@ export const useFranchiseSearch = () => {
       setIsLoading(true);
       try {
         await franchiseApi.toggleFranchiseStatus(String(id), { is_active: !isActive });
-        showSuccess("Thành công", "Cập nhật trạng thái thành công");
+        showSuccess("Success", "Status updated successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi cập nhật trạng thái";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to update status";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -177,12 +177,12 @@ export const useFranchiseSearch = () => {
       setIsLoading(true);
       try {
         await franchiseApi.restoreFranchise(String(id));
-        showSuccess("Thành công", "Phục hồi nhượng quyền thành công");
+        showSuccess("Success", "Franchise restored successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi phục hồi nhượng quyền";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to restore franchise";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }

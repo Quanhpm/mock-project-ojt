@@ -25,7 +25,7 @@ export const useRestoreFranchise = () => {
       await franchiseApi.restoreFranchise(String(id));
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Khôi phục nhượng quyền thành công", "Nhượng quyền đã được khôi phục.");
+      success("Franchise restored successfully", "Franchise has been restored.");
       
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -33,10 +33,10 @@ export const useRestoreFranchise = () => {
 
       const errorMessage =
         err.response?.data?.message ||
-        "Không thể khôi phục nhượng quyền lúc này. Vui lòng thử lại!";
+        "Unable to restore franchise right now. Please try again!";
       setError(errorMessage);
 
-      showErrorToast("Khôi phục nhượng quyền thất bại", errorMessage);
+      showErrorToast("Failed to restore franchise", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsRestoring(false);

@@ -119,7 +119,7 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                             color: "#495057",
                             lineHeight: "1.6"
                         }}>
-                            Bạn có chắc chắn muốn xóa người dùng <span style={{ fontWeight: "600", color: "#212529" }}>"{userName}"</span> không? Hành động này không thể hoàn tác.
+                            Are you sure you want to delete user <span style={{ fontWeight: "600", color: "#212529" }}>"{userName}"</span>? This action cannot be undone.
                         </p>
                         
                         <div style={{

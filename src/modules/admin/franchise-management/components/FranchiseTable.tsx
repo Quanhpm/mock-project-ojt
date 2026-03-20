@@ -365,7 +365,7 @@ export default function FranchiseTable() {
                 e.currentTarget.style.color =
                   isLoadingDetail === String(franchise.id) ? "#c0c0c0" : "#4b5563";
               }}
-              title={isLoadingDetail === String(franchise.id) ? "Đang tải..." : "View"}
+              title={isLoadingDetail === String(franchise.id) ? "Loading..." : "View"}
             >
               <Eye size={20} />
             </button>
@@ -417,7 +417,7 @@ export default function FranchiseTable() {
                 if (franchise.is_deleted) {
                   if (
                     window.confirm(
-                      `Bạn có chắc chắn muốn phục hồi nhượng quyền "${franchise.name}"?`
+                      `Are you sure you want to restore franchise "${franchise.name}"?`
                     )
                   ) {
                     restoreFranchise(franchise.id);
@@ -644,7 +644,7 @@ export default function FranchiseTable() {
                           color: "#8B5A2B",
                         }}
                       >
-                        Đang tải dữ liệu nhượng quyền...
+                        Loading franchise data...
                       </div>
                     </td>
                   </tr>
@@ -667,7 +667,7 @@ export default function FranchiseTable() {
                           color: "#dc2626",
                         }}
                       >
-                        ❌ Có lỗi xảy ra
+                        ❌ An error occurred
                       </div>
                       <p
                         style={{
@@ -707,10 +707,10 @@ export default function FranchiseTable() {
                           marginBottom: "4px",
                         }}
                       >
-                        📭 Không có dữ liệu
+                        📭 No data found
                       </div>
                       <p style={{ fontSize: "14px", margin: "0" }}>
-                        Hãy thử điều chỉnh bộ lọc hoặc tạo một nhượng quyền mới
+                        Try adjusting your filters or create a new franchise
                       </p>
                     </td>
                   </tr>
@@ -781,7 +781,7 @@ export default function FranchiseTable() {
                   Next
                 </button>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
                   <input
                     type="number" min={1} max={totalPages}
                     value={pageInput}

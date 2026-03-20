@@ -36,10 +36,9 @@ export const useToggleFranchiseStatus = (): UseToggleFranchiseStatusReturn => {
 
       console.log("✅ Toggle status success:", response);
 
-      // Thông báo thành công
       success(
-        "Cập nhật trạng thái thành công",
-        `Nhượng quyền đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`
+        "Status updated successfully",
+        `Franchise has been ${newStatus ? "activated" : "deactivated"}.`
       );
 
       if (onSuccess) onSuccess();
@@ -54,10 +53,10 @@ export const useToggleFranchiseStatus = (): UseToggleFranchiseStatusReturn => {
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
-        "Không thể thay đổi trạng thái lúc này!";
+        "Cannot change status right now!";
 
       setError(errorMessage);
-      showErrorToast("Cập nhật trạng thái thất bại", errorMessage);
+      showErrorToast("Failed to update status", errorMessage);
 
       // Nếu API lỗi, phải gọi onError để rollback UI
       if (onError) onError();

@@ -38,7 +38,7 @@ export const useUserSearch = () => {
 
       return condition;
     },
-    errorMessage: "Lỗi tải dữ liệu người dùng",
+    errorMessage: "Failed to load user data",
     initialPageSize: 10,
     executeOnMount: true,
   });
