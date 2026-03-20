@@ -22,7 +22,7 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
     setIsToggling(true);
     setError(null);
 
-    // Đảo ngược trạng thái để gửi lên Server
+    // Flip status before sending to server.
     const newStatus = !currentStatus;
 
     console.log(
@@ -36,15 +36,15 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
 
       console.log("✅ Toggle status success:", response);
 
-      // Thông báo thành công
+      // Success toast.
       success(
-        "Cập nhật trạng thái thành công",
-        `Sản phẩm đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`
+        "Status updated",
+        `Product has been ${newStatus ? "activated" : "deactivated"}.`
       );
 
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error("❌ Lỗi cập nhật trạng thái:", err);
+      console.error("❌ Failed to update product status:", err);
       console.error("Error details:", {
         message: err.message,
         response: err.response?.data,
@@ -54,12 +54,12 @@ export const useToggleProductStatus = (): UseToggleProductStatusReturn => {
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
-        "Không thể thay đổi trạng thái lúc này!";
+        "Unable to change status right now.";
 
       setError(errorMessage);
-      showErrorToast("Cập nhật trạng thái thất bại", errorMessage);
+      showErrorToast("Status update failed", errorMessage);
 
-      // Nếu API lỗi, phải gọi onError để rollback UI
+      // On API failure, call rollback handler.
       if (onError) onError();
     } finally {
       setIsToggling(false);

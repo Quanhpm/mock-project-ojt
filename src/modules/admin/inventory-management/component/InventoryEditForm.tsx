@@ -1,579 +1,239 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Package, AlertCircle, Check, ArrowLeft, Save } from "lucide-react";
-import { mockProducts, mockFranchises } from "../../../../mockdata";
-import productFranchise from "../../../../mockdata/product_franchise.json";
-import inventory from "../../../../mockdata/inventory.json";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, ArrowLeft, Loader2, Package } from "lucide-react";
+import { useToast } from "@/hooks/use-toast.hook";
+import { inventoryApi, type InventoryItem } from "@/apis/endpoints/inventory.api";
+
+const editInventorySchema = z.object({
+  quantity: z.coerce.number().int().min(0, "Quantity cannot be negative"),
+  alert_threshold: z.coerce.number().int().min(0, "Alert threshold cannot be negative"),
+  reason: z.string().trim().min(3, "Reason must be at least 3 characters"),
+});
+
+type EditInventoryFormValues = z.infer<typeof editInventorySchema>;
 
 export default function InventoryEditForm() {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { success: showSuccess, error: showError } = useToast();
 
-  // Helper functions
-  const getProductName = (productFranchiseId: number) => {
-    const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-    if (!pf) return "Unknown Product";
-    const product = mockProducts.find(p => p.id === pf.product_id);
-    return product?.name || "Unknown Product";
-  };
+  const [inventory, setInventory] = useState<InventoryItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getFranchiseName = (productFranchiseId: number) => {
-    const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-    if (!pf) return "Unknown Franchise";
-    const franchise = mockFranchises.find(f => f.id === pf.franchise_id);
-    return franchise?.name || "Unknown Franchise";
-  };
-
-  const getProductSKU = (productFranchiseId: number) => {
-    const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-    if (!pf) return "";
-    const product = mockProducts.find(p => p.id === pf.product_id);
-    return product?.SKU || "";
-  };
-
-  const getProductId = (productFranchiseId: number) => {
-    const pf = productFranchise.find(pf => pf.id === productFranchiseId);
-    return pf?.product_id || 0;
-  };
-
-  // Initialize form data
-  const [formData, setFormData] = useState(() => {
-    if (id) {
-      const inventoryId = parseInt(id);
-      const item = inventory.find(i => i.id === inventoryId);
-      if (item) {
-        return {
-          id: item.id,
-          productFranchiseId: item.product_franchise_id,
-          quantity: item.quantity,
-          alertThreshold: item.alert_threshold,
-          isActive: item.is_active,
-        };
-      }
-    }
-
-    return {
-      id: 0,
-      productFranchiseId: 0,
+  const form = useForm<EditInventoryFormValues>({
+    resolver: zodResolver(editInventorySchema),
+    defaultValues: {
       quantity: 0,
-      alertThreshold: 10,
-      isActive: true,
-    };
+      alert_threshold: 0,
+      reason: "Manual inventory update",
+    },
   });
 
+  useEffect(() => {
+    const loadInventory = async () => {
+      if (!id) {
+        showError("Invalid inventory", "Inventory id is missing.");
+        navigate("/admin/inventory");
+        return;
+      }
 
+      setIsLoading(true);
+      try {
+        const response = await inventoryApi.getInventoryById(id);
+        if (!response) {
+          showError("Not found", "Inventory item was not found.");
+          navigate("/admin/inventory");
+          return;
+        }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Updated inventory:", formData);
-    alert("Inventory item updated successfully!");
-    navigate("/admin/inventory");
-  };
+        setInventory(response);
+        form.reset({
+          quantity: response.quantity,
+          alert_threshold: response.alert_threshold,
+          reason: "Manual inventory update",
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load inventory item.";
+        showError("Load failed", message);
+        navigate("/admin/inventory");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.type === "number" ? parseFloat(e.target.value) : e.target.value;
-    setFormData({
-      ...formData,
-      [e.target.name]: value,
-    });
-  };
+    void loadInventory();
+  }, [form, id, navigate, showError]);
 
-  const handleQuantityChange = (delta: number) => {
-    setFormData({
-      ...formData,
-      quantity: Math.max(0, formData.quantity + delta),
-    });
-  };
+  const stockState = useMemo(() => {
+    const quantity = form.watch("quantity");
+    const threshold = form.watch("alert_threshold");
 
-  const handleThresholdChange = (delta: number) => {
-    setFormData({
-      ...formData,
-      alertThreshold: Math.max(0, formData.alertThreshold + delta),
-    });
-  };
+    if (quantity <= 0) {
+      return { label: "Out of Stock", className: "bg-red-100 text-red-700" };
+    }
+    if (quantity <= threshold) {
+      return { label: "Low Stock", className: "bg-amber-100 text-amber-700" };
+    }
+    return { label: "In Stock", className: "bg-emerald-100 text-emerald-700" };
+  }, [form]);
 
-  const toggleActive = () => {
-    setFormData({
-      ...formData,
-      isActive: !formData.isActive,
-    });
-  };
+  const onSubmit = form.handleSubmit(async (values) => {
+    if (!inventory) return;
 
+    setIsSubmitting(true);
+    try {
+      await inventoryApi.bulkAdjustInventory({
+        items: [
+          {
+            product_franchise_id: inventory.product_franchise_id,
+            change: values.quantity - inventory.quantity,
+            alert_threshold: values.alert_threshold,
+            reason: values.reason,
+          },
+        ],
+      });
 
+      showSuccess("Inventory updated", "Inventory item was updated successfully.");
+      navigate("/admin/inventory");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to update inventory item.";
+      showError("Update failed", message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  });
 
-  const productName = getProductName(formData.productFranchiseId);
-  const franchiseName = getFranchiseName(formData.productFranchiseId);
-  const productSKU = getProductSKU(formData.productFranchiseId);
-  const productId = getProductId(formData.productFranchiseId);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f3f4f6] py-10 px-6 flex items-center justify-center">
+        <div className="inline-flex items-center gap-2 text-slate-600">
+          <Loader2 size={18} className="animate-spin" />
+          Loading inventory item...
+        </div>
+      </div>
+    );
+  }
+
+  if (!inventory) return null;
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        <span 
+    <div className="min-h-screen bg-[#f3f4f6] py-10 px-6">
+      <div className="max-w-3xl mx-auto">
+        <button
+          type="button"
           onClick={() => navigate("/admin/inventory")}
-          style={{ cursor: "pointer", color: "#8B4513" }}
+          className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4"
         >
-          Inventory
-        </span> › <span style={{ color: "#212529" }}>Edit Inventory</span>
-      </div>
+          <ArrowLeft size={16} />
+          Back to Inventory
+        </button>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-        <div>
-          <button
-            onClick={() => navigate("/admin/inventory")}
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              marginBottom: "12px",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              color: "#6c757d",
-              fontSize: "14px"
-            }}
-          >
-            <ArrowLeft size={18} />
-            Back to Inventory
-          </button>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
-            Edit Inventory Item
-          </h1>
-          <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            Update inventory quantity, alert threshold, and status.
+        <div className="mb-6">
+          <p className="text-sm text-slate-500">Inventory / Edit Inventory</p>
+          <h1 className="text-3xl font-bold text-slate-900 mt-2">Edit Inventory Item</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Update quantity and alert threshold for this inventory record.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/admin/inventory")}
-            style={{
-              padding: "10px 20px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              backgroundColor: "white",
-              color: "#374151"
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: "pointer",
-              backgroundColor: "#8B4513",
-              color: "white",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              transition: "background-color 0.2s"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#6d3610"}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "#8B4513"}
-          >
-            <Save size={18} />
-            Save Changes
-          </button>
-        </div>
-      </div>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-          {/* Left Column */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Inventory Identity */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Inventory Identity</h2>
-              </div>
+        <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <Package size={18} className="text-[#8B4513]" />
+            <h2 className="text-lg font-semibold text-slate-800">Inventory Information</h2>
+          </div>
 
-              {/* Inventory ID */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Inventory ID
-                </label>
-                <input
-                  type="text"
-                  value={`#${formData.id}`}
-                  disabled
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    backgroundColor: "#f8f9fa",
-                    color: "#6c757d",
-                    boxSizing: "border-box"
-                  }}
-                />
-              </div>
-
-              {/* Product & Franchise Selection */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Product & Franchise <span style={{ color: "#dc3545" }}>*</span>
-                </label>
-                <select
-                  value={formData.productFranchiseId}
-                  onChange={(e) => setFormData({ ...formData, productFranchiseId: parseInt(e.target.value) })}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    backgroundColor: "white",
-                    cursor: "pointer",
-                    boxSizing: "border-box"
-                  }}
-                >
-                  <option value="0">Select Product & Franchise</option>
-                  {productFranchise.map((pf) => {
-                    const product = mockProducts.find(p => p.id === pf.product_id);
-                    const franchise = mockFranchises.find(f => f.id === pf.franchise_id);
-                    return (
-                      <option key={pf.id} value={pf.id}>
-                        {product?.name || "Unknown"} - {franchise?.name || "Unknown"}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              {/* Preview Selected Product */}
-              {formData.productFranchiseId > 0 && (
-                <div style={{
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px",
-                  padding: "16px"
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <img
-                      src={`https://picsum.photos/seed/product${productId}/400`}
-                      alt={productName}
-                      style={{
-                        width: "60px",
-                        height: "60px",
-                        borderRadius: "8px",
-                        objectFit: "cover"
-                      }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#212529" }}>
-                        {productName}
-                      </p>
-                      <p style={{ margin: "4px 0 0 0", fontSize: "12px", color: "#6c757d" }}>
-                        SKU: {productSKU}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ 
-                    padding: "8px 12px", 
-                    backgroundColor: "white", 
-                    borderRadius: "6px",
-                    border: "1px solid #e0e0e0"
-                  }}>
-                    <p style={{ margin: 0, fontSize: "11px", color: "#6c757d", marginBottom: "4px" }}>
-                      FRANCHISE
-                    </p>
-                    <p style={{ margin: 0, fontSize: "14px", fontWeight: "500", color: "#212529" }}>
-                      {franchiseName}
-                    </p>
-                  </div>
-                </div>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-slate-500">Inventory ID</p>
+              <p className="text-slate-900 font-medium mt-1">{inventory.id}</p>
             </div>
-
-            {/* Stock Information */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Stock Information</h2>
-              </div>
-
-              {/* Quantity */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Quantity <span style={{ color: "#dc3545" }}>*</span>
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleQuantityChange(-10)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    name="quantity"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    min="0"
-                    step="0.1"
-                    required
-                    style={{
-                      flex: 1,
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      textAlign: "center",
-                      outline: "none"
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleQuantityChange(10)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Alert Threshold */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Alert Threshold <span style={{ color: "#dc3545" }}>*</span>
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button
-                    type="button"
-                    onClick={() => handleThresholdChange(-1)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    name="alertThreshold"
-                    value={formData.alertThreshold}
-                    onChange={handleChange}
-                    min="0"
-                    required
-                    style={{
-                      flex: 1,
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      textAlign: "center",
-                      outline: "none"
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleThresholdChange(1)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "18px",
-                      fontWeight: "500"
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-                <p style={{ fontSize: "11px", color: "#6c757d", margin: "4px 0 0 0" }}>
-                  Alert when stock falls below this level
-                </p>
-              </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-slate-500">Franchise</p>
+              <p className="text-slate-900 font-medium mt-1">{inventory.franchise_name ?? inventory.franchise_id}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-2">
+              <p className="text-slate-500">Product</p>
+              <p className="text-slate-900 font-medium mt-1">{inventory.product_name ?? inventory.product_id}</p>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Status */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Package size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Inventory Status</h2>
-              </div>
-
-              {/* Active Status */}
-              <div>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "12px", color: "#374151" }}>
-                  Status
-                </label>
-                
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "14px", color: "#374151" }}>Active Inventory</span>
-                  <div
-                    onClick={toggleActive}
-                    style={{
-                      width: "44px",
-                      height: "24px",
-                      borderRadius: "12px",
-                      backgroundColor: formData.isActive ? "#8B4513" : "#e0e0e0",
-                      position: "relative",
-                      cursor: "pointer",
-                      transition: "background-color 0.2s"
-                    }}
-                  >
-                    <div style={{
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "50%",
-                      backgroundColor: "white",
-                      position: "absolute",
-                      top: "2px",
-                      left: formData.isActive ? "22px" : "2px",
-                      transition: "left 0.2s"
-                    }} />
-                  </div>
-                </div>
-                <p style={{ fontSize: "11px", color: "#6c757d", margin: "8px 0 0 0" }}>
-                  {formData.isActive ? "This inventory item is active and visible in the system" : "This inventory item is inactive and hidden from the system"}
-                </p>
-              </div>
-
-              {/* Stock Status Preview */}
-              <div style={{
-                marginTop: "24px",
-                padding: "16px",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "8px",
-                border: "1px solid #e0e0e0"
-              }}>
-                <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: "#6c757d", marginBottom: "12px" }}>
-                  STOCK STATUS PREVIEW
-                </p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#374151" }}>Current Quantity:</span>
-                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>
-                    {formData.quantity}
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <span style={{ fontSize: "13px", color: "#374151" }}>Alert Threshold:</span>
-                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#ffc107" }}>
-                    {formData.alertThreshold}
-                  </span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "13px", color: "#374151" }}>Status:</span>
-                  <span style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    padding: "4px 12px",
-                    borderRadius: "12px",
-                    fontSize: "12px",
-                    fontWeight: "600",
-                    backgroundColor: formData.quantity === 0 ? "#dc354520" : formData.quantity <= formData.alertThreshold ? "#ffc10720" : "#28a74520",
-                    color: formData.quantity === 0 ? "#dc3545" : formData.quantity <= formData.alertThreshold ? "#ffc107" : "#28a745"
-                  }}>
-                    <span style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      backgroundColor: formData.quantity === 0 ? "#dc3545" : formData.quantity <= formData.alertThreshold ? "#ffc107" : "#28a745"
-                    }} />
-                    {formData.quantity === 0 ? "Out of Stock" : formData.quantity <= formData.alertThreshold ? "Low Stock" : "In Stock"}
-                  </span>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Quantity</label>
+              <input
+                type="number"
+                min={0}
+                {...form.register("quantity")}
+                disabled={isSubmitting}
+                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-sm"
+              />
+              <p className="text-xs text-red-500 mt-1">{form.formState.errors.quantity?.message}</p>
             </div>
-
-            {/* Activity Log Preview */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0, marginBottom: "16px" }}>Recent Activity</h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                <div style={{ 
-                  padding: "12px", 
-                  backgroundColor: "#f8f9fa", 
-                  borderRadius: "6px",
-                  borderLeft: "3px solid #8B4513"
-                }}>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>Last Updated</p>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "13px", fontWeight: "500", color: "#212529" }}>
-                    {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
-                </div>
-                <div style={{ 
-                  padding: "12px", 
-                  backgroundColor: "#f8f9fa", 
-                  borderRadius: "6px",
-                  borderLeft: "3px solid #28a745"
-                }}>
-                  <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>Created</p>
-                  <p style={{ margin: "4px 0 0 0", fontSize: "13px", fontWeight: "500", color: "#212529" }}>
-                    {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </p>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700">Alert Threshold</label>
+              <input
+                type="number"
+                min={0}
+                {...form.register("alert_threshold")}
+                disabled={isSubmitting}
+                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-sm"
+              />
+              <p className="text-xs text-red-500 mt-1">{form.formState.errors.alert_threshold?.message}</p>
             </div>
           </div>
-        </div>
-      </form>
 
-      {/* Sync Status */}
-      <div style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        backgroundColor: "#212529",
-        color: "white",
-        padding: "12px 20px",
-        borderRadius: "24px",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-        fontSize: "14px",
-        fontWeight: "500"
-      }}>
-        <Check size={18} color="#4caf50" />
-        Ready to save changes
+          <div>
+            <label className="block text-sm font-medium text-slate-700">Reason</label>
+            <textarea
+              rows={3}
+              {...form.register("reason")}
+              disabled={isSubmitting}
+              className="mt-2 w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm"
+              placeholder="Provide a reason for this inventory adjustment"
+            />
+            <p className="text-xs text-red-500 mt-1">{form.formState.errors.reason?.message}</p>
+          </div>
+
+          <div className="rounded-lg border border-[#f0dcc8] bg-[#fff8f2] p-4 text-sm text-[#6d3610]">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Current Stock Status</span>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${stockState.className}`}>
+                {stockState.label}
+              </span>
+            </div>
+            <div className="mt-2 text-xs flex items-start gap-2">
+              <AlertCircle size={14} className="mt-0.5" />
+              <span>
+                Current quantity is {inventory.quantity}. Saving will apply a delta of {form.watch("quantity") - inventory.quantity}.
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/inventory")}
+              disabled={isSubmitting}
+              className="text-sm text-slate-600 hover:text-slate-800 disabled:opacity-60"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] disabled:opacity-70 inline-flex items-center gap-2"
+            >
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
       </div>
-
     </div>
   );
 }

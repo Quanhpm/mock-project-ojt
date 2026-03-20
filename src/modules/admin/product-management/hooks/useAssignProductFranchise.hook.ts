@@ -27,15 +27,15 @@ export interface UseAssignProductFranchiseReturn {
   isFranchisesLoading: boolean;
 
   // Actions
-  /** Step 1 hoàn thành → lưu productId và chuyển sang Step 2 */
+  /** Complete step 1 and move to step 2 with created product id. */
   goToStep2: (productId: string) => void;
-  /** Step 2 submit → gọi POST /product-franchises */
+  /** Submit step 2 and call POST /product-franchises. */
   handleAssignFranchise: (formData: AssignFranchiseFormData) => Promise<void>;
-  /** Quay lại step 1 */
+  /** Go back to step 1. */
   goBackToStep1: () => void;
-  /** Reset toàn bộ flow */
+  /** Reset the full flow state. */
   resetFlow: () => void;
-  /** Khởi tạo trực tiếp cho Luồng 2 (từ Table) — set productId và nhảy sang step 2 */
+  /** Initialize directly for step 2 (from table actions). */
   initWithProductId: (productId: string) => void;
 }
 
@@ -53,7 +53,7 @@ export const useAssignProductFranchise = (
   const [franchises, setFranchises] = useState<FranchiseSelectItem[]>([]);
   const [isFranchisesLoading, setIsFranchisesLoading] = useState(false);
 
-  // ──────── Fetch franchises khi sang step 2 ────────
+  // Fetch franchises when entering step 2.
   useEffect(() => {
     if (currentStep !== 2) return;
     let cancelled = false;
@@ -86,21 +86,21 @@ export const useAssignProductFranchise = (
 
   const { success: toastSuccess, error: toastError } = useToast();
 
-  // ──────── Luồng 1: Step 1 xong → chuyển Step 2 ────────
+  // Flow 1: finish step 1 and move to step 2.
   const goToStep2 = useCallback((productId: string) => {
     setCreatedProductId(productId);
     setCurrentStep(2);
     setError(null);
   }, []);
 
-  // ──────── Luồng 2: Khởi tạo trực tiếp từ Table ────────
+  // Flow 2: direct initialization from table action.
   const initWithProductId = useCallback((productId: string) => {
     setCreatedProductId(productId);
     setCurrentStep(2);
     setError(null);
   }, []);
 
-  // ──────── Step 2: Submit assign franchise ────────
+  // Step 2: submit franchise assignment.
   const handleAssignFranchise = useCallback(
     async (formData: AssignFranchiseFormData) => {
       if (!createdProductId) {
@@ -120,17 +120,14 @@ export const useAssignProductFranchise = (
         };
 
         await createProductFranchise(payload);
-        toastSuccess(
-          "Gán franchise thành công",
-          "Sản phẩm đã được gán vào chi nhánh.",
-        );
+        toastSuccess("Assignment successful", "The product was assigned to the franchise.");
         onSuccess?.();
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Failed to assign franchise.";
         setError(message);
-        toastError("Gán franchise thất bại", message);
-        throw err; // Re-throw để caller biết
+        toastError("Assignment failed", message);
+        throw err;
       } finally {
         setIsSubmitting(false);
       }

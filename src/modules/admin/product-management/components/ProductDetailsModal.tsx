@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import type { Product } from "../../../../types/product.types";
 
 interface ProductDetailsModalProps {
@@ -9,7 +8,11 @@ interface ProductDetailsModalProps {
 }
 
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("vi-VN").format(price) + " đ";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(price);
 };
 
 const cleanHTML = (html: string) => {
@@ -64,16 +67,6 @@ export default function ProductDetailsModal({
             Product Details
           </h2>
 
-          <button
-            onClick={onClose}
-            style={{
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-            }}
-          >
-            <X size={20} />
-          </button>
         </div>
 
         {/* CONTENT */}

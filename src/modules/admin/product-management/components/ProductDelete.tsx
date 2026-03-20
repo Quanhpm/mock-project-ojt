@@ -159,7 +159,7 @@ export default function ProductDelete({
             borderTop: "1px solid #f0f0f0",
             display: "flex",
             gap: "12px",
-            justifyContent: "flex-end"
+            justifyContent: "flex-start"
           }}>
             <button
               onClick={onClose}
@@ -174,7 +174,7 @@ export default function ProductDelete({
                 color: "#374151"
               }}
             >
-              Cancel
+              Close
             </button>
             <button
               onClick={handleConfirm}

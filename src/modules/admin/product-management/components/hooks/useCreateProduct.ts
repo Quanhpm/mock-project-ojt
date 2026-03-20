@@ -9,9 +9,7 @@ export const useCreateProduct = () => {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Hàm thực thi gọi API tạo mới sản phẩm
-   * @param payload Dữ liệu từ Form nhập vào
-   * @param onSuccess Callback chạy khi tạo thành công (vd: Đóng modal, chuyển trang, reset form)
+   * Executes create-product API and triggers optional success callback.
    */
   const createProductAction = async (
     payload: ProductCreatePayload,
@@ -24,7 +22,7 @@ export const useCreateProduct = () => {
       const newProduct = await productApi.createProduct(payload);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Tạo sản phẩm thành công", "Sản phẩm đã được tạo.");
+      success("Product created", "The product has been created successfully.");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
       if (onSuccess) {
@@ -33,18 +31,18 @@ export const useCreateProduct = () => {
 
       return newProduct; // Trả về data nếu Component bên ngoài muốn dùng trực tiếp
     } catch (err: any) {
-      console.error("Lỗi khi tạo sản phẩm:", err);
+      console.error("Create product failed:", err);
 
       // Bắt thông báo lỗi từ Backend
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.data ||
-        "Có lỗi xảy ra khi tạo sản phẩm mới. Vui lòng thử lại!";
+        "An error occurred while creating the product. Please try again.";
       setError(errorMessage);
 
-      showErrorToast("Tạo mới thất bại", errorMessage);
+      showErrorToast("Create failed", errorMessage);
     } finally {
-      // Tắt trạng thái loading dù thành công hay thất bại
+      // Always clear loading state.
       setIsCreating(false);
     }
   };
