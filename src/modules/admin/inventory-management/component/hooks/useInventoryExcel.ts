@@ -14,6 +14,12 @@ import { useToast } from "@/hooks/use-toast.hook";
 interface UseInventoryExcelParams {
     getValues: UseFormGetValues<{ items: InventoryTableRow[] }>;
     replace: UseFieldArrayReplace<{ items: InventoryTableRow[] }, "items">;
+    onImportValidationErrors?: (
+        errors: ImportValidationError[],
+        mappedRows: Record<string, unknown>[],
+    ) => void;
+    onImportSuccess?: () => void;
+    onImportStart?: () => void;
 }
 
 interface UseInventoryExcelReturn {
@@ -37,6 +43,9 @@ interface UseInventoryExcelReturn {
 export function useInventoryExcel({
     getValues,
     replace,
+    onImportValidationErrors,
+    onImportSuccess,
+    onImportStart,
 }: UseInventoryExcelParams): UseInventoryExcelReturn {
     const [importErrors, setImportErrors] = useState<ImportValidationError[]>([]);
     const [isParsingFile, setIsParsingFile] = useState(false);
@@ -82,6 +91,7 @@ export function useInventoryExcel({
 
             setIsParsingFile(true);
             setImportErrors([]); // Xóa lỗi cũ
+            onImportStart?.();
 
             try {
                 // Step 1: Parse file
@@ -150,12 +160,14 @@ export function useInventoryExcel({
                 if (errors.length > 0) {
                     // ❌ CÓ LỖI → KHÔNG import, hiển thị lỗi trên Error Banner
                     setImportErrors(errors);
+                    onImportValidationErrors?.(errors, mappedRows);
                     setIsParsingFile(false);
                     return;
                 }
 
                 // ✅ KHÔNG LỖI → Import data vào form + auto tick checkbox
                 setImportErrors([]);
+                onImportSuccess?.();
 
                 const updatedItems = currentItems.map((item) => ({ ...item }));
 
@@ -207,7 +219,16 @@ export function useInventoryExcel({
                 setIsParsingFile(false);
             }
         },
-        [getValues, replace, toastError, toastSuccess, toastWarning],
+        [
+            getValues,
+            onImportStart,
+            onImportSuccess,
+            onImportValidationErrors,
+            replace,
+            toastError,
+            toastSuccess,
+            toastWarning,
+        ],
     );
 
     return {

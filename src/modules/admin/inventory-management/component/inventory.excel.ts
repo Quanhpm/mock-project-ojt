@@ -6,6 +6,7 @@ import type {
     ImportValidationError,
 } from "./inventory.types";
 import { FIELD_TO_HEADER_MAP, EXCEL_HEADER_MAP } from "./inventory.types";
+import { validateImportEditableFields } from "./inventory-table.validation";
 
 export function exportInventoryToExcel(
     data: InventoryTableRow[],
@@ -142,69 +143,7 @@ export function validateImportRows(
     const errors: ImportValidationError[] = [];
 
     rows.forEach((row, index) => {
-        const rowNum = String(index + 1).padStart(2, "0"); // "01", "02", ...
-
-        // === Check quantity (TRÁI - check trước) ===
-        const qty = row.quantity;
-        if (
-            qty === undefined ||
-            qty === null ||
-            qty === "" ||
-            typeof qty === "boolean" ||
-            isNaN(Number(qty))
-        ) {
-            errors.push({
-                row: index + 1,
-                field: "quantity",
-                message: `Row ${rowNum}, lỗi chỉ được nhập data số ở field quantity,`,
-            });
-        } else {
-            const qtyNum = Number(qty);
-            if (qtyNum < 0) {
-                errors.push({
-                    row: index + 1,
-                    field: "quantity",
-                    message: `Row ${rowNum}: lỗi data ở field quantity phải >= 0`,
-                });
-            } else if (!Number.isInteger(qtyNum)) {
-                errors.push({
-                    row: index + 1,
-                    field: "quantity",
-                    message: `Row ${rowNum}: lỗi data ở field quantity phải là số nguyên`,
-                });
-            }
-        }
-
-        // === Check alert_threshold (PHẢI - check sau) ===
-        const threshold = row.alert_threshold;
-        if (
-            threshold === undefined ||
-            threshold === null ||
-            threshold === "" ||
-            typeof threshold === "boolean" ||
-            isNaN(Number(threshold))
-        ) {
-            errors.push({
-                row: index + 1,
-                field: "alert_threshold",
-                message: `Row ${rowNum}, lỗi chỉ được nhập data số ở field alert_threshold,`,
-            });
-        } else {
-            const thresholdNum = Number(threshold);
-            if (thresholdNum < 0) {
-                errors.push({
-                    row: index + 1,
-                    field: "alert_threshold",
-                    message: `Row ${rowNum}: lỗi data ở field alert_threshold phải >= 0`,
-                });
-            } else if (!Number.isInteger(thresholdNum)) {
-                errors.push({
-                    row: index + 1,
-                    field: "alert_threshold",
-                    message: `Row ${rowNum}: lỗi data ở field alert_threshold phải là số nguyên`,
-                });
-            }
-        }
+        errors.push(...validateImportEditableFields(row, index));
     });
 
     return errors;
