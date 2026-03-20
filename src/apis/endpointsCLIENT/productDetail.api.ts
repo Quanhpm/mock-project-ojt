@@ -17,7 +17,7 @@ export interface ProductDetailResponse {
     content: string;
     image_url: string;
     images_url: string[];
-    is_have_topping: string[];
+    is_have_topping: boolean;
     sizes: ProductSize[];
 }
 

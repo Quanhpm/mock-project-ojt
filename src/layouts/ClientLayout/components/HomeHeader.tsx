@@ -1,20 +1,45 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
-import { useCartStore } from '@/stores/cart.store';
 import { useToast } from '@/hooks/use-toast.hook';
 import { ShoppingCart, ClipboardClock, User, LogOut } from 'lucide-react';
 import logo2 from '@/assets/img/logo2.png';
+import { countCustomerCarts } from '@/apis/endpointsCLIENT/cart.api';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
   const profile = useClientAuthStore((state) => state.user);
-  const cartItems = useCartStore((state) => state.items);  const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
+  const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+  const location = useLocation();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const { success, error } = useToast();
+
+  useEffect(() => {
+    const loadCartCount = async () => {
+      if (!isLoggedIn || !profile?.id) {
+        setCartCount(0);
+        return;
+      }
+
+      // Avoid duplicate fetch with Cart page itself, which already calls getCustomerCarts.
+      if (location.pathname.startsWith('/cart')) {
+        return;
+      }
+
+      try {
+        const result = await countCustomerCarts(profile.id, 'ACTIVE');
+        setCartCount(result?.count ?? 0);
+      } catch {
+        setCartCount(0);
+      }
+    };
+
+    loadCartCount();
+  }, [isLoggedIn, location.pathname, profile?.id]);
 
   const handleLogout = async () => {
     setIsDropdownOpen(false);
@@ -94,9 +119,9 @@ const HomeHeader: React.FC = () => {
               className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ShoppingCart />
-              {totalItems > 0 && (
+              {cartCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
-                  {totalItems}
+                  {cartCount}
                 </span>
               )}
             </Link>

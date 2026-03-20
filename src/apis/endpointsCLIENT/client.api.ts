@@ -34,7 +34,7 @@ export interface MenuProduct {
     name: string;
     description: string;
     image_url: string;
-    is_have_topping: string[];
+    is_have_topping: boolean;
     sizes: ProductSize[];
 }
 
@@ -55,7 +55,7 @@ interface ProductByFranchiseAndCategory {
     name: string;
     description: string;
     image_url: string;
-    is_have_topping: string[];
+    is_have_topping: boolean;
     sizes: ProductSize[];
 }
 
@@ -69,7 +69,7 @@ interface ProductDetailResponse {
     content: string;
     image_url: string;
     image_urls: string[];
-    is_have_topping: string[];
+    is_have_topping: boolean;
     sizes: ProductSize[];
 }
 
