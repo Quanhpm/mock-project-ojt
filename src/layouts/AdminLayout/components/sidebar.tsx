@@ -1,12 +1,8 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Users,
   Store,
-  Settings,
   X,
-  Package,
   LogOut,
 } from "lucide-react";
 import type { AdminMenuItem } from "@/routes/admin/Admin.menu";
@@ -45,10 +41,38 @@ const Sidebar: React.FC<SidebarProps> = ({
     navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
   };
 
-  const isActivePath = (path: string) => {
-    return (
-      location.pathname === path || location.pathname.startsWith(path + "/")
-    );
+  const toAbsoluteAdminPath = (path: string) => {
+    if (path.startsWith("/")) {
+      return path;
+    }
+
+    return `${ROUTER_URL.ADMIN}/${path}`;
+  };
+
+  const normalizePath = (path: string) => path.replace(/\/+$/, "");
+
+  const isActivePath = (item: AdminMenuItem) => {
+    const currentPath = normalizePath(location.pathname);
+    const targetPath = normalizePath(toAbsoluteAdminPath(item.path));
+
+    if (item.activeExcludes?.some((excludePath) => {
+      const absoluteExcludePath = normalizePath(toAbsoluteAdminPath(excludePath));
+      return currentPath === absoluteExcludePath || currentPath.startsWith(`${absoluteExcludePath}/`);
+    })) {
+      return false;
+    }
+
+    if (item.isEnd) {
+      return currentPath === targetPath;
+    }
+
+    return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
+  };
+
+  const isAccountPageActive = () => {
+    const currentPath = normalizePath(location.pathname);
+    const accountPath = normalizePath("/admin/account");
+    return currentPath === accountPath || currentPath.startsWith(`${accountPath}/`);
   };
 
   const handleProfileClick = () => {
@@ -85,7 +109,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         aria-label="Main navigation"
       >
         {menuItems.map((item) => {
-          const isActive = isActivePath(item.path);
+          const isActive = isActivePath(item);
           return (
             <Link
               key={item.path}
@@ -131,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`
             w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 cursor-pointer group
             ${
-              isActivePath("/admin/account")
+              isAccountPageActive()
                 ? "bg-amber-50 shadow-sm"
                 : "bg-gray-50 hover:bg-amber-50"
             }
@@ -148,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex-1 min-w-0 text-left">
             <p
               className={`text-sm font-semibold truncate transition-colors ${
-                isActivePath("/admin/account")
+                isAccountPageActive()
                   ? "text-amber-900"
                   : "text-gray-800 group-hover:text-amber-900"
               }`}
@@ -157,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </p>
             <p
               className={`text-xs truncate transition-colors ${
-                isActivePath("/admin/account")
+                isAccountPageActive()
                   ? "text-amber-700"
                   : "text-gray-500 group-hover:text-amber-700"
               }`}

@@ -11,6 +11,8 @@ interface PageHeaderProps {
   onToggleViewMode: () => void
   onChangeFranchise?: () => void
   isImportDisabled?: boolean
+  showImportButton?: boolean
+  showCreateShiftButton?: boolean
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -23,6 +25,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   onToggleViewMode,
   onChangeFranchise,
   isImportDisabled = false,
+  showImportButton = true,
+  showCreateShiftButton = true,
 }) => {
   return (
     <header className="z-10 flex w-full shrink-0 flex-col gap-6 px-8 py-6">
@@ -69,22 +73,26 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </span>
           </button>
 
-          <button
-            onClick={onImportExcel}
-            disabled={isImportDisabled}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <span className="material-symbols-outlined text-[18px]">upload_file</span>
-            <span>Import Excel</span>
-          </button>
+          {showImportButton && (
+            <button
+              onClick={onImportExcel}
+              disabled={isImportDisabled}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-[18px]">upload_file</span>
+              <span>Import Excel</span>
+            </button>
+          )}
 
-          <button
-            onClick={onCreateShift}
-            className="group flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-600 active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            <span className="text-sm font-bold">Create Shift</span>
-          </button>
+          {showCreateShiftButton && (
+            <button
+              onClick={onCreateShift}
+              className="group flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-white shadow-sm shadow-blue-500/20 transition-all hover:bg-blue-600 active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[20px]">add</span>
+              <span className="text-sm font-bold">Create Shift</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

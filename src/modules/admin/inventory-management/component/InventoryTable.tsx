@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { useGetInventories } from "./hooks/useGetInventories";
 import { useDeleteInventory } from "./hooks/useDeleteInventory";
 import { useRestoreInventory } from "./hooks/useRestoreInventory";
@@ -9,7 +9,7 @@ import { useAdjustInventory } from "./hooks/useAdjustInventory";
 import { useGetInventoryLogs } from "./hooks/useGetInventoryLogs";
 import { useBulkAdjustInventory } from "./hooks/useBulkAdjustInventory";
 import { useInventoryExcel } from "./hooks/useInventoryExcel";
-import type { InventoryItem, InventorySearchPayload, InventoryTableRow, BulkAdjustPayload } from "./inventory.types";
+import type { BulkAdjustPayload, ImportValidationError, InventoryItem, InventorySearchPayload, InventoryTableRow } from "./inventory.types";
 import InventoryDelete from "./InventoryDelete";
 import { useToast } from "@/hooks/use-toast.hook";
 import {
@@ -17,6 +17,10 @@ import {
   getInventoryTableFieldPath,
   inventoryTableFormSchema,
 } from "./inventory-table.validation";
+import {
+  getInventoryTableDisplayIndex,
+  mapInventoryImportErrorsToTableRows,
+} from "./inventory-import-errors";
 
 const getStockStatus = (quantity: number, alertThreshold: number) => {
   if (quantity === 0) return { label: "Out of Stock", color: "#dc3545" };
@@ -26,7 +30,7 @@ const getStockStatus = (quantity: number, alertThreshold: number) => {
 
 export default function InventoryTable() {
   const navigate = useNavigate();
-  const { success: toastSuccess, error: toastError } = useToast();
+  const { error: toastError } = useToast();
 
   // === Existing state ===
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,9 +46,7 @@ export default function InventoryTable() {
   const [inputValue, setInputValue] = useState("");
   const [franchiseFilter, setFranchiseFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
-  const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
   const [activeTooltipKey, setActiveTooltipKey] = useState<string | null>(null);
-  const [mappedImportErrorPaths, setMappedImportErrorPaths] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const itemsPerPage = 10;
 
@@ -60,18 +62,32 @@ export default function InventoryTable() {
   // === React Hook Form + useFieldArray ===
   const methods = useForm<{ items: InventoryTableRow[] }>({
     defaultValues: { items: [] },
-    resolver: zodResolver(inventoryTableFormSchema) as any,
+    resolver: zodResolver(inventoryTableFormSchema),
     mode: "onSubmit",
   });
-  const { control, register, getValues, watch, trigger, setError, clearErrors, formState: { errors } } = methods;
+  const { control, register, getValues, trigger, setError, clearErrors, formState: { errors } } = methods;
   const { fields, replace, update } = useFieldArray({ control, name: "items" });
+  type InventoryEditableFieldPath = ReturnType<typeof getInventoryTableFieldPath>;
+  const [mappedImportErrorPaths, setMappedImportErrorPaths] = useState<InventoryEditableFieldPath[]>([]);
 
   const clearMappedImportErrors = useCallback(() => {
     if (mappedImportErrorPaths.length > 0) {
-      clearErrors(mappedImportErrorPaths as any);
+      clearErrors(mappedImportErrorPaths);
       setMappedImportErrorPaths([]);
     }
   }, [clearErrors, mappedImportErrorPaths]);
+
+  const mapImportErrors = useCallback(
+    (validationErrors: ImportValidationError[], mappedRows: Record<string, unknown>[]) =>
+      mapInventoryImportErrorsToTableRows({
+        errors: validationErrors,
+        mappedRows,
+        currentItems: getValues("items"),
+        currentPage,
+        itemsPerPage,
+      }),
+    [currentPage, getValues, itemsPerPage],
+  );
 
   // === Excel hook ===
   const {
@@ -81,6 +97,7 @@ export default function InventoryTable() {
   } = useInventoryExcel({
     getValues,
     replace,
+    mapImportErrors,
     onImportStart: () => {
       clearMappedImportErrors();
     },
@@ -90,7 +107,7 @@ export default function InventoryTable() {
     onImportValidationErrors: (validationErrors, mappedRows) => {
       clearMappedImportErrors();
 
-      const nextPaths: string[] = [];
+      const nextPaths: InventoryEditableFieldPath[] = [];
       validationErrors.forEach((error) => {
         if (error.field !== "quantity" && error.field !== "alert_threshold") {
           return;
@@ -135,12 +152,12 @@ export default function InventoryTable() {
     }
   }, [inventories, replace]);
 
-  const buildPayload = (page: number): InventorySearchPayload => ({
+  const buildPayload = useCallback((page: number): InventorySearchPayload => ({
     searchCondition: { is_deleted: showDeleted },
     pageInfo: { pageNum: page, pageSize: itemsPerPage },
-  });
+  }), [itemsPerPage, showDeleted]);
 
-  useEffect(() => { refetch(buildPayload(currentPage)); }, [currentPage, showDeleted]);
+  useEffect(() => { refetch(buildPayload(currentPage)); }, [buildPayload, currentPage, refetch]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); searchInputRef.current?.focus(); }
@@ -149,24 +166,8 @@ export default function InventoryTable() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // ── Handle pagination after deletion ────────────────────────────
-  // If page is empty after deletion and we're not on page 1, go back to page 1
-  useEffect(() => {
-    if (
-      shouldCheckPagination &&
-      inventories.length === 0 &&
-      currentPage > 1 &&
-      !isLoading
-    ) {
-      setShouldCheckPagination(false);
-      setCurrentPage(1);
-    } else if (shouldCheckPagination && !isLoading) {
-      setShouldCheckPagination(false);
-    }
-  }, [shouldCheckPagination, inventories.length, currentPage, isLoading]);
-
   // === Watched values for selected count ===
-  const watchedItems = watch("items");
+  const watchedItems = useWatch({ control, name: "items" });
   const selectedCount = watchedItems?.filter((r) => r._selected).length ?? 0;
 
   // === Dirty check: có row nào đang bị edit chưa lưu không ===
@@ -242,7 +243,7 @@ export default function InventoryTable() {
       getInventoryTableFieldPath(index, "_editAlertThreshold"),
     ]);
 
-    void trigger(selectedPaths as any).then((isValid) => {
+    void trigger(selectedPaths).then((isValid) => {
       if (!isValid) {
         const firstInvalidPath = selectedPaths.find(
           (path) => !!methods.getFieldState(path).error,
@@ -273,7 +274,7 @@ export default function InventoryTable() {
         refetch(buildPayload(currentPage));
       });
     });
-  }, [getValues, bulkAdjust, refetch, currentPage, toastError, trigger, methods]);
+  }, [buildPayload, bulkAdjust, currentPage, getValues, methods, refetch, toastError, trigger]);
 
   // === Legacy handlers (adjust, logs, delete, restore) ===
   const handleOpenAdjust = (_e: React.MouseEvent<HTMLButtonElement>, item: InventoryItem) => {
@@ -289,7 +290,17 @@ export default function InventoryTable() {
   };
   const handleViewLogs = (inventoryId: string, productName: string) => { setLogsModal({ open: true, inventoryId, productName }); fetchLogs(inventoryId); };
   const handleDelete = (inventoryId: string, productName: string) => { setDeleteModal({ isOpen: true, inventoryId, productName }); };
-  const handleDeleteConfirm = () => { deleteInventory(deleteModal.inventoryId, () => { setDeleteModal({ isOpen: false, inventoryId: "", productName: "" }); setShouldCheckPagination(true); refetch(buildPayload(currentPage)); }); };
+  const handleDeleteConfirm = () => {
+    const nextPage = currentPage > 1 && inventories.length === 1 ? 1 : currentPage;
+
+    deleteInventory(deleteModal.inventoryId, () => {
+      setDeleteModal({ isOpen: false, inventoryId: "", productName: "" });
+      if (nextPage !== currentPage) {
+        setCurrentPage(nextPage);
+      }
+      refetch(buildPayload(nextPage));
+    });
+  };
   const handleRestore = (inventoryId: string, productName: string) => { setRestoreModal({ open: true, inventoryId, productName }); };
   const handleRestoreConfirm = () => { restoreInventory(restoreModal.inventoryId, () => { setRestoreModal({ open: false, inventoryId: "", productName: "" }); refetch(buildPayload(currentPage)); }); };
 
@@ -323,9 +334,9 @@ export default function InventoryTable() {
 
   const handleEditableFieldChange = useCallback((path: `items.${number}._editQuantity` | `items.${number}._editAlertThreshold`) => {
     window.setTimeout(() => {
-      void trigger(path as any).then((isValid) => {
+      void trigger(path).then((isValid) => {
         if (isValid) {
-          clearErrors(path as any);
+          clearErrors(path);
           setMappedImportErrorPaths((prev) => prev.filter((item) => item !== path));
           if (activeTooltipKey === path) {
             setActiveTooltipKey(null);
@@ -499,7 +510,7 @@ export default function InventoryTable() {
                           onChange={e => handleSelectAll(e.target.checked)}
                           style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#8B4513" }} />
                       </th>
-                      {["ID", "Product", "Franchise", "Quantity", "Alert Threshold", "Status", "Actions"].map(h => (
+                      {["No.", "ID", "Product", "Franchise", "Quantity", "Alert Threshold", "Status", "Actions"].map(h => (
                         <th key={h} style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: h === "Actions" ? "center" : "left" }}>{h}</th>
                       ))}
                     </tr>
@@ -514,6 +525,7 @@ export default function InventoryTable() {
                       const thresholdPath = getInventoryTableFieldPath(index, "_editAlertThreshold");
                       const quantityError = errors.items?.[index]?._editQuantity;
                       const thresholdError = errors.items?.[index]?._editAlertThreshold;
+                      const displayIndex = getInventoryTableDisplayIndex(currentPage, itemsPerPage, index);
                       return (
                         <tr key={field.id} style={{ borderBottom: "1px solid #e9ecef", backgroundColor: item._selected ? "#fff8f2" : "transparent", transition: "background-color 0.15s" }}
                           onMouseEnter={e => { if (!item._selected) e.currentTarget.style.backgroundColor = "#f8f9fa"; }}
@@ -521,6 +533,9 @@ export default function InventoryTable() {
                           <td style={{ padding: "16px" }}>
                             <input type="checkbox" checked={item._selected} onChange={() => handleToggleRow(index)}
                               style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#8B4513" }} />
+                          </td>
+                          <td style={{ padding: "16px", fontSize: "14px", fontWeight: "700", color: "#212529" }}>
+                            {String(displayIndex).padStart(2, "0")}
                           </td>
                           <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>#{item.id.slice(-6)}</td>
                           <td style={{ padding: "16px" }}><span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>{item.product_name ?? item.product_id}</span></td>

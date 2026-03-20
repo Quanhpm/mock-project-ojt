@@ -8,8 +8,8 @@ interface ShiftAssignmentCardProps {
   assignment: ShiftAssignmentView
   secondaryLine: string
   tertiaryLine?: string
-  onStatusChange: (assignmentId: string, status: ShiftAssignmentStatus) => void
-  onDelete: (assignment: ShiftAssignmentView) => void
+  onStatusChange?: (assignmentId: string, status: ShiftAssignmentStatus) => void
+  onDelete?: (assignment: ShiftAssignmentView) => void
   isStatusUpdating?: boolean
   isDeleting?: boolean
 }
@@ -53,9 +53,11 @@ export const ShiftAssignmentCard: React.FC<ShiftAssignmentCardProps> = ({
 }) => {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false)
   const statusMenuRef = useRef<HTMLDivElement | null>(null)
+  const canChangeStatus = Boolean(onStatusChange)
+  const canDelete = Boolean(onDelete)
 
   useEffect(() => {
-    if (!isStatusMenuOpen) return
+    if (!isStatusMenuOpen || !canChangeStatus) return
 
     const handleClickOutside = (event: MouseEvent) => {
       if (!statusMenuRef.current?.contains(event.target as Node)) {
@@ -68,7 +70,7 @@ export const ShiftAssignmentCard: React.FC<ShiftAssignmentCardProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
     }
-  }, [isStatusMenuOpen])
+  }, [canChangeStatus, isStatusMenuOpen])
 
   return (
     <div className="relative flex items-center gap-3 rounded-2xl border border-slate-200 p-3">
@@ -91,56 +93,68 @@ export const ShiftAssignmentCard: React.FC<ShiftAssignmentCardProps> = ({
 
       <div className="shrink-0">
         <div className="flex items-center gap-2">
-          <div className="relative" ref={statusMenuRef}>
+          {canChangeStatus ? (
+            <div className="relative" ref={statusMenuRef}>
+              <button
+                type="button"
+                disabled={isStatusUpdating || isDeleting}
+                onClick={() => setIsStatusMenuOpen((current) => !current)}
+                className={`inline-flex min-w-[144px] items-center justify-between gap-2 rounded-md px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition-colors ${
+                  STATUS_STYLES[assignment.status] || 'bg-slate-100 text-slate-700 ring-slate-300'
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <span className="truncate whitespace-nowrap">
+                  {isStatusUpdating ? 'Saving...' : assignment.status}
+                </span>
+                <span className="material-symbols-outlined text-[14px]">expand_more</span>
+              </button>
+
+              {isStatusMenuOpen && (
+                <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
+                  {STATUS_OPTIONS.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => {
+                        setIsStatusMenuOpen(false)
+                        onStatusChange?.(assignment.id, status)
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors hover:bg-slate-50 ${
+                        status === assignment.status ? 'text-primary' : 'text-slate-700'
+                      }`}
+                    >
+                      <span>{status}</span>
+                      {status === assignment.status && (
+                        <span className="material-symbols-outlined text-[14px]">check</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span
+              className={`inline-flex min-w-[120px] items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium ring-1 ring-inset ${
+                STATUS_STYLES[assignment.status] || 'bg-slate-100 text-slate-700 ring-slate-300'
+              }`}
+            >
+              {assignment.status}
+            </span>
+          )}
+
+          {canDelete && (
             <button
               type="button"
+              onClick={() => onDelete?.(assignment)}
               disabled={isStatusUpdating || isDeleting}
-              onClick={() => setIsStatusMenuOpen((current) => !current)}
-              className={`inline-flex min-w-[144px] items-center justify-between gap-2 rounded-md px-3 py-1.5 text-xs font-medium ring-1 ring-inset transition-colors ${
-                STATUS_STYLES[assignment.status] || 'bg-slate-100 text-slate-700 ring-slate-300'
-              } disabled:cursor-not-allowed disabled:opacity-60`}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label={`Delete assignment for ${assignment.staffName}`}
             >
-              <span className="truncate whitespace-nowrap">
-                {isStatusUpdating ? 'Saving...' : assignment.status}
+              <span className="material-symbols-outlined text-[18px]">
+                {isDeleting ? 'hourglass_top' : 'delete'}
               </span>
-              <span className="material-symbols-outlined text-[14px]">expand_more</span>
             </button>
-
-            {isStatusMenuOpen && (
-              <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg">
-                {STATUS_OPTIONS.map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    onClick={() => {
-                      setIsStatusMenuOpen(false)
-                      onStatusChange(assignment.id, status)
-                    }}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors hover:bg-slate-50 ${
-                      status === assignment.status ? 'text-primary' : 'text-slate-700'
-                    }`}
-                  >
-                    <span>{status}</span>
-                    {status === assignment.status && (
-                      <span className="material-symbols-outlined text-[14px]">check</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => onDelete(assignment)}
-            disabled={isStatusUpdating || isDeleting}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-            aria-label={`Delete assignment for ${assignment.staffName}`}
-          >
-            <span className="material-symbols-outlined text-[18px]">
-              {isDeleting ? 'hourglass_top' : 'delete'}
-            </span>
-          </button>
+          )}
         </div>
       </div>
     </div>

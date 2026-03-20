@@ -8,14 +8,18 @@ export interface DailyAssignmentTarget {
   workDate: string | null
 }
 
+export type ShiftCalendarType = 'month' | 'day'
+
 interface ShiftManagementState {
   selectedFranchiseId: string | null
   selectedDateKey: string | null
   viewMode: ShiftCalendarViewMode
+  calendarType: ShiftCalendarType
   dailyAssignment: DailyAssignmentTarget
   setSelectedFranchiseId: (franchiseId: string | null) => void
   setSelectedDate: (dateKey: string | null) => void
   setViewMode: (viewMode: ShiftCalendarViewMode) => void
+  setCalendarType: (type: ShiftCalendarType) => void
   toggleViewMode: () => void
   openDailyAssignment: (shiftId: string, workDate: string) => void
   closeDailyAssignment: () => void
@@ -32,6 +36,7 @@ export const useShiftManagementStore = create<ShiftManagementState>((set) => ({
   selectedFranchiseId: null,
   selectedDateKey: null,
   viewMode: 'assignment',
+  calendarType: 'month',
   dailyAssignment: defaultDailyAssignmentState,
 
   setSelectedFranchiseId: (franchiseId) => {
@@ -44,6 +49,10 @@ export const useShiftManagementStore = create<ShiftManagementState>((set) => ({
 
   setViewMode: (viewMode) => {
     set({ viewMode })
+  },
+
+  setCalendarType: (calendarType) => {
+    set({ calendarType })
   },
 
   toggleViewMode: () => {
@@ -70,6 +79,7 @@ export const useShiftManagementStore = create<ShiftManagementState>((set) => ({
     set({
       selectedDateKey: null,
       viewMode: 'assignment',
+      calendarType: 'month',
       dailyAssignment: defaultDailyAssignmentState,
     })
   },

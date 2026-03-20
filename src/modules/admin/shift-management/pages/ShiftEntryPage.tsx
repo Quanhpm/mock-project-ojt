@@ -9,9 +9,10 @@ function ShiftEntryPage() {
   const roleCode = getRoleCode(store)
   const activeContext = useAdminAuthStore((state) => state.activeContext)
   const setSelectedFranchiseId = useShiftManagementStore((state) => state.setSelectedFranchiseId)
+  const isFranchiseScopedShiftRole = roleCode === 'MANAGER' || roleCode === 'STAFF'
 
   useEffect(() => {
-    if (roleCode === 'MANAGER' && activeContext?.franchise_id) {
+    if (isFranchiseScopedShiftRole && activeContext?.franchise_id) {
       setSelectedFranchiseId(activeContext.franchise_id)
       navigate(`/admin/shifts/calendar?franchiseId=${activeContext.franchise_id}`, {
         replace: true,
@@ -25,7 +26,7 @@ function ShiftEntryPage() {
     }
 
     navigate('/admin/dashboard', { replace: true })
-  }, [activeContext?.franchise_id, navigate, roleCode, setSelectedFranchiseId])
+  }, [activeContext?.franchise_id, isFranchiseScopedShiftRole, navigate, roleCode, setSelectedFranchiseId])
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center shadow-sm">

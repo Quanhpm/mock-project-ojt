@@ -12,6 +12,7 @@ import {
   Ticket,
 } from "lucide-react";
 import React from "react";
+import type { RoleCode } from "@/config/permissions.config";
 import { ROUTER_URL } from "../router.const";
 import FranchiseSelectionPage from "@/modules/admin/side-selection/pages/FranchiseSelectionPage";
 
@@ -25,6 +26,8 @@ export type AdminMenuItem = {
   isEnd?: boolean;
   module: string;
   hideFromSidebar?: boolean;
+  activeExcludes?: string[];
+  allowedRoles?: RoleCode[];
 };
 
 export const ADMIN_MENU: AdminMenuItem[] = [
@@ -229,11 +232,31 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
-    label: "Order Pos",
+    label: "Orders",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER,
     icon: <ShoppingCart size={18} />,
-    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),
+    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderListPage")),
     module: "orders",
+    activeExcludes: [ROUTER_URL.ADMIN_ROUTER.ORDER_POS],
+    allowedRoles: ["ADMIN", "MANAGER"],
+  },
+  {
+    label: "POS",
+    path: ROUTER_URL.ADMIN_ROUTER.ORDER_POS,
+    icon: <ShoppingCart size={18} />,
+    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderPosPage")),
+    module: "orders",
+    isEnd: true,
+    allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
+  },
+  {
+    label: "Order Detail",
+    path: ROUTER_URL.ADMIN_ROUTER.ORDER_DETAIL,
+    icon: <ShoppingCart size={18} />,
+    component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderDetailPage")),
+    module: "orders",
+    hideFromSidebar: true,
+    allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
   },
   {
     label: "Shifts",
