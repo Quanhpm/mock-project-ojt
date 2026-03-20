@@ -1,1 +1,9 @@
-export { default as OrderDetailModal } from './OrderDetailModal';
+export { default as OrderDetailModal } from './OrderDetailModal/OrderDetailModal';
+export { default as OrderHero } from './OrderHero';
+export { default as OrderStatsCards } from './OrderStatsCards';
+export { default as OrderListContainer } from './OrderListContainer';
+export { default as OrderPagination } from './OrderPagination';
+export { default as OrderStatusHeader } from './OrderDetailModal/OrderStatusHeader';
+export { default as OrderTimeline } from './OrderDetailModal/OrderTimeline';
+export { default as OrderPaymentInfo } from './OrderDetailModal/OrderPaymentInfo';
+export { default as OrderItemsList } from './OrderDetailModal/OrderItemsList';
