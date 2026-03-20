@@ -1,4 +1,4 @@
-import { ShoppingBag, ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
@@ -22,36 +22,35 @@ function Cart() {
 
   if (carts.length === 0) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] bg-[var(--cf-bg)] py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="min-h-[calc(100vh-4rem)] bg-[var(--cf-bg)] text-[var(--cf-dark)]">
+        <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-10 pb-20">
+          <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold text-[var(--cf-dark)]">Danh sách giỏ hàng</h2>
-              <p className="text-[var(--cf-primary)]/65 mt-1">Quản lý các phiên mua sắm của bạn</p>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Giỏ hàng của bạn</h1>
+              <p className="text-[var(--cf-primary)]/70 text-lg mt-2">Bạn chưa có giỏ hàng nào đang chờ xử lý</p>
             </div>
             <button
               onClick={() => navigate(ROUTER_URL.MENU)}
-              className="bg-[var(--cf-primary)] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[var(--cf-dark)] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="group flex items-center gap-2 bg-[var(--cf-primary)] text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-[var(--cf-primary)]/20 cursor-pointer"
             >
-              <Plus size={18} />
+              <ArrowLeft size={18} />
               Tiếp tục mua sắm
             </button>
           </div>
 
-          <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-2xl border border-[var(--cf-primary)]/10">
-            <div className="w-24 h-24 bg-[var(--cf-bg)] rounded-full flex items-center justify-center mb-4">
-              <ShoppingBag size={44} className="text-[var(--cf-secondary)]/40" />
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-[var(--cf-primary)]/10 shadow-[0px_20px_60px_rgba(28,27,27,0.06)]">
+            <div className="w-32 h-32 bg-[var(--cf-bg)] rounded-full flex items-center justify-center mb-6">
+              <ShoppingBag size={52} className="text-[var(--cf-primary)]/45" />
             </div>
-            <h3 className="text-lg font-semibold text-[var(--cf-dark)]">Không tìm thấy giỏ hàng nào</h3>
-            <p className="text-[var(--cf-primary)]/60 max-w-xs mx-auto mt-2">
-              Bạn chưa có giỏ hàng nào được tạo. Hãy bắt đầu mua sắm ngay.
+            <h2 className="text-2xl font-bold mb-2">Bạn chưa có giỏ hàng nào</h2>
+            <p className="text-[var(--cf-primary)]/60 mb-8 max-w-xs mx-auto">
+              Khám phá thực đơn đặc biệt của chúng tôi và bắt đầu hành trình hương vị.
             </p>
             <button
               onClick={() => navigate(ROUTER_URL.MENU)}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 bg-[var(--cf-secondary)] text-white font-semibold rounded-lg hover:bg-[var(--cf-dark)] transition-colors cursor-pointer"
+              className="bg-[var(--cf-primary)] text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-[var(--cf-primary)]/20 hover:bg-[var(--cf-dark)] transition-colors cursor-pointer"
             >
-              <ArrowLeft size={20} />
-              Tạo giỏ hàng mới
+              Khám phá ngay
             </button>
           </div>
         </div>
@@ -60,25 +59,25 @@ function Cart() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[var(--cf-bg)] py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="min-h-[calc(100vh-4rem)] bg-[var(--cf-bg)] text-[var(--cf-dark)]">
+      <div className="max-w-screen-2xl mx-auto px-4 md:px-8 pt-10 pb-24">
+        <section className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
-            <h2 className="text-2xl font-bold text-[var(--cf-dark)]">Danh sách giỏ hàng</h2>
-            <p className="text-[var(--cf-primary)]/65 mt-1">
-              Có {carts.length} cart hoạt động, tổng {totalItems} sản phẩm
+            <h1 className="text-4xl font-extrabold text-[var(--cf-dark)] mb-2 tracking-tight">Giỏ hàng của bạn</h1>
+            <p className="text-[var(--cf-primary)]/75 text-lg">
+              Bạn có {carts.length} giỏ hàng đang chờ xử lý
             </p>
           </div>
           <button
             onClick={() => navigate(ROUTER_URL.MENU)}
-            className="bg-[var(--cf-primary)] text-white px-5 py-2.5 rounded-lg font-medium hover:bg-[var(--cf-dark)] shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="group flex items-center gap-2 bg-[var(--cf-primary)] text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-[var(--cf-primary)]/20 cursor-pointer"
           >
-            <Plus size={18} />
+            <ArrowLeft size={18} />
             Tiếp tục mua sắm
           </button>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {carts.map((cart) => (
             <CartSummaryCard
               cart={cart}
@@ -89,9 +88,11 @@ function Cart() {
           ))}
         </div>
 
-        <div className="mt-8 bg-white rounded-xl border border-[var(--cf-primary)]/10 p-4 flex items-center justify-between">
-          <p className="text-sm text-[var(--cf-primary)]/70">Tổng giá trị tất cả cart đang hoạt động</p>
-          <p className="text-2xl font-black text-[var(--cf-primary)]">{totalAmount.toLocaleString('vi-VN')} ₫</p>
+        <div className="mt-10 bg-white rounded-2xl border border-[var(--cf-primary)]/10 p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-[0px_12px_32px_rgba(28,27,27,0.04)]">
+          <p className="text-sm md:text-base text-[var(--cf-primary)]/75">
+            Tổng giá trị tất cả giỏ hàng đang hoạt động: <span className="font-semibold">{totalItems} sản phẩm</span>
+          </p>
+          <p className="text-2xl md:text-3xl font-black text-[var(--cf-primary)] tracking-tight">{totalAmount.toLocaleString('vi-VN')} đ</p>
         </div>
       </div>
     </div>

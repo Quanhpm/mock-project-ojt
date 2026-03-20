@@ -1,10 +1,18 @@
 export interface CartSummaryView {
   id: string;
   franchiseId: string;
+  franchiseName: string;
   status: string;
   totalAmount: number;
   itemsCount: number;
   createdAt: string;
+  itemsPreview: Array<{
+    id: string;
+    name: string;
+    imageUrl: string;
+    quantity: number;
+    optionSummary: string;
+  }>;
 }
 
 export interface CartDetailItemView {
@@ -160,9 +168,35 @@ export const extractCartsFromPayload = (payload: unknown): Record<string, unknow
 
 export const toCartSummary = (cart: Record<string, unknown>): CartSummaryView => {
   const items = extractCartItems(cart);
+
+  const itemsPreview = items.slice(0, 3).map((item) => {
+    const itemOptions = Array.isArray(item.options)
+      ? item.options.filter(isRecord)
+      : [];
+
+    const optionSummary = itemOptions
+      .map((option) => {
+        const optionName = pickString(option.product_name, option.name);
+        const optionQty = Math.max(1, Math.floor(pickNumber(option.quantity, 1)));
+        if (!optionName) return '';
+        return `${optionName} x${optionQty}`;
+      })
+      .filter(Boolean)
+      .join(', ');
+
+    return {
+      id: pickString(item.cart_item_id, item.id, item._id),
+      name: pickString(item.product_name, item.name, 'Sản phẩm trong giỏ'),
+      imageUrl: pickString(item.product_image_url, item.image_url),
+      quantity: Math.max(1, Math.floor(pickNumber(item.quantity, item.qty, 1))),
+      optionSummary,
+    };
+  });
+
   return {
     id: pickString(cart.id, cart._id, cart.cart_id),
     franchiseId: pickString(cart.franchise_id, cart.franchiseId),
+    franchiseName: pickString(cart.franchise_name, 'Cửa hàng đang hoạt động'),
     status: pickString(cart.status, 'ACTIVE'),
     totalAmount: pickNumber(
       cart.final_amount,
@@ -174,6 +208,7 @@ export const toCartSummary = (cart: Record<string, unknown>): CartSummaryView =>
     ),
     itemsCount: Math.max(0, Math.floor(pickNumber(cart.total_items, cart.items_count, items.length))),
     createdAt: pickString(cart.created_at, cart.createdAt),
+    itemsPreview,
   };
 };
 
