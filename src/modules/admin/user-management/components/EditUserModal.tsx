@@ -179,6 +179,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         avatar_url: avatarUrl,
       })
       setSuccessMsg('User information updated successfully!')
+      onSuccess()
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Failed to update user.'

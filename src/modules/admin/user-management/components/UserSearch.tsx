@@ -165,7 +165,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
                 }
               }}
               onKeyDown={handleSearchKeyDown}
-              placeholder="Tìm kiếm theo tên, email, số điện thoại... (Ctrl+K)"
+              placeholder="Search by name, email, phone... (Ctrl+K)"
               className="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
             />
 
@@ -197,7 +197,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                 <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center">
                   <span className="text-xs font-semibold text-slate-500 uppercase">
-                    Tìm kiếm gần đây
+                    Recent searches
                   </span>
                   <button
                     onClick={(e) => {
@@ -207,7 +207,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
                     }}
                     className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                   >
-                    Xóa
+                    Clear
                   </button>
                 </div>
                 {searchHistory.map((item, index) => (
@@ -257,7 +257,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
-          Tìm kiếm
+          Search
         </button>
       </div>
 
@@ -269,9 +269,9 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           onChange={(e) => handleStatusFilterChange(e.target.value)}
           className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
-          <option value="">Tất cả trạng thái</option>
-          <option value="true">Đang hoạt động</option>
-          <option value="false">Ngừng hoạt động</option>
+          <option value="">All statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
         </select>
 
         {/* Deleted Filter */}
@@ -282,8 +282,8 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           }
           className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
-          <option value="false">Chưa xóa</option>
-          <option value="true">Đã xóa</option>
+          <option value="false">Not deleted</option>
+          <option value="true">Deleted</option>
         </select>
 
         {/* Clear Filters Button */}
@@ -291,7 +291,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           onClick={onClearFilters}
           className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap"
         >
-          Xóa bộ lọc
+          Clear filters
         </button>
       </div>
     </div>

@@ -195,7 +195,7 @@ export function FranchiseSearch({
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Tìm kiếm theo tên, mã, địa chỉ... (Ctrl+K)"
+              placeholder="Search by name, code, address... (Ctrl+K)"
               value={filters.keyword}
               onChange={(e) => {
                 setFilters((prev) => ({
@@ -317,7 +317,7 @@ export function FranchiseSearch({
                       textTransform: "uppercase",
                     }}
                   >
-                    Tìm kiếm gần đây
+                    Recent searches
                   </span>
                   <button
                     onClick={(e) => {
@@ -342,7 +342,7 @@ export function FranchiseSearch({
                       transition: "all 0.2s",
                     }}
                   >
-                    Xóa
+                    Clear
                   </button>
                 </div>
                 {searchHistory.map((item, index) => (
@@ -434,7 +434,7 @@ export function FranchiseSearch({
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.35-4.35" />
           </svg>
-          Tìm kiếm
+          Search
         </button>
       </div>
 
@@ -465,9 +465,9 @@ export function FranchiseSearch({
             minWidth: "160px",
           }}
         >
-          <option value="null">Tất cả trạng thái</option>
-          <option value="true">Đang hoạt động</option>
-          <option value="false">Ngừng hoạt động</option>
+          <option value="null">All statuses</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
         </select>
 
         {/* Deleted Filter */}
@@ -486,8 +486,8 @@ export function FranchiseSearch({
             minWidth: "140px",
           }}
         >
-          <option value="false">Chưa xóa</option>
-          <option value="true">Đã xóa</option>
+          <option value="false">Not deleted</option>
+          <option value="true">Deleted</option>
         </select>
 
         {/* Clear Filters Button */}
@@ -512,7 +512,7 @@ export function FranchiseSearch({
             whiteSpace: "nowrap",
           }}
         >
-          Xóa bộ lọc
+          Clear filters
         </button>
       </div>
     </div>
