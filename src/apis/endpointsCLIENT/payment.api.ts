@@ -124,8 +124,8 @@ export const refundPayment = (
     });
 }
 
-export const getOrderbyId = (id: string): Promise<OrderResponse | null> => {
+export const getOrderbyCartId = (id: string): Promise<OrderResponse | null> => {
     return httpClient.get<OrderResponse>({
-        url: `orders/${id}`
+        url: `orders/cart/${id}`
     })
 }

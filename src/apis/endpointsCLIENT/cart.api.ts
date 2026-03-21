@@ -52,6 +52,12 @@ export interface CountCustomerCartsResponse {
   count: number;
 }
 
+interface CheckoutCartRequest {
+  address: string;
+  phone: string;
+  message?: string;
+}
+
 export const addCartItem = (
   data: AddCartItemRequest,
 ): Promise<null> => {
@@ -169,9 +175,11 @@ export const removeVoucher = (
 
 export const checkoutCart = (
   cartId: string,
+  data: CheckoutCartRequest
 ): Promise<null> => {
-  return httpClient.put<null, never>({
+  return httpClient.put<null, CheckoutCartRequest>({
     url: `/carts/${cartId}/checkout`,
+    data,
   });
 };
 

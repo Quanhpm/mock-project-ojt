@@ -17,7 +17,7 @@ function Discount({ label, value }: DiscountProps) {
 }
 
 interface PriceSummaryProps {
-    orderData?: OrderResponse;
+    orderData?: OrderResponse | null;
 }
 
 export function PriceSummary({ orderData }: PriceSummaryProps) {
