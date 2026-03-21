@@ -8,6 +8,7 @@ import { ProfilePage } from "@/modules/client/auth-client";
 // Lazy load private pages
 const OrderHistoryPage = React.lazy(() => import("@/modules/client/order-history"));
 const CartPage = React.lazy(() => import("@/modules/client/cart/pages/Cart"));
+const CartDetailPage = React.lazy(() => import("@/modules/client/cart/pages/CartDetail"));
 const FranchisePage = React.lazy(() => import("@/modules/client/franchise"));
 const PaymentPage = React.lazy(() => import("@/modules/client/payment/pages/Payment"))
 
@@ -21,6 +22,7 @@ export const HomePrivateRoutes = (
   <Route element={<ClientGuard />}>
     <Route element={<ClientLayout />}>
       <Route path={ROUTER_URL.HOME_ROUTER.CART} element={<CartPage />} />
+      <Route path={ROUTER_URL.HOME_ROUTER.CART_DETAIL} element={<CartDetailPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.FRANCHISE} element={<FranchisePage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.ORDER_HISTORY} element={<OrderHistoryPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.PROFILE} element={<ProfilePage />} />

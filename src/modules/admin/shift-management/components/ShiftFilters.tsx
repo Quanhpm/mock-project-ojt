@@ -81,13 +81,11 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {isFranchiseLocked && (
-            <div className="min-w-[220px] rounded-lg bg-slate-100 px-3 py-2.5 ring-1 ring-inset ring-slate-200">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Franchise Scope
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-800">
+            <div className="flex h-[44px] min-w-[220px] items-center gap-2 rounded-lg bg-slate-100 px-3 ring-1 ring-inset ring-slate-200">
+              <span className="material-symbols-outlined text-[18px] text-slate-400">lock</span>
+              <span className="truncate text-sm font-medium text-slate-800">
                 {selectedFranchiseName || 'Selected franchise'}
-              </div>
+              </span>
             </div>
           )}
 
@@ -132,7 +130,7 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {!isAssignmentView && (
-            <div className="inline-flex min-w-[170px] items-center rounded-lg bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+            <div className="inline-flex h-[44px] min-w-[170px] items-center rounded-lg bg-slate-100 px-3 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
               Shift overview filters
             </div>
           )}

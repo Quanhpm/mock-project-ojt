@@ -111,7 +111,7 @@ export default function PromotionTable() {
         pageInfo: { pageNum: resolvedPage, pageSize: PAGE_SIZE },
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
     [keyword, franchiseFilter, typeFilter, isActiveFilter, showDeleted, refetch],
   );
 

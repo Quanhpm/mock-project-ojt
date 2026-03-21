@@ -6,21 +6,21 @@ import { X, Loader2, Tag } from "lucide-react";
 import { useGetPromotionById } from "./hooks/useGetPromotionById";
 import { useUpdatePromotion } from "./hooks/useUpdatePromotion";
 
-const updatePromotionSchema = z.object({
-  name: z.string().min(1, "Tên promotion là bắt buộc"),
-  franchise_id: z.string().min(1, "Franchise là bắt buộc"),
-  product_franchise_id: z.string().optional(),
-  type: z.enum(["FIXED", "PERCENT"]).pipe(z.enum(["FIXED", "PERCENT"])),
-  value: z
-    .number()
-    .positive("Giá trị phải lớn hơn 0"),
-  quota_total: z
-    .number()
-    .int("Số lượng phải là số nguyên")
-    .positive("Số lượng phải lớn hơn 0"),
-  start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
-  end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
-}).refine(
+const updatePromotionSchema = z
+  .object({
+    name: z.string().min(1, "Tên promotion là bắt buộc"),
+    type: z.enum(["FIXED", "PERCENT"], { required_error: "Loại promotion là bắt buộc" }),
+    value: z
+      .number({ invalid_type_error: "Giá trị phải là số" })
+      .positive("Giá trị phải lớn hơn 0"),
+    quota_total: z
+      .number({ invalid_type_error: "Số lượng phải là số" })
+      .int("Số lượng phải là số nguyên")
+      .positive("Số lượng phải lớn hơn 0"),
+    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
+    end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
+  })
+  .refine(
     (data) => {
       if (data.start_date && data.end_date) {
         return new Date(data.start_date) < new Date(data.end_date);
@@ -28,6 +28,15 @@ const updatePromotionSchema = z.object({
       return true;
     },
     { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
+  )
+  .refine(
+    (data) => {
+      if (data.type === "PERCENT" && data.value > 100) {
+        return false;
+      }
+      return true;
+    },
+    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
   );
 
 type UpdatePromotionFormValues = z.infer<typeof updatePromotionSchema>;
@@ -84,10 +93,38 @@ export default function PromotionEditModal({
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UpdatePromotionFormValues>({
     resolver: zodResolver(updatePromotionSchema),
   });
+
+  const selectedType = watch("type");
+  const currentValue = watch("value");
+
+  // Format value display based on type
+  const formatValueDisplay = (value: number) => {
+    if (selectedType === "PERCENT") {
+      return value.toString();
+    }
+    // FIXED: format as Vietnamese currency
+    return value.toLocaleString("vi-VN");
+  };
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
+    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
+    setValue("value", numValue, { shouldValidate: true });
+  };
+
+  const getValuePlaceholder = () => {
+    return selectedType === "PERCENT" ? "0-100" : "0";
+  };
+
+  const getValueSuffix = () => {
+    return selectedType === "PERCENT" ? " %" : " VND";
+  };
 
   useEffect(() => {
     if (isOpen && promotionId) {
@@ -286,16 +323,42 @@ export default function PromotionEditModal({
                     <label style={labelStyle}>
                       Giá trị <span style={{ color: "#ef4444" }}>*</span>
                     </label>
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      {...register("value", { valueAsNumber: true })}
-                      placeholder="0"
-                      style={inputStyle}
-                    />
+                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={formatValueDisplay(currentValue)}
+                        onChange={handleValueChange}
+                        placeholder={getValuePlaceholder()}
+                        style={inputStyle}
+                      />
+                      <span style={{
+                        position: "absolute",
+                        right: "12px",
+                        color: "#9ca3af",
+                        fontSize: "14px",
+                        pointerEvents: "none",
+                      }}>
+                        {getValueSuffix()}
+                      </span>
+                    </div>
                     {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
                   </div>
+                </div>
+
+                {/* Quota Total */}
+                <div>
+                  <label style={labelStyle}>
+                    Số lượng tổng <span style={{ color: "#ef4444" }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    {...register("quota_total", { valueAsNumber: true })}
+                    placeholder="10"
+                    style={inputStyle}
+                  />
+                  {errors.quota_total && <p style={errorStyle}>{errors.quota_total.message}</p>}
                 </div>
 
                 {/* Date range */}

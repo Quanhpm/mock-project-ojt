@@ -60,6 +60,7 @@ export type CartItemInput = Omit<CartItem, 'id' | 'quantity'>;
 
 interface CartState {
   items: CartItem[];
+  setItems: (items: CartItem[]) => void;
   addItem: (product: CartItemInput, quantity?: number) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -83,7 +84,7 @@ export const formatOptionsNote = (item: CartItem) => {
   const iceText = `ice: ${opt.ice.label}`;
   const toppingText =
     opt.toppings?.length
-      ? `topping: ${opt.toppings.map(t => t.code).join(', ')}`
+      ? `topping: ${opt.toppings.map(t => t.name).join(', ')}`
       : '';
   return [sizeText, sugarText, iceText, toppingText].filter(Boolean).join(' || ');
 };
@@ -94,6 +95,10 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+
+      setItems: (items) => {
+        set({ items });
+      },
 
       /**
        * Add a product to the cart.

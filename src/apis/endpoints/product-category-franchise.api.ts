@@ -8,10 +8,43 @@ export interface ProductCategoryFranchiseItem {
     category_franchise_id: string;
     product_franchise_id: string;
     display_order: number;
+    category_id?: string;
+    category_name?: string;
+    franchise_id?: string;
+    franchise_name?: string;
+    franchise_code?: string;
+    product_id?: string;
+    product_name?: string;
+    product_sku?: string;
+    size?: string;
+    price_base?: number;
     is_active?: boolean;
     is_deleted?: boolean;
     created_at?: string;
     updated_at?: string;
+}
+
+export interface ProductCategoryRef {
+    category_id: string;
+    category_name: string;
+}
+
+export interface ProductWithCategoriesApiItem {
+    id: string;
+    product_franchise_id: string;
+    product_id: string;
+    product_name: string;
+    product_sku: string;
+    size: string;
+    price_base: number;
+    franchise_id: string;
+    franchise_name: string;
+    franchise_code: string;
+    is_active: boolean;
+    is_deleted: boolean;
+    created_at: string;
+    updated_at: string;
+    categories: ProductCategoryRef[];
 }
 
 export interface AddProductToCategoryFranchiseRequest {
@@ -75,6 +108,14 @@ export const getProductCategoryFranchiseById = (
 ): Promise<ProductCategoryFranchiseItem | null> => {
     return httpClient.get<ProductCategoryFranchiseItem>({
         url: `/product-category-franchises/${itemId}`,
+    });
+};
+
+export const getProductsByFranchiseWithCategory = (
+    franchiseId: string,
+): Promise<ProductWithCategoriesApiItem[] | null> => {
+    return httpClient.get<ProductWithCategoriesApiItem[]>({
+        url: `/product-category-franchises/franchise/${franchiseId}`,
     });
 };
 

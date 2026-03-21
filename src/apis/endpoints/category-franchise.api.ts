@@ -8,6 +8,7 @@ export interface CategoryFranchiseItem {
     id: string;
     franchise_id: string;
     category_id: string;
+    category_name?: string;
     display_order: number;
     is_active?: boolean;
     is_deleted?: boolean;
@@ -46,6 +47,7 @@ export interface FranchiseCategoryListItem {
     id: string;
     franchise_id: string;
     category_id: string;
+    category_name?: string;
     display_order: number;
     category?: CategoryItem;
 }
