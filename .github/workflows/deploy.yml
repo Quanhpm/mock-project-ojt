@@ -28,7 +28,7 @@ jobs:
           context: .
           push: true
           # Thay 'ten_repo_docker' bằng tên repo bạn tạo trên Docker Hub
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ten_repo_docker:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-app:latest
           # Giúp build nhanh hơn bằng cách cache các layer
           cache-from: type=gha
           cache-to: type=inline
