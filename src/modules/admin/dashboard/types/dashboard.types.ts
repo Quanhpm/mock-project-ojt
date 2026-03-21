@@ -172,3 +172,20 @@ export interface DashboardFilters {
   endDate: Date;
   franchiseId?: string;
 }
+
+export interface DashboardInfoData {
+  countUsers: number;
+  countUserFranchises: number;
+  countCustomers: number;
+  countCustomerFranchises: number;
+  countProducts: number;
+  countProductFranchises: number;
+  countOrders: Record<string, number>;
+  countPayments: Record<string, number>;
+  countDeliveries: Record<string, number>;
+}
+
+export interface DistributionChartItem {
+  name: string;
+  count: number;
+}
