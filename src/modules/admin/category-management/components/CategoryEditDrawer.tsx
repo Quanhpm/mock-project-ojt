@@ -62,8 +62,9 @@ export default function CategoryEditDrawer({
         onClick={onClose}
       />
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 border-l border-slate-200">
+      {/* Center Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
         {/* Drawer Header */}
         <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
           <div>
@@ -197,13 +198,13 @@ export default function CategoryEditDrawer({
         </div>
 
         {/* Drawer Footer */}
-        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-end gap-3 mt-auto">
+        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-between gap-3 mt-auto">
           <button
             onClick={onClose}
             disabled={isUpdating || isToggling}
             className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            Close
           </button>
           <button
             onClick={handleSave}
@@ -215,6 +216,7 @@ export default function CategoryEditDrawer({
           </button>
         </div>
       </div>
+    </div>
     </>
   );
 }

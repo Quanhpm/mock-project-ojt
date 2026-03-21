@@ -17,7 +17,7 @@ export const useGetCategory = (id: string | undefined) => {
         const data = await getCategoryFranchiseById(id);
         setCategory(data);
       } catch (error) {
-        showError("Không thể tải thông tin danh mục");
+        showError("Failed to load category information");
       } finally {
         setIsLoading(false);
       }

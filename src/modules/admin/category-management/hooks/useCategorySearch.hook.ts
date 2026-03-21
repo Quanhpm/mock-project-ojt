@@ -27,7 +27,7 @@ export const useCategorySearch = (options?: UseCategorySearchOptions) => {
   const buildSearchCondition = useCallback(
     (filters: CategoryFranchiseSearchFilters) => {
       const searchCondition: CategoryFranchiseSearchPayload["searchCondition"] = {
-        is_deleted: false,
+        is_deleted: filters.is_deleted,
       };
 
       if (tableScope === "FRANCHISE_TABLE_SCOPE" && franchiseId) {
@@ -92,8 +92,6 @@ export const useCategorySearch = (options?: UseCategorySearchOptions) => {
       void refetch();
     }
   }, [franchiseId, refetch, setCurrentPage, tableScope]);
-
-  return search;
 
   return search;
 };

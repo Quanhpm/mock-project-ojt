@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { X, FolderPlus, Settings, Save } from "lucide-react";
 import { getCategorySelectItems } from "../api/category-franchise.api";
 import { useCreateMasterCategory } from "./hooks/useCreateMasterCategory";
 import type { CategorySelectItem } from "../api/category-franchise.types";
+
+interface MasterCategoryFormValues {
+  code: string;
+  name: string;
+  description: string;
+  parent_id: string;
+}
 
 interface MasterCategoryCreateDrawerProps {
   isOpen: boolean;
@@ -17,20 +25,23 @@ export default function MasterCategoryCreateDrawer({
 }: MasterCategoryCreateDrawerProps) {
   const { createCategory, isCreating } = useCreateMasterCategory();
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<MasterCategoryFormValues>({
+    defaultValues: {
+      code: "",
+      name: "",
+      description: "",
+      parent_id: "",
+    },
+  });
+
   const [categories, setCategories] = useState<CategorySelectItem[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
-
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    description: "",
-    parent_id: "",
-  });
-
-  const [errors, setErrors] = useState({
-    code: "",
-    name: "",
-  });
 
   // Load parent categories
   useEffect(() => {
@@ -51,40 +62,14 @@ export default function MasterCategoryCreateDrawer({
     loadCategories();
   }, [isOpen]);
 
-  const validateForm = () => {
-    const newErrors = {
-      code: "",
-      name: "",
-    };
-
-    if (!formData.code.trim()) {
-      newErrors.code = "Category code is required";
-    } else if (!/^[A-Z0-9_]+$/.test(formData.code)) {
-      newErrors.code = "Code must be uppercase letters, numbers, and underscores only";
-    }
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Category name is required";
-    }
-
-    setErrors(newErrors);
-    return !newErrors.code && !newErrors.name;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+  const onSubmit = async (data: MasterCategoryFormValues) => {
     try {
-      const payload = {
-        code: formData.code.trim(),
-        name: formData.name.trim(),
-        description: formData.description.trim() || "",
-        parent_id: formData.parent_id || "",
-      };
-
-      await createCategory(payload);
+      await createCategory({
+        code: data.code.trim(),
+        name: data.name.trim(),
+        description: data.description.trim() || "",
+        parent_id: data.parent_id || "",
+      });
       handleClose();
       onSuccess?.();
     } catch (error) {
@@ -93,16 +78,7 @@ export default function MasterCategoryCreateDrawer({
   };
 
   const handleClose = () => {
-    setFormData({
-      code: "",
-      name: "",
-      description: "",
-      parent_id: "",
-    });
-    setErrors({
-      code: "",
-      name: "",
-    });
+    reset();
     onClose();
   };
 
@@ -116,8 +92,9 @@ export default function MasterCategoryCreateDrawer({
         onClick={handleClose}
       />
 
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right">
+      {/* Center Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-[#8B5A2B]/5 to-transparent">
           <div className="flex items-center gap-3">
@@ -176,10 +153,14 @@ export default function MasterCategoryCreateDrawer({
                 </label>
                 <input
                   type="text"
-                  value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                  }
+                  {...register("code", {
+                    required: "Category code is required",
+                    pattern: {
+                      value: /^[A-Z0-9_]+$/,
+                      message: "Code must be uppercase letters, numbers, and underscores only",
+                    },
+                  })}
+                  onChange={(e) => setValue("code", e.target.value.toUpperCase())}
                   placeholder="e.g. FNB_TOPPING"
                   className={`w-full h-11 px-4 rounded-lg border ${
                     errors.code
@@ -188,7 +169,7 @@ export default function MasterCategoryCreateDrawer({
                   } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors placeholder:text-slate-400`}
                 />
                 {errors.code && (
-                  <p className="text-xs text-red-500 mt-1">{errors.code}</p>
+                  <p className="text-xs text-red-500 mt-1">{errors.code.message}</p>
                 )}
                 <p className="text-xs text-slate-500 mt-1">
                   Use uppercase letters, numbers, and underscores (e.g. FNB_COFFEE, ICE_BLENDED)
@@ -202,10 +183,7 @@ export default function MasterCategoryCreateDrawer({
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
+                  {...register("name", { required: "Category name is required" })}
                   placeholder="e.g. Topping"
                   className={`w-full h-11 px-4 rounded-lg border ${
                     errors.name
@@ -214,7 +192,7 @@ export default function MasterCategoryCreateDrawer({
                   } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors placeholder:text-slate-400`}
                 />
                 {errors.name && (
-                  <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                  <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
                 )}
                 <p className="text-xs text-slate-500 mt-1">
                   Display name shown to customers and staff
@@ -228,10 +206,7 @@ export default function MasterCategoryCreateDrawer({
                 </label>
                 <div className="relative">
                   <select
-                    value={formData.parent_id}
-                    onChange={(e) =>
-                      setFormData({ ...formData, parent_id: e.target.value })
-                    }
+                    {...register("parent_id")}
                     disabled={isLoadingCategories}
                     className="w-full h-11 pl-4 pr-10 appearance-none rounded-lg border border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B] bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
                   >
@@ -273,10 +248,7 @@ export default function MasterCategoryCreateDrawer({
                   Description
                 </label>
                 <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  {...register("description")}
                   placeholder="Optional description for internal use..."
                   rows={3}
                   className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B] bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors resize-none placeholder:text-slate-400"
@@ -292,40 +264,36 @@ export default function MasterCategoryCreateDrawer({
         {/* Footer */}
         <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              * Required fields must be filled out
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isCreating}
-                className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isCreating}
-                className="px-6 py-2.5 rounded-lg bg-[#8B5A2B] text-white text-sm font-semibold hover:bg-[#724a23] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
-              >
-                {isCreating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Create Category
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isCreating}
+              className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+              disabled={isCreating}
+              className="px-6 py-2.5 rounded-lg bg-[#8B5A2B] text-white text-sm font-semibold hover:bg-[#724a23] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            >
+              {isCreating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Create Category
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
+    </div>
     </>
   );
 }

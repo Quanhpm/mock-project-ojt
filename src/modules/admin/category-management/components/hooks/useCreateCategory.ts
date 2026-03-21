@@ -11,10 +11,10 @@ export const useCreateCategory = () => {
     setIsCreating(true);
     try {
       const result = await createCategoryFranchise(payload);
-      success("Thêm danh mục vào chi nhánh thành công");
+      success("Category assigned to franchise successfully");
       return result;
     } catch (error) {
-      showError("Thêm danh mục thất bại");
+      showError("Failed to add category");
       throw error;
     } finally {
       setIsCreating(false);

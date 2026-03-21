@@ -11,10 +11,10 @@ export const useToggleStatus = () => {
     try {
       await toggleCategoryFranchiseStatus(id, { is_active: !currentStatus });
       success(
-        `${!currentStatus ? "Kích hoạt" : "Vô hiệu hóa"} danh mục thành công`
+        `Category ${!currentStatus ? "activated" : "deactivated"} successfully`
       );
     } catch (error) {
-      showError("Thay đổi trạng thái thất bại");
+      showError("Failed to update category status");
       throw error;
     } finally {
       setIsToggling(false);

@@ -11,10 +11,10 @@ export const useCreateMasterCategory = () => {
     setIsCreating(true);
     try {
       const result = await createMasterCategory(payload);
-      success("Tạo danh mục chính thành công");
+      success("Master category created successfully");
       return result;
     } catch (error) {
-      showError("Tạo danh mục thất bại");
+      showError("Failed to create category");
       throw error;
     } finally {
       setIsCreating(false);

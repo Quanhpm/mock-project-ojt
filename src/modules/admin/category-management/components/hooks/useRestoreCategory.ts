@@ -10,9 +10,9 @@ export const useRestoreCategory = () => {
     setIsRestoring(true);
     try {
       await restoreCategoryFranchise(id);
-      success("Khôi phục danh mục thành công");
+      success("Category restored successfully");
     } catch (error) {
-      showError("Khôi phục danh mục thất bại");
+      showError("Failed to restore category");
       throw error;
     } finally {
       setIsRestoring(false);

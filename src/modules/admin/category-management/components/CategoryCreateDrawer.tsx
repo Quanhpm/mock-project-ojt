@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { X, FolderPlus, Settings, Save, MapPin } from "lucide-react";
 import { getCategorySelectItems } from "../api/category-franchise.api";
 import { useCreateCategory } from "./hooks/useCreateCategory";
@@ -27,6 +28,30 @@ export default function CategoryCreateDrawer({
   const { createCategory, isCreating } = useCreateCategory();
   const { error: showError } = useToast();
 
+  interface CreateCategoryFormValues {
+    franchise_id: string;
+    category_id: string;
+    display_order: number;
+  }
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<CreateCategoryFormValues>({
+    defaultValues: {
+      franchise_id: franchiseId || "",
+      category_id: "",
+      display_order: 1,
+    },
+  });
+
+  const watchedFranchiseId = watch("franchise_id");
+  const effectiveFranchiseId = isGlobalRole ? watchedFranchiseId : authFranchiseId;
+
   const [categories, setCategories] = useState<CategorySelectItem[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [loadCategoriesError, setLoadCategoriesError] = useState(false);
@@ -34,21 +59,6 @@ export default function CategoryCreateDrawer({
   const [franchises, setFranchises] = useState<FranchiseSelectItem[]>([]);
   const [isLoadingFranchises, setIsLoadingFranchises] = useState(false);
   const [loadFranchisesError, setLoadFranchisesError] = useState(false);
-
-  const [formData, setFormData] = useState({
-    franchise_id: "",
-    category_id: "",
-    display_order: 1,
-  });
-
-  const [errors, setErrors] = useState({
-    franchise_id: "",
-    category_id: "",
-    display_order: "",
-  });
-
-  // Determine effective franchise ID
-  const effectiveFranchiseId = isGlobalRole ? formData.franchise_id : authFranchiseId;
 
   // Load master categories
   useEffect(() => {
@@ -64,7 +74,7 @@ export default function CategoryCreateDrawer({
         console.error("Failed to load categories:", error);
         setLoadCategoriesError(true);
         if (showError) {
-          showError("Không thể tải danh sách danh mục");
+          showError("Failed to load categories");
         }
       } finally {
         setIsLoadingCategories(false);
@@ -88,7 +98,7 @@ export default function CategoryCreateDrawer({
         console.error("Failed to load franchises:", error);
         setLoadFranchisesError(true);
         if (showError) {
-          showError("Không thể tải danh sách franchise");
+          showError("Failed to load franchises");
         }
       } finally {
         setIsLoadingFranchises(false);
@@ -101,58 +111,24 @@ export default function CategoryCreateDrawer({
   // Reset form when drawer opens
   useEffect(() => {
     if (isOpen) {
-      setFormData({
+      reset({
         franchise_id: franchiseId || "",
         category_id: "",
         display_order: 1,
       });
     }
-  }, [isOpen, franchiseId]);
+  }, [isOpen, franchiseId, reset]);
 
-  const validateForm = () => {
-    const newErrors = {
-      franchise_id: "",
-      category_id: "",
-      display_order: "",
-    };
-
-    if (isGlobalRole && !formData.franchise_id) {
-      newErrors.franchise_id = "Please select a franchise";
-    }
-
-    if (!formData.category_id) {
-      newErrors.category_id = "Please select a category";
-    }
-
-    if (formData.display_order < 1) {
-      newErrors.display_order = "Display order must be at least 1";
-    }
-
-    setErrors(newErrors);
-    return !newErrors.franchise_id && !newErrors.category_id && !newErrors.display_order;
-  };
-
-  const handleSave = async () => {
-    if (!effectiveFranchiseId) {
-      return;
-    }
-
-    if (!validateForm()) {
-      return;
-    }
+  const onSubmit = async (data: CreateCategoryFormValues) => {
+    if (!effectiveFranchiseId) return;
 
     try {
       await createCategory({
         franchise_id: effectiveFranchiseId,
-        category_id: formData.category_id,
-        display_order: formData.display_order,
+        category_id: data.category_id,
+        display_order: data.display_order,
       });
-
-      setFormData({
-        franchise_id: "",
-        category_id: "",
-        display_order: 1,
-      });
+      reset();
       onSuccess?.();
       handleClose();
     } catch (error) {
@@ -161,11 +137,7 @@ export default function CategoryCreateDrawer({
   };
 
   const handleClose = () => {
-    setErrors({
-      franchise_id: "",
-      category_id: "",
-      display_order: "",
-    });
+    reset();
     onClose();
   };
 
@@ -256,48 +228,42 @@ export default function CategoryCreateDrawer({
                       Franchise <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <select
-                        value={formData.franchise_id}
-                        onChange={(e) =>
-                          setFormData({ ...formData, franchise_id: e.target.value })
-                        }
-                        disabled={!!franchiseId || isLoadingFranchises || loadFranchisesError}
-                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.franchise_id
-                          ? "border-red-300 focus:ring-red-200 focus:border-red-500"
-                          : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
-                          } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
-                      >
-                        <option value="">
-                          {isLoadingFranchises
-                            ? "Loading franchises..."
-                            : loadFranchisesError
-                              ? "Failed to load franchises"
-                              : "Select a franchise..."}
-                        </option>
-                        {franchises.map((franchise) => (
-                          <option key={franchise.value} value={franchise.value}>
-                            {franchise.name}
-                          </option>
-                        ))}
-                      </select>
+                      <Controller
+                        name="franchise_id"
+                        control={control}
+                        rules={isGlobalRole ? { required: "Please select a franchise" } : undefined}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            disabled={!!franchiseId || isLoadingFranchises || loadFranchisesError}
+                            className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.franchise_id
+                              ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                              : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                              } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+                          >
+                            <option value="">
+                              {isLoadingFranchises
+                                ? "Loading franchises..."
+                                : loadFranchisesError
+                                  ? "Failed to load franchises"
+                                  : "Select a franchise..."}
+                            </option>
+                            {franchises.map((franchise) => (
+                              <option key={franchise.value} value={franchise.value}>
+                                {franchise.name}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      />
                       <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                        <svg
-                          className="w-5 h-5 text-slate-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
+                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </div>
                     {errors.franchise_id && (
-                      <p className="text-xs text-red-500 mt-1">{errors.franchise_id}</p>
+                      <p className="text-xs text-red-500 mt-1">{errors.franchise_id.message}</p>
                     )}
                   </div>
                 </section>
@@ -317,48 +283,42 @@ export default function CategoryCreateDrawer({
                       Category <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <select
-                        value={formData.category_id}
-                        onChange={(e) =>
-                          setFormData({ ...formData, category_id: e.target.value })
-                        }
-                        disabled={isLoadingCategories || loadCategoriesError}
-                        className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.category_id
-                          ? "border-red-300 focus:ring-red-200 focus:border-red-500"
-                          : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
-                          } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
-                      >
-                        <option value="">
-                          {isLoadingCategories
-                            ? "Loading categories..."
-                            : loadCategoriesError
-                              ? "Failed to load categories"
-                              : "Select a category..."}
-                        </option>
-                        {categories.map((cat) => (
-                          <option key={cat.value} value={cat.value}>
-                            {cat.name} ({cat.code})
-                          </option>
-                        ))}
-                      </select>
+                      <Controller
+                        name="category_id"
+                        control={control}
+                        rules={{ required: "Please select a category" }}
+                        render={({ field }) => (
+                          <select
+                            {...field}
+                            disabled={isLoadingCategories || loadCategoriesError}
+                            className={`w-full h-11 pl-4 pr-10 appearance-none rounded-lg border ${errors.category_id
+                              ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                              : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                              } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed`}
+                          >
+                            <option value="">
+                              {isLoadingCategories
+                                ? "Loading categories..."
+                                : loadCategoriesError
+                                  ? "Failed to load categories"
+                                  : "Select a category..."}
+                            </option>
+                            {categories.map((cat) => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.name} ({cat.code})
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      />
                       <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                        <svg
-                          className="w-5 h-5 text-slate-400"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
+                        <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </div>
                     {errors.category_id && (
-                      <p className="text-xs text-red-500 mt-1">{errors.category_id}</p>
+                      <p className="text-xs text-red-500 mt-1">{errors.category_id.message}</p>
                     )}
                     <p className="text-xs text-slate-500 mt-1">
                       Choose from master categories to add to this franchise.
@@ -381,13 +341,11 @@ export default function CategoryCreateDrawer({
                   </label>
                   <input
                     type="number"
-                    value={formData.display_order}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        display_order: Number(e.target.value),
-                      })
-                    }
+                    {...register("display_order", {
+                      required: "Display order is required",
+                      min: { value: 1, message: "Display order must be at least 1" },
+                      valueAsNumber: true,
+                    })}
                     min="1"
                     className={`w-full h-11 px-4 rounded-lg border ${errors.display_order
                       ? "border-red-300 focus:ring-red-200 focus:border-red-500"
@@ -395,7 +353,7 @@ export default function CategoryCreateDrawer({
                       } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors`}
                   />
                   {errors.display_order && (
-                    <p className="text-xs text-red-500 mt-1">{errors.display_order}</p>
+                    <p className="text-xs text-red-500 mt-1">{errors.display_order.message}</p>
                   )}
                   <p className="text-xs text-slate-500 mt-1">
                     Lower numbers appear first in the menu. Categories are sorted by this value.
@@ -433,7 +391,7 @@ export default function CategoryCreateDrawer({
         </div>
 
         {/* Drawer Footer */}
-        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-end gap-3 mt-auto">
+        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-between gap-3 mt-auto">
           <button
             onClick={handleClose}
             disabled={isCreating}
@@ -442,7 +400,7 @@ export default function CategoryCreateDrawer({
             Cancel
           </button>
           <button
-            onClick={handleSave}
+            onClick={handleSubmit(onSubmit)}
             disabled={isCreating || isLoadingCategories}
             className="px-5 py-2.5 text-sm font-medium text-white bg-[#8B5A2B] border border-transparent rounded-lg hover:bg-[#8B5A2B]/90 focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/50 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >

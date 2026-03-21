@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw, Plus, AlertTriangle } from "lucide-react";
 import { searchProductCategoryFranchises, type ProductCategoryFranchise } from "../api/product-category-franchise.api";
 import { getCategoryFranchiseById } from "../api/category-franchise.api";
 import { useProductCategoryActions } from "../hooks/useProductCategoryActions.hook";
 import EditProductCategoryDrawer from "../components/EditProductCategoryDrawer";
+import AddProductToCategoryDrawer from "../components/AddProductToCategoryDrawer";
 import { getFranchiseId, useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { ROUTER_URL } from "@/routes/router.const";
 
@@ -39,11 +40,14 @@ export default function ProductsByCategoryPage() {
 
   const [products, setProducts] = useState<ProductCategoryFranchise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [keyword, setKeyword] = useState("");
+  const [inputKeyword, setInputKeyword] = useState("");
+  const [committedKeyword, setCommittedKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
   const [showDeleted, setShowDeleted] = useState(false);
   const [deleteModal, setDeleteModal] = useState<DeleteModal>({ isOpen: false, productId: "", productName: "" });
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductCategoryFranchise | null>(null);
+  const [isAssignDrawerOpen, setIsAssignDrawerOpen] = useState(false);
 
   const { deleteProduct, toggleStatus, restoreProduct, isDeleting, isToggling, isRestoring } = useProductCategoryActions(() => {
     fetchProducts();
@@ -109,7 +113,7 @@ export default function ProductsByCategoryPage() {
 
       setProducts(response.data);
     } catch (error) {
-      // Error handling
+      console.error("Failed to load products:", error);
     } finally {
       setIsLoading(false);
     }
@@ -145,22 +149,37 @@ export default function ProductsByCategoryPage() {
     setIsEditDrawerOpen(true);
   };
 
-  const filteredProducts = products.filter((item) =>
-    item.product_name?.toLowerCase().includes(keyword.toLowerCase())
-  );
+  const handleSearch = () => {
+    setCommittedKeyword(inputKeyword);
+  };
 
-  if (isLoading || isLoadingCategoryContext) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#8B5A2B] mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
-  if (!categoryContext.categoryFranchiseId) {
+  const handleClearFilter = () => {
+    setInputKeyword("");
+    setCommittedKeyword("");
+    setStatusFilter("all");
+    if (showDeleted) {
+      setShowDeleted(false);
+    }
+  };
+
+  const filteredProducts = products.filter((item) => {
+    const matchesKeyword =
+      committedKeyword === "" ||
+      item.product_name?.toLowerCase().includes(committedKeyword.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && item.is_active && !item.is_deleted) ||
+      (statusFilter === "inactive" && !item.is_active && !item.is_deleted);
+    return matchesKeyword && matchesStatus;
+  });
+
+  if (!categoryContext.categoryFranchiseId && !isLoading && !isLoadingCategoryContext) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
@@ -213,38 +232,78 @@ export default function ProductsByCategoryPage() {
                 <ArrowLeft size={20} />
                 <span>Back to Categories</span>
               </button>
+              <button
+                onClick={() => setIsAssignDrawerOpen(true)}
+                className="flex items-center justify-center gap-2 rounded-full h-10 px-6 bg-[#8B5A2B] text-white hover:bg-[#6d4622] transition-colors text-sm font-medium shadow-sm"
+              >
+                <Plus size={18} />
+                <span>Assign Product</span>
+              </button>
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-10">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {/* Search */}
-                <div className="flex-1 min-w-[300px]">
-                  <label className="flex w-full items-center rounded-lg bg-slate-50 border border-slate-100 px-3">
-                    <Search className="text-slate-400" size={20} />
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-8">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Search Input */}
+                <div className="flex-1 min-w-[220px]">
+                  <label className="flex w-full items-center rounded-lg bg-slate-50 border border-slate-200 px-3">
+                    <Search className="text-slate-400 shrink-0" size={18} />
                     <input
                       className="w-full bg-transparent border-none text-slate-900 focus:ring-0 placeholder:text-slate-400 px-2 py-2.5 text-sm outline-none"
-                      placeholder={`Search products in ${categoryContext.categoryName}...`}
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
+                      placeholder="Search products..."
+                      value={inputKeyword}
+                      onChange={(e) => setInputKeyword(e.target.value)}
+                      onKeyDown={handleKeyDown}
                     />
                   </label>
                 </div>
 
-                {/* Filter Buttons */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowDeleted(!showDeleted)}
-                    className={`flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
-                      showDeleted
-                        ? "border-red-500 bg-red-50 text-red-700"
-                        : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Trash2 size={16} />
-                    <span>{showDeleted ? "Hide Deleted" : "Show Deleted"}</span>
-                  </button>
+                {/* Search Button */}
+                <button
+                  onClick={handleSearch}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-[#8B5A2B] text-white rounded-lg text-sm font-medium hover:bg-[#6d4622] transition-colors shrink-0"
+                >
+                  <Search size={15} />
+                  Search
+                </button>
+
+                {/* Status Filters */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {(["all", "active", "inactive"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatusFilter(s)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                        statusFilter === s
+                          ? "bg-[#8B5A2B] text-white border-[#8B5A2B]"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Show Deleted */}
+                <button
+                  onClick={() => setShowDeleted(!showDeleted)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-colors shrink-0 ${
+                    showDeleted
+                      ? "border-red-400 bg-red-50 text-red-700"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  <span>{showDeleted ? "Hide Deleted" : "Show Deleted"}</span>
+                </button>
+
+                {/* Clear Filter */}
+                <button
+                  onClick={handleClearFilter}
+                  className="px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-500 text-sm font-medium hover:bg-slate-50 transition-colors shrink-0"
+                >
+                  Clear Filter
+                </button>
               </div>
             </div>
 
@@ -256,7 +315,7 @@ export default function ProductsByCategoryPage() {
                   No products found
                 </h3>
                 <p className="text-slate-500 mb-6">
-                  {keyword
+                  {committedKeyword
                     ? "Try adjusting your search terms"
                     : "There are no products in this category yet"}
                 </p>
@@ -285,7 +344,7 @@ export default function ProductsByCategoryPage() {
                         )}
                         {/* Status Toggle */}
                         {!item.is_deleted && (
-                          <label className="absolute top-4 right-4 inline-flex items-center cursor-pointer">
+                          <label aria-label="Toggle product status" className="absolute top-4 right-4 inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               checked={item.is_active}
@@ -343,7 +402,7 @@ export default function ProductsByCategoryPage() {
                               <>
                                 <button
                                   onClick={() => handleEditClick(item)}
-                                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-100 rounded-xl text-slate-700 text-sm font-bold transition-colors"
+                                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-sm font-semibold transition-colors"
                                 >
                                   <Edit size={18} />
                                   Edit
@@ -351,9 +410,10 @@ export default function ProductsByCategoryPage() {
                                 <button
                                   onClick={() => handleDeleteClick(item.id, item.product_name)}
                                   disabled={isDeleting}
-                                  className="w-11 h-11 flex items-center justify-center bg-slate-50 hover:bg-red-50 border border-slate-100 rounded-xl text-slate-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl text-red-600 text-sm font-semibold transition-colors disabled:opacity-50"
                                 >
-                                  <Trash2 size={20} />
+                                  <Trash2 size={18} />
+                                  Remove
                                 </button>
                               </>
                             )}
@@ -369,34 +429,49 @@ export default function ProductsByCategoryPage() {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Remove Product Confirmation Modal */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="text-red-600" size={24} />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            {/* Warning Icon + Title */}
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <AlertTriangle className="text-red-600" size={32} />
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">Remove Product</h3>
-                <p className="text-sm text-slate-500">This action can be undone later</p>
+              <h3 className="text-xl font-bold text-slate-900">Remove Product</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                This will remove the product from this category only
+              </p>
+            </div>
+
+            {/* Message */}
+            <p className="text-slate-600 text-center mb-5">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold text-slate-900">{deleteModal.productName}</span>{" "}
+              from this category?
+            </p>
+
+            {/* Product Info */}
+            <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100 space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-500">Product Name</span>
+                <span className="text-slate-900 font-semibold">{deleteModal.productName}</span>
               </div>
             </div>
-            <p className="text-slate-600 mb-6">
-              Are you sure you want to remove <span className="font-semibold">{deleteModal.productName}</span> from this category?
-            </p>
+
+            {/* Buttons */}
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isDeleting ? (
                   <>
@@ -404,7 +479,10 @@ export default function ProductsByCategoryPage() {
                     Removing...
                   </>
                 ) : (
-                  "Remove Product"
+                  <>
+                    <Trash2 size={16} />
+                    Remove Product
+                  </>
                 )}
               </button>
             </div>
@@ -424,6 +502,19 @@ export default function ProductsByCategoryPage() {
           fetchProducts();
         }}
         productCategory={selectedProduct}
+      />
+
+      {/* Add Product to Category Drawer */}
+      <AddProductToCategoryDrawer
+        isOpen={isAssignDrawerOpen}
+        onClose={() => setIsAssignDrawerOpen(false)}
+        onSuccess={() => {
+          setIsAssignDrawerOpen(false);
+          fetchProducts();
+        }}
+        categoryFranchiseId={categoryContext.categoryFranchiseId}
+        categoryId={categoryContext.categoryId}
+        categoryName={categoryContext.categoryName}
       />
     </div>
   );

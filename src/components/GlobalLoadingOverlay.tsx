@@ -30,7 +30,7 @@ export function GlobalLoadingOverlay({ forceShow = false }: { forceShow?: boolea
           </div>
         </div>
         <p className="text-sm font-medium text-amber-800 animate-pulse">
-          Đang tải...
+          Loading...
         </p>
       </div>
     </div>

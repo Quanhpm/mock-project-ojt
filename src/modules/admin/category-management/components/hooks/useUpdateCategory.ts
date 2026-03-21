@@ -14,10 +14,10 @@ export const useUpdateCategory = () => {
     setIsUpdating(true);
     try {
       const result = await updateCategoryFranchiseDisplayOrder(id, payload);
-      success("Cập nhật thứ tự hiển thị thành công");
+      success("Display order updated successfully");
       return result;
     } catch (error) {
-      showError("Cập nhật thứ tự hiển thị thất bại");
+      showError("Failed to update display order");
       throw error;
     } finally {
       setIsUpdating(false);

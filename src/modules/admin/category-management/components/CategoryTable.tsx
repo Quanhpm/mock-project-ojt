@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, RotateCcw, FileText, FolderPlus } from "lucide-react";
+import { Edit2, Trash2, RotateCcw, Eye, FolderPlus, X, AlertTriangle } from "lucide-react";
 import { useCategorySearch } from "../hooks/useCategorySearch.hook";
 import { useDeleteCategory } from "./hooks/useDeleteCategory";
 import { useRestoreCategory } from "./hooks/useRestoreCategory";
@@ -335,6 +335,8 @@ export default function CategoryTable() {
       ...prev,
       is_active: value === "" ? "" : value === "true",
     }));
+    setCurrentPage(1);
+    setTimeout(() => void refetch(), 0);
   };
 
   const handleViewProducts = (category: CategoryFranchise) => {
@@ -661,6 +663,8 @@ export default function CategoryTable() {
                       ...prev,
                       franchise_id: e.target.value,
                     }));
+                    setCurrentPage(1);
+                    setTimeout(() => void refetch(), 0);
                   }}
                   style={{
                     width: "100%",
@@ -690,6 +694,30 @@ export default function CategoryTable() {
               </div>
             )}
 
+            {/* Show Deleted Toggle */}
+            <button
+              onClick={() => {
+                const newIsDeleted = !filters.is_deleted;
+                setFilters((prev) => ({ ...prev, is_deleted: newIsDeleted }));
+                setCurrentPage(1);
+                setTimeout(() => void refetch(), 0);
+              }}
+              style={{
+                padding: "10px 16px",
+                fontSize: "14px",
+                fontWeight: "500",
+                color: filters.is_deleted ? "#ffffff" : "#ef4444",
+                backgroundColor: filters.is_deleted ? "#ef4444" : "transparent",
+                border: "1px solid #ef4444",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {filters.is_deleted ? "Hide Deleted" : "Show Deleted"}
+            </button>
+
             {/* Clear Filters */}
             <button
               onClick={() => {
@@ -698,8 +726,11 @@ export default function CategoryTable() {
                   keyword: "",
                   franchise_id: "",
                   is_active: "",
+                  is_deleted: false,
                 }));
+                setCurrentPage(1);
                 searchInputRef.current?.focus();
+                setTimeout(() => void refetch(), 0);
               }}
               style={{
                 padding: "10px 16px",
@@ -761,7 +792,7 @@ export default function CategoryTable() {
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
-              Tìm kiếm
+              Search
             </button>
           </div>
 
@@ -1018,7 +1049,7 @@ export default function CategoryTable() {
                               e.currentTarget.style.color = "#64748b";
                             }}
                           >
-                            <FileText size={18} />
+                            <Eye size={18} />
                           </button>
                           <button
                             onClick={() => handleEdit(category.id)}
@@ -1256,7 +1287,7 @@ export default function CategoryTable() {
                 </button>
               </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
                   <input
                     type="number" min={1} max={totalPages}
                     value={pageInput}
@@ -1303,183 +1334,226 @@ export default function CategoryTable() {
 
       {/* Delete Modal */}
       {deleteModal.isOpen && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(2px)",
-          }}
-          onClick={handleCloseDeleteModal}
-        >
+        <>
+          {/* Backdrop */}
           <div
+            onClick={handleCloseDeleteModal}
             style={{
-              backgroundColor: "white",
-              borderRadius: "16px",
-              padding: "40px",
-              maxWidth: "500px",
-              width: "90%",
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-              animation: "modalSlideIn 0.2s ease-out",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              zIndex: 999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Modal */}
             <div
+              onClick={(e) => e.stopPropagation()}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "16px",
-                marginBottom: "20px",
+                backgroundColor: "white",
+                borderRadius: "12px",
+                width: "90%",
+                maxWidth: "480px",
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                overflow: "hidden",
               }}
             >
+              {/* Header */}
               <div
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  backgroundColor: "#fee2e2",
-                  borderRadius: "12px",
+                  padding: "20px 24px",
+                  borderBottom: "1px solid #f0f0f0",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  justifyContent: "space-between",
                 }}
               >
-                <Trash2 size={24} color="#dc2626" />
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div
+                    style={{
+                      backgroundColor: "#ffebee",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <AlertTriangle size={24} color="#f44336" />
+                  </div>
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: "20px",
+                      fontWeight: "600",
+                      color: "#212529",
+                    }}
+                  >
+                    Delete Category
+                  </h2>
+                </div>
+                <button
+                  onClick={handleCloseDeleteModal}
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px",
+                    display: "flex",
+                    alignItems: "center",
+                    color: "#6c757d",
+                  }}
+                >
+                  <X size={20} />
+                </button>
               </div>
-              <h3
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "700",
-                  color: "#1f2937",
-                  margin: 0,
-                }}
-              >
-                Delete Category
-              </h3>
-            </div>
 
-            {/* Content */}
-            <p
-              style={{
-                fontSize: "15px",
-                lineHeight: "1.6",
-                color: "#6b7280",
-                marginBottom: "28px",
-              }}
-            >
-              Are you sure you want to delete the category{" "}
-              <strong style={{ color: "#1f2937" }}>
-                "{deleteModal.categoryName}"
-              </strong>
-              ? This action can be undone.
-            </p>
+              {/* Body */}
+              <div style={{ padding: "24px" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    marginBottom: "16px",
+                    fontSize: "15px",
+                    color: "#495057",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Are you sure you want to delete this category? This action can be undone.
+                </p>
 
-            {/* Actions */}
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                justifyContent: "flex-end",
-              }}
-            >
-              <button
-                onClick={handleCloseDeleteModal}
-                disabled={isDeleting}
-                style={{
-                  padding: "12px 24px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  backgroundColor: "white",
-                  color: "#374151",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  cursor: isDeleting ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
-                  opacity: isDeleting ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "white";
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={isDeleting}
-                style={{
-                  padding: "12px 24px",
-                  border: "none",
-                  borderRadius: "8px",
-                  backgroundColor: isDeleting ? "#fca5a5" : "#ef4444",
-                  color: "white",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  cursor: isDeleting ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#dc2626";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#ef4444";
-                  }
-                }}
-              >
-                {isDeleting ? (
-                  <>
-                    <div
+                <div
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    border: "1px solid #e9ecef",
+                  }}
+                >
+                  <div style={{ marginBottom: "8px" }}>
+                    <span
                       style={{
-                        width: "14px",
-                        height: "14px",
-                        border: "2px solid white",
-                        borderTop: "2px solid transparent",
-                        borderRadius: "50%",
-                        animation: "spin 0.6s linear infinite",
+                        fontSize: "12px",
+                        color: "#6c757d",
+                        textTransform: "uppercase",
+                        fontWeight: "600",
                       }}
-                    />
-                    Deleting...
-                  </>
-                ) : (
-                  "Delete Category"
-                )}
-              </button>
+                    >
+                      Category ID
+                    </span>
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: "14px",
+                        color: "#212529",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {deleteModal.categoryId}
+                    </p>
+                  </div>
+                  <div>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: "#6c757d",
+                        textTransform: "uppercase",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Category Name
+                    </span>
+                    <p
+                      style={{
+                        margin: "4px 0 0 0",
+                        fontSize: "14px",
+                        color: "#212529",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {deleteModal.categoryName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div
+                style={{
+                  padding: "16px 24px",
+                  borderTop: "1px solid #f0f0f0",
+                  display: "flex",
+                  gap: "12px",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  onClick={handleCloseDeleteModal}
+                  disabled={isDeleting}
+                  style={{
+                    padding: "10px 20px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: isDeleting ? "not-allowed" : "pointer",
+                    backgroundColor: "white",
+                    color: "#374151",
+                    opacity: isDeleting ? 0.5 : 1,
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting}
+                  style={{
+                    padding: "10px 20px",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: isDeleting ? "not-allowed" : "pointer",
+                    backgroundColor: isDeleting ? "#fca5a5" : "#f44336",
+                    color: "white",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  {isDeleting ? (
+                    <>
+                      <div
+                        style={{
+                          width: "14px",
+                          height: "14px",
+                          border: "2px solid white",
+                          borderTop: "2px solid transparent",
+                          borderRadius: "50%",
+                          animation: "spin 0.6s linear infinite",
+                        }}
+                      />
+                      Deleting...
+                    </>
+                  ) : (
+                    "Delete Category"
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* CSS Animations */}
       <style>
         {`
-          @keyframes modalSlideIn {
-            from {
-              opacity: 0;
-              transform: translateY(-20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
           @keyframes spin {
             from {
               transform: rotate(0deg);

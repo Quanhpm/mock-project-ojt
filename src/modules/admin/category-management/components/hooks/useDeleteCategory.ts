@@ -10,9 +10,9 @@ export const useDeleteCategory = () => {
     setIsDeleting(true);
     try {
       await deleteCategoryFranchise(id);
-      success("Xóa danh mục thành công");
+      success("Category deleted successfully");
     } catch (error) {
-      showError("Xóa danh mục thất bại");
+      showError("Failed to delete category");
       throw error;
     } finally {
       setIsDeleting(false);
