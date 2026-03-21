@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { useGetInventories } from "./hooks/useGetInventories";
@@ -12,6 +11,10 @@ import { useInventoryExcel } from "./hooks/useInventoryExcel";
 import type { BulkAdjustPayload, ImportValidationError, InventoryItem, InventorySearchPayload, InventoryTableRow } from "./inventory.types";
 import InventoryDelete from "./InventoryDelete";
 import { useToast } from "@/hooks/use-toast.hook";
+import { getFranchisesSelect, type FranchiseOptionItem } from "@/apis/endpoints/franchise.api";
+import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpoints/product-franchise.api";
+import { productApi } from "@/apis/endpoints/product.api";
+import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import {
   getInventoryImportFieldPath,
   getInventoryTableFieldPath,
@@ -29,8 +32,7 @@ const getStockStatus = (quantity: number, alertThreshold: number) => {
 };
 
 export default function InventoryTable() {
-  const navigate = useNavigate();
-  const { error: toastError } = useToast();
+  const { error: toastError, success: toastSuccess } = useToast();
 
   // === Existing state ===
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,7 +46,18 @@ export default function InventoryTable() {
   const [logsModal, setLogsModal] = useState<{ open: boolean; inventoryId: string; productName: string }>({ open: false, inventoryId: "", productName: "" });
   const [restoreModal, setRestoreModal] = useState<{ open: boolean; inventoryId: string; productName: string }>({ open: false, inventoryId: "", productName: "" });
   const [inputValue, setInputValue] = useState("");
+  const [pageInput, setPageInput] = useState("");
   const [franchiseFilter, setFranchiseFilter] = useState("");
+  const [franchiseOptions, setFranchiseOptions] = useState<FranchiseOptionItem[]>([]);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createFranchiseId, setCreateFranchiseId] = useState("");
+  const [createProductFranchiseId, setCreateProductFranchiseId] = useState("");
+  const [createQuantity, setCreateQuantity] = useState(1);
+  const [createAlertThreshold, setCreateAlertThreshold] = useState(10);
+  const [createProductFranchises, setCreateProductFranchises] = useState<ProductFranchiseItem[]>([]);
+  const [createProductNamesById, setCreateProductNamesById] = useState<Record<string, string>>({});
+  const [isCreateLoadingProducts, setIsCreateLoadingProducts] = useState(false);
+  const [isCreateSubmitting, setIsCreateSubmitting] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeTooltipKey, setActiveTooltipKey] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -152,10 +165,26 @@ export default function InventoryTable() {
     }
   }, [inventories, replace]);
 
+  useEffect(() => {
+    const loadFranchiseOptions = async () => {
+      try {
+        const franchises = await getFranchisesSelect();
+        setFranchiseOptions(franchises ?? []);
+      } catch {
+        setFranchiseOptions([]);
+      }
+    };
+
+    void loadFranchiseOptions();
+  }, []);
+
   const buildPayload = useCallback((page: number): InventorySearchPayload => ({
-    searchCondition: { is_deleted: showDeleted },
+    searchCondition: {
+      is_deleted: showDeleted,
+      ...(franchiseFilter ? { franchise_id: franchiseFilter } : {}),
+    },
     pageInfo: { pageNum: page, pageSize: itemsPerPage },
-  }), [itemsPerPage, showDeleted]);
+  }), [franchiseFilter, itemsPerPage, showDeleted]);
 
   useEffect(() => { refetch(buildPayload(currentPage)); }, [buildPayload, currentPage, refetch]);
   useEffect(() => {
@@ -192,7 +221,7 @@ export default function InventoryTable() {
     if (!item) return false;
     const productName = item.product_name ?? "";
     const matchesSearch = searchTerm === "" || productName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFranchise = franchiseFilter === "" || (item.franchise_name ?? item.franchise_id) === franchiseFilter;
+    const matchesFranchise = franchiseFilter === "" || item.franchise_id === franchiseFilter;
     const stockStatus = getStockStatus(item._editQuantity, item._editAlertThreshold);
     const matchesStatus = statusFilter === "all"
       || (statusFilter === "in-stock" && stockStatus.label === "In Stock")
@@ -200,10 +229,6 @@ export default function InventoryTable() {
       || (statusFilter === "out-of-stock" && stockStatus.label === "Out of Stock");
     return matchesSearch && matchesStatus && matchesFranchise;
   });
-
-  const franchiseOptions = Array.from(
-    new Map(inventories.map(i => [i.franchise_id, i.franchise_name ?? i.franchise_id])).entries()
-  ).sort((a, b) => a[1].localeCompare(b[1]));
 
   // === Handlers ===
   const handleClearFilters = () => { setInputValue(""); setSearchTerm(""); setStatusFilter("all"); setFranchiseFilter(""); setShowDeleted(false); setCurrentPage(1); };
@@ -271,7 +296,7 @@ export default function InventoryTable() {
       };
 
       bulkAdjust(payload, () => {
-        refetch(buildPayload(currentPage));
+        refetch(buildPayload(currentPage), { force: true });
       });
     });
   }, [buildPayload, bulkAdjust, currentPage, getValues, methods, refetch, toastError, trigger]);
@@ -284,8 +309,14 @@ export default function InventoryTable() {
     if (!adjustPopover.item) return;
     const change = (Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0);
     if (change === 0) return;
-    adjustInventory({ product_franchise_id: adjustPopover.item.product_franchise_id, change, reason: popoverReason.trim() || "Điều chỉnh số lượng" }, () => {
-      setAdjustPopover({ open: false, item: null }); refetch(buildPayload(currentPage));
+    adjustInventory({
+      product_franchise_id: adjustPopover.item.product_franchise_id,
+      inventory_id: adjustPopover.item.id,
+      alert_threshold: adjustPopover.item.alert_threshold,
+      change,
+      reason: popoverReason.trim() || "Điều chỉnh số lượng",
+    }, () => {
+      setAdjustPopover({ open: false, item: null }); refetch(buildPayload(currentPage), { force: true });
     });
   };
   const handleViewLogs = (inventoryId: string, productName: string) => { setLogsModal({ open: true, inventoryId, productName }); fetchLogs(inventoryId); };
@@ -303,6 +334,119 @@ export default function InventoryTable() {
   };
   const handleRestore = (inventoryId: string, productName: string) => { setRestoreModal({ open: true, inventoryId, productName }); };
   const handleRestoreConfirm = () => { restoreInventory(restoreModal.inventoryId, () => { setRestoreModal({ open: false, inventoryId: "", productName: "" }); refetch(buildPayload(currentPage)); }); };
+
+  const resetCreateForm = useCallback(() => {
+    setCreateFranchiseId("");
+    setCreateProductFranchiseId("");
+    setCreateQuantity(1);
+    setCreateAlertThreshold(10);
+    setCreateProductFranchises([]);
+    setCreateProductNamesById({});
+  }, []);
+
+  const handleOpenCreateModal = useCallback(() => {
+    resetCreateForm();
+    setCreateModalOpen(true);
+  }, [resetCreateForm]);
+
+  const handleCloseCreateModal = useCallback(() => {
+    if (isCreateSubmitting) return;
+    setCreateModalOpen(false);
+    resetCreateForm();
+  }, [isCreateSubmitting, resetCreateForm]);
+
+  const handleCreateFranchiseChange = useCallback(async (franchiseId: string) => {
+    setCreateFranchiseId(franchiseId);
+    setCreateProductFranchiseId("");
+    setCreateProductFranchises([]);
+    setCreateProductNamesById({});
+
+    if (!franchiseId) return;
+
+    setIsCreateLoadingProducts(true);
+    try {
+      const response = await searchProductFranchises({
+        searchCondition: {
+          franchise_id: franchiseId,
+          is_deleted: false,
+          is_active: true,
+        },
+        pageInfo: {
+          pageNum: 1,
+          pageSize: 200,
+        },
+      });
+      const productFranchiseList = response.data ?? [];
+      setCreateProductFranchises(productFranchiseList);
+
+      const uniqueProductIds = Array.from(
+        new Set(productFranchiseList.map((item) => item.product_id).filter(Boolean)),
+      );
+
+      if (uniqueProductIds.length > 0) {
+        const productNameEntries = await Promise.all(
+          uniqueProductIds.map(async (productId) => {
+            try {
+              const product = await productApi.getProductById(productId);
+              return [productId, product?.name ?? "Sản phẩm"] as const;
+            } catch {
+              return [productId, "Sản phẩm"] as const;
+            }
+          }),
+        );
+
+        setCreateProductNamesById(Object.fromEntries(productNameEntries));
+      }
+    } catch {
+      toastError("Lỗi", "Không thể tải danh sách sản phẩm của franchise.");
+    } finally {
+      setIsCreateLoadingProducts(false);
+    }
+  }, [toastError]);
+
+  const handleCreateSubmit = useCallback(async () => {
+    if (!createFranchiseId) {
+      toastError("Thiếu dữ liệu", "Vui lòng chọn franchise.");
+      return;
+    }
+    if (!createProductFranchiseId) {
+      toastError("Thiếu dữ liệu", "Vui lòng chọn sản phẩm.");
+      return;
+    }
+    if (createQuantity <= 0) {
+      toastError("Dữ liệu không hợp lệ", "Quantity phải lớn hơn 0.");
+      return;
+    }
+
+    setIsCreateSubmitting(true);
+    try {
+      await inventoryApi.createInventory({
+        product_franchise_id: createProductFranchiseId,
+        quantity: createQuantity,
+        alert_threshold: createAlertThreshold,
+      });
+      toastSuccess("Tạo thành công", "Đã thêm inventory mới.");
+      setCreateModalOpen(false);
+      resetCreateForm();
+      await refetch(buildPayload(currentPage));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể tạo inventory.";
+      toastError("Tạo thất bại", message);
+    } finally {
+      setIsCreateSubmitting(false);
+    }
+  }, [
+    buildPayload,
+    createAlertThreshold,
+    createFranchiseId,
+    createProductFranchiseId,
+    createQuantity,
+    currentPage,
+    refetch,
+    resetCreateForm,
+    toastError,
+    toastSuccess,
+  ]);
 
   // === Styles ===
   const btnOutline: React.CSSProperties = { display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #8B4513", backgroundColor: "white", color: "#8B4513", fontWeight: "600", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s" };
@@ -422,7 +566,7 @@ export default function InventoryTable() {
                 <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>sync</span>
                 {isBulkAdjusting ? "Đang cập nhật..." : `Update Selected (${selectedCount})`}
               </button>
-              <button onClick={() => navigate('/admin/inventory/create')}
+              <button onClick={handleOpenCreateModal}
                 style={{ ...btnPrimary }} onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6d3610"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8B4513"}>
                 <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>add</span>Add Inventory
               </button>
@@ -445,7 +589,7 @@ export default function InventoryTable() {
               </div>
               <button onClick={handleSearch} style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#8B4513", color: "white", padding: "10px 18px", borderRadius: "8px", border: "none", fontWeight: "600", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6d3610"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8B4513"}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>Tìm kiếm
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>Search
               </button>
               <div style={{ position: "relative", minWidth: "165px" }}>
                 <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
@@ -458,7 +602,11 @@ export default function InventoryTable() {
               <div style={{ position: "relative", minWidth: "175px" }}>
                 <select value={franchiseFilter} onChange={e => { setFranchiseFilter(e.target.value); setCurrentPage(1); }} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
                   <option value="">Sort by Franchise</option>
-                  {franchiseOptions.map(([id, name]) => (<option key={id} value={name}>{name}</option>))}
+                  {franchiseOptions.map((franchise) => (
+                    <option key={franchise.value} value={franchise.value}>
+                      {franchise.name}
+                    </option>
+                  ))}
                 </select>
                 <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", color: "#6c757d" }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
@@ -510,9 +658,13 @@ export default function InventoryTable() {
                           onChange={e => handleSelectAll(e.target.checked)}
                           style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#8B4513" }} />
                       </th>
-                      {["No.", "ID", "Product", "Franchise", "Quantity", "Alert Threshold", "Status", "Actions"].map(h => (
-                        <th key={h} style={{ padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: h === "Actions" ? "center" : "left" }}>{h}</th>
-                      ))}
+                      <th style={{ width: "7%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>No.</th>
+                      <th style={{ width: "28%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Product</th>
+                      <th style={{ width: "22%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Franchise</th>
+                      <th style={{ width: "12%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Quantity</th>
+                      <th style={{ width: "13%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Alert Threshold</th>
+                      <th style={{ width: "10%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Status</th>
+                      <th style={{ width: "8%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody style={{ borderTop: "1px solid #e9ecef" }}>
@@ -537,7 +689,6 @@ export default function InventoryTable() {
                           <td style={{ padding: "16px", fontSize: "14px", fontWeight: "700", color: "#212529" }}>
                             {String(displayIndex).padStart(2, "0")}
                           </td>
-                          <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>#{item.id.slice(-6)}</td>
                           <td style={{ padding: "16px" }}><span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>{item.product_name ?? item.product_id}</span></td>
                           <td style={{ padding: "16px", fontSize: "14px", color: "#495057" }}>{item.franchise_name ?? item.franchise_id}</td>
                           <td style={{ padding: "16px" }}>
@@ -629,13 +780,156 @@ export default function InventoryTable() {
               {/* Pagination */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e9ecef", backgroundColor: "#f8f9fa", padding: "12px 24px" }}>
                 <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>Page {currentPage} of {totalPages} — {totalItems} results</p>
-                <nav style={{ display: "inline-flex", borderRadius: "8px", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
-                  <button onClick={() => handlePageChange(Math.max(1, currentPage - 1))} disabled={currentPage === 1} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: currentPage === 1 ? "#adb5bd" : "#495057", backgroundColor: "white", border: "1px solid #dee2e6", borderRadius: "6px 0 0 6px", cursor: currentPage === 1 ? "not-allowed" : "pointer" }}>Previous</button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                    <button key={page} onClick={() => handlePageChange(page)} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: page === currentPage ? "white" : "#495057", backgroundColor: page === currentPage ? "#8B4513" : "white", border: "1px solid #dee2e6", borderLeft: "none", cursor: "pointer" }}>{page}</button>
-                  ))}
-                  <button onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages || totalPages === 0} style={{ padding: "8px 12px", fontSize: "14px", fontWeight: "500", color: currentPage === totalPages ? "#adb5bd" : "#495057", backgroundColor: "white", border: "1px solid #dee2e6", borderLeft: "none", borderRadius: "0 6px 6px 0", cursor: currentPage === totalPages ? "not-allowed" : "pointer" }}>Next</button>
-                </nav>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <nav
+                    aria-label="Pagination"
+                    style={{ display: "inline-flex" }}
+                  >
+                    <button
+                      onClick={() =>
+                        handlePageChange(Math.max(1, currentPage - 1))
+                      }
+                      disabled={currentPage === 1}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "8px 16px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color: currentPage === 1 ? "#9ca3af" : "#374151",
+                        backgroundColor: "white",
+                        border: "1px solid #e5e7eb",
+                        borderTopLeftRadius: "6px",
+                        borderBottomLeftRadius: "6px",
+                        borderRight: "none",
+                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== 1) {
+                          e.currentTarget.style.backgroundColor = "#f9fafb";
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "white";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                      }}
+                    >
+                      Trước
+                    </button>
+                    {(() => {
+                      const pages: (number | "...")[] = [];
+                      if (totalPages <= 5) {
+                        for (let i = 1; i <= totalPages; i++) pages.push(i);
+                      } else {
+                        const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
+                        const we = ws + 2;
+                        if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
+                        for (let i = ws; i <= we; i++) pages.push(i);
+                        if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
+                      }
+                      return pages.map((page, idx) =>
+                        page === "..." ? (
+                          <span key={`e-${idx}`} style={{ display: "inline-flex", alignItems: "center", padding: "0 4px", fontSize: "14px", color: "#6b7280" }}>...</span>
+                        ) : (
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              minWidth: "40px",
+                              padding: "8px 12px",
+                              fontSize: "14px",
+                              fontWeight: currentPage === page ? "600" : "500",
+                              color: currentPage === page ? "white" : "#374151",
+                              backgroundColor: currentPage === page ? "#8B4513" : "white",
+                              border: "1px solid",
+                              borderColor: currentPage === page ? "#8B4513" : "#e5e7eb",
+                              borderRight: "none",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              if (currentPage !== page) {
+                                e.currentTarget.style.backgroundColor = "#f9fafb";
+                                e.currentTarget.style.borderColor = "#d1d5db";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (currentPage !== page) {
+                                e.currentTarget.style.backgroundColor = "white";
+                                e.currentTarget.style.borderColor = "#e5e7eb";
+                              } else {
+                                e.currentTarget.style.backgroundColor = "#8B4513";
+                                e.currentTarget.style.borderColor = "#8B4513";
+                              }
+                            }}
+                          >
+                            {page}
+                          </button>
+                        )
+                      );
+                    })()}
+                    <button
+                      onClick={() =>
+                        handlePageChange(Math.min(totalPages, currentPage + 1))
+                      }
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "8px 16px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        color:
+                          currentPage === totalPages || totalPages === 0 ? "#9ca3af" : "#374151",
+                        backgroundColor: "white",
+                        border: "1px solid #e5e7eb",
+                        borderTopRightRadius: "6px",
+                        borderBottomRightRadius: "6px",
+                        cursor:
+                          currentPage === totalPages || totalPages === 0
+                            ? "not-allowed"
+                            : "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (currentPage !== totalPages && totalPages !== 0) {
+                          e.currentTarget.style.backgroundColor = "#f9fafb";
+                          e.currentTarget.style.borderColor = "#d1d5db";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "white";
+                        e.currentTarget.style.borderColor = "#e5e7eb";
+                      }}
+                    >
+                      Sau
+                    </button>
+                  </nav>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                    <input
+                      type="number" min={1} max={totalPages}
+                      value={pageInput}
+                      onChange={(e) => setPageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const n = parseInt(pageInput, 10);
+                          if (!isNaN(n) && n >= 1 && n <= totalPages) handlePageChange(n);
+                          setPageInput("");
+                        }
+                      }}
+                      placeholder={String(currentPage)}
+                      style={{ width: "52px", height: "34px", border: "1px solid #e5e7eb", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
@@ -733,6 +1027,132 @@ export default function InventoryTable() {
 
       {/* Delete Modal */}
       <InventoryDelete isOpen={deleteModal.isOpen} onClose={() => setDeleteModal({ isOpen: false, inventoryId: "", productName: "" })} onConfirm={handleDeleteConfirm} inventoryId={deleteModal.inventoryId} productName={deleteModal.productName} />
+
+      {/* Create Inventory Modal */}
+      {createModalOpen && (
+        <div
+          onClick={handleCloseCreateModal}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0,0,0,0.45)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "520px",
+              backgroundColor: "white",
+              borderRadius: "12px",
+              boxShadow: "0 20px 30px rgba(0,0,0,0.18)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e9ecef", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3 style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: "#212529" }}>Add Inventory</h3>
+              <button
+                type="button"
+                onClick={handleCloseCreateModal}
+                disabled={isCreateSubmitting}
+                style={{ border: "none", background: "none", fontSize: "20px", color: "#6c757d", cursor: isCreateSubmitting ? "not-allowed" : "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: "20px", display: "grid", gap: "14px" }}>
+              <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                Franchise
+                <select
+                  value={createFranchiseId}
+                  onChange={(e) => void handleCreateFranchiseChange(e.target.value)}
+                  style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
+                  disabled={isCreateSubmitting}
+                >
+                  <option value="">-- Chọn franchise --</option>
+                  {franchiseOptions.map((franchise) => (
+                    <option key={franchise.value} value={franchise.value}>{franchise.name}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                Product
+                <select
+                  value={createProductFranchiseId}
+                  onChange={(e) => setCreateProductFranchiseId(e.target.value)}
+                  style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
+                  disabled={!createFranchiseId || isCreateLoadingProducts || isCreateSubmitting}
+                >
+                  <option value="">
+                    {!createFranchiseId
+                      ? "-- Chọn franchise trước --"
+                      : isCreateLoadingProducts
+                        ? "Đang tải sản phẩm..."
+                        : "-- Chọn sản phẩm --"}
+                  </option>
+                  {createProductFranchises.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {createProductNamesById[product.product_id] ?? "Sản phẩm"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                  Quantity
+                  <input
+                    type="number"
+                    min={1}
+                    value={createQuantity}
+                    onChange={(e) => setCreateQuantity(Math.max(1, Number(e.target.value) || 1))}
+                    style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
+                    disabled={isCreateSubmitting}
+                  />
+                </label>
+
+                <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                  Alert Threshold
+                  <input
+                    type="number"
+                    min={0}
+                    value={createAlertThreshold}
+                    onChange={(e) => setCreateAlertThreshold(Math.max(0, Number(e.target.value) || 0))}
+                    style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
+                    disabled={isCreateSubmitting}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div style={{ padding: "14px 20px", borderTop: "1px solid #e9ecef", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={handleCloseCreateModal}
+                disabled={isCreateSubmitting}
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #dee2e6", backgroundColor: "white", color: "#374151", fontSize: "14px", cursor: isCreateSubmitting ? "not-allowed" : "pointer" }}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleCreateSubmit()}
+                disabled={isCreateSubmitting || isCreateLoadingProducts}
+                style={{ padding: "8px 14px", borderRadius: "8px", border: "none", backgroundColor: "#8B4513", color: "white", fontSize: "14px", fontWeight: 600, cursor: isCreateSubmitting || isCreateLoadingProducts ? "not-allowed" : "pointer", opacity: isCreateSubmitting || isCreateLoadingProducts ? 0.6 : 1 }}
+              >
+                {isCreateSubmitting ? "Đang tạo..." : "Tạo mới"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Restore Modal */}
       {restoreModal.open && (
