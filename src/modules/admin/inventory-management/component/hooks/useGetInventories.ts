@@ -9,7 +9,10 @@ interface UseGetInventoriesReturn {
   error: string | null;
   totalPages: number;
   totalItems: number;
-  refetch: (payload: InventorySearchPayload) => Promise<void>;
+  refetch: (
+    payload: InventorySearchPayload,
+    options?: { force?: boolean }
+  ) => Promise<void>;
   updateItem: (updated: InventoryItem) => void;
 }
 
@@ -48,14 +51,19 @@ export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesRe
     showErrorRef.current = showError;
   }, [showError]);
 
-  const refetch = useCallback(async (payload: InventorySearchPayload) => {
+  const refetch = useCallback(async (
+    payload: InventorySearchPayload,
+    options?: { force?: boolean }
+  ) => {
     const requestId = requestSequenceRef.current + 1;
     requestSequenceRef.current = requestId;
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await searchInventoriesDeduped(payload);
+      const response = options?.force
+        ? await inventoryApi.searchInventories(payload)
+        : await searchInventoriesDeduped(payload);
       if (requestId !== requestSequenceRef.current) {
         return;
       }

@@ -8,6 +8,7 @@ import {
   type ProductFranchiseItem,
 } from "@/apis/endpoints/product-franchise.api";
 import { inventoryApi } from "@/apis/endpoints/inventory.api";
+import { productApi } from "@/apis/endpoints/product.api";
 
 export default function InventoryForm() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function InventoryForm() {
 
   // Product franchise list & selection
   const [productFranchises, setProductFranchises] = useState<ProductFranchiseItem[]>([]);
+  const [productNamesById, setProductNamesById] = useState<Record<string, string>>({});
   const [selectedProductFranchiseId, setSelectedProductFranchiseId] = useState("");
 
   // Form fields
@@ -52,6 +54,7 @@ export default function InventoryForm() {
     setSelectedFranchiseId(franchiseId);
     setSelectedProductFranchiseId("");
     setProductFranchises([]);
+    setProductNamesById({});
 
     if (!franchiseId) return;
 
@@ -61,7 +64,27 @@ export default function InventoryForm() {
         searchCondition: { franchise_id: franchiseId, is_deleted: false },
         pageInfo: { pageNum: 1, pageSize: 100 },
       });
-      setProductFranchises(res?.data ?? []);
+      const productFranchiseItems = res?.data ?? [];
+      setProductFranchises(productFranchiseItems);
+
+      const uniqueProductIds = Array.from(
+        new Set(productFranchiseItems.map((item) => item.product_id).filter(Boolean)),
+      );
+
+      if (uniqueProductIds.length > 0) {
+        const productResponses = await Promise.all(
+          uniqueProductIds.map(async (productId) => {
+            try {
+              const product = await productApi.getProductById(productId);
+              return [productId, product?.name ?? "Sản phẩm không xác định"] as const;
+            } catch {
+              return [productId, "Sản phẩm không xác định"] as const;
+            }
+          }),
+        );
+
+        setProductNamesById(Object.fromEntries(productResponses));
+      }
     } catch {
       alert("Không thể tải danh sách sản phẩm. Vui lòng thử lại.");
     } finally {
@@ -156,35 +179,6 @@ export default function InventoryForm() {
       {/* ── FORM ── */}
       {formVisible && (
         <>
-          {/* Global loading overlay when fetching products */}
-          {isLoading && (
-            <div style={{
-              position: "fixed",
-              inset: 0,
-              backgroundColor: "rgba(255,255,255,0.6)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-            }}>
-              <div style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "12px",
-                backgroundColor: "white",
-                padding: "32px 48px",
-                borderRadius: "12px",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-              }}>
-                <Loader2 size={36} color="#8B4513" style={{ animation: "spin 1s linear infinite" }} />
-                <p style={{ margin: 0, fontSize: "14px", color: "#6c757d" }}>
-                  Đang tải danh sách sản phẩm...
-                </p>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit}>
             <div style={{ maxWidth: "640px", display: "flex", flexDirection: "column", gap: "24px" }}>
 
@@ -258,13 +252,15 @@ export default function InventoryForm() {
                     <option value="">
                       {!selectedFranchiseId
                         ? "-- Hãy chọn Franchise trước --"
+                        : isLoading
+                        ? "Đang tải danh sách sản phẩm..."
                         : productFranchises.length === 0
                         ? "Không có sản phẩm nào"
                         : "-- Chọn sản phẩm --"}
                     </option>
                     {productFranchises.map((pf) => (
                       <option key={pf.id} value={pf.id}>
-                        ID: {pf.product_id} | Size: {pf.size} | Giá: {pf.price_base.toLocaleString("vi-VN")}₫
+                        {productNamesById[pf.product_id] ?? "Đang tải tên sản phẩm..."}
                       </option>
                     ))}
                   </select>
@@ -290,6 +286,9 @@ export default function InventoryForm() {
                     gap: "4px",
                   }}>
                     <p style={{ margin: 0, fontWeight: "600" }}>Sản phẩm đã chọn</p>
+                    <p style={{ margin: 0 }}>
+                      Tên sản phẩm: <strong>{productNamesById[selectedPF.product_id] ?? "Sản phẩm không xác định"}</strong>
+                    </p>
                     <p style={{ margin: 0 }}>Product ID: <strong>{selectedPF.product_id}</strong></p>
                     <p style={{ margin: 0 }}>Size: <strong>{selectedPF.size}</strong></p>
                     <p style={{ margin: 0 }}>Giá cơ bản: <strong>{selectedPF.price_base.toLocaleString("vi-VN")}₫</strong></p>

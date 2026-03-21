@@ -45,7 +45,7 @@ interface UseProductSearchReturn {
 
   // Actions
   executeSearch: () => Promise<void>;
-  clearFilters: () => void;
+  clearFilters: () => Promise<void>;
 
   // Search history
   searchHistory: string[];
@@ -141,9 +141,14 @@ export const useProductSearch = (
   }, []);
 
   // Execute search
-  const executeSearch = useCallback(async () => {
+  const runSearch = useCallback(async (searchFilters: SearchFilters, targetPage: number) => {
     setIsLoading(true);
     setError(null);
+
+    const resolvedFranchiseId =
+      tableScope === "FRANCHISE_TABLE_SCOPE"
+        ? activeFranchiseId
+        : searchFilters.franchise_id?.trim() || "";
 
     try {
       if (tableScope === "GLOBAL_TABLE_SCOPE") {
@@ -155,20 +160,20 @@ export const useProductSearch = (
           max_price?: number;
           is_active?: boolean;
           is_deleted: boolean;
-        } = { is_deleted: filters.is_deleted };
+        } = { is_deleted: searchFilters.is_deleted };
 
-        if (filters.keyword.trim()) {
-          searchCondition.keyword = filters.keyword.trim();
-          addToHistory(filters.keyword.trim());
+        if (searchFilters.keyword.trim()) {
+          searchCondition.keyword = searchFilters.keyword.trim();
+          addToHistory(searchFilters.keyword.trim());
         }
-        if (filters.min_price) searchCondition.min_price = Number(filters.min_price);
-        if (filters.max_price) searchCondition.max_price = Number(filters.max_price);
-        if (filters.is_active !== "") searchCondition.is_active = filters.is_active === "true";
-        if (effectiveFranchiseId) searchCondition.franchise_id = effectiveFranchiseId;
+        if (searchFilters.min_price) searchCondition.min_price = Number(searchFilters.min_price);
+        if (searchFilters.max_price) searchCondition.max_price = Number(searchFilters.max_price);
+        if (searchFilters.is_active !== "") searchCondition.is_active = searchFilters.is_active === "true";
+        if (resolvedFranchiseId) searchCondition.franchise_id = resolvedFranchiseId;
 
         const response = await searchProducts({
           searchCondition,
-          pageInfo: { pageNum: currentPage, pageSize },
+          pageInfo: { pageNum: targetPage, pageSize },
         });
 
         if (response.success && response.data) {
@@ -201,18 +206,18 @@ export const useProductSearch = (
         // Franchise-scoped search via product-franchise API
         const response = await searchProductFranchises({
           searchCondition: {
-            franchise_id: effectiveFranchiseId || undefined,
+            franchise_id: resolvedFranchiseId || undefined,
             product_id: undefined,
             size: undefined,
-            price_from: filters.min_price ? Number(filters.min_price) : undefined,
-            price_to: filters.max_price ? Number(filters.max_price) : undefined,
-            is_active: filters.is_active !== "" ? filters.is_active === "true" : undefined,
-            is_deleted: filters.is_deleted,
+            price_from: searchFilters.min_price ? Number(searchFilters.min_price) : undefined,
+            price_to: searchFilters.max_price ? Number(searchFilters.max_price) : undefined,
+            is_active: searchFilters.is_active !== "" ? searchFilters.is_active === "true" : undefined,
+            is_deleted: searchFilters.is_deleted,
           },
-          pageInfo: { pageNum: currentPage, pageSize },
+          pageInfo: { pageNum: targetPage, pageSize },
         });
 
-        const keyword = filters.keyword.trim().toLowerCase();
+        const keyword = searchFilters.keyword.trim().toLowerCase();
         const normalizedProducts: ProductTableItem[] = response.data
           .filter((item) => {
             if (!keyword) return true;
@@ -247,9 +252,9 @@ export const useProductSearch = (
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải dữ liệu sản phẩm";
+        err instanceof Error ? err.message : "Failed to load products";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
       setProducts([]);
       setTotalPages(0);
       setTotalItems(0);
@@ -257,27 +262,32 @@ export const useProductSearch = (
       setIsLoading(false);
     }
   }, [
+    activeFranchiseId,
     addToHistory,
-    currentPage,
-    effectiveFranchiseId,
-    filters,
     pageSize,
     showError,
     tableScope,
   ]);
 
+  const executeSearch = useCallback(async () => {
+    await runSearch(filters, currentPage);
+  }, [currentPage, filters, runSearch]);
+
   // Clear all filters
-  const clearFilters = useCallback(() => {
-    setFilters({
+  const clearFilters = useCallback(async () => {
+    const nextFilters: SearchFilters = {
       keyword: "",
       franchise_id: tableScope === "GLOBAL_TABLE_SCOPE" ? "" : activeFranchiseId || "",
       min_price: "",
       max_price: "",
       is_active: "",
       is_deleted: false,
-    });
+    };
+
+    setFilters(nextFilters);
     setCurrentPage(1);
-  }, [activeFranchiseId, tableScope]);
+    await runSearch(nextFilters, 1);
+  }, [activeFranchiseId, runSearch, tableScope]);
 
   // Load initial products on mount (only once)
   useEffect(() => {

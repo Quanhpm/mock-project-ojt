@@ -24,7 +24,7 @@ export const useCreateProduct = () => {
       const newProduct = await productApi.createProduct(payload);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Tạo sản phẩm thành công", "Sản phẩm đã được tạo.");
+      success("Product created", "The product has been created successfully.");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
       if (onSuccess) {
@@ -39,10 +39,10 @@ export const useCreateProduct = () => {
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.data ||
-        "Có lỗi xảy ra khi tạo sản phẩm mới. Vui lòng thử lại!";
+        "Unable to create product right now. Please try again.";
       setError(errorMessage);
 
-      showErrorToast("Tạo mới thất bại", errorMessage);
+      showErrorToast("Create failed", errorMessage);
     } finally {
       // Tắt trạng thái loading dù thành công hay thất bại
       setIsCreating(false);
