@@ -73,28 +73,36 @@ export const useFranchiseSearch = () => {
   }, []);
 
   // Execute search
-  const executeSearch = useCallback(async () => {
+  const executeSearch = useCallback(async (overrides?: {
+    is_deleted?: boolean;
+    is_active?: boolean | null;
+    keyword?: string;
+    page?: number;
+  }) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      const activeFilters = { ...filters, ...(overrides || {}) };
+      const resolvedPage = overrides?.page !== undefined ? overrides.page : currentPage;
+
       const searchCondition: any = {
-        is_deleted: filters.is_deleted,
+        is_deleted: activeFilters.is_deleted,
       };
 
-      if (filters.keyword.trim()) {
-        searchCondition.keyword = filters.keyword.trim();
-        addToHistory(filters.keyword.trim());
+      if (activeFilters.keyword.trim()) {
+        searchCondition.keyword = activeFilters.keyword.trim();
+        addToHistory(activeFilters.keyword.trim());
       }
 
-      if (filters.is_active !== null && filters.is_active !== undefined) {
-        searchCondition.is_active = filters.is_active;
+      if (activeFilters.is_active !== null && activeFilters.is_active !== undefined) {
+        searchCondition.is_active = activeFilters.is_active;
       }
 
       const payload: FranchiseSearchPayload = {
         searchCondition,
         pageInfo: {
-          pageNum: currentPage,
+          pageNum: resolvedPage,
           pageSize: pageSize,
         },
       };

@@ -7,6 +7,7 @@ import FranchiseDetailModal from "./FranchiseDetailModal";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import type { Franchise } from "../../../../types/franchise.types";
 import FranchiseDelete from "./FranchiseDelete";
+import FranchiseRestore from "./FranchiseRestore";
 import { FranchiseSearch } from "./FranchiseSearch";
 
 // ============================================================================
@@ -201,6 +202,17 @@ export default function FranchiseTable() {
 
   // Delete Modal State
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; franchiseId: string | number; franchiseName: string }>({
+    isOpen: false,
+    franchiseId: "",
+    franchiseName: "",
+  });
+
+  // Restore Modal State
+  const [restoreModal, setRestoreModal] = useState<{
+    isOpen: boolean;
+    franchiseId: string | number;
+    franchiseName: string;
+  }>({
     isOpen: false,
     franchiseId: "",
     franchiseName: "",
@@ -415,13 +427,11 @@ export default function FranchiseTable() {
             <button
               onClick={() => {
                 if (franchise.is_deleted) {
-                  if (
-                    window.confirm(
-                      `Are you sure you want to restore franchise "${franchise.name}"?`
-                    )
-                  ) {
-                    restoreFranchise(franchise.id);
-                  }
+                  setRestoreModal({
+                    isOpen: true,
+                    franchiseId: franchise.id,
+                    franchiseName: franchise.name
+                  });
                 } else {
                   setDeleteModal({
                     isOpen: true,
@@ -818,6 +828,19 @@ export default function FranchiseTable() {
         onConfirm={() => deleteFranchise(deleteModal.franchiseId)}
         franchiseId={deleteModal.franchiseId}
         franchiseName={deleteModal.franchiseName}
+      />
+
+      {/* Restore Franchise Modal */}
+      <FranchiseRestore
+        isOpen={restoreModal.isOpen}
+        franchiseId={restoreModal.franchiseId}
+        franchiseName={restoreModal.franchiseName}
+        isRestoring={isLoading}
+        onConfirm={() => {
+          restoreFranchise(restoreModal.franchiseId);
+          setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" });
+        }}
+        onClose={() => setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" })}
       />
     </div>
   );
