@@ -118,11 +118,11 @@ const HomeHeader: React.FC = () => {
     setIsLoggingOut(true);
     const result = await logout();
     if (result.success) {
-      success(result.message || 'ÄÄƒng xuáº¥t thÃ nh cÃ´ng');
+      success(result.message || 'Đăng xuất thành công');
       navigate('/', { replace: true });
     } else {
       setIsLoggingOut(false);
-      error(result.message || 'ÄÄƒng xuáº¥t tháº¥t báº¡i');
+      error(result.message || 'Đăng xuất thất bại');
     }
   };
 
@@ -278,6 +278,7 @@ const HomeHeader: React.FC = () => {
                   >
                     <LogOut className="w-4 h-4" /> Đăng xuất
                   </button>
+                  
                 </div>
               )}
             </div>

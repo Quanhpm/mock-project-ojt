@@ -193,10 +193,10 @@ function CartDetail() {
                     <span>-{formatCurrency(cart.voucherDiscount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-[var(--cf-primary)]/65 text-sm border-t border-[var(--cf-primary)]/10 pt-4">
+                {/* <div className="flex justify-between text-[var(--cf-primary)]/65 text-sm border-t border-[var(--cf-primary)]/10 pt-4">
                   <span className="italic">Phí vận chuyển</span>
                   <span className="font-medium">Sẽ được tính ở bước tiếp theo</span>
-                </div>
+                </div> */}
               </div>
 
               <div className="flex items-center gap-2 bg-[#2D6A4F]/10 text-[#2D6A4F] px-4 py-3 rounded-2xl mb-8 border border-[#2D6A4F]/20">
