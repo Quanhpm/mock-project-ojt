@@ -29,6 +29,10 @@ jobs:
           push: true
           # Thay 'ten_repo_docker' bằng tên repo bạn tạo trên Docker Hub
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/react-app:latest
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_CLOUDINARY_CLOUD_NAME=${{ secrets.VITE_CLOUDINARY_CLOUD_NAME }}
+            VITE_CLOUDINARY_UPLOAD_PRESET=${{ secrets.VITE_CLOUDINARY_UPLOAD_PRESET }}
           # Giúp build nhanh hơn bằng cách cache các layer
           cache-from: type=gha
           cache-to: type=inline
