@@ -120,6 +120,8 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
 
   const handleDeletedFilterChange = (value: boolean) => {
     setFilters((prev) => ({ ...prev, is_deleted: value }));
+    searchState.setCurrentPage(1);
+    searchState.executeSearch({ is_deleted: value, page: 1 });
   };
 
   // ── Render ──
@@ -285,6 +287,39 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           <option value="false">Not deleted</option>
           <option value="true">Deleted</option>
         </select>
+
+        {/* Deleted Toggle */}
+        <button
+          onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
+          style={{
+            padding: "9px 16px",
+            borderRadius: "8px",
+            border: "1px solid #e0e0e0",
+            backgroundColor: filters.is_deleted ? "#fff3e0" : "white",
+            color: filters.is_deleted ? "#f57c00" : "#6c757d",
+            fontWeight: "500",
+            fontSize: "14px",
+            cursor: "pointer",
+            transition: "all 0.2s",
+            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = filters.is_deleted ? "#f57c00" : "#bdbdbd";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6M14 11v6" />
+          </svg>
+          {filters.is_deleted ? "Deleted" : "Current"}
+        </button>
 
         {/* Clear Filters Button */}
         <button

@@ -310,7 +310,7 @@ export default function FranchiseTable() {
             style={
               {
                 ...getButtonStyles.toggleSwitch,
-                cursor: isLoading ? "not-allowed" : "pointer",
+                cursor: isLoading || franchise.is_deleted ? "not-allowed" : "pointer",
               } as React.CSSProperties
             }
           >
@@ -318,10 +318,10 @@ export default function FranchiseTable() {
               type="checkbox"
               checked={franchise.is_active}
               onChange={() =>
-                !isLoading && toggleFranchiseStatus(franchise.id, franchise.is_active)
+                !isLoading && !franchise.is_deleted && toggleFranchiseStatus(franchise.id, franchise.is_active)
               }
               style={getButtonStyles.toggleInput as React.CSSProperties}
-              disabled={isLoading}
+              disabled={isLoading || franchise.is_deleted}
             />
             <div
               style={{
@@ -331,7 +331,7 @@ export default function FranchiseTable() {
                 borderRadius: "12px",
                 transition: "background-color 0.3s",
                 position: "relative",
-                opacity: isLoading ? 0.6 : 1,
+                opacity: isLoading || franchise.is_deleted ? 0.6 : 1,
               }}
             >
               <div
@@ -382,47 +382,51 @@ export default function FranchiseTable() {
               <Eye size={20} />
             </button>
 
-            <button
-              onClick={() => navigate(`/admin/franchises/${franchise.id}/products`)}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#ede9fe";
-                e.currentTarget.style.color = "#7c3aed";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
-              title="Products"
-            >
-              <Package size={20} />
-            </button>
+            {!franchise.is_deleted && (
+              <>
+                <button
+                  onClick={() => navigate(`/admin/franchises/${franchise.id}/products`)}
+                  style={
+                    {
+                      ...getButtonStyles.actionButton,
+                      color: "#4b5563",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#ede9fe";
+                    e.currentTarget.style.color = "#7c3aed";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="Products"
+                >
+                  <Package size={20} />
+                </button>
 
-            <button
-              onClick={() => navigate(`/admin/franchises/edit/${franchise.id}`)}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fef3c7";
-                e.currentTarget.style.color = "#92400e";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
-              title="Edit"
-            >
-              <Edit2 size={20} />
-            </button>
+                <button
+                  onClick={() => navigate(`/admin/franchises/edit/${franchise.id}`)}
+                  style={
+                    {
+                      ...getButtonStyles.actionButton,
+                      color: "#4b5563",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#fef3c7";
+                    e.currentTarget.style.color = "#92400e";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="Edit"
+                >
+                  <Edit2 size={20} />
+                </button>
+              </>
+            )}
 
             <button
               onClick={() => {
@@ -443,13 +447,13 @@ export default function FranchiseTable() {
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: franchise.is_deleted ? "#16a34a" : "#4b5563",
+                  color: "#4b5563",
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
                 if (franchise.is_deleted) {
-                  e.currentTarget.style.backgroundColor = "#d1fae5";
-                  e.currentTarget.style.color = "#15803d";
+                  e.currentTarget.style.backgroundColor = "#f3f4f6";
+                  e.currentTarget.style.color = "#1f2937";
                 } else {
                   e.currentTarget.style.backgroundColor = "#fee2e2";
                   e.currentTarget.style.color = "#dc2626";
@@ -457,7 +461,7 @@ export default function FranchiseTable() {
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = franchise.is_deleted ? "#16a34a" : "#4b5563";
+                e.currentTarget.style.color = "#4b5563";
               }}
               title={franchise.is_deleted ? "Restore" : "Delete"}
             >

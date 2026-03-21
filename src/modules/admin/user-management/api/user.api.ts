@@ -67,6 +67,16 @@ export const userApi = {
   },
 
   /**
+   * Restore deleted user
+   */
+  restoreUser: async (id: string): Promise<UserItem> => {
+    const data = await httpClient.patch<UserItem>({
+      url: `/users/${id}/restore`,
+    });
+    return data!;
+  },
+
+  /**
    * Toggle user active status
    */
   toggleUserStatus: async (

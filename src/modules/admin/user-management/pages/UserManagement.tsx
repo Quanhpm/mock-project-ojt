@@ -7,8 +7,9 @@ import {
   DeleteUserDialog,
   ViewUserModal,
   UserSearch,
+  UserRestoreModal,
 } from "../components";
-import { useUserSearch, useUserStatus } from "../hooks";
+import { useUserSearch, useUserStatus, useRestoreUser } from "../hooks";
 import type { UserItem } from "../api/user.types";
 
 /** Skeleton row cho trạng thái loading */
@@ -149,6 +150,23 @@ function UserManagement() {
     executeSearch(); // Refresh data
   }, [executeSearch]);
 
+  // ──────── Restore Modal ────────
+  const { restoreUser } = useRestoreUser();
+  const [restoreTarget, setRestoreTarget] = useState<UserItem | null>(null);
+
+  const handleRestoreClick = useCallback((user: UserItem) => {
+    setRestoreTarget(user);
+  }, []);
+
+  const handleRestoreClose = useCallback(() => {
+    setRestoreTarget(null);
+  }, []);
+
+  const handleRestoreSuccess = useCallback(() => {
+    setRestoreTarget(null);
+    executeSearch(); // Refresh data
+  }, [executeSearch]);
+
   return (
     <div className="flex flex-col w-full">
       <main className="flex flex-col flex-1">
@@ -237,6 +255,7 @@ function UserManagement() {
                         onView={handleViewClick}
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
+                        onRestore={handleRestoreClick}
                       />
                     ))}
 
@@ -300,6 +319,19 @@ function UserManagement() {
         userName={deleteTarget?.name ?? ""}
         onClose={handleDeleteClose}
         onSuccess={handleDeleteSuccess}
+      />
+
+      {/* Restore User Modal */}
+      <UserRestoreModal
+        isOpen={!!restoreTarget}
+        targetId={restoreTarget?.id ?? ""}
+        targetName={restoreTarget?.name ?? ""}
+        onClose={handleRestoreClose}
+        onConfirm={() => {
+          if (restoreTarget) {
+            restoreUser(restoreTarget.id, handleRestoreSuccess);
+          }
+        }}
       />
     </div>
   );
