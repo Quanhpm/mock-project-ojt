@@ -301,6 +301,31 @@ export default function ProductDetailsModal({
             </div>
           )}
         </div>
+
+        <div
+          style={{
+            padding: "14px 24px",
+            borderTop: "1px solid #eee",
+            display: "flex",
+            justifyContent: "flex-start",
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1px solid #d1d5db",
+              backgroundColor: "white",
+              color: "#374151",
+              fontSize: "14px",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
