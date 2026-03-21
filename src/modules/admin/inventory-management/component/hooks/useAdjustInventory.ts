@@ -8,6 +8,29 @@ export const useAdjustInventory = () => {
   const [error, setError] = useState<string | null>(null);
   const { success, error: showErrorToast } = useToast();
 
+  const getErrorMessage = (err: unknown): string => {
+    if (typeof err === "object" && err !== null) {
+      const maybeErr = err as {
+        message?: string;
+        response?: {
+          data?: {
+            message?: string;
+            errors?: Array<{ message?: string }>;
+          };
+        };
+      };
+
+      const serverMessage =
+        maybeErr.response?.data?.message ||
+        maybeErr.response?.data?.errors?.[0]?.message;
+
+      if (serverMessage) return serverMessage;
+      if (maybeErr.message) return maybeErr.message;
+    }
+
+    return "Không thể điều chỉnh số lượng lúc này. Vui lòng thử lại!";
+  };
+
   const adjustInventory = async (
     payload: InventoryAdjustPayload,
     onSuccess?: () => void,
@@ -24,10 +47,36 @@ export const useAdjustInventory = () => {
       );
       if (onSuccess) onSuccess();
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Không thể điều chỉnh số lượng lúc này. Vui lòng thử lại!";
+      // Fallback: nhiều môi trường không mở endpoint /adjust nhưng vẫn hỗ trợ /adjust/bulk.
+      if (typeof payload.alert_threshold === "number") {
+        try {
+          await inventoryApi.bulkAdjustInventory({
+            items: [
+              {
+                product_franchise_id: payload.product_franchise_id,
+                change: payload.change,
+                alert_threshold: payload.alert_threshold,
+                reason: payload.reason,
+              },
+            ],
+          });
+
+          success(
+            "Điều chỉnh thành công",
+            `Số lượng đã được ${payload.change > 0 ? "tăng" : "giảm"} ${Math.abs(payload.change)}.`,
+          );
+          if (onSuccess) onSuccess();
+          return;
+        } catch (fallbackErr) {
+          const errorMessage = getErrorMessage(fallbackErr);
+          setError(errorMessage);
+          showErrorToast("Điều chỉnh thất bại", errorMessage);
+          if (onError) onError(errorMessage);
+          return;
+        }
+      }
+
+      const errorMessage = getErrorMessage(err);
       setError(errorMessage);
       showErrorToast("Điều chỉnh thất bại", errorMessage);
       if (onError) onError(errorMessage);

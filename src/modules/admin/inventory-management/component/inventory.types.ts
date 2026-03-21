@@ -61,6 +61,8 @@ export interface InventoryAdjustPayload {
   product_franchise_id: string;
   change: number;
   reason: string;
+  inventory_id?: string;
+  alert_threshold?: number;
 }
 
 export interface InventorySearchCondition {
