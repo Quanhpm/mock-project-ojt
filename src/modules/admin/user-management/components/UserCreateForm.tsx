@@ -69,7 +69,6 @@ export const UserCreateForm: React.FC = () => {
 
   const {
     register,
-    handleSubmit,
     trigger,
     setValue,
     watch,
@@ -348,7 +347,7 @@ export const UserCreateForm: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
               >
                 Cancel
               </button>
@@ -427,7 +426,7 @@ export const UserCreateForm: React.FC = () => {
               <button
                 type="button"
                 onClick={handleBackStep1}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
               >
                 Back
               </button>

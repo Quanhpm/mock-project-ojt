@@ -402,7 +402,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}
@@ -505,7 +505,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}

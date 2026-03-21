@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, MapPin, Calendar, AlertCircle, Loader, Phone } from "lucide-react";
+import { X, MapPin, Calendar, AlertCircle, Phone } from "lucide-react";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
 import type { UpdateFranchiseRequest } from "../../../../apis/endpoints/franchise.api";
@@ -188,12 +188,6 @@ export default function FranchiseEditModal({
 
           {/* BODY */}
           <div className="fem-body">
-            {isFetching ? (
-              <div className="fem-loading">
-                <Loader size={32} className="fem-spinner" />
-                <p>Loading franchise data...</p>
-              </div>
-            ) : (
               <form id="edit-franchise-form" onSubmit={handleSubmit} className="fem-form">
                 <div className="fem-grid">
                   {/* Left Column */}
@@ -293,7 +287,6 @@ export default function FranchiseEditModal({
                   </div>
                 </div>
               </form>
-            )}
           </div>
 
           {/* FOOTER */}

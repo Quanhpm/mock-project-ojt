@@ -193,11 +193,13 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                         borderTop: "1px solid #f0f0f0",
                         display: "flex",
                         gap: "12px",
-                        justifyContent: "flex-end"
+                        justifyContent: "space-between"
                     }}>
                         <button
                             onClick={onClose}
                             disabled={isDeleting}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#f3f4f6"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "white"; }}
                             style={{
                                 padding: "10px 20px",
                                 border: "1px solid #e0e0e0",
@@ -207,7 +209,8 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                                 cursor: isDeleting ? "not-allowed" : "pointer",
                                 backgroundColor: "white",
                                 color: "#374151",
-                                opacity: isDeleting ? 0.7 : 1
+                                opacity: isDeleting ? 0.7 : 1,
+                                transition: "all 0.2s"
                             }}
                         >
                             Cancel
