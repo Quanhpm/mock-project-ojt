@@ -9,6 +9,7 @@ import { useCreateFranchise } from "./hooks/useCreateFranchise";
 const franchiseSchema = z.object({
   code:              z.string().min(1, "Franchise code is required"),
   name:              z.string().min(1, "Franchise name is required"),
+  hotline:           z.string().min(1, "Hotline is required").max(10, "Hotline has a maximum of 10 digits").regex(/^\d+$/, "Hotline must contain only digits"),
   logo_url:          z.string().optional(),
   address:           z.string().min(1, "Address is required"),
   opened_at:         z.string().min(1, "Opening time is required"),
@@ -55,6 +56,7 @@ export default function FranchiseForm() {
     defaultValues: {
       code:              "",
       name:              "",
+      hotline:           "",
       logo_url:          "",
       address:           "",
       opened_at:         "",
@@ -69,6 +71,7 @@ export default function FranchiseForm() {
       {
         code:              data.code,
         name:              data.name,
+        hotline:           data.hotline,
         logo_url:          data.logo_url ?? "",
         address:           data.address,
         opened_at:         data.opened_at,
@@ -138,6 +141,20 @@ export default function FranchiseForm() {
                   />
                   {errors.name && <p style={errStyle}>{errors.name.message}</p>}
                 </div>
+              </div>
+
+              {/* Hotline */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                  Hotline <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  {...register("hotline")}
+                  placeholder="0123456789"
+                  maxLength={10}
+                  style={errors.hotline ? inputErrorStyle : inputStyle}
+                />
+                {errors.hotline && <p style={errStyle}>{errors.hotline.message}</p>}
               </div>
 
               {/* Logo URL */}
@@ -250,12 +267,11 @@ export default function FranchiseForm() {
             )}
 
             {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
               <button
                 type="button"
                 onClick={() => navigate("/admin/franchises")}
                 style={{
-                  flex: 1,
                   padding: "12px 20px",
                   backgroundColor: "#f3f4f6",
                   color: "#374151",
@@ -275,7 +291,6 @@ export default function FranchiseForm() {
                 type="submit"
                 disabled={isCreating}
                 style={{
-                  flex: 1,
                   padding: "12px 20px",
                   backgroundColor: isCreating ? "#d97706" : "#8B5A2B",
                   color: "white",

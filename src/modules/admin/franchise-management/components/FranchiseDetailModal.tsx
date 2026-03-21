@@ -93,10 +93,7 @@ export default function FranchiseDetailModal({
                     <div>
                       <label>Open Time</label>
                       <p>
-                        {new Date(franchise.opened_at).toLocaleTimeString(
-                          "vi-VN",
-                          { hour: "2-digit", minute: "2-digit" }
-                        )}
+                        {franchise.opened_at || "Chưa cập nhật"}
                       </p>
                     </div>
                   </div>
@@ -106,12 +103,7 @@ export default function FranchiseDetailModal({
                     <div>
                       <label>Close Time</label>
                       <p>
-                        {franchise.closed_at
-                          ? new Date(franchise.closed_at).toLocaleTimeString(
-                              "vi-VN",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )
-                          : "Chưa cập nhật"}
+                        {franchise.closed_at || "Chưa cập nhật"}
                       </p>
                     </div>
                   </div>

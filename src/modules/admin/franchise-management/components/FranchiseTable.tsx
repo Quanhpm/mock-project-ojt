@@ -9,6 +9,7 @@ import type { Franchise } from "../../../../types/franchise.types";
 import FranchiseDelete from "./FranchiseDelete";
 import FranchiseRestore from "./FranchiseRestore";
 import { FranchiseSearch } from "./FranchiseSearch";
+import FranchiseEditModal from "./FranchiseEditModal";
 
 // ============================================================================
 // STYLES
@@ -218,6 +219,15 @@ export default function FranchiseTable() {
     franchiseName: "",
   });
 
+  // Edit Modal State
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    franchiseId: string | number | null;
+  }>({
+    isOpen: false,
+    franchiseId: null,
+  });
+
   // Prevent body scroll
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -406,7 +416,7 @@ export default function FranchiseTable() {
                 </button>
 
                 <button
-                  onClick={() => navigate(`/admin/franchises/edit/${franchise.id}`)}
+                  onClick={() => setEditModal({ isOpen: true, franchiseId: franchise.id })}
                   style={
                     {
                       ...getButtonStyles.actionButton,
@@ -845,6 +855,16 @@ export default function FranchiseTable() {
           setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" });
         }}
         onClose={() => setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" })}
+      />
+
+      {/* Edit Franchise Modal */}
+      <FranchiseEditModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, franchiseId: null })}
+        franchiseId={editModal.franchiseId}
+        onSuccess={() => {
+          executeSearch();
+        }}
       />
     </div>
   );

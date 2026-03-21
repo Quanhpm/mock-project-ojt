@@ -159,7 +159,7 @@ export default function FranchiseDelete({
             borderTop: "1px solid #f0f0f0",
             display: "flex",
             gap: "12px",
-            justifyContent: "flex-end"
+            justifyContent: "space-between"
           }}>
             <button
               onClick={onClose}

@@ -3,6 +3,7 @@ export interface Franchise {
   id: string | number
   code: string
   name: string
+  hotline: string
   logo_url: string
   address: string
   opened_at: string
