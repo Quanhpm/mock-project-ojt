@@ -1,11 +1,124 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 import { useCreateUser } from '../hooks/useCreateUser.hook'
 import type { RoleSelectItem } from '@/apis'
-import { Upload, X } from 'lucide-react'
+import { Eye, EyeOff, Upload, X } from 'lucide-react'
 import axios from 'axios'
 import { ENV } from '@/config/env.config'
 import { useToast } from '@/hooks/use-toast.hook'
+
+// ============================================================================
+// YUP VALIDATION SCHEMA (Step 1)
+// ============================================================================
+interface Step1Values {
+  name: string
+  email: string
+  password: string
+  confirmPassword: string
+  phone: string
+}
+
+const step1Schema = yup.object().shape({
+  name: yup
+    .string()
+    .trim()
+    .required('Tên là bắt buộc')
+    .min(5, 'Tên phải có ít nhất 5 ký tự')
+    .max(100, 'Tên không được vượt quá 100 ký tự')
+    .matches(
+      /^[a-zA-Z0-9. ]+$/,
+      'Tên chỉ được chứa chữ thường, chữ hoa, số, dấu chấm và khoảng trắng',
+    )
+    .test('no-consecutive-dots', 'Không được chứa hai dấu chấm liên tiếp', (v) => !v || !v.includes('..'))
+    .test('no-multiple-spaces', 'Không được chứa nhiều khoảng trắng liên tiếp', (v) => !v || !/ {2,}/.test(v))
+    .test('no-edge-dot', 'Không được bắt đầu hoặc kết thúc bằng dấu chấm', (v) => !v || (!v.startsWith('.') && !v.endsWith('.')))
+    .default(''),
+
+  email: yup
+    .string()
+    .trim()
+    .required('Email là bắt buộc')
+    .min(6, 'Email phải có ít nhất 6 ký tự')
+    .max(254, 'Email không được vượt quá 254 ký tự')
+    .test('has-at', 'Email phải chứa ký tự @', (v) => !v || v.includes('@'))
+    .test('single-at', 'Email chỉ được chứa đúng một ký tự @', (v) => !v || (v.match(/@/g) ?? []).length === 1)
+    .test('local-not-empty', 'Phần trước @ không được để trống', (v) => {
+      if (!v || !v.includes('@')) return true
+      return (v.split('@')[0] ?? '').length > 0
+    })
+    .test('local-valid-chars', 'Phần trước @ chỉ được chứa chữ cái, số, dấu chấm, gạch dưới, dấu cộng hoặc dấu gạch ngang', (v) => {
+      if (!v || !v.includes('@')) return true
+      const local = v.split('@')[0] ?? ''
+      return /^[a-zA-Z0-9._%+-]+$/.test(local)
+    })
+    .test('local-no-edge-dot', 'Phần trước @ không được bắt đầu hoặc kết thúc bằng dấu chấm', (v) => {
+      if (!v || !v.includes('@')) return true
+      const local = v.split('@')[0] ?? ''
+      return !local.startsWith('.') && !local.endsWith('.')
+    })
+    .test('no-consecutive-dots', 'Email không được chứa hai dấu chấm liên tiếp', (v) => !v || !v.includes('..'))
+    .test('domain-not-empty', 'Phần tên miền sau @ không được để trống', (v) => {
+      if (!v || !v.includes('@')) return true
+      const domain = v.split('@')[1] ?? ''
+      return domain.length > 0
+    })
+    .test('domain-has-dot', 'Tên miền phải có ít nhất một dấu chấm (ví dụ: gmail.com)', (v) => {
+      if (!v || !v.includes('@')) return true
+      const domain = v.split('@')[1] ?? ''
+      return domain.includes('.')
+    })
+    .test('domain-valid-chars', 'Tên miền chỉ được chứa chữ cái, số, dấu chấm hoặc dấu gạch ngang', (v) => {
+      if (!v || !v.includes('@')) return true
+      const domain = v.split('@')[1] ?? ''
+      return /^[a-zA-Z0-9.-]+$/.test(domain)
+    })
+    .test('domain-no-edge-hyphen', 'Tên miền không được bắt đầu hoặc kết thúc bằng dấu gạch ngang', (v) => {
+      if (!v || !v.includes('@')) return true
+      const domain = v.split('@')[1] ?? ''
+      const labels = domain.split('.')
+      return labels.every((label) => !label.startsWith('-') && !label.endsWith('-'))
+    })
+    .test('tld-valid', 'Phần đuôi tên miền không hợp lệ — phải có ít nhất 2 chữ cái (ví dụ: .com, .vn, .org)', (v) => {
+      if (!v || !v.includes('@')) return true
+      const domain = v.split('@')[1] ?? ''
+      if (!domain.includes('.')) return true
+      const tld = domain.split('.').pop() ?? ''
+      return tld.length >= 2 && /^[a-zA-Z]+$/.test(tld)
+    }),
+
+  password: yup
+    .string()
+    .required('Mật khẩu là bắt buộc')
+    .min(8, 'Mật khẩu phải có ít nhất 8 ký tự')
+    .max(100, 'Mật khẩu không được vượt quá 100 ký tự')
+    .matches(/[A-Z]/, 'Mật khẩu phải có ít nhất 1 chữ hoa (A–Z)')
+    .matches(/[a-z]/, 'Mật khẩu phải có ít nhất 1 chữ thường (a–z)')
+    .matches(/[0-9]/, 'Mật khẩu phải có ít nhất 1 chữ số (0–9)')
+    .matches(/[^a-zA-Z0-9]/, 'Mật khẩu phải có ít nhất 1 ký tự đặc biệt (@, #, $, ...)'),
+
+  confirmPassword: yup
+    .string()
+    .required('Xác nhận mật khẩu là bắt buộc')
+    .oneOf([yup.ref('password')], 'Mật khẩu xác nhận không khớp'),
+
+  phone: yup
+    .string()
+    .required('Số điện thoại là bắt buộc')
+    .test(
+      'only-valid-chars',
+      'Số điện thoại chỉ được chứa chữ số và dấu + ở đầu',
+      (v) => !v || /^[+0-9]+$/.test(v),
+    )
+    .min(10, 'Số điện thoại phải có ít nhất 10 ký tự')
+    .max(13, 'Số điện thoại không được vượt quá 13 ký tự')
+    .matches(
+      /^(\+84|0)(3[2-9]|5[2689]|7[06-9]|8\d|9\d)\d{7}$/,
+      'Số điện thoại không hợp lệ (ví dụ: 0912345678 hoặc +84912345678)',
+    ),
+})
 
 export const UserCreateForm: React.FC = () => {
   const navigate = useNavigate()
@@ -26,13 +139,23 @@ export const UserCreateForm: React.FC = () => {
     navigate('/admin/users')
   })
 
-  // ──────── Step 1 fields ────────
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [phone, setPhone] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+  // ──────── Step 1 fields (react-hook-form) ────────
+  const {
+    register,
+    handleSubmit: hookFormHandleSubmit,
+    formState: { errors, isValid },
+  } = useForm<Step1Values>({
+    resolver: yupResolver(step1Schema),
+    mode: 'onTouched',
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '', phone: '' },
+  })
+
+  // ──────── Avatar (managed outside RHF) ────────
   const [avatarUrl, setAvatarUrl] = useState('')
+
+  // ──────── Password visibility ────────
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   // ──────── Cloudinary Upload ────────
   const [isUploading, setIsUploading] = useState(false)
@@ -110,10 +233,9 @@ export const UserCreateForm: React.FC = () => {
   }
 
   // ──────── Step 1 submit ────────
-  const onSubmitStep1 = async (e: React.FormEvent) => {
-    e.preventDefault()
-    await handleCreateUser({ name, email, password, phone, avatar_url: avatarUrl })
-  }
+  const onSubmitStep1 = hookFormHandleSubmit(async (data) => {
+    await handleCreateUser({ name: data.name, email: data.email, password: data.password, phone: data.phone, avatar_url: avatarUrl })
+  })
 
   // ──────── Step 2 submit ────────
   const onSubmitStep2 = async (e: React.FormEvent) => {
@@ -123,12 +245,6 @@ export const UserCreateForm: React.FC = () => {
   }
 
   // ──────── Validate ────────
-  const isStep1Valid =
-    name.trim() &&
-    email.trim() &&
-    password.trim() &&
-    confirmPassword.trim() &&
-    password === confirmPassword
   const isStep2Valid =
     selectedRoleId && (isAdmin || selectedFranchiseId)
 return (
@@ -200,6 +316,7 @@ return (
       {currentStep === 1 && (
         <form
           onSubmit={onSubmitStep1}
+          noValidate
           className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-10"
         >
 
@@ -254,11 +371,13 @@ return (
             </label>
 
             <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
+              {...register('name')}
+              className={`mt-2 w-full h-11 px-4 rounded-lg border ${errors.name ? 'border-red-400' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm`}
               placeholder="e.g. Alex Morgan"
             />
+            {errors.name && (
+              <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>
+            )}
 
           </div>
 
@@ -271,11 +390,13 @@ return (
 
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+              {...register('email')}
+              className={`mt-2 w-full h-11 px-4 rounded-lg border ${errors.email ? 'border-red-400' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm`}
               placeholder="alex.morgan@company.com"
             />
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>
+            )}
 
           </div>
 
@@ -288,12 +409,23 @@ return (
                 Password
               </label>
 
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
-              />
+              <div className="relative mt-2">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  {...register('password')}
+                  className={`w-full h-11 px-4 pr-10 rounded-lg border ${errors.password ? 'border-red-400' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>
+              )}
 
             </div>
 
@@ -303,12 +435,23 @@ return (
                 Confirm Password
               </label>
 
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
-              />
+              <div className="relative mt-2">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  {...register('confirmPassword')}
+                  className={`w-full h-11 px-4 pr-10 rounded-lg border ${errors.confirmPassword ? 'border-red-400' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>
+              )}
 
             </div>
 
@@ -322,10 +465,13 @@ return (
             </label>
 
             <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm"
+              {...register('phone')}
+              className={`mt-2 w-full h-11 px-4 rounded-lg border ${errors.phone ? 'border-red-400' : 'border-slate-200'} bg-slate-50 focus:bg-white focus:border-sky-400 outline-none text-sm`}
+              placeholder="e.g. 0912345678"
             />
+            {errors.phone && (
+              <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>
+            )}
 
           </div>
 
@@ -342,8 +488,8 @@ return (
 
             <button
               type="submit"
-              disabled={!isStep1Valid || isSubmitting}
-              className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition"
+              disabled={!isValid || isSubmitting}
+              className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Creating..." : "Next Step →"}
             </button>
