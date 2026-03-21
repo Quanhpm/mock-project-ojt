@@ -214,7 +214,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   }
 
   // ──────── Validation ────────
-  const isInfoValid = name.trim() && email.trim()
+  // Require phone to be exactly 10 digits if user provides one, OR require it outright if it's mandatory.
+  // The user prompt said: "khi nhập số điện thoại bắt buộc phải nhập đủ 10 số"
+  const isPhoneValid = /^\d{10}$/.test(phone.trim());
+  const isInfoValid = name.trim() && email.trim() && isPhoneValid;
   const isRoleValid = selectedRoleId && (isAdmin || selectedFranchiseId)
 
   return (
@@ -325,19 +328,22 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               {/* Phone */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Phone Number{' '}
-                  <span className="text-gray-400 font-normal lowercase">(optional)</span>
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">phone</span>
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    placeholder="+84 xxx xxx xxxx"
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    maxLength={10}
+                    className={`w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border ${!isPhoneValid && phone.length > 0 ? "border-red-300 focus:ring-red-200 focus:border-red-400" : "border-gray-200 focus:ring-primary/20 focus:border-primary"} text-gray-800 placeholder-gray-400 focus:ring-2 transition-all text-sm`}
+                    placeholder="0912345678"
                   />
                 </div>
+                {!isPhoneValid && phone.length > 0 && (
+                  <p className="text-xs text-red-500 mt-1">Phone number must be exactly 10 digits</p>
+                )}
               </div>
 
               {/* Avatar Upload */}

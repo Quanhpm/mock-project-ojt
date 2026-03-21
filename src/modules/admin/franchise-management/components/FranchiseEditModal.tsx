@@ -96,7 +96,11 @@ export default function FranchiseEditModal({
     const errors: Record<string, string> = {};
     if (!formData.code.trim()) errors.code = "Franchise Code is required";
     if (!formData.name.trim()) errors.name = "Franchise Name is required";
-    if (!formData.hotline.trim()) errors.hotline = "Hotline is required";
+    if (!formData.hotline.trim()) {
+      errors.hotline = "Hotline is required";
+    } else if (!/^\d{10}$/.test(formData.hotline.trim())) {
+      errors.hotline = "Hotline must be exactly 10 digits";
+    }
     if (!formData.opened_at) errors.opened_at = "Open Time is required";
     if (!formData.closed_at) errors.closed_at = "Close Time is required";
     setFormErrors(errors);
@@ -212,7 +216,7 @@ export default function FranchiseEditModal({
 
                     <div className="fem-field">
                       <label><Phone size={13} style={{ display: "inline", marginRight: 4, transform: "translateY(2px)" }} /> Hotline <span className="fem-required">*</span></label>
-                      <input type="text" name="hotline" value={formData.hotline} onChange={handleChange} placeholder="0123456789" style={inputStyle("hotline")} />
+                      <input type="text" name="hotline" value={formData.hotline} onChange={handleChange} placeholder="0123456789" maxLength={10} style={inputStyle("hotline")} />
                       {formErrors.hotline && <span className="fem-error-text">{formErrors.hotline}</span>}
                     </div>
 

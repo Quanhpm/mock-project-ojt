@@ -163,7 +163,7 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
                 </div>
 
                 {/* ═══════════ Footer ═══════════ */}
-                <div className="flex items-center justify-end px-6 py-4 bg-white border-t border-gray-100">
+                <div className="flex items-center justify-start px-6 py-4 bg-white border-t border-gray-100">
                     <button
                         onClick={onClose}
                         className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
