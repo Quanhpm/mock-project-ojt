@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
 import { useProductSearch } from "../hooks/use-product-search.hook";
 import { useDeleteProduct } from "./hooks/useDeleteProduct";
 import { useRestoreProduct } from "./hooks/useRestoreProduct";
@@ -126,6 +125,7 @@ export default function ProductTable() {
     productName: "",
   });
   const [pageInput, setPageInput] = useState("");
+  const hasInitializedFilterSearch = useRef(false);
 
   // Track if we need to check pagination after deletion
   const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
@@ -275,6 +275,20 @@ export default function ProductTable() {
   const handleFranchiseFilterChange = (value: string) => {
     setFilters((prev) => ({ ...prev, franchise_id: value }));
   };
+
+  useEffect(() => {
+    if (!hasInitializedFilterSearch.current) {
+      hasInitializedFilterSearch.current = true;
+      return;
+    }
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    void executeSearch();
+  }, [executeSearch, filters.franchise_id, filters.is_active, filters.is_deleted]);
 
   const handleDeleteClick = (productId: string, productName: string) => {
     setDeleteModal({
@@ -540,7 +554,7 @@ export default function ProductTable() {
                         }
                       }}
                       onKeyDown={handleSearchKeyDown}
-                      placeholder="Tìm kiếm theo tên, mã sản phẩm... (Ctrl+K)"
+                      placeholder="Search by product name, SKU... (Ctrl+K)"
                       className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
                       style={{
                         display: "block",
@@ -636,7 +650,7 @@ export default function ProductTable() {
                               textTransform: "uppercase",
                             }}
                           >
-                            Tìm kiếm gần đây
+                            Recent searches
                           </span>
                           <button
                             onClick={(e) => {
@@ -662,7 +676,7 @@ export default function ProductTable() {
                                 "transparent")
                             }
                           >
-                            Xóa
+                            Clear
                           </button>
                         </div>
                         {searchHistory.map((item, index) => (
@@ -765,7 +779,7 @@ export default function ProductTable() {
                       >
                         <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                       </svg>
-                      Đang tìm...
+                      Searching...
                     </>
                   ) : (
                     <>
@@ -780,7 +794,7 @@ export default function ProductTable() {
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.35-4.35" />
                       </svg>
-                      Tìm kiếm
+                      Search
                     </>
                   )}
                 </button>
@@ -812,9 +826,9 @@ export default function ProductTable() {
                     (e.currentTarget.style.borderColor = "#e0e0e0")
                   }
                 >
-                  <option value="">Tất cả trạng thái</option>
-                  <option value="true">Hoạt động</option>
-                  <option value="false">Không hoạt động</option>
+                  <option value="">All Status</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
                 </select>
 
                 {isGlobalScope && (
@@ -877,7 +891,7 @@ export default function ProductTable() {
                   >
                     delete_outline
                   </span>
-                  {filters.is_deleted ? "Đã xóa" : "Hiện tại"}
+                  {filters.is_deleted ? "Deleted" : "Undeleted"}
                 </button>
 
                 {/* Clear Filters */}
@@ -904,7 +918,7 @@ export default function ProductTable() {
                     e.currentTarget.style.borderColor = "#e0e0e0";
                   }}
                 >
-                  Xóa bộ lọc
+                  Clear Filters
                 </button>
               </div>
             </div>
@@ -938,18 +952,6 @@ export default function ProductTable() {
                       borderBottom: "1px solid #e9ecef",
                     }}
                   >
-                    <th
-                      style={{
-                        padding: "12px 16px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        color: "#6c757d",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Product ID
-                    </th>
                     <th
                       style={{
                         padding: "12px 16px",
@@ -1021,7 +1023,7 @@ export default function ProductTable() {
                         key={idx}
                         style={{ borderBottom: "1px solid #f8f9fa" }}
                       >
-                        <td colSpan={6} style={{ padding: "16px" }}>
+                        <td colSpan={5} style={{ padding: "16px" }}>
                           <div
                             style={{
                               display: "flex",
@@ -1067,7 +1069,7 @@ export default function ProductTable() {
                     // Empty State
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={5}
                         style={{ padding: "60px 40px", textAlign: "center" }}
                       >
                         <div
@@ -1110,7 +1112,7 @@ export default function ProductTable() {
                                 margin: "0 0 8px 0",
                               }}
                             >
-                              Không tìm thấy kết quả
+                              No results found
                             </h3>
                             <p
                               style={{
@@ -1120,8 +1122,8 @@ export default function ProductTable() {
                               }}
                             >
                               {filters.keyword
-                                ? `Không có sản phẩm nào khớp với "${filters.keyword}"`
-                                : "Không có sản phẩm nào để hiển thị"}
+                                ? `No products match "${filters.keyword}"`
+                                : "No products available to display"}
                             </p>
                           </div>
                           {(filters.keyword ||
@@ -1152,7 +1154,7 @@ export default function ProductTable() {
                                 e.currentTarget.style.borderColor = "#e0e0e0";
                               }}
                             >
-                              Xóa bộ lọc
+                              Clear Filters
                             </button>
                           )}
                         </div>
@@ -1174,16 +1176,6 @@ export default function ProductTable() {
                             "transparent")
                         }
                       >
-                        <td
-                          style={{
-                            padding: "16px",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                            color: "#495057",
-                          }}
-                        >
-                          {product.id}
-                        </td>
                         <td style={{ padding: "16px" }}>
                           <div
                             style={{
@@ -1261,7 +1253,7 @@ export default function ProductTable() {
                             color: "#212529",
                           }}
                         >
-                          {formatPrice(product.displayPrice)}
+                          {`${formatPrice(product.min_price ?? 0)} - ${formatPrice(product.max_price ?? product.min_price ?? 0)}`}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <label
@@ -1327,6 +1319,38 @@ export default function ProductTable() {
                               gap: "8px",
                             }}
                           >
+                            <button
+                              onClick={async () => {
+                                await fetchProduct(product.masterProductId);
+                                navigate(`/admin/products/edit/${product.masterProductId}`);
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: "32px",
+                                height: "32px",
+                                border: "none",
+                                borderRadius: "6px",
+                                backgroundColor: "transparent",
+                                color: "#94a3b8",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(67, 56, 202, 0.08)";
+                                e.currentTarget.style.color = "#4338ca";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "#94a3b8";
+                              }}
+                              title="Edit"
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                edit
+                              </span>
+                            </button>
                             {/* View Details Button */}
                             <button
                               onClick={async () => {
@@ -1533,13 +1557,13 @@ export default function ProductTable() {
                     <p
                       style={{ fontSize: "14px", color: "#495057", margin: 0 }}
                     >
-                      Hiển thị trang{" "}
+                      Showing page{" "}
                       <span style={{ fontWeight: "500" }}>{currentPage}</span>{" "}
-                      trong{" "}
+                      of{" "}
                       <span style={{ fontWeight: "500" }}>{totalPages}</span>{" "}
-                      trang (
+                      (
                       <span style={{ fontWeight: "500" }}>{totalItems}</span>{" "}
-                      sản phẩm)
+                      products)
                     </p>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1579,7 +1603,7 @@ export default function ProductTable() {
                           e.currentTarget.style.borderColor = "#e5e7eb";
                         }}
                       >
-                        Trước
+                        Previous
                       </button>
                       {(() => {
                         const pages: (number | "...")[] = [];
@@ -1671,11 +1695,11 @@ export default function ProductTable() {
                           e.currentTarget.style.borderColor = "#e5e7eb";
                         }}
                       >
-                        Sau
+                        Next
                       </button>
                     </nav>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                      <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to</span>
                       <input
                         type="number" min={1} max={totalPages}
                         value={pageInput}

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useDroppable } from '@dnd-kit/core';
+import { motion } from 'framer-motion';
 import { X, Search, Loader2 } from 'lucide-react';
 import type { EnrichedCategoryFranchiseItem } from '../hooks/useCategoryFranchiseList.hook.ts';
+import { getCategoryLabel } from '../utils/productFranchise.utils.ts';
 
 interface CategoryFranchiseSidebarProps {
     categories: EnrichedCategoryFranchiseItem[];
@@ -8,6 +11,10 @@ interface CategoryFranchiseSidebarProps {
     isLoading: boolean;
     selectedCategory: EnrichedCategoryFranchiseItem | null;
     onSelectCategory: (cat: EnrichedCategoryFranchiseItem | null) => void;
+    assignmentEnabled?: boolean;
+    activeDraggedProductName?: string | null;
+    highlightedCategoryId?: string | null;
+    successAnimationKey?: number;
     canAssign: boolean;
     isAssigning: boolean;
     onAssign: () => void;
@@ -15,12 +22,132 @@ interface CategoryFranchiseSidebarProps {
     onClose?: () => void;
 }
 
+interface DroppableCategoryItemProps {
+    category: EnrichedCategoryFranchiseItem;
+    itemCount: number;
+    isChecked: boolean;
+    isRecentlyAssigned: boolean;
+    assignmentEnabled: boolean;
+    successAnimationKey: number;
+    onToggle: (category: EnrichedCategoryFranchiseItem) => void;
+    getCategoryLabel: (category: EnrichedCategoryFranchiseItem) => string;
+}
+
+const DroppableCategoryItem: React.FC<DroppableCategoryItemProps> = ({
+    category,
+    itemCount,
+    isChecked,
+    isRecentlyAssigned,
+    assignmentEnabled,
+    successAnimationKey,
+    onToggle,
+    getCategoryLabel,
+}) => {
+    const { isOver, setNodeRef } = useDroppable({
+        id: `category-franchise-${category.id}`,
+        disabled: !assignmentEnabled,
+        data: {
+            type: 'category-franchise',
+            category,
+        },
+    });
+
+    const name = getCategoryLabel(category);
+    const baseBackgroundColor = isChecked ? 'rgba(255, 251, 235, 1)' : 'rgba(255, 255, 255, 0)';
+    const baseBorderColor = isChecked ? 'rgba(253, 230, 138, 1)' : 'rgba(255, 255, 255, 0)';
+
+    return (
+        <motion.button
+            ref={setNodeRef}
+            type="button"
+            onClick={() => onToggle(category)}
+            animate={isRecentlyAssigned
+                ? {
+                    scale: [1, 1.035, 1],
+                    borderColor: [baseBorderColor, 'rgba(16, 185, 129, 0.9)', baseBorderColor],
+                    backgroundColor: [baseBackgroundColor, 'rgba(220, 252, 231, 0.95)', baseBackgroundColor],
+                    boxShadow: [
+                        '0 0 0 rgba(0, 0, 0, 0)',
+                        '0 16px 32px rgba(16, 185, 129, 0.22)',
+                        '0 0 0 rgba(0, 0, 0, 0)',
+                    ],
+                }
+                : {
+                    scale: isOver ? 1.02 : 1,
+                    borderColor: isOver ? 'rgba(251, 191, 36, 1)' : baseBorderColor,
+                    backgroundColor: isOver ? 'rgba(254, 243, 199, 0.8)' : baseBackgroundColor,
+                    boxShadow: isOver ? '0 12px 30px rgba(180, 83, 9, 0.16)' : '0 0 0 rgba(0, 0, 0, 0)',
+                }}
+            transition={isRecentlyAssigned
+                ? { duration: 0.72, ease: 'easeOut', times: [0, 0.4, 1] }
+                : { duration: 0.18, ease: 'easeOut' }}
+            className={`flex w-full items-center justify-between rounded-lg border px-3 py-3 text-left transition-colors ${isOver
+                ? 'border-amber-400 bg-amber-100/80 ring-2 ring-amber-300/70'
+                : isChecked
+                    ? 'border-amber-200 bg-amber-50'
+                    : 'border-transparent hover:bg-gray-50'
+                }`}
+        >
+            <div className="flex items-center gap-3">
+                <span
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border ${isChecked || isOver
+                        ? 'border-amber-700 bg-amber-700'
+                        : 'border-gray-300 bg-white'
+                        }`}
+                >
+                    {(isChecked || isOver) && <span className="h-2 w-2 rounded-full bg-white" />}
+                </span>
+                <div>
+                    <span className={`block text-sm font-medium ${isChecked || isOver ? 'font-bold text-amber-900' : 'text-gray-700'}`}>
+                        {name}
+                    </span>
+                    {isOver && assignmentEnabled && (
+                        <span className="block text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                            Drop here
+                        </span>
+                    )}
+                </div>
+            </div>
+            <motion.span
+                key={`${category.id}-${successAnimationKey}-${itemCount}`}
+                animate={isRecentlyAssigned
+                    ? {
+                        scale: [1, 1.16, 1],
+                        y: [0, -2, 0],
+                        backgroundColor: [
+                            'rgba(243, 244, 246, 1)',
+                            'rgba(209, 250, 229, 1)',
+                            'rgba(243, 244, 246, 1)',
+                        ],
+                        color: [
+                            'rgba(107, 114, 128, 1)',
+                            'rgba(5, 150, 105, 1)',
+                            'rgba(107, 114, 128, 1)',
+                        ],
+                    }
+                    : {
+                        scale: 1,
+                        y: 0,
+                    }}
+                transition={{ duration: 0.72, ease: 'easeOut', times: [0, 0.4, 1] }}
+                className="inline-flex min-w-[72px] items-center justify-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-500"
+            >
+                {itemCount} Items
+            </motion.span>
+        </motion.button>
+    );
+};
+
 export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> = ({
     categories,
     categoryItemCounts = {},
     isLoading,
     selectedCategory,
     onSelectCategory, 
+    assignmentEnabled = true,
+    activeDraggedProductName,
+    highlightedCategoryId,
+    successAnimationKey = 0,
     canAssign,
     isAssigning,
     onAssign,
@@ -30,7 +157,7 @@ export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> =
     const [searchQuery, setSearchQuery] = useState('');
 
     const filteredCategories = categories.filter((cat) => {
-        const name = cat.category?.name ?? cat.category_id;
+        const name = getCategoryLabel(cat);
         return name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
@@ -72,6 +199,17 @@ export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> =
                         type="text"
                     />
                 </div>
+
+                {activeDraggedProductName && assignmentEnabled && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+                    >
+                        <p className="text-xs font-semibold text-amber-800">Dragging product</p>
+                        <p className="truncate text-sm text-amber-900">{activeDraggedProductName}</p>
+                    </motion.div>
+                )}
             </div>
 
             {/* Category List */}
@@ -91,34 +229,19 @@ export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> =
                 ) : (
                     <div className="space-y-1">
                         {filteredCategories.map((cat) => {
-                            const name = cat.category?.name ?? cat.category_id;
                             const isChecked = selectedCategory?.id === cat.id;
                             return (
-                                <label
+                                <DroppableCategoryItem
                                     key={cat.id}
-                                    onClick={() => handleToggleCategory(cat)}
-                                    className={`flex items-center justify-between px-3 py-3 rounded-lg cursor-pointer transition-colors ${isChecked
-                                        ? 'bg-amber-50 border border-amber-200'
-                                        : 'hover:bg-gray-50 border border-transparent'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <input
-                                            type="radio"
-                                            name="category-selection"
-                                            checked={isChecked}
-                                            onChange={() => handleToggleCategory(cat)}
-                                            className="w-5 h-5 border-gray-300 text-amber-700 focus:ring-amber-700 cursor-pointer accent-amber-700"
-                                        />
-                                        <span className={`text-sm font-medium ${isChecked ? 'text-amber-800 font-bold' : 'text-gray-700'
-                                            }`}>
-                                            {name}
-                                        </span>
-                                    </div>
-                                    <span className="text-xs text-gray-400">
-                                        {categoryItemCounts?.[cat.id] || 0} Items
-                                    </span>
-                                </label>
+                                    category={cat}
+                                    itemCount={categoryItemCounts?.[cat.category_id] || 0}
+                                    isChecked={isChecked}
+                                    isRecentlyAssigned={highlightedCategoryId === cat.category_id}
+                                    assignmentEnabled={assignmentEnabled}
+                                    successAnimationKey={successAnimationKey}
+                                    onToggle={handleToggleCategory}
+                                    getCategoryLabel={getCategoryLabel}
+                                />
                             );
                         })}
                     </div>
@@ -141,16 +264,21 @@ export const CategoryFranchiseSidebar: React.FC<CategoryFranchiseSidebarProps> =
                         ← Chọn một category trước
                     </p>
                 )}
-                {selectedCategory && !canAssign && (
+                {!assignmentEnabled && (
+                    <p className="text-xs text-amber-700 font-medium text-center">
+                        ← Chuyển về tab All để gán product
+                    </p>
+                )}
+                {selectedCategory && assignmentEnabled && !canAssign && (
                     <p className="text-xs text-amber-700 font-medium text-center">
                         ← Chọn một product để gán
                     </p>
                 )}
                 <button
                     onClick={onAssign}
-                    disabled={!canAssign || isAssigning}
+                    disabled={!assignmentEnabled || !canAssign || isAssigning}
                     className={`w-full font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2
-                        ${canAssign && !isAssigning
+                        ${assignmentEnabled && canAssign && !isAssigning
                             ? 'bg-amber-700 hover:bg-amber-800 text-white shadow-amber-700/20 cursor-pointer'
                             : 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none'
                         }`}

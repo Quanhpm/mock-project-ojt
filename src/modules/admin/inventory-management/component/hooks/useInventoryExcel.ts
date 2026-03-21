@@ -14,6 +14,10 @@ import { useToast } from "@/hooks/use-toast.hook";
 interface UseInventoryExcelParams {
     getValues: UseFormGetValues<{ items: InventoryTableRow[] }>;
     replace: UseFieldArrayReplace<{ items: InventoryTableRow[] }, "items">;
+    mapImportErrors?: (
+        errors: ImportValidationError[],
+        mappedRows: Record<string, unknown>[],
+    ) => ImportValidationError[];
     onImportValidationErrors?: (
         errors: ImportValidationError[],
         mappedRows: Record<string, unknown>[],
@@ -43,6 +47,7 @@ interface UseInventoryExcelReturn {
 export function useInventoryExcel({
     getValues,
     replace,
+    mapImportErrors,
     onImportValidationErrors,
     onImportSuccess,
     onImportStart,
@@ -159,7 +164,10 @@ export function useInventoryExcel({
                 // Step 3: Xử lý kết quả
                 if (errors.length > 0) {
                     // ❌ CÓ LỖI → KHÔNG import, hiển thị lỗi trên Error Banner
-                    setImportErrors(errors);
+                    const displayErrors = mapImportErrors
+                        ? mapImportErrors(errors, mappedRows)
+                        : errors;
+                    setImportErrors(displayErrors);
                     onImportValidationErrors?.(errors, mappedRows);
                     setIsParsingFile(false);
                     return;
@@ -224,6 +232,7 @@ export function useInventoryExcel({
             onImportStart,
             onImportSuccess,
             onImportValidationErrors,
+            mapImportErrors,
             replace,
             toastError,
             toastSuccess,

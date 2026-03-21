@@ -61,6 +61,8 @@ export interface InventoryAdjustPayload {
   product_franchise_id: string;
   change: number;
   reason: string;
+  inventory_id?: string;
+  alert_threshold?: number;
 }
 
 export interface InventorySearchCondition {
@@ -177,6 +179,7 @@ export interface ImportValidationError {
   row: number; // Row index (bắt đầu từ 01)
   field: string; // "quantity" | "alert_threshold"
   message: string; // Mô tả lỗi chi tiết
+  tableRowIndex?: number; // Dòng tương ứng trên bảng hiện tại (nếu match được)
 }
 
 // ============================================================

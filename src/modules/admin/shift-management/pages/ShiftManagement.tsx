@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core'
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
 import { shiftApi } from '@/apis/endpoints'
 import type { BulkAssignShiftRequest } from '@/apis/endpoints/shift.api'
 import { useAdminAuthStore, getRoleCode } from '@/modules/admin/auth-admin/stores/admin-auth.store'
@@ -11,9 +13,11 @@ import {
   PageHeader,
   QuickAssignShiftModal,
   ShiftCalendar,
+  ShiftDailyTimeline,
   ShiftDayPanel,
   ShiftFilters,
   ShiftImportModal,
+  StaffSidebar,
 } from '../components'
 import { useDailyAssignment, useShiftCalendar, useShiftFilters } from '../hooks'
 import type {
@@ -35,6 +39,11 @@ const parseDateKey = (dateKey: string | null) => {
   return new Date(`${dateKey}T00:00:00`)
 }
 
+interface ActiveDragUser {
+  userId: string
+  userName: string
+}
+
 function ShiftManagement() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -42,7 +51,11 @@ function ShiftManagement() {
   const store = useAdminAuthStore()
   const roleCode = getRoleCode(store)
   const activeContext = useAdminAuthStore((state) => state.activeContext)
+  const adminUser = useAdminAuthStore((state) => state.admin)
   const routeFranchiseId = searchParams.get('franchiseId')
+
+  const isStaff = roleCode === 'STAFF'
+  const staffUserId = adminUser?.id ?? null
 
   const selectedFranchiseId = useShiftManagementStore((state) => state.selectedFranchiseId)
   const setSelectedFranchiseId = useShiftManagementStore((state) => state.setSelectedFranchiseId)
@@ -50,6 +63,8 @@ function ShiftManagement() {
   const setSelectedDate = useShiftManagementStore((state) => state.setSelectedDate)
   const viewMode = useShiftManagementStore((state) => state.viewMode)
   const toggleViewMode = useShiftManagementStore((state) => state.toggleViewMode)
+  const calendarType = useShiftManagementStore((state) => state.calendarType)
+  const setCalendarType = useShiftManagementStore((state) => state.setCalendarType)
   const dailyAssignment = useShiftManagementStore((state) => state.dailyAssignment)
   const openDailyAssignment = useShiftManagementStore((state) => state.openDailyAssignment)
   const closeDailyAssignment = useShiftManagementStore((state) => state.closeDailyAssignment)
@@ -64,10 +79,15 @@ function ShiftManagement() {
   const [isQuickAssignModalOpen, setIsQuickAssignModalOpen] = useState(false)
   const [isQuickAssignSubmitting, setIsQuickAssignSubmitting] = useState(false)
 
+  const [hoveredDateKey, setHoveredDateKey] = useState<string | null>(null)
+  const [activeDragUser, setActiveDragUser] = useState<ActiveDragUser | null>(null)
+  const [isAssignMode, setIsAssignMode] = useState(false)
+  const [closeSignal, setCloseSignal] = useState(0)
+
   const resolvedFranchiseId =
-    roleCode === 'MANAGER'
-      ? activeContext?.franchise_id || routeFranchiseId || selectedFranchiseId
-      : routeFranchiseId || selectedFranchiseId
+    roleCode === 'ADMIN'
+      ? routeFranchiseId || selectedFranchiseId
+      : activeContext?.franchise_id || routeFranchiseId || selectedFranchiseId
 
   const {
     filters,
@@ -78,6 +98,13 @@ function ShiftManagement() {
     handleClearFilters,
     isFranchiseLocked,
   } = useShiftFilters(resolvedFranchiseId)
+
+  // Nếu là STAFF: tự động lock staffFilter theo userId của chính họ
+  useEffect(() => {
+    if (isStaff && staffUserId) {
+      setStaffFilter(staffUserId)
+    }
+  }, [isStaff, staffUserId, setStaffFilter])
 
   const {
     monthDate,
@@ -106,8 +133,9 @@ function ShiftManagement() {
 
   const selectedShifts = useMemo(() => {
     if (!selectedDateKey) return []
-    return visibleShiftGroupsByDate[selectedDateKey] || []
-  }, [selectedDateKey, visibleShiftGroupsByDate])
+    const dayData = calendarDays.find((d) => formatDateKey(d.date) === selectedDateKey)
+    return dayData ? dayData.shifts : (visibleShiftGroupsByDate[selectedDateKey] || [])
+  }, [selectedDateKey, calendarDays, visibleShiftGroupsByDate])
 
   const selectedShift = useMemo(() => {
     if (!dailyAssignment.shiftId || !dailyAssignment.workDate) return null
@@ -177,7 +205,7 @@ function ShiftManagement() {
     isUsersLoading,
     isSubmitting,
     handleAssignUser,
-  } = useDailyAssignment(resolvedFranchiseId, selectedShift)
+  } = useDailyAssignment(isStaff ? null : resolvedFranchiseId, isStaff ? null : selectedShift)
 
   useEffect(() => {
     if (resolvedFranchiseId && resolvedFranchiseId !== selectedFranchiseId) {
@@ -226,6 +254,11 @@ function ShiftManagement() {
   }
 
   const handleOpenShiftDetail = (shiftId: string, workDate: string) => {
+    if (isStaff) {
+      setSelectedDate(workDate)
+      return
+    }
+
     setSelectedDate(workDate)
     openDailyAssignment(shiftId, workDate)
   }
@@ -379,6 +412,90 @@ function ShiftManagement() {
     }
   }
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const type = event.active.data.current?.type
+    if (type === 'user' || type === 'assignment') {
+      setActiveDragUser(event.active.data.current.user as ActiveDragUser)
+    }
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const overData = event.over?.data.current
+    if (overData?.type === 'date') {
+      setHoveredDateKey(overData.date)
+    } else if (overData?.type === 'shift') {
+      setHoveredDateKey(overData.workDate)
+    } else {
+      setHoveredDateKey(null)
+    }
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveDragUser(null)
+    setHoveredDateKey(null)
+
+    const overData = event.over?.data.current
+    const activeData = event.active.data.current
+
+    if (overData?.type === 'shift') {
+      const shiftId = overData.shiftId
+      const workDate = overData.workDate
+
+      if (activeData?.type === 'user') {
+        const userId = activeData.user.userId
+        const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
+        
+        if (assignedIds.includes(userId)) {
+          showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
+          return
+        }
+
+        try {
+          await shiftApi.assignShiftToUser({
+            shift_id: shiftId,
+            user_id: userId,
+            work_date: workDate,
+          })
+          success('Gán nhân viên thành công', `Đã phân công ${activeData.user.userName}.`)
+          reloadCalendarData()
+        } catch {
+          showError('Gán nhân viên thất bại', 'Vui lòng thử lại.')
+        }
+      } else if (activeData?.type === 'assignment') {
+        const userId = activeData.user.userId
+        const oldAssignmentId = activeData.assignmentId
+        const oldShiftId = activeData.shiftId
+        const oldWorkDate = activeData.workDate
+
+        if (oldShiftId === shiftId && oldWorkDate === workDate) {
+          return
+        }
+
+        const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
+        if (assignedIds.includes(userId)) {
+          showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
+          return
+        }
+
+        try {
+          await shiftApi.deleteShiftAssignment(oldAssignmentId)
+          await shiftApi.assignShiftToUser({
+            shift_id: shiftId,
+            user_id: userId,
+            work_date: workDate,
+          })
+          success('Chuyển ca thành công', `Đã chuyển ${activeData.user.userName} sang ca mới.`)
+          reloadCalendarData()
+        } catch {
+          showError('Chuyển ca thất bại', 'Vui lòng thử lại.')
+        }
+      }
+    }
+
+    // Đóng modal bất kể thả vào đâu
+    setCloseSignal((prev) => prev + 1)
+  }
+
   return (
     <div className="flex h-screen w-full">
       <main className="relative flex h-full flex-1 flex-col overflow-hidden">
@@ -392,84 +509,192 @@ function ShiftManagement() {
           onToggleViewMode={toggleViewMode}
           onChangeFranchise={roleCode === 'ADMIN' ? handleChangeFranchise : undefined}
           isImportDisabled={!resolvedFranchiseId || isLoading}
+          showImportButton={!isStaff}
+          showCreateShiftButton={!isStaff}
         />
 
-        <div className="flex-1 overflow-y-auto px-8 pb-8">
-          <ShiftFilters
-            viewMode={viewMode}
-            searchTerm={filters.searchTerm}
-            franchiseFilter={filters.franchiseFilter}
-            staffFilter={filters.staffFilter}
-            statusFilter={filters.statusFilter}
-            franchises={franchiseOptions}
-            staff={staffOptions}
-            isFranchiseLocked={isFranchiseLocked}
-            selectedFranchiseName={selectedFranchiseName}
-            onSearchChange={setSearchTerm}
-            onFranchiseChange={setFranchiseFilter}
-            onStaffChange={setStaffFilter}
-            onStatusChange={setStatusFilter}
-            onClearFilters={handleClearFilters}
-          />
+        <DndContext
+          collisionDetection={pointerWithin}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+          autoScroll={{
+            threshold: { x: 0.2, y: 0.2 },
+            acceleration: 15,
+            interval: 5,
+          }}
+        >
+          <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex rounded-xl bg-slate-100 p-1 ring-1 ring-inset ring-slate-200">
+                <button
+                  onClick={() => setCalendarType('month')}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
+                    calendarType === 'month'
+                      ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+                  Monthly Grid
+                </button>
+                <button
+                  onClick={() => {
+                    setCalendarType('day')
+                    if (!selectedDateKey) {
+                      setSelectedDate(formatDateKey(new Date()))
+                    }
+                  }}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
+                    calendarType === 'day'
+                      ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">view_timeline</span>
+                  Daily Timeline
+                </button>
+              </div>
 
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-              {error}
+              {/* Nút Quick Assign: ẩn với STAFF */}
+              {!isStaff && (
+                <button
+                  onClick={() => setIsAssignMode(!isAssignMode)}
+                  className={`flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                    isAssignMode
+                      ? 'bg-primary text-white shadow-md'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 relative'
+                  }`}
+                >
+                  {!isAssignMode && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    </span>
+                  )}
+                  <span className="material-symbols-outlined text-[20px]">group_add</span>
+                  Chế độ Kéo thả Nhanh
+                </button>
+              )}
+
+              {/* Banner lịch cá nhân cho STAFF */}
+              {isStaff && (
+                <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm font-semibold text-primary">
+                  <span className="material-symbols-outlined text-[18px]">person</span>
+                  Lịch làm việc cá nhân
+                </div>
+              )}
             </div>
-          )}
 
-          {isLoading && (
-            <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
-              Loading shift calendar data...
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 items-stretch gap-6 xl:h-[calc(100vh-250px)] xl:grid-cols-3">
-            <div className="xl:col-span-2 xl:min-h-0">
-              <ShiftCalendar
-                monthLabel={monthLabel}
-                calendarDays={calendarDays}
-                selectedDate={selectedDate}
+            {/* Filters: ẩn với STAFF vì họ chỉ xem lịch của chính mình */}
+            {!isStaff && (
+              <ShiftFilters
                 viewMode={viewMode}
-                onSelectDate={handleSelectDate}
-                onPrevMonth={handlePrevMonth}
-                onNextMonth={handleNextMonth}
-                onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                searchTerm={filters.searchTerm}
+                franchiseFilter={filters.franchiseFilter}
+                staffFilter={filters.staffFilter}
+                statusFilter={filters.statusFilter}
+                franchises={franchiseOptions}
+                staff={staffOptions}
+                isFranchiseLocked={isFranchiseLocked}
+                selectedFranchiseName={selectedFranchiseName}
+                onSearchChange={setSearchTerm}
+                onFranchiseChange={setFranchiseFilter}
+                onStaffChange={setStaffFilter}
+                onStatusChange={setStatusFilter}
+                onClearFilters={handleClearFilters}
               />
-            </div>
-            <div className="xl:col-span-1 xl:min-h-0">
-              <ShiftDayPanel
-                viewMode={viewMode}
-                selectedDate={selectedDate}
-                assignments={selectedAssignments}
-                shifts={selectedShifts}
-                onCreateAssignment={handleOpenQuickAssignModal}
-                onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
-                onEditShift={handleEditShift}
-                onStatusChange={handleStatusChange}
-                onDeleteAssignment={handleDeleteRequest}
-                updatingAssignmentId={updatingAssignmentId}
-                deletingAssignmentId={deletingAssignmentId}
-              />
+            )}
+
+            {error && (
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            {isLoading && (
+              <div className="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                Loading shift calendar data...
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 items-stretch gap-6 xl:h-[calc(100vh-250px)] xl:grid-cols-3">
+              <div className="xl:col-span-2 xl:min-h-0">
+                {calendarType === 'month' ? (
+                  <ShiftCalendar
+                    monthLabel={monthLabel}
+                    calendarDays={calendarDays}
+                    selectedDate={selectedDate}
+                    viewMode={viewMode}
+                    hoveredDateKey={hoveredDateKey}
+                    closeSignal={closeSignal}
+                    onSelectDate={handleSelectDate}
+                    onPrevMonth={handlePrevMonth}
+                    onNextMonth={handleNextMonth}
+                    onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                  />
+                ) : (
+                  <ShiftDailyTimeline
+                    selectedDay={calendarDays.find((d) => formatDateKey(d.date) === selectedDateKey)}
+                    onSelectDate={handleSelectDate}
+                    onOpenShiftDetail={isStaff ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                  />
+                )}
+              </div>
+              <div className="xl:col-span-1 xl:min-h-0">
+                {/* STAFF không có sidebar kéo thả, chỉ xem panel ngày */}
+                {isAssignMode && !isStaff ? (
+                  <StaffSidebar franchiseId={resolvedFranchiseId} />
+                ) : (
+                  <ShiftDayPanel
+                    viewMode={isStaff ? 'assignment' : viewMode}
+                    selectedDate={selectedDate}
+                    assignments={selectedAssignments}
+                    shifts={selectedShifts}
+                    onCreateAssignment={isStaff ? undefined : handleOpenQuickAssignModal}
+                    onOpenShiftDetail={isStaff ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                    onEditShift={isStaff ? undefined : handleEditShift}
+                    onStatusChange={isStaff ? undefined : handleStatusChange}
+                    onDeleteAssignment={isStaff ? undefined : handleDeleteRequest}
+                    updatingAssignmentId={updatingAssignmentId}
+                    deletingAssignmentId={deletingAssignmentId}
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </div>
+
+          <DragOverlay dropAnimation={{ duration: 250, easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)' }}>
+            {activeDragUser ? (
+              <div className="group flex cursor-grabbing items-center gap-3 rounded-xl border border-primary bg-white p-3 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] opacity-95 w-[240px]">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
+                  {activeDragUser.userName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="truncate text-sm font-semibold text-slate-900">{activeDragUser.userName}</p>
+                </div>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </main>
 
-      <DailyAssignmentModal
-        isOpen={dailyAssignment.isOpen}
-        selectedShift={selectedShift}
-        assignableUsers={assignableUsers}
-        isUsersLoading={isUsersLoading}
-        isSubmitting={isSubmitting}
-        updatingAssignmentId={updatingAssignmentId}
-        deletingAssignmentId={deletingAssignmentId}
-        onClose={closeDailyAssignment}
-        onSubmit={handleDailyAssignmentSubmit}
-        onEditShift={handleEditShift}
-        onStatusChange={handleStatusChange}
-        onDeleteAssignment={handleDeleteRequest}
-      />
+      {!isStaff && (
+        <DailyAssignmentModal
+          isOpen={dailyAssignment.isOpen}
+          selectedShift={selectedShift}
+          assignableUsers={assignableUsers}
+          isUsersLoading={isUsersLoading}
+          isSubmitting={isSubmitting}
+          updatingAssignmentId={updatingAssignmentId}
+          deletingAssignmentId={deletingAssignmentId}
+          onClose={closeDailyAssignment}
+          onSubmit={handleDailyAssignmentSubmit}
+          onEditShift={handleEditShift}
+          onStatusChange={handleStatusChange}
+          onDeleteAssignment={handleDeleteRequest}
+        />
+      )}
 
       <DeleteShiftAssignmentDialog
         isOpen={Boolean(deleteTarget)}
@@ -487,15 +712,17 @@ function ShiftManagement() {
         onSubmit={handleUpdateShift}
       />
 
-      <ShiftImportModal
-        isOpen={isImportModalOpen}
-        franchiseName={selectedFranchiseName}
-        referenceData={shiftImportReferenceData}
-        isReferenceLoading={isLoading}
-        isSubmitting={isImportingShifts}
-        onClose={() => setIsImportModalOpen(false)}
-        onSubmit={handleBulkImport}
-      />
+      {!isStaff && (
+        <ShiftImportModal
+          isOpen={isImportModalOpen}
+          franchiseName={selectedFranchiseName}
+          referenceData={shiftImportReferenceData}
+          isReferenceLoading={isLoading}
+          isSubmitting={isImportingShifts}
+          onClose={() => setIsImportModalOpen(false)}
+          onSubmit={handleBulkImport}
+        />
+      )}
 
       <QuickAssignShiftModal
         isOpen={isQuickAssignModalOpen}

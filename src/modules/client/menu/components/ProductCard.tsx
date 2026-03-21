@@ -1,40 +1,9 @@
 import type { MenuProduct } from "@/apis/endpointsCLIENT/client.api";
-import { useCartStore } from '@/stores/cart.store';
 import { slugify } from "@/utils/slugify.util";
 import { useNavigate } from "react-router-dom";
-import { useToast } from '@/hooks/use-toast.hook';
-import { useClientAuthStore } from "../../auth-client/stores/client-auth.store";
-import { ROUTER_URL } from '@/routes/router.const';
 
 function ProductCard({ product, franchiseId }: { product: MenuProduct; franchiseId: string }) {
     const navigate = useNavigate();
-    const addItem = useCartStore((state) => state.addItem);
-    const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
-    const { success, error } = useToast();
-
-    const handleAddToCart = (product: MenuProduct, e: React.MouseEvent) => {
-        e.stopPropagation();
-
-        // Kiểm tra đăng nhập
-        if (!isLoggedIn) {
-            error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
-            setTimeout(() => {
-                navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
-                    state: { from: ROUTER_URL.MENU }
-                });
-            }, 1500);
-            return;
-        }
-
-        addItem({
-            productId: product.product_id,
-            name: product.name,
-            price: product.sizes[0].price,
-            image_url: product.image_url
-        });
-
-        success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
-    };
 
     return (
         <div
@@ -86,7 +55,6 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
                     )} */}
                 </div>
                 <button
-                    // onClick={(e) => handleAddToCart(product, e)}
                     className="bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2"
                 >
                     <span className="material-icons-outlined text-[18px]">add</span>

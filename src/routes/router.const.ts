@@ -23,6 +23,7 @@ export const ROUTER_URL = {
   HOME_ROUTER: {
     DASHBOARD: "/",
     CART: "/cart",
+    CART_DETAIL: "/cart/:cartId",
     SELECT_FRANCHISE: "/select-franchise",
     FRANCHISE: "/franchise",
     CHECKOUT: "/checkout",
@@ -44,6 +45,8 @@ export const ROUTER_URL = {
     CATEGORY: `categories`,
     PRODUCT: `products`,
     ORDER: `orders`,
+    ORDER_POS: `orders/pos`,
+    ORDER_DETAIL: `orders/:orderId`,
     FRANCHISE: `franchises`,
     CUSTOMER: `customers`,
     CART: `cart`,

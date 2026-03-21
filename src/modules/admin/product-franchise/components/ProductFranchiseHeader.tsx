@@ -8,6 +8,7 @@ interface ProductFranchiseHeaderProps {
     onSearchChange: (query: string) => void;
     onSearchSubmit: () => void;
     selectedSize: string;
+    sizeOptions: string[];
     onSizeChange: (size: string) => void;
     selectedStatus: string;
     onStatusChange: (status: string) => void;
@@ -19,12 +20,14 @@ export const ProductFranchiseHeader: React.FC<ProductFranchiseHeaderProps> = ({
     onSearchChange,
     onSearchSubmit,
     selectedSize,
+    sizeOptions,
     onSizeChange,
     selectedStatus,
     onStatusChange,
 }) => {
     const navigate = useNavigate();
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const availableSizes = Array.from(new Set(['all', ...sizeOptions]));
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
@@ -117,7 +120,7 @@ export const ProductFranchiseHeader: React.FC<ProductFranchiseHeaderProps> = ({
                                                     Kích cỡ (Size)
                                                 </label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {['all', 'S', 'M', 'L'].map((size) => (
+                                                    {availableSizes.map((size) => (
                                                         <button
                                                             key={size}
                                                             onClick={() => onSizeChange(size)}
