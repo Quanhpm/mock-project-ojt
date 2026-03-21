@@ -10,6 +10,7 @@ import axios from "axios";
 import { ENV } from "@/config/env.config";
 import { useToast } from "@/hooks/use-toast.hook";
 
+
 export default function ProductForm() {
   const navigate = useNavigate();
   const { createProduct, isCreating, error } = useCreateProduct();

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus, Eye, Pencil, RotateCcw, Trash2 } from "lucide-react";
 import { useGetPromotions } from "./hooks/useGetPromotions";
+import { useGetPromotionById } from "./hooks/useGetPromotionById";
 import { useDeletePromotion } from "./hooks/useDeletePromotion";
 import { useRestorePromotion } from "./hooks/useRestorePromotion";
 import PromotionDelete from "./PromotionDelete";
@@ -25,6 +26,33 @@ if (!document.head.querySelector("style[data-promotion-table]")) {
 
 const PAGE_SIZE = 10;
 
+const styles = {
+  paginationContainer: {
+    marginTop: "20px",
+    display: "flex" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    fontSize: "15px",
+    padding: "20px 24px",
+    backgroundColor: "white",
+    borderRadius: "12px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+    border: "1px solid #e5e7eb",
+  },
+};
+
+const getButtonStyles = {
+  pagination: {
+    padding: "8px 12px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "6px",
+    fontSize: "14px",
+    fontWeight: "600" as const,
+    transition: "all 0.2s",
+    cursor: "pointer" as const,
+  },
+};
+
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("vi-VN");
@@ -47,6 +75,11 @@ export default function PromotionTable() {
   const { promotions, isLoading, totalPages, totalItems, refetch } = useGetPromotions(true);
   const { deletePromotion, isDeleting } = useDeletePromotion();
   const { restorePromotion, isRestoring } = useRestorePromotion();
+  const {
+    promotion: selectedPromotion,
+    // isLoading: isLoadingDetail,
+    fetchById,
+  } = useGetPromotionById();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +87,7 @@ export default function PromotionTable() {
   const [deleteModal, setDeleteModal] = useState<ModalState>(defaultModal);
   const [restoreModal, setRestoreModal] = useState<ModalState>(defaultModal);
   const [detailPromotion, setDetailPromotion] = useState<Promotion | null>(null);
+  const [viewingPromotionId, setViewingPromotionId] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editPromotionId, setEditPromotionId] = useState<string>("");
 
@@ -64,6 +98,7 @@ export default function PromotionTable() {
   const [isActiveFilter, setIsActiveFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [pageNum, setPageNum] = useState(1);
+  const [pageInput, setPageInput] = useState("");
 
   // Franchise list for dropdown
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
@@ -157,7 +192,9 @@ export default function PromotionTable() {
 
   // Text search — triggered by button click or Enter key
   const handleSearch = () => {
-    doSearch({ page: 1 });
+    if (keyword.trim() || franchiseFilter || typeFilter || isActiveFilter !== "") {
+      doSearch({ page: 1 });
+    }
   };
 
   const handleClearKeyword = () => {
@@ -186,6 +223,9 @@ export default function PromotionTable() {
   const handlePageChange = (page: number) => {
     doSearch({ page });
   };
+
+  const currentPage = pageNum;
+  const setCurrentPage = handlePageChange;
 
   // ---------------------------------------------------------------------------
   // Delete / Restore — smart page recovery.
@@ -277,10 +317,10 @@ export default function PromotionTable() {
                   margin: 0,
                 }}
               >
-                Quản lý Promotion
+                Promotion Management
               </h2>
               <p style={{ color: "#6c757d", margin: 0 }}>
-                Tổng cộng: {isLoading ? "..." : totalItems} promotion
+                Total: {isLoading ? "..." : totalItems} promotion
               </p>
             </div>
             <button
@@ -304,7 +344,7 @@ export default function PromotionTable() {
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#8B4513")}
             >
               <Plus size={18} />
-              <span>Tạo Promotion</span>
+              <span>Create Promotion</span>
             </button>
           </div>
         </header>
@@ -370,7 +410,7 @@ export default function PromotionTable() {
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="Tìm theo mã hoặc tên promotion..."
+                  placeholder="Find name or code of promotion..."
                   style={{
                     display: "block",
                     width: "100%",
@@ -465,7 +505,7 @@ export default function PromotionTable() {
                     >
                       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
-                    Đang tìm...
+                    Loading...
                   </>
                 ) : (
                   <>
@@ -480,7 +520,7 @@ export default function PromotionTable() {
                       <circle cx="11" cy="11" r="8" />
                       <path d="m21 21-4.35-4.35" />
                     </svg>
-                    Tìm kiếm
+                    Search
                   </>
                 )}
               </button>
@@ -514,7 +554,7 @@ export default function PromotionTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả Franchise</option>
+                <option value="">All Franchise</option>
                 {franchises.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -540,9 +580,9 @@ export default function PromotionTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả loại</option>
-                <option value="FIXED">Cố định (₫)</option>
-                <option value="PERCENT">Phần trăm (%)</option>
+                <option value="">Type</option>
+                <option value="FIXED">Fixed (₫)</option>
+                <option value="PERCENT">Percent (%)</option>
               </select>
 
               {/* Status filter */}
@@ -563,9 +603,9 @@ export default function PromotionTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">All status</option>
+                <option value="true">Active</option>
+                <option value="false">In Active</option>
               </select>
 
               {/* Toggle deleted */}
@@ -605,7 +645,7 @@ export default function PromotionTable() {
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                   <path d="M10 11v6M14 11v6" />
                 </svg>
-                {showDeleted ? "Đã xóa" : "Hiện tại"}
+                {showDeleted ? "Archived" : "Available"}
               </button>
 
               {/* Clear all filters */}
@@ -632,7 +672,7 @@ export default function PromotionTable() {
                   e.currentTarget.style.borderColor = "#e0e0e0";
                 }}
               >
-                Xóa bộ lọc
+                Clear Filter
               </button>
             </div>
           </div>
@@ -658,11 +698,12 @@ export default function PromotionTable() {
                   <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
                     {[
                       "Franchise",
-                      "Loại",
-                      "Giá trị",
-                      "Hiệu lực",
-                      "Trạng thái",
-                      "Thao tác",
+                      "Name",
+                      "Type",
+                      "Value",
+                      "Validity",
+                      "Status",
+                      "Actions",
                     ].map((h, i) => (
                       <th
                         key={h}
@@ -817,6 +858,28 @@ export default function PromotionTable() {
                           </div>
                         </td>
 
+                        {/* Name */}
+                        <td
+                          style={{
+                            padding: "14px 16px",
+                            fontSize: "14px",
+                            color: "#212529",
+                            fontWeight: "500",
+                            maxWidth: "180px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                            title={v.name}
+                          >
+                            {v.name}
+                          </div>
+                        </td>
+
                         {/* Type */}
                         <td style={{ padding: "14px 16px" }}>
                           <span
@@ -831,7 +894,7 @@ export default function PromotionTable() {
                               color: v.type === "FIXED" ? "#1565c0" : "#e65100",
                             }}
                           >
-                            {v.type === "FIXED" ? "Cố định" : "Phần trăm"}
+                            {v.type === "FIXED" ? "Fixed" : "Percent"}
                           </span>
                         </td>
 
@@ -876,7 +939,7 @@ export default function PromotionTable() {
                               color: v.is_active ? "#2e7d32" : "#c62828",
                             }}
                           >
-                            {v.is_active ? "Hoạt động" : "Ngừng"}
+                            {v.is_active ? "Active" : "InActive"}
                           </span>
                         </td>
 
@@ -892,7 +955,12 @@ export default function PromotionTable() {
                           >
                             {/* View */}
                             <button
-                              onClick={() => setDetailPromotion(v)}
+                              onClick={async () => {
+                                setViewingPromotionId(v.id);
+                                setDetailPromotion(v);
+                                await fetchById(v.id);
+                              }}
+                              disabled={viewingPromotionId === v.id}
                               title="Xem chi tiết"
                               style={{
                                 display: "flex",
@@ -903,21 +971,40 @@ export default function PromotionTable() {
                                 border: "none",
                                 borderRadius: "6px",
                                 backgroundColor: "transparent",
-                                color: "#94a3b8",
-                                cursor: "pointer",
+                                color: viewingPromotionId === v.id ? "#3366cc" : "#94a3b8",
+                                cursor: viewingPromotionId === v.id ? "not-allowed" : "pointer",
                                 transition: "all 0.2s",
+                                opacity: viewingPromotionId === v.id ? 0.8 : 1,
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor =
-                                  "rgba(51,102,204,0.07)";
-                                e.currentTarget.style.color = "#3366cc";
+                                if (viewingPromotionId !== v.id) {
+                                  e.currentTarget.style.backgroundColor =
+                                    "rgba(51,102,204,0.07)";
+                                  e.currentTarget.style.color = "#3366cc";
+                                }
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = "#94a3b8";
+                                if (viewingPromotionId !== v.id) {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }
                               }}
                             >
-                              <Eye size={17} />
+                              {viewingPromotionId === v.id ? (
+                                <svg
+                                  className="animate-spin"
+                                  width="17"
+                                  height="17"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                >
+                                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                </svg>
+                              ) : (
+                                <Eye size={17} />
+                              )}
                             </button>
 
                             {!showDeleted && (
@@ -1043,145 +1130,174 @@ export default function PromotionTable() {
               </table>
             </div>
 
-            {/* ── Pagination ───────────────────────────────────────────── */}
-            {totalPages > 0 && (
+                    {/* Pagination */}
+          {!isLoading && promotions.length > 0 && totalPages > 1 && (
+            <div style={styles.paginationContainer}>
+              <span style={{ color: "#6b7280", fontWeight: "600" }}>
+                Showing {(currentPage - 1) * 10 + 1} to{" "}
+                {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
+                promotions
+              </span>
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderTop: "1px solid #e9ecef",
-                  backgroundColor: "#f8f9fa",
-                  padding: "12px 24px",
-                  flexShrink: 0,
-                }}
+                style={{ display: "flex", gap: "8px", alignItems: "center" }}
               >
-                {/* Info text */}
-                <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
-                  Hiển thị trang{" "}
-                  <span style={{ fontWeight: "500" }}>{pageNum}</span>{" "}
-                  trong{" "}
-                  <span style={{ fontWeight: "500" }}>{totalPages}</span>{" "}
-                  trang ({" "}
-                  <span style={{ fontWeight: "500" }}>{totalItems}</span>{" "}
-                  promotion)
-                </p>
-
-                {/* Page buttons */}
-                <nav aria-label="Phân trang" style={{ display: "inline-flex" }}>
-                  {/* Prev */}
-                  <button
-                    onClick={() => handlePageChange(Math.max(1, pageNum - 1))}
-                    disabled={pageNum === 1}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: pageNum === 1 ? "#9ca3af" : "#374151",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderTopLeftRadius: "6px",
-                      borderBottomLeftRadius: "6px",
-                      borderRight: "none",
-                      cursor: pageNum === 1 ? "not-allowed" : "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (pageNum !== 1) {
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#d1d5db";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "white";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                    }}
-                  >
-                    Trước
-                  </button>
-
-                  {/* Page numbers */}
-                  {buildPageNumbers().map((page, i, arr) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minWidth: "40px",
-                        padding: "8px 12px",
-                        fontSize: "14px",
-                        fontWeight: pageNum === page ? "600" : "500",
-                        color: pageNum === page ? "white" : "#374151",
-                        backgroundColor: pageNum === page ? "#8B4513" : "white",
-                        border: "1px solid",
-                        borderColor: pageNum === page ? "#8B4513" : "#e5e7eb",
-                        borderRight: i < arr.length - 1 ? "none" : undefined,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (pageNum !== page) {
-                          e.currentTarget.style.backgroundColor = "#f9fafb";
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (pageNum !== page) {
-                          e.currentTarget.style.backgroundColor = "white";
-                          e.currentTarget.style.borderColor = "#e5e7eb";
-                        } else {
-                          e.currentTarget.style.backgroundColor = "#8B4513";
-                          e.currentTarget.style.borderColor = "#8B4513";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  {/* Next */}
-                  <button
-                    onClick={() =>
-                      handlePageChange(Math.min(totalPages, pageNum + 1))
+                {/* Previous Button */}
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === 1 ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === 1 ? "#9ca3af" : "#374151",
+                      cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                      e.currentTarget.style.borderColor = "#d1d5db";
                     }
-                    disabled={pageNum === totalPages}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: pageNum === totalPages ? "#9ca3af" : "#374151",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderTopRightRadius: "6px",
-                      borderBottomRightRadius: "6px",
-                      cursor: pageNum === totalPages ? "not-allowed" : "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (pageNum !== totalPages) {
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#d1d5db";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.backgroundColor = "#ffffff";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    }
+                  }}
+                >
+                  ‹
+                </button>
+
+                {/* Page Numbers */}
+                {(() => {
+                  const pages: (number | "...")[] = [...buildPageNumbers()];
+                  // if (pages[pages.length - 1] < totalPages - 1) pages.push("...");
+                  if (pages[pages.length - 1] !== totalPages) pages.push(totalPages);
+
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          padding: "0 4px",
+                          color: "#6b7280",
+                          fontWeight: "600",
+                          userSelect: "none",
+                          lineHeight: "36px",
+                        }}
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={
+                          {
+                            ...getButtonStyles.pagination,
+                            backgroundColor:
+                              currentPage === page ? "#8B5A2B" : "#ffffff",
+                            color: currentPage === page ? "#ffffff" : "#374151",
+                            fontWeight:
+                              currentPage === page
+                                ? ("700" as const)
+                                : ("600" as const),
+                            minWidth: "40px",
+                            textAlign: "center" as const,
+                          } as React.CSSProperties
+                        }
+                        onMouseEnter={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                            e.currentTarget.style.borderColor = "#d1d5db";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#ffffff";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
+                          }
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  );
+                })()}
+
+                {/* Next Button */}
+                <button
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === totalPages ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === totalPages ? "#9ca3af" : "#374151",
+                      cursor:
+                        currentPage === totalPages ? "not-allowed" : "pointer",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                      e.currentTarget.style.borderColor = "#d1d5db";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.backgroundColor = "#ffffff";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    }
+                  }}
+                >
+                  ›
+                </button>
+
+                {/* Go to page */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const num = parseInt(pageInput, 10);
+                        if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                          setCurrentPage(num);
+                        }
+                        setPageInput("");
                       }
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "white";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    placeholder={String(currentPage)}
+                    style={{
+                      width: "52px",
+                      height: "36px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "6px",
+                      textAlign: "center",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#374151",
+                      outline: "none",
+                      padding: "0 4px",
                     }}
-                  >
-                    Sau
-                  </button>
-                </nav>
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "#8B5A2B"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                  />
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
         </div>
       </main>
 
@@ -1202,8 +1318,12 @@ export default function PromotionTable() {
       />
       <PromotionDetailsModal
         isOpen={!!detailPromotion}
-        onClose={() => setDetailPromotion(null)}
-        promotion={detailPromotion}
+        onClose={() => {
+          setDetailPromotion(null);
+          setViewingPromotionId("");
+        }}
+        promotion={selectedPromotion || detailPromotion}
+        // isLoading={isLoadingDetail}
       />
       <PromotionCreateModal
         isOpen={showCreateModal}
