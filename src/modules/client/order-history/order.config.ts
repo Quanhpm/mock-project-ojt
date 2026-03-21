@@ -5,15 +5,15 @@ export const PAGE_SIZE = 5;
 export const statusConfig = {
   COMPLETED: {
     label: 'Hoàn tất',
-    color: 'bg-primary text-white',
-    textColor: 'text-primary',
-    bgLight: 'bg-primary/10',
+    color: 'bg-emerald-500 text-white',
+    textColor: 'text-emerald-600',
+    bgLight: 'bg-emerald-50',
   },
   PREPARING: {
     label: 'Đang pha chế',
-    color: 'bg-secondary text-white',
-    textColor: 'text-secondary',
-    bgLight: 'bg-secondary/10',
+    color: 'bg-blue-600 text-white',
+    textColor: 'text-blue-600',
+    bgLight: 'bg-blue-600/50',
   },
   CONFIRMED: {
     label: 'Đã xác nhận',
@@ -23,18 +23,18 @@ export const statusConfig = {
   },
   READY_FOR_PICKUP: {
     label: 'Chờ lấy hàng',
-    color: 'bg-blue-600 text-white',
-    textColor: 'text-blue-600',
-    bgLight: 'bg-blue-600/10',
+    color: ' bg-amber-500 text-white',
+    textColor: 'text-amber-600',
+    bgLight: 'bg-amber-500/10',
   },
   CANCELLED: {
     label: 'Đã huỷ',
-    color: 'bg-dark-shade text-white',
-    textColor: 'text-dark-shade',
-    bgLight: 'bg-dark-shade/10',
+    color: 'bg-rose-500 text-white',
+    textColor: 'text-rose-600',
+    bgLight: 'bg-rose-50',
   },
   DRAFT: {
-    label: 'Nháp',
+    label: 'Chờ thanh toán',
     color: 'bg-gray-400 text-white',
     textColor: 'text-gray-400',
     bgLight: 'bg-gray-400/10',

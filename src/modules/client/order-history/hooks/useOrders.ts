@@ -94,6 +94,7 @@ export const useOrders = () => {
     } else if (selectedFilter === 'pending') {
       filtered = filtered.filter(
         (order) =>
+          order.status.code === 'DRAFT' ||
           order.status.code === 'PREPARING' ||
           order.status.code === 'CONFIRMED' ||
           order.status.code === 'READY_FOR_PICKUP',

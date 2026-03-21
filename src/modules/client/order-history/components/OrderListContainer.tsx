@@ -58,7 +58,7 @@ function OrderListContainer({ orders, onViewDetail }: OrderListContainerProps) {
               <div className="flex items-center justify-between">
                 <p className="font-bold text-zinc-900">#{order.code}</p>
                 <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(order.status.code)}`}
+                  className={`inline-flex w-fit whitespace-nowrap items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(order.status.code)}`}
                 >
                   {config.label}
                 </span>
@@ -101,7 +101,7 @@ function OrderListContainer({ orders, onViewDetail }: OrderListContainerProps) {
                     <td className="px-6 py-6 font-bold text-zinc-900">{formatCurrency(order.pricing.total)}</td>
                     <td className="px-6 py-6">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(order.status.code)}`}
+                        className={`inline-flex w-fit whitespace-nowrap items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(order.status.code)}`}
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full ${getStatusDotClass(order.status.code)}`}
