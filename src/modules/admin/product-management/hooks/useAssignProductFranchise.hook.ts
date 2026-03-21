@@ -121,15 +121,15 @@ export const useAssignProductFranchise = (
 
         await createProductFranchise(payload);
         toastSuccess(
-          "Gán franchise thành công",
-          "Sản phẩm đã được gán vào chi nhánh.",
+          "Franchise assigned",
+          "Product has been assigned to the selected franchise.",
         );
         onSuccess?.();
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Failed to assign franchise.";
         setError(message);
-        toastError("Gán franchise thất bại", message);
+        toastError("Assign failed", message);
         throw err; // Re-throw để caller biết
       } finally {
         setIsSubmitting(false);
