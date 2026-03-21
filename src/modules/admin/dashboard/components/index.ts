@@ -1,0 +1,10 @@
+export { GlobalOverview } from './GlobalOverview.tsx';
+export { FranchisePerformance } from './FranchisePerformance.tsx';
+export { OrdersOperations } from './OrdersOperations.tsx';
+export { ProductsInventory } from './ProductsInventory.tsx';
+export { InventoryWarnings } from './InventoryWarnings.tsx';
+export { CustomersLoyalty } from './CustomersLoyalty.tsx';
+export { StaffShifts } from './StaffShifts.tsx';
+export { AuditControl } from './AuditControl.tsx';
+export { RevenueChart } from './RevenueChart.tsx';
+export { OrderSourceComparison } from './OrderSourceComparison.tsx';

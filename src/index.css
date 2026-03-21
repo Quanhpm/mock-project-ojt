@@ -1,0 +1,145 @@
+@import "tailwindcss";
+@import "trackasia-gl/dist/trackasia-gl.css";
+
+:root {
+  --cf-bg: #EDE0D4;
+  /* Nền chính – sáng, nhẹ mắt */
+  --cf-surface: #E6CCB2;
+  /* Nền bề mặt – card, form */
+  --cf-accent-light: #DDB892;
+  /* Màu nhấn sáng – hover, bàn trống */
+  --cf-secondary: #B08968;
+  /* Màu phụ – border, button phụ */
+  --cf-primary: #7F5539;
+  /* Màu chính – thương hiệu, nút chính */
+  --cf-dark: #9C6644;
+  /* Màu đậm – nhấn mạnh, trạng thái đã đặt */
+}
+
+/* Custom utility classes sử dụng trực tiếp CSS variables */
+.bg-primary {
+  background-color: var(--cf-primary) !important;
+}
+
+.bg-surface-light {
+  background-color: var(--cf-surface) !important;
+}
+
+.bg-background-light {
+  background-color: var(--cf-bg) !important;
+}
+
+.text-primary {
+  color: var(--cf-primary) !important;
+}
+
+.border-primary {
+  border-color: var(--cf-primary) !important;
+}
+
+.hover\:bg-primary:hover {
+  background-color: var(--cf-primary) !important;
+}
+
+.hover\:text-primary:hover {
+  color: var(--cf-primary) !important;
+}
+
+.bg-accent-light {
+  background-color: var(--cf-accent-light) !important;
+}
+
+.hover\:bg-accent-light:hover {
+  background-color: var(--cf-accent-light) !important;
+}
+
+.bg-secondary {
+  background-color: var(--cf-secondary) !important;
+}
+
+.hover\:bg-secondary:hover {
+  background-color: var(--cf-secondary) !important;
+}
+
+/* Toggle/Checkbox peer-checked states */
+.peer:checked~.peer-checked\:bg-primary {
+  background-color: var(--cf-primary) !important;
+}
+.bg-dark-shade {
+  background-color: var(--cf-dark) !important;
+}
+
+.text-dark-shade {
+  color: var(--cf-dark) !important;
+}
+
+/* Ẩn dấu mũi tên trong ô input số */
+@layer base {
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  /* Override browser autofill background for glass morphism inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset !important;
+    -webkit-text-fill-color: currentColor !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: auto;
+  }
+}
+
+/* Cursor pointer for all interactive elements */
+button:not(:disabled),
+select:not(:disabled),
+label[for],
+[role="button"]:not([aria-disabled="true"]),
+[role="tab"] {
+  cursor: pointer;
+}
+
+/* Sonner toast - click to dismiss */
+[data-sonner-toast] {
+  cursor: pointer !important;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Ẩn scrollbar trên Internet Explorer */
+  scrollbar-width: none;      /* Ẩn scrollbar trên Firefox */
+}
+
+/* ============================================================
+   CKEditor content preview — render đúng HTML từ CKEditor
+   ============================================================ */
+.ck-content-preview h1 { font-size: 2em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h2 { font-size: 1.5em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h3 { font-size: 1.17em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview h4 { font-size: 1em; font-weight: 700; margin: 0.5em 0; }
+.ck-content-preview p  { margin: 0.5em 0; }
+.ck-content-preview strong, .ck-content-preview b { font-weight: 700; }
+.ck-content-preview em, .ck-content-preview i { font-style: italic; }
+.ck-content-preview u  { text-decoration: underline; }
+.ck-content-preview s  { text-decoration: line-through; }
+.ck-content-preview ul { list-style: disc; padding-left: 1.5em; margin: 0.5em 0; }
+.ck-content-preview ol { list-style: decimal; padding-left: 1.5em; margin: 0.5em 0; }
+.ck-content-preview li { margin: 0.25em 0; }
+.ck-content-preview a  { color: #8B4513; text-decoration: underline; }
+.ck-content-preview blockquote { border-left: 4px solid #dee2e6; padding-left: 1em; color: #6c757d; margin: 0.5em 0; }
+.ck-content-preview pre { background: #f1f3f5; padding: 12px; border-radius: 6px; font-family: monospace; overflow-x: auto; }
+.ck-content-preview code { background: #f1f3f5; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+.ck-content-preview img { max-width: 100%; height: auto; border-radius: 4px; }
+.ck-content-preview table { border-collapse: collapse; width: 100%; margin: 0.5em 0; }
+.ck-content-preview table td,
+.ck-content-preview table th { border: 1px solid #dee2e6; padding: 8px 12px; }
+.ck-content-preview table th { background: #f8f9fa; font-weight: 700; }

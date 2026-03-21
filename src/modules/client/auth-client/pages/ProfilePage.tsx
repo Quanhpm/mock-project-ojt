@@ -1,0 +1,280 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast.hook';
+import { ROUTER_URL } from '@/routes/router.const';
+import { useAuth } from '../context/useAuth';
+import { useClientAuthStore } from '../stores/client-auth.store';
+import { type CustomerUser } from '@/apis/endpointsCLIENT/customerAuth.api';
+import EditProfileModal from '../components/EditProfileModal/index';
+
+// ─────────────────────────── Profile Page ───────────────────────────
+
+function ProfilePage() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { success, error: showError } = useToast();
+
+  const { user: storeUser, setUser } = useClientAuthStore();
+  const [profile, setProfile] = useState<CustomerUser | null>(storeUser as CustomerUser | null);
+  const [isFetching] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Sync local state when store updates
+  useEffect(() => {
+    if (storeUser) {
+      setProfile(storeUser as CustomerUser);
+    }
+  }, [storeUser]);
+
+  const handleSaved = (updated: CustomerUser) => {
+    setProfile(updated);
+    setUser(updated);
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    const result = await logout();
+    if (result.success) {
+      success(result.message);
+      navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || '/client/login');
+    } else {
+      setIsLoggingOut(false);
+      showError(result.message, 'Đăng xuất thất bại');
+    }
+  };
+
+  if (isLoggingOut) {
+    return null;
+  }
+
+  if (isFetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-3">
+          <span className="material-symbols-outlined text-primary text-[48px] animate-spin">
+            progress_activity
+          </span>
+          <p className="text-gray-500 text-sm font-medium">Đang tải thông tin...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-gray-400 text-[48px]">person_off</span>
+          <p className="text-gray-500 mt-2">Không tìm thấy thông tin người dùng.</p>
+          <a href="/client" className="mt-4 inline-block text-primary font-semibold hover:underline">
+            Quay về trang chủ
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+        <main className="max-w-4xl mx-auto space-y-8">
+
+          {/* ══ Profile Header ══ */}
+          <section className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-6">
+            {/* Avatar + Identity */}
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Avatar */}
+              <div className="relative group">
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="material-symbols-outlined text-[56px] text-gray-300">person</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  title="Thay đổi ảnh"
+                  className="cursor-pointer absolute bottom-1 right-1 p-2 bg-primary text-white rounded-full shadow-lg hover:opacity-90 transition-opacity"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Name + Email + Status */}
+              <div className="text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+                  <h1 className="text-3xl font-bold tracking-tight text-gray-900">{profile.name}</h1>
+                </div>
+                <p className="text-gray-500 font-medium">{profile.email}</p>
+                <div className="mt-2 flex items-center justify-center md:justify-start gap-2 text-sm text-green-600">
+                  {profile.is_active ? (
+                    <>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                      </span>
+                      Đang hoạt động
+                    </>
+                  ) : (
+                    <>
+                      <span className="inline-flex rounded-full h-2 w-2 bg-gray-400" />
+                      <span className="text-gray-400">Không hoạt động</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* ══ Main Grid ══ */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            {/* ── Personal Information ── */}
+            <div className="md:col-span-2 space-y-6">
+              <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
+                  <span className="material-symbols-outlined text-primary text-[20px]">person</span>
+                  <h2 className="text-xl font-bold text-gray-800">Thông tin cá nhân</h2>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Họ và tên</label>
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
+                      {profile.name}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Địa chỉ Email</label>
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 text-sm">
+                      {profile.email}
+                    </div>
+                    <p className="text-[10px] text-gray-400 italic">Liên hệ hỗ trợ để thay đổi email chính.</p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Số điện thoại</label>
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
+                      {profile.phone || <span className="text-gray-400">Chưa cung cấp</span>}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Địa chỉ</label>
+                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
+                      {profile.address || <span className="text-gray-400">Chưa cung cấp</span>}
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Action Footer */}
+              <div className="flex items-center justify-end gap-4">
+                <a
+                  href="/"
+                  className="inline-flex items-center px-6 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors text-sm"
+                >
+                  Quay về trang chủ
+                </a>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="cursor-pointer inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-[#6c4830] shadow-sm transition-all active:scale-95 text-sm"
+                >
+                  <span className="material-symbols-outlined text-[16px]">edit</span>
+                  Chỉnh sửa hồ sơ
+                </button>
+              </div>
+            </div>
+
+            {/* ── Sidebar ── */}
+            <aside className="space-y-6">
+
+              {/* Account Detail */}
+              <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-5 border-b border-gray-100 pb-4">
+                  <span className="material-symbols-outlined text-primary text-[20px]">shield</span>
+                  <h2 className="text-base font-bold text-gray-800">Chi tiết tài khoản</h2>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Thành viên từ</p>
+                    <p className="text-sm text-gray-700">
+                      {new Date(profile.created_at).toLocaleDateString('vi-VN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Trạng thái</p>
+                    {profile.is_verified ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                        <span className="material-symbols-outlined text-[14px]">verified</span>
+                        Tài khoản đã xác thực
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                        <span className="material-symbols-outlined text-[14px]">pending</span>
+                        Chờ xác thực
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* Session & Security */}
+              <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-5 text-red-500">
+                  <span className="material-symbols-outlined text-[20px]">warning</span>
+                  <h2 className="text-base font-bold">Phiên &amp; Bảo mật</h2>
+                </div>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="cursor-pointer w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 group"
+                  >
+                    <span className="text-sm font-medium text-gray-700">Đổi mật khẩu</span>
+                    <span className="material-symbols-outlined text-[18px] text-gray-400 group-hover:translate-x-1 transition-transform">
+                      chevron_right
+                    </span>
+                  </button>
+                  <div className="pt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="cursor-pointer w-full px-4 py-2.5 border border-red-400 text-red-500 font-semibold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">logout</span>
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+            </aside>
+          </div>
+        </main>
+      </div>
+
+      <EditProfileModal
+        isOpen={isModalOpen}
+        profile={profile}
+        onClose={() => setIsModalOpen(false)}
+        onSaved={handleSaved}
+      />
+    </>
+  );
+}
+
+export default ProfilePage;
+
