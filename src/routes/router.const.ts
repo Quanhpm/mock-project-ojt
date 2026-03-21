@@ -27,6 +27,7 @@ export const ROUTER_URL = {
     SELECT_FRANCHISE: "/select-franchise",
     FRANCHISE: "/franchise",
     CHECKOUT: "/checkout",
+    PAYMENT: "/payment",
     PROFILE: "/profile",
     CHANGE_PASSWORD: "/change-password",
     ORDER_HISTORY: "/order-history",

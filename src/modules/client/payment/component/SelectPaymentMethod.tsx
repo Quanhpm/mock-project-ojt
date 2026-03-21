@@ -1,4 +1,6 @@
 import type { ReactNode } from "react"
+import momoIcon from "./assets/momo.webp"
+import vnpayIcon from "./assets/vnpay.webp"
 
 export type PaymentMethod = {
     id: string;
@@ -23,7 +25,11 @@ export const paymentMethods = [
         label: "Tiền mặt",
         icon: (
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a4 4 0 00-8 0v2M5 9h14l1 12H4L5 9z" />
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2 7h20v10H2V7zm3 3h.01M19 14h.01M12 12a2 2 0 100-4 2 2 0 000 4z"
+                />
             </svg>
         ),
     },
@@ -31,9 +37,11 @@ export const paymentMethods = [
         id: "MOMO",
         label: "Ví MoMo",
         icon: (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
+            <img
+                src={momoIcon}
+                alt="momo"
+                className="w-5 h-5 object-contain"
+            />
         ),
     },
     {
@@ -49,14 +57,16 @@ export const paymentMethods = [
         id: "VNPAY",
         label: "VNPay",
         icon: (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <img
+                src={vnpayIcon}
+                alt="vnpay"
+                className="w-5 h-5 object-contain"
+            />
         ),
     },
 ];
 
-function PaymentMethodItem({ isSelected, method, onSelect }: PaymentItemProps ) {
+function PaymentMethodItem({ isSelected, method, onSelect }: PaymentItemProps) {
     return (
         <button
             key={method.id}
@@ -95,7 +105,7 @@ export function SelectPaymentMethod({ selectedPayment, onSelect }: SelectPayment
                 {paymentMethods.map((method) => {
                     const isSelected = selectedPayment === method.id;
                     return (
-                        <PaymentMethodItem 
+                        <PaymentMethodItem
                             isSelected={isSelected}
                             method={method}
                             onSelect={onSelect}

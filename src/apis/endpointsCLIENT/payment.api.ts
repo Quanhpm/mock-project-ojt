@@ -119,7 +119,7 @@ export const refundPayment = (
     data: RefundPaymentRequest,
 ): Promise<RefundPaymentResponse[] | null> => {
     return httpClient.put<RefundPaymentResponse[], RefundPaymentRequest>({
-        url: `payments/${id}`,
+        url: `payments/${id}/refund`,
         data,
     });
 }

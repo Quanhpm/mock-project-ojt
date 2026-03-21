@@ -10,8 +10,8 @@ export function usePaymentHandler(paymentId: string) {
   const [selectedPayment, setSelectedPayment] = useState("CASH");
   const [showQr, setShowQr] = useState(false);
 
-  const isQrMethod = (method: string) =>
-    method !== "CASH" && method !== "CARD";
+  // const isQrMethod = (method: string) =>
+  //   method !== "CASH" && method !== "CARD";
 
   const handleConfirm = async () => {
     setPaying(true);
@@ -19,10 +19,9 @@ export function usePaymentHandler(paymentId: string) {
       await confirmPayment(paymentId, { method: selectedPayment });
 
       // Chỉ show QR sau khi confirm thành công
-      if (isQrMethod(selectedPayment)) setShowQr(true);
+      // if (isQrMethod(selectedPayment)) setShowQr(true);
 
       success("Thanh toán thành công");
-      setTimeout(() => navigate("/"), 5000);
     } catch (e) {
       console.error("Payment error:", e);
       error("Thanh toán thất bại");
