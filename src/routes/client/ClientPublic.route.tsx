@@ -7,7 +7,7 @@ import ClientLayout from "@/layouts/ClientLayout/ClientLayout";
 const HomePage = React.lazy(() => import("@/modules/client/home/pages/HomePage"));
 const AboutPage = React.lazy(() => import("@/modules/client/about"));
 const ContactPage = React.lazy(() => import("@/modules/client/contact"));
-const MenuPage = React.lazy(() => import("@/modules/client/menu/pages/MenuPage"));
+const MenuPage = React.lazy(() => import("@/modules/client/menu"));
 const Item = React.lazy(() => import("@/modules/client/menu/pages/Item"));
 const VerifyEmailPage = React.lazy(() => import("@/modules/client/auth-client/pages/VerifyEmailPage"));
 const LocationPage = React.lazy(() => import("@/modules/client/store"));

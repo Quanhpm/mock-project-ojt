@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { HttpError } from '@/apis';
 import {
   applyVoucher,
+  cancelCart,
   deleteCartItem,
   getCartDetail,
   removeVoucher,
@@ -37,6 +38,7 @@ export function useCartDetail(cartId: string) {
   const [voucherCode, setVoucherCode] = useState('');
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [isRemovingVoucher, setIsRemovingVoucher] = useState(false);
+  const [isCancellingCart, setIsCancellingCart] = useState(false);
 
   const loadCartDetail = useCallback(async () => {
     if (!cartId) {
@@ -72,19 +74,21 @@ export function useCartDetail(cartId: string) {
   }, [loadCartDetail]);
 
   const handleDeleteItem = useCallback(async (cartItemId: string) => {
-    if (!cart || isDeleting) return;
+    if (!cart || isDeleting) return false;
     setIsDeleting(cartItemId);
 
     try {
       await deleteCartItem(cartItemId);
       await loadCartDetail();
-      toast.success('Da xoa san pham khoi gio hang');
+      toast.success('Đã xóa sản phẩm khỏi giỏ hàng');
+      return true;
     } catch (err) {
       const message = err instanceof HttpError
         ? err.message
         : 'Không thể xóa sản phẩm khỏi cart. Vui lòng thử lại.';
 
       toast.error('Xóa sản phẩm thất bại', { description: message, duration: 5000 });
+      return false;
     } finally {
       setIsDeleting(null);
     }
@@ -354,6 +358,25 @@ export function useCartDetail(cartId: string) {
     }
   }, [cart, isRemovingVoucher, isApplyingVoucher, loadCartDetail]);
 
+  const handleCancelCart = useCallback(async () => {
+    if (!cart || isCancellingCart) return false;
+
+    setIsCancellingCart(true);
+    try {
+      await cancelCart(cart.id);
+      toast.success('Đã hủy giỏ hàng thành công');
+      return true;
+    } catch (err) {
+      const message = err instanceof HttpError
+        ? err.message
+        : 'Không thể hủy giỏ hàng.';
+      toast.error('Hủy giỏ hàng thất bại', { description: message, duration: 5000 });
+      return false;
+    } finally {
+      setIsCancellingCart(false);
+    }
+  }, [cart, isCancellingCart]);
+
   return {
     cart,
     isLoading,
@@ -369,8 +392,10 @@ export function useCartDetail(cartId: string) {
     voucherCode,
     isApplyingVoucher,
     isRemovingVoucher,
+    isCancellingCart,
     loadCartDetail,
     handleDeleteItem,
+    handleCancelCart,
     setCartItemQuantity,
     increaseCartItemQuantity,
     decreaseCartItemQuantity,

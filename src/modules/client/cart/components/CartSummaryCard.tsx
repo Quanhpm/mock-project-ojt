@@ -1,5 +1,5 @@
 import { ChevronRight, ShoppingBag } from 'lucide-react';
-import type { CartSummaryView } from '../hook/cartApiMapper';
+import type { CartSummaryView } from '../hooks/cartApiMapper';
 
 interface CartSummaryCardProps {
   cart: CartSummaryView;
@@ -86,3 +86,4 @@ function CartSummaryCard({ cart, onOpenDetail, formatUpdatedAt }: CartSummaryCar
 }
 
 export default CartSummaryCard;
+

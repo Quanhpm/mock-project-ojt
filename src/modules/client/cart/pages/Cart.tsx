@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
 import { CartSummaryCard } from '../components';
-import { useCartList } from '../hook/use-cart-list.hook';
+import { useCartList } from '../hooks/use-cart-list.hook';
 
 function Cart() {
   const navigate = useNavigate();

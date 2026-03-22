@@ -1,0 +1,164 @@
+import { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { HttpError } from '@/apis';
+import { addCartItem } from '@/apis/endpointsCLIENT/cart.api';
+import { useToast } from '@/hooks/use-toast.hook';
+import { ROUTER_URL } from '@/routes/router.const';
+import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
+import { useProductDetail } from './use-product-detail.hook';
+
+export function useItemPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { success, error } = useToast();
+
+  // Extract navigation state
+  const locationState = location.state as { franchiseId?: string; productId?: string } | null;
+  const franchiseId = locationState?.franchiseId ?? '';
+  const productId = locationState?.productId ?? '';
+
+  // Get auth state
+  const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
+  const user = useClientAuthStore((state) => state.user);
+
+  // Load product details
+  const { product, loading, selectedSize, toppingOptions, setSelectedSize } = useProductDetail(
+    franchiseId,
+    productId,
+  );
+
+  // Local state for cart interaction
+  const [qty, setQty] = useState(1);
+  const [selectedToppings, setSelectedToppings] = useState<typeof toppingOptions>([]);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
+
+  // Compute product images
+  const images = useMemo(() => {
+    if (!product) return [];
+    return [product.image_url, ...(product.images_url ?? []).filter((url) => url !== product.image_url)];
+  }, [product]);
+
+  // Compute total topping price
+  const toppingsPrice = useMemo(
+    () => selectedToppings.reduce((sum, topping) => sum + topping.price, 0),
+    [selectedToppings],
+  );
+
+  // Compute final price
+  const totalPrice = useMemo(() => {
+    if (!selectedSize) return 0;
+    return (selectedSize.price + toppingsPrice) * qty;
+  }, [selectedSize, toppingsPrice, qty]);
+
+  // Toggle topping selection
+  const toggleTopping = (productFranchiseId: string) => {
+    setSelectedToppings((current) => {
+      const exists = current.some((item) => item.product_franchise_id === productFranchiseId);
+      if (exists) {
+        return current.filter((item) => item.product_franchise_id !== productFranchiseId);
+      }
+
+      const topping = toppingOptions.find((item) => item.product_franchise_id === productFranchiseId);
+      return topping ? [...current, topping] : current;
+    });
+  };
+
+  // Quantity helpers
+  const decreaseQty = () => setQty((current) => Math.max(1, current - 1));
+  const increaseQty = () => setQty((current) => current + 1);
+  const updateQtyFromInput = (rawValue: string) => {
+    setQty(Math.min(999, Math.max(1, parseInt(rawValue, 10) || 1)));
+  };
+
+  // Navigation helpers
+  const goToMenu = () => navigate(ROUTER_URL.MENU);
+
+  // Add to cart handler
+  const handleAddToCart = async () => {
+    if (isAddingToCart) return;
+
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      error('Yêu cầu đăng nhập', 'Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng');
+      setTimeout(() => {
+        navigate(ROUTER_URL.CLIENT_ROUTER.LOGIN, {
+          state: { from: ROUTER_URL.MENU },
+        });
+      }, 1500);
+      return;
+    }
+
+    if (!product || !selectedSize) return;
+
+    // Validate franchise selection
+    if (!franchiseId) {
+      error('Thiếu thông tin cửa hàng', 'Không xác định được chi nhánh để thêm vào giỏ hàng');
+      return;
+    }
+
+    // Validate delivery info
+    const address = user?.address?.trim() ?? '';
+    const phone = user?.phone?.trim() ?? '';
+
+    if (!address || !phone) {
+      error('Thiếu thông tin giao hàng', 'Vui lòng cập nhật địa chỉ và số điện thoại trong hồ sơ');
+      return;
+    }
+
+    setIsAddingToCart(true);
+
+    try {
+      await addCartItem({
+        franchise_id: franchiseId,
+        product_franchise_id: selectedSize.product_franchise_id,
+        quantity: qty,
+        address,
+        phone,
+        options: selectedToppings.map((topping) => ({
+          product_franchise_id: topping.product_franchise_id,
+          quantity: 1,
+        })),
+        message:
+          selectedToppings.length > 0
+            ? `Topping: ${selectedToppings.map((topping) => topping.name).join(', ')}`
+            : undefined,
+      });
+
+      success('Đã thêm vào giỏ hàng', `${product.name} đã được thêm vào giỏ hàng`);
+      goToMenu();
+    } catch (err) {
+      const errorMessage =
+        err instanceof HttpError
+          ? err.message
+          : 'Không thể thêm sản phẩm vào giỏ hàng. Vui lòng thử lại.';
+
+      error('Thêm vào giỏ hàng thất bại', errorMessage);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
+  return {
+    franchiseId,
+    productId,
+    product,
+    loading,
+    selectedSize,
+    toppingOptions,
+    setSelectedSize,
+    qty,
+    selectedToppings,
+    isAddingToCart,
+    activeImg,
+    images,
+    totalPrice,
+    setActiveImg,
+    toggleTopping,
+    decreaseQty,
+    increaseQty,
+    updateQtyFromInput,
+    handleAddToCart,
+    goToMenu,
+  };
+}

@@ -4,7 +4,7 @@ import { X, AlertTriangle } from 'lucide-react';
 interface ConfirmProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   title?: string;
   message?: string;
   confirmText?: string;
@@ -26,7 +26,6 @@ export const Confirm: React.FC<ConfirmProps> = ({
 
   const handleConfirm = () => {
     onConfirm();
-    onClose();
   };
 
   const getTypeColor = () => {
