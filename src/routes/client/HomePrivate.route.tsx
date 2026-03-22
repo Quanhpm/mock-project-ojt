@@ -7,7 +7,7 @@ import { ProfilePage } from "@/modules/client/auth-client";
 
 // Lazy load private pages
 const OrderHistoryPage = React.lazy(() => import("@/modules/client/order-history"));
-const CartPage = React.lazy(() => import("@/modules/client/cart/pages/Cart"));
+const CartPage = React.lazy(() => import("@/modules/client/cart"));
 const CartDetailPage = React.lazy(() => import("@/modules/client/cart/pages/CartDetail"));
 const FranchisePage = React.lazy(() => import("@/modules/client/franchise"));
 const PaymentPage = React.lazy(() => import("@/modules/client/payment/pages/Payment"));

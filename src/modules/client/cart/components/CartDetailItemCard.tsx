@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Minus, Pencil, Plus, ShoppingBag, X } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import type { CartDetailItemView } from '../hook/cartApiMapper';
+import type { CartDetailItemView } from '../hooks/cartApiMapper';
 
 const rowQuantitySchema = z.object({
   quantityInput: z
@@ -230,3 +230,4 @@ function CartDetailItemCard({
 }
 
 export default CartDetailItemCard;
+
