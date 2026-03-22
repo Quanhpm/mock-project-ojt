@@ -74,6 +74,7 @@ const HomeHeader: React.FC = () => {
         const normalized = normalizeOrdersPayload(response);
         const count = normalized.orders.filter(
           (order) =>
+            order.status.code === 'DRAFT' ||
             order.status.code === 'PREPARING' ||
             order.status.code === 'CONFIRMED' ||
             order.status.code === 'READY_FOR_PICKUP',

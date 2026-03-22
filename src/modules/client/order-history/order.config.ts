@@ -34,7 +34,7 @@ export const statusConfig = {
     bgLight: 'bg-rose-50',
   },
   DRAFT: {
-    label: 'Chờ thanh toán',
+    label: 'Chờ xác nhận',
     color: 'bg-gray-400 text-white',
     textColor: 'text-gray-400',
     bgLight: 'bg-gray-400/10',
