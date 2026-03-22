@@ -1,0 +1,473 @@
+import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTER_URL } from "@/routes/router.const";
+import { useToast } from "@/hooks/use-toast.hook";
+import type { CartDetail, CartItem } from "../models/cart.models";
+import type { CustomerOption } from "../models/customer.models";
+import type { PosProduct, PosProductFranchiseLookupItem } from "../models/menu.models";
+import type { PosProductCatalogSelection } from "../services/menu-catalog.service";
+import { cartService } from "../services/cart.service";
+import {
+  buildSelectedToppingMapFromCartItem,
+  buildStaffCartItemConfigKey,
+  buildStaffCartItemInputFromCartItem,
+  buildStaffCartItemInputFromConfiguredProduct,
+} from "../services/pos-product-config.service";
+import { addCartItemsUsecase } from "../usecases/add-cart-items.usecase";
+import { checkoutCartUsecase } from "../usecases/checkout-cart.usecase";
+import { replaceCartItemWithRestoreUsecase } from "../usecases/replace-cart-item-with-restore.usecase";
+
+interface UsePosReviewActionsOptions {
+  cart: CartDetail | null;
+  setCart: (nextCart: CartDetail | null) => void;
+  draftAddress: string;
+  draftPhone: string;
+  draftMessage: string;
+  voucherCode: string;
+  setActiveCartId: (cartId: string | null) => void;
+  setIsMutatingCart: (value: boolean) => void;
+  ensureCartDetail: (nextCart: CartDetail | null, action: string) => CartDetail;
+  hydrateReviewCart: (nextCart: CartDetail, customer?: CustomerOption | null) => void;
+  syncVoucherFromCart: (nextCart: CartDetail) => void;
+  refreshCartDetail: (targetCartId: string) => Promise<CartDetail>;
+  loadReviewCart: () => Promise<void>;
+  products: PosProduct[];
+  productFranchiseLookup: Record<string, PosProductFranchiseLookupItem>;
+  openConfiguratorForEdit: (
+    product: PosProduct,
+    initialState: {
+      selectedSizeId?: string;
+      quantity?: number;
+      note?: string;
+      selectedToppings?: Record<string, number>;
+    },
+  ) => void;
+  closeConfigurator: () => void;
+  buildSelection: () => PosProductCatalogSelection | null;
+}
+
+export const usePosReviewActions = ({
+  cart,
+  setCart,
+  draftAddress,
+  draftPhone,
+  draftMessage,
+  voucherCode,
+  setActiveCartId,
+  setIsMutatingCart,
+  ensureCartDetail,
+  hydrateReviewCart,
+  syncVoucherFromCart,
+  refreshCartDetail,
+  loadReviewCart,
+  products,
+  productFranchiseLookup,
+  openConfiguratorForEdit,
+  closeConfigurator,
+  buildSelection,
+}: UsePosReviewActionsOptions) => {
+  const navigate = useNavigate();
+  const { success: showSuccess, error: showError } = useToast();
+  const [editingItem, setEditingItem] = useState<CartItem | null>(null);
+
+  const productCatalogLookup = useMemo<Record<string, PosProduct>>(() => {
+    return products.reduce<Record<string, PosProduct>>((lookup, product) => {
+      lookup[product.product_id] = product;
+      return lookup;
+    }, {});
+  }, [products]);
+
+  const closeProductConfigurator = useCallback(() => {
+    setEditingItem(null);
+    closeConfigurator();
+  }, [closeConfigurator]);
+
+  const resolveProductForCartItem = useCallback(
+    (item: CartItem) => {
+      const productId = productFranchiseLookup[item.product_franchise_id]?.product_id;
+
+      if (productId && productCatalogLookup[productId]) {
+        return productCatalogLookup[productId];
+      }
+
+      return (
+        products.find((product) =>
+          product.sizes.some((size) => size.product_franchise_id === item.product_franchise_id),
+        ) ?? null
+      );
+    },
+    [productCatalogLookup, productFranchiseLookup, products],
+  );
+
+  const editCartItem = useCallback(
+    (item: CartItem) => {
+      const product = resolveProductForCartItem(item);
+
+      if (!product) {
+        showError("Không tìm thấy cấu hình món này trong menu hiện tại");
+        return;
+      }
+
+      setEditingItem(item);
+      openConfiguratorForEdit(product, {
+        selectedSizeId: item.product_franchise_id,
+        quantity: item.quantity,
+        note: item.note,
+        selectedToppings: buildSelectedToppingMapFromCartItem(item),
+      });
+    },
+    [openConfiguratorForEdit, resolveProductForCartItem, showError],
+  );
+
+  const applyVoucher = useCallback(async () => {
+    const normalizedVoucherCode = voucherCode.trim();
+
+    if (!cart?._id) {
+      showError("Chưa có cart để áp voucher");
+      return;
+    }
+
+    if (!normalizedVoucherCode) {
+      showError("Vui lòng nhập mã voucher");
+      return;
+    }
+
+    try {
+      setIsMutatingCart(true);
+      const nextCart = ensureCartDetail(
+        await cartService.applyVoucher(cart._id, {
+          voucher_code: normalizedVoucherCode,
+        }),
+        "applyVoucher",
+      );
+
+      setCart(nextCart);
+      syncVoucherFromCart(nextCart);
+      showSuccess("Áp dụng voucher thành công");
+    } catch (error) {
+      console.error("[OrderPOSReview] Failed to apply voucher", error);
+      showError("Không áp dụng được voucher");
+    } finally {
+      setIsMutatingCart(false);
+    }
+  }, [cart?._id, ensureCartDetail, setCart, setIsMutatingCart, showError, showSuccess, syncVoucherFromCart, voucherCode]);
+
+  const removeVoucher = useCallback(async () => {
+    if (!cart?._id) {
+      showError("Chưa có cart để bỏ voucher");
+      return;
+    }
+
+    try {
+      setIsMutatingCart(true);
+      const nextCart = ensureCartDetail(await cartService.removeVoucher(cart._id), "removeVoucher");
+
+      setCart(nextCart);
+      syncVoucherFromCart(nextCart);
+      showSuccess("Đã bỏ voucher khỏi cart");
+    } catch (error) {
+      console.error("[OrderPOSReview] Failed to remove voucher", error);
+      showError("Không bỏ được voucher");
+    } finally {
+      setIsMutatingCart(false);
+    }
+  }, [cart?._id, ensureCartDetail, setCart, setIsMutatingCart, showError, showSuccess, syncVoucherFromCart]);
+
+  const addOneMoreOfCartItem = useCallback(
+    async (item: CartItem) => {
+      if (!cart?._id) {
+        return;
+      }
+
+      try {
+        setIsMutatingCart(true);
+        const nextCart = ensureCartDetail(
+          await addCartItemsUsecase(cart.customer_id, cart.franchise_id, [
+            {
+              ...buildStaffCartItemInputFromCartItem(item),
+              quantity: 1,
+            },
+          ]),
+          "addCartItems",
+        );
+
+        setCart(nextCart);
+        syncVoucherFromCart(nextCart);
+      } catch (error) {
+        console.error("[OrderPOSReview] Failed to increase cart item quantity", error);
+        showError("Không tăng được số lượng món");
+      } finally {
+        setIsMutatingCart(false);
+      }
+    },
+    [cart, ensureCartDetail, setCart, setIsMutatingCart, showError, syncVoucherFromCart],
+  );
+
+  const decreaseCartItemQuantity = useCallback(
+    async (item: CartItem) => {
+      if (!cart?._id) {
+        return;
+      }
+
+      try {
+        setIsMutatingCart(true);
+
+        if (item.quantity <= 1) {
+          await cartService.deleteCartItem(item.cart_item_id);
+          await loadReviewCart();
+        } else {
+          await cartService.updateCartItem({
+            cart_item_id: item.cart_item_id,
+            quantity: item.quantity - 1,
+          });
+          await refreshCartDetail(cart._id);
+        }
+      } catch (error) {
+        console.error("[OrderPOSReview] Failed to decrease cart item quantity", error);
+        showError("Không giảm được số lượng món");
+      } finally {
+        setIsMutatingCart(false);
+      }
+    },
+    [cart?._id, loadReviewCart, refreshCartDetail, setIsMutatingCart, showError],
+  );
+
+  const removeCartItem = useCallback(
+    async (cartItemId: string) => {
+      if (!cart?._id) {
+        return;
+      }
+
+      try {
+        setIsMutatingCart(true);
+        await cartService.deleteCartItem(cartItemId);
+        await loadReviewCart();
+      } catch (error) {
+        console.error("[OrderPOSReview] Failed to remove cart item", error);
+        showError("Không xóa được món khỏi cart");
+      } finally {
+        setIsMutatingCart(false);
+      }
+    },
+    [cart?._id, loadReviewCart, setIsMutatingCart, showError],
+  );
+
+  const saveEditedCartItem = useCallback(async () => {
+    if (!cart?._id || !editingItem) {
+      return;
+    }
+
+    const selection = buildSelection();
+
+    if (!selection) {
+      showError("Sản phẩm này chưa có size khả dụng");
+      return;
+    }
+
+    const currentCartItemInput = buildStaffCartItemInputFromCartItem(editingItem);
+    const nextCartItemInput = buildStaffCartItemInputFromConfiguredProduct(selection);
+    const hasSameConfiguration =
+      buildStaffCartItemConfigKey(currentCartItemInput) ===
+      buildStaffCartItemConfigKey(nextCartItemInput);
+    const hasSameQuantity = currentCartItemInput.quantity === nextCartItemInput.quantity;
+
+    if (hasSameConfiguration && hasSameQuantity) {
+      closeProductConfigurator();
+      return;
+    }
+
+    const requiresReplaceLineItem =
+      currentCartItemInput.product_franchise_id !== nextCartItemInput.product_franchise_id ||
+      (currentCartItemInput.note ?? "") !== (nextCartItemInput.note ?? "");
+
+    try {
+      setIsMutatingCart(true);
+
+      if (requiresReplaceLineItem) {
+        const nextCart = ensureCartDetail(
+          await replaceCartItemWithRestoreUsecase({
+            cartItemId: editingItem.cart_item_id,
+            customerId: cart.customer_id,
+            franchiseId: cart.franchise_id,
+            currentCartItemInput,
+            nextCartItemInput,
+          }),
+          "replaceReviewCartItem",
+        );
+
+        hydrateReviewCart(nextCart);
+      } else {
+        const currentOptionsMap = new Map(
+          (currentCartItemInput.options ?? []).map((option) => [
+            option.product_franchise_id,
+            option.quantity,
+          ]),
+        );
+        const nextOptionsMap = new Map(
+          (nextCartItemInput.options ?? []).map((option) => [
+            option.product_franchise_id,
+            option.quantity,
+          ]),
+        );
+        const optionIds = new Set([...currentOptionsMap.keys(), ...nextOptionsMap.keys()]);
+
+        const addedOptions: Array<{ product_franchise_id: string; quantity: number }> = [];
+        const updatedOptions: Array<{ product_franchise_id: string; quantity: number }> = [];
+        const removedOptionIds: string[] = [];
+
+        optionIds.forEach((optionId) => {
+          const currentQuantity = currentOptionsMap.get(optionId) ?? 0;
+          const nextQuantity = nextOptionsMap.get(optionId) ?? 0;
+
+          if (currentQuantity === nextQuantity) {
+            return;
+          }
+
+          if (currentQuantity === 0 && nextQuantity > 0) {
+            addedOptions.push({ product_franchise_id: optionId, quantity: nextQuantity });
+            return;
+          }
+
+          if (currentQuantity > 0 && nextQuantity === 0) {
+            removedOptionIds.push(optionId);
+            return;
+          }
+
+          updatedOptions.push({ product_franchise_id: optionId, quantity: nextQuantity });
+        });
+
+        const optionsChanged =
+          addedOptions.length > 0 || updatedOptions.length > 0 || removedOptionIds.length > 0;
+
+        if (!optionsChanged && !hasSameQuantity) {
+          await cartService.updateCartItem({
+            cart_item_id: editingItem.cart_item_id,
+            quantity: nextCartItemInput.quantity,
+          });
+          await refreshCartDetail(cart._id);
+        } else {
+          if (!hasSameQuantity) {
+            await cartService.updateCartItem({
+              cart_item_id: editingItem.cart_item_id,
+              quantity: nextCartItemInput.quantity,
+            });
+          }
+
+          if (addedOptions.length > 0) {
+            await cartService.replaceCartItemOptions({
+              cart_item_id: editingItem.cart_item_id,
+              options: nextCartItemInput.options ?? [],
+            });
+          } else {
+            for (const option of updatedOptions) {
+              await cartService.updateCartItemOption({
+                cart_item_id: editingItem.cart_item_id,
+                option_product_franchise_id: option.product_franchise_id,
+                quantity: option.quantity,
+              });
+            }
+
+            for (const optionProductFranchiseId of removedOptionIds) {
+              await cartService.removeCartItemOption({
+                cart_item_id: editingItem.cart_item_id,
+                option_product_franchise_id: optionProductFranchiseId,
+              });
+            }
+          }
+
+          await refreshCartDetail(cart._id);
+        }
+      }
+
+      closeProductConfigurator();
+      showSuccess("Đã cập nhật món trong cart");
+    } catch (error) {
+      console.error("[OrderPOSReview] Failed to edit cart item", error);
+      showError("Không cập nhật được món trong cart");
+    } finally {
+      setIsMutatingCart(false);
+    }
+  }, [
+    buildSelection,
+    cart,
+    closeProductConfigurator,
+    editingItem,
+    ensureCartDetail,
+    hydrateReviewCart,
+    refreshCartDetail,
+    setIsMutatingCart,
+    showError,
+    showSuccess,
+  ]);
+
+  const checkoutCart = useCallback(async () => {
+    if (!cart?._id) {
+      showError("Chưa có cart để checkout");
+      return;
+    }
+
+    const normalizedDraftPhone = draftPhone.trim();
+
+    if (!normalizedDraftPhone) {
+      showError("Số điện thoại đang trống, vui lòng kiểm tra lại");
+      return;
+    }
+
+    try {
+      setIsMutatingCart(true);
+      const order = await checkoutCartUsecase(cart._id, {
+        address: draftAddress.trim(),
+        phone: normalizedDraftPhone,
+        message: draftMessage,
+      });
+
+      if (!order?._id) {
+        showError("Checkout thành công nhưng chưa lấy được order detail");
+        return;
+      }
+
+      setActiveCartId(null);
+      showSuccess("Checkout thành công");
+      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("[OrderPOSReview] Failed to checkout cart", error);
+      showError("Checkout thất bại");
+    } finally {
+      setIsMutatingCart(false);
+    }
+  }, [
+    cart?._id,
+    draftAddress,
+    draftMessage,
+    draftPhone,
+    navigate,
+    setActiveCartId,
+    setIsMutatingCart,
+    showError,
+    showSuccess,
+  ]);
+
+  const canCheckout = useMemo(() => {
+    return Boolean(cart?._id && (cart.cart_items?.length ?? 0) > 0);
+  }, [cart?._id, cart?.cart_items?.length]);
+
+  const canApplyVoucher = useMemo(() => {
+    return Boolean(cart?._id && voucherCode.trim() && (cart.cart_items?.length ?? 0) > 0);
+  }, [cart?._id, cart?.cart_items?.length, voucherCode]);
+
+  return {
+    canCheckout,
+    canApplyVoucher,
+    editCartItem,
+    closeProductConfigurator,
+    applyVoucher,
+    removeVoucher,
+    addOneMoreOfCartItem,
+    decreaseCartItemQuantity,
+    removeCartItem,
+    saveEditedCartItem,
+    checkoutCart,
+  };
+};

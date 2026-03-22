@@ -69,16 +69,20 @@ export const cartService = {
 
   async updateCartItem(payload: UpdateCartItemPayload) {
     try {
-      return await httpClient.patch<CartDetail, UpdateCartItemPayload>({
+      const response = await httpClient.patch<CartMutationResponse, UpdateCartItemPayload>({
         url: "/carts/items/update-cart-item",
         data: payload,
       });
+
+      return extractCartDetail(response);
     } catch (error) {
       console.warn("[OrderPOS] PATCH update-cart-item failed, retrying with PUT", error);
-      return httpClient.put<CartDetail, UpdateCartItemPayload>({
+      const response = await httpClient.put<CartMutationResponse, UpdateCartItemPayload>({
         url: "/carts/items/update-cart-item",
         data: payload,
       });
+
+      return extractCartDetail(response);
     }
   },
 

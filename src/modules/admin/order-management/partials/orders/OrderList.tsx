@@ -37,7 +37,7 @@ export const OrderList = ({
 
   return (
     <div className="flex flex-col gap-3">
-      {[...orders].reverse().map((order) => (
+      {orders.map((order) => (
         <OrderCard
           key={order._id}
           order={order}

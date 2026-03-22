@@ -6,15 +6,7 @@ import { useOrderFranchiseContext } from "./use-order-franchise-context";
 
 export const useOrderListPage = () => {
   const { error: showError } = useToast();
-  const {
-    franchiseId,
-    franchiseName,
-    franchiseOptions,
-    isSwitchingFranchise,
-    requiresFranchiseSelection,
-    hasInvalidFranchiseContext,
-    switchFranchise,
-  } = useOrderFranchiseContext();
+  const { franchiseId } = useOrderFranchiseContext();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [rawOrders, setRawOrders] = useState<FranchiseOrderListItem[]>([]);
@@ -60,20 +52,24 @@ export const useOrderListPage = () => {
     });
   }, [rawOrders, searchQuery]);
 
+  const displayOrders = useMemo(() => {
+    return [...filteredOrders].reverse();
+  }, [filteredOrders]);
+
   useEffect(() => {
-    if (filteredOrders.length === 0) {
+    if (displayOrders.length === 0) {
       setSelectedOrderId(undefined);
       return;
     }
 
     setSelectedOrderId((currentSelectedOrderId) => {
-      if (currentSelectedOrderId && filteredOrders.some((order) => order._id === currentSelectedOrderId)) {
+      if (currentSelectedOrderId && displayOrders.some((order) => order._id === currentSelectedOrderId)) {
         return currentSelectedOrderId;
       }
 
-      return filteredOrders[0]._id;
+      return displayOrders[0]._id;
     });
-  }, [filteredOrders]);
+  }, [displayOrders]);
 
   const summary = useMemo(() => {
     return {
@@ -93,14 +89,8 @@ export const useOrderListPage = () => {
   );
 
   return {
-    franchiseId,
-    franchiseName,
-    franchiseOptions,
     isLoading,
-    isSwitchingFranchise,
-    requiresFranchiseSelection,
-    hasInvalidFranchiseContext,
-    orders: filteredOrders,
+    orders: displayOrders,
     rawOrders,
     statusFilter,
     searchQuery,
@@ -110,6 +100,5 @@ export const useOrderListPage = () => {
     setSearchQuery,
     selectOrder,
     reload: loadOrders,
-    switchFranchise,
   };
 };
