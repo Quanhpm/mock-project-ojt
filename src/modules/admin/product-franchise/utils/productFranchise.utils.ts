@@ -94,8 +94,22 @@ export function filterProductFranchises({
     }
 
     if (selectedStatus !== ALL_CATEGORY_TAB_ID) {
-        const isActive = selectedStatus === 'active';
-        result = result.filter((product) => product.is_active === isActive);
+        const normalizedStatus = selectedStatus.toLowerCase();
+        result = result.filter((product) => {
+            if (normalizedStatus === 'active' || normalizedStatus === 'true') {
+                return product.is_active === true;
+            }
+
+            if (normalizedStatus === 'inactive' || normalizedStatus === 'false') {
+                return product.is_active === false;
+            }
+
+            if (normalizedStatus === 'deleted') {
+                return product.is_deleted === true;
+            }
+
+            return false;
+        });
     }
 
     return result;

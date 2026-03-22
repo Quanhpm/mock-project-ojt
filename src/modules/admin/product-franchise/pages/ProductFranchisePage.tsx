@@ -29,6 +29,7 @@ import {
     getCategoryLabel,
 } from '../utils/productFranchise.utils.ts';
 import { franchiseApi } from '@/apis/endpoints/franchise.api';
+import { getProductFranchiseStatuses } from '@/apis/endpoints/product-franchise.api';
 import {
     addProductToCategoryFranchise,
     deleteProductCategoryFranchise,
@@ -42,6 +43,54 @@ interface AssignmentCelebrationState {
     categoryId: string;
     productFranchiseId: string;
 }
+
+const DEFAULT_STATUS_OPTIONS = [
+    { value: 'all', label: 'Tất cả trạng thái' },
+    { value: 'active', label: 'Đang hoạt động (Active)' },
+    { value: 'inactive', label: 'Ngừng bán (Inactive)' },
+];
+
+const normalizeStatusOption = (raw: string | Record<string, unknown>): { value: string; label: string } | null => {
+    if (typeof raw === 'string') {
+        const normalized = raw.trim().toLowerCase();
+        if (!normalized) return null;
+
+        if (normalized.includes('active') || normalized === 'true') {
+            return { value: 'active', label: 'Đang hoạt động (Active)' };
+        }
+
+        if (normalized.includes('inactive') || normalized === 'false') {
+            return { value: 'inactive', label: 'Ngừng bán (Inactive)' };
+        }
+
+        return { value: normalized, label: raw };
+    }
+
+    const code = String(raw.code ?? raw.value ?? raw.status ?? '').trim();
+    const label = String(raw.label ?? raw.name ?? raw.display_name ?? code).trim();
+    const isActive = raw.is_active;
+
+    if (typeof isActive === 'boolean') {
+        return isActive
+            ? { value: 'active', label: 'Đang hoạt động (Active)' }
+            : { value: 'inactive', label: 'Ngừng bán (Inactive)' };
+    }
+
+    if (!code && !label) return null;
+
+    const normalized = (code || label).toLowerCase();
+    if (normalized.includes('active')) {
+        return { value: 'active', label: 'Đang hoạt động (Active)' };
+    }
+    if (normalized.includes('inactive')) {
+        return { value: 'inactive', label: 'Ngừng bán (Inactive)' };
+    }
+
+    return {
+        value: normalized,
+        label: label || code,
+    };
+};
 
 export const ProductFranchisePage: React.FC = () => {
     const { franchiseId } = useParams<{ franchiseId: string }>();
@@ -60,6 +109,9 @@ export const ProductFranchisePage: React.FC = () => {
     const [showDeletedInCategory, setShowDeletedInCategory] = useState(false);
     const [activeDraggedProduct, setActiveDraggedProduct] = useState<EnrichedProductFranchiseItem | null>(null);
     const [assignmentCelebration, setAssignmentCelebration] = useState<AssignmentCelebrationState | null>(null);
+    const [statusOptions, setStatusOptions] = useState<Array<{ value: string; label: string }>>(DEFAULT_STATUS_OPTIONS);
+    const [isStatusLoading, setIsStatusLoading] = useState(false);
+    const [statusLoadError, setStatusLoadError] = useState<string | null>(null);
 
     const {
         products,
@@ -103,6 +155,52 @@ export const ProductFranchisePage: React.FC = () => {
             if (franchise?.name) setFranchiseName(franchise.name);
         });
     }, [franchiseId]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadStatuses = async () => {
+            setIsStatusLoading(true);
+            setStatusLoadError(null);
+
+            try {
+                const statuses = await getProductFranchiseStatuses();
+                if (!isMounted) return;
+
+                const normalized = (statuses ?? [])
+                    .map(normalizeStatusOption)
+                    .filter((item): item is { value: string; label: string } => item !== null);
+
+                const uniqueByValue = Array.from(new Map(normalized.map((item) => [item.value, item])).values());
+                setStatusOptions([{ value: 'all', label: 'Tất cả trạng thái' }, ...uniqueByValue]);
+            } catch (error) {
+                if (!isMounted) return;
+                console.error('Failed to load product-franchise statuses:', error);
+                setStatusLoadError('Failed to load statuses');
+                setStatusOptions(DEFAULT_STATUS_OPTIONS);
+            } finally {
+                if (isMounted) {
+                    setIsStatusLoading(false);
+                }
+            }
+        };
+
+        void loadStatuses();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setAppliedSearchQuery(searchQuery.trim());
+        }, 400);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [searchQuery, setAppliedSearchQuery]);
 
     useEffect(() => {
         setSelectedProductFranchiseId(null);
@@ -317,6 +415,9 @@ export const ProductFranchisePage: React.FC = () => {
                         onSizeChange={setSelectedSize}
                         selectedStatus={selectedStatus}
                         onStatusChange={setSelectedStatus}
+                        statusOptions={statusOptions}
+                        isStatusLoading={isStatusLoading}
+                        statusLoadError={statusLoadError}
                     />
 
                     <ProductFranchiseCategoryTabs

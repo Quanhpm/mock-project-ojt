@@ -12,6 +12,9 @@ interface ProductFranchiseHeaderProps {
     onSizeChange: (size: string) => void;
     selectedStatus: string;
     onStatusChange: (status: string) => void;
+    statusOptions: Array<{ value: string; label: string }>;
+    isStatusLoading?: boolean;
+    statusLoadError?: string | null;
 }
 
 export const ProductFranchiseHeader: React.FC<ProductFranchiseHeaderProps> = ({
@@ -24,6 +27,9 @@ export const ProductFranchiseHeader: React.FC<ProductFranchiseHeaderProps> = ({
     onSizeChange,
     selectedStatus,
     onStatusChange,
+    statusOptions,
+    isStatusLoading = false,
+    statusLoadError = null,
 }) => {
     const navigate = useNavigate();
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -140,22 +146,24 @@ export const ProductFranchiseHeader: React.FC<ProductFranchiseHeaderProps> = ({
                                                 <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
                                                     Trạng thái hiển thị
                                                 </label>
+                                                {isStatusLoading && (
+                                                    <p className="mb-2 text-xs text-gray-400">Đang tải danh sách trạng thái...</p>
+                                                )}
+                                                {statusLoadError && (
+                                                    <p className="mb-2 text-xs text-red-500">Không thể tải status từ server. Đang dùng danh sách mặc định.</p>
+                                                )}
                                                 <div className="flex flex-col gap-1.5">
-                                                    {[
-                                                        { id: 'all', label: 'Tất cả trạng thái' },
-                                                        { id: 'active', label: 'Đang hoạt động (Active)' },
-                                                        { id: 'inactive', label: 'Ngừng bán (Inactive)' },
-                                                    ].map((status) => (
+                                                    {statusOptions.map((status) => (
                                                         <button
-                                                            key={status.id}
-                                                            onClick={() => onStatusChange(status.id)}
-                                                            className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors text-left ${selectedStatus === status.id
+                                                            key={status.value}
+                                                            onClick={() => onStatusChange(status.value)}
+                                                            className={`flex items-center justify-between px-3 py-2 text-sm rounded-md transition-colors text-left ${selectedStatus === status.value
                                                                 ? 'bg-amber-50 text-amber-800 font-medium'
                                                                 : 'hover:bg-gray-50 text-gray-700'
                                                                 }`}
                                                         >
                                                             {status.label}
-                                                            {selectedStatus === status.id && (
+                                                            {selectedStatus === status.value && (
                                                                 <Check size={16} className="text-amber-600" />
                                                             )}
                                                         </button>
