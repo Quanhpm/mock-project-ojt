@@ -168,14 +168,6 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
-    label: "Edit Voucher",
-    path: `${ROUTER_URL.ADMIN_ROUTER.VOUCHER}/edit/:id`,
-    icon: <Ticket size={18} />,
-    component: React.lazy(() => import("@/modules/admin/voucher-management/pages/VoucherActionPage")),
-    module: "vouchers",
-    hideFromSidebar: true,
-  },
-  {
     label: "Promotions",
     path: ROUTER_URL.ADMIN_ROUTER.PROMOTION,
     icon: <Ticket size={18} />,
@@ -213,14 +205,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     module: "promotions",
     hideFromSidebar: true,
   },
-  // {
-  //   label: "Edit Promotion",
-  //   path: `${ROUTER_URL.ADMIN_ROUTER.PROMOTION}/edit/:id`,
-  //   icon: <Ticket size={18} />,
-  //   component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionActionPage")),
-  //   module: "promotions",
-  //   hideFromSidebar: true,
-  // },
+
   {
     label: "Customers",
     path: ROUTER_URL.ADMIN_ROUTER.CUSTOMER,

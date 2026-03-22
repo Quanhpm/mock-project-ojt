@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus, Eye, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useGetVouchers } from "./hooks/useGetVouchers";
+import { useGetVoucherById } from "./hooks/useGetVoucherById";
 import { useDeleteVoucher } from "./hooks/useDeleteVoucher";
 import { useRestoreVoucher } from "./hooks/useRestoreVoucher";
 import VoucherDelete from "./VoucherDelete";
 import VoucherRestore from "./VoucherRestore";
 import VoucherDetailsModal from "./VoucherDetailsModal";
-import VoucherCreateModal from "./VoucherCreateModal";
 import VoucherEditModal from "./VoucherEditModal";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import type { Voucher, VoucherSearchCondition, VoucherType } from "./voucher.types";
@@ -24,6 +25,33 @@ if (!document.head.querySelector("style[data-voucher-table]")) {
 }
 
 const PAGE_SIZE = 10;
+
+const styles = {
+  paginationContainer: {
+    marginTop: "20px",
+    display: "flex" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    fontSize: "15px",
+    padding: "20px 24px",
+    backgroundColor: "white",
+    borderRadius: "12px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+    border: "1px solid #e5e7eb",
+  },
+};
+
+const getButtonStyles = {
+  pagination: {
+    padding: "8px 12px",
+    border: "1px solid #e5e7eb",
+    borderRadius: "6px",
+    fontSize: "14px",
+    fontWeight: "600" as const,
+    transition: "all 0.2s",
+    cursor: "pointer" as const,
+  },
+};
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "—";
@@ -44,7 +72,9 @@ interface ModalState {
 const defaultModal: ModalState = { isOpen: false, id: "", name: "" };
 
 export default function VoucherTable() {
+  const navigate = useNavigate();
   const { vouchers, isLoading, totalPages, totalItems, refetch } = useGetVouchers(true);
+  const { voucher: selectedVoucher, isLoading: isLoadingDetail, fetchById } = useGetVoucherById();
   const { deleteVoucher, isDeleting } = useDeleteVoucher();
   const { restoreVoucher, isRestoring } = useRestoreVoucher();
 
@@ -54,7 +84,6 @@ export default function VoucherTable() {
   const [deleteModal, setDeleteModal] = useState<ModalState>(defaultModal);
   const [restoreModal, setRestoreModal] = useState<ModalState>(defaultModal);
   const [detailVoucher, setDetailVoucher] = useState<Voucher | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editVoucherId, setEditVoucherId] = useState<string>("");
 
   // Filter states
@@ -64,6 +93,7 @@ export default function VoucherTable() {
   const [isActiveFilter, setIsActiveFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [pageNum, setPageNum] = useState(1);
+  const [pageInput, setPageInput] = useState("");
 
   // Franchise list for dropdown
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
@@ -212,6 +242,10 @@ export default function VoucherTable() {
 
   const isActionLoading = isDeleting || isRestoring;
 
+  // Pagination — alias for convenience
+  const currentPage = pageNum;
+  const setCurrentPage = handlePageChange;
+
   // Build page-number range: max 3 buttons, sliding window
   const buildPageNumbers = () => {
     if (totalPages <= 3) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -277,14 +311,14 @@ export default function VoucherTable() {
                   margin: 0,
                 }}
               >
-                Quản lý Voucher
+                 Voucher Management
               </h2>
-              <p style={{ color: "#6c757d", margin: 0 }}>
-                Tổng cộng: {isLoading ? "..." : totalItems} voucher
+              <p style={{ color: "#6c757d", margin: 0 }}> 
+                Total: {isLoading ? "..." : totalItems} voucher
               </p>
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => navigate("/admin/vouchers/create")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -304,7 +338,7 @@ export default function VoucherTable() {
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#8B4513")}
             >
               <Plus size={18} />
-              <span>Tạo Voucher</span>
+              <span>Create Voucher</span>
             </button>
           </div>
         </header>
@@ -465,7 +499,7 @@ export default function VoucherTable() {
                     >
                       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
-                    Đang tìm...
+                    Loading...
                   </>
                 ) : (
                   <>
@@ -480,7 +514,7 @@ export default function VoucherTable() {
                       <circle cx="11" cy="11" r="8" />
                       <path d="m21 21-4.35-4.35" />
                     </svg>
-                    Tìm kiếm
+                    Search
                   </>
                 )}
               </button>
@@ -514,7 +548,7 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả Franchise</option>
+                <option value="">All Franchise</option>
                 {franchises.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -540,9 +574,9 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả loại</option>
-                <option value="FIXED">Cố định (₫)</option>
-                <option value="PERCENT">Phần trăm (%)</option>
+                <option value="">All Types</option>
+                <option value="FIXED">FIXED (₫)</option>
+                <option value="PERCENT">PERCENT (%)</option>
               </select>
 
               {/* Status filter */}
@@ -563,9 +597,9 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">In Active</option>
               </select>
 
               {/* Toggle deleted */}
@@ -605,7 +639,7 @@ export default function VoucherTable() {
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                   <path d="M10 11v6M14 11v6" />
                 </svg>
-                {showDeleted ? "Đã xóa" : "Hiện tại"}
+                {showDeleted ? "Deleted" : "Current"}
               </button>
 
               {/* Clear all filters */}
@@ -632,7 +666,7 @@ export default function VoucherTable() {
                   e.currentTarget.style.borderColor = "#e0e0e0";
                 }}
               >
-                Xóa bộ lọc
+                Clear Filters
               </button>
             </div>
           </div>
@@ -657,15 +691,15 @@ export default function VoucherTable() {
                 <thead>
                   <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
                     {[
-                      "Mã voucher",
-                      "Tên voucher",
-                      "Franchise",
-                      "Loại",
-                      "Giá trị",
-                      "Đã dùng / Tổng",
-                      "Hiệu lực",
-                      "Trạng thái",
-                      "Thao tác",
+                        "Voucher Code",
+                        "Voucher Name",
+                        "Franchise",
+                        "Type",
+                        "Value",
+                        "Used / Total",
+                        "Validity",
+                        "Status",
+                        "Actions",
                     ].map((h, i) => (
                       <th
                         key={h}
@@ -772,12 +806,12 @@ export default function VoucherTable() {
                                 margin: "0 0 8px 0",
                               }}
                             >
-                              Không tìm thấy voucher
+                              No results found 
                             </h3>
                             <p style={{ fontSize: "14px", color: "#6c757d", margin: 0 }}>
                               {keyword
-                                ? `Không có voucher nào khớp với "${keyword}"`
-                                : "Không có dữ liệu để hiển thị"}
+                                 ? `No vouchers match "${keyword}"`
+                                 : "No data available"}
                             </p>
                           </div>
                         </div>
@@ -873,7 +907,7 @@ export default function VoucherTable() {
                               color: v.type === "FIXED" ? "#1565c0" : "#e65100",
                             }}
                           >
-                            {v.type === "FIXED" ? "Cố định" : "Phần trăm"}
+                            {v.type === "FIXED" ? "FIXED" : "PERCENT"}
                           </span>
                         </td>
 
@@ -950,7 +984,7 @@ export default function VoucherTable() {
                               color: v.is_active ? "#2e7d32" : "#c62828",
                             }}
                           >
-                            {v.is_active ? "Hoạt động" : "Ngừng"}
+                            {v.is_active ? "Active" : "In Active"}
                           </span>
                         </td>
 
@@ -966,7 +1000,10 @@ export default function VoucherTable() {
                           >
                             {/* View */}
                             <button
-                              onClick={() => setDetailVoucher(v)}
+                              onClick={() => {
+                                setDetailVoucher(v);
+                                fetchById(v.id);
+                              }}
                               title="Xem chi tiết"
                               style={{
                                 display: "flex",
@@ -1117,144 +1154,173 @@ export default function VoucherTable() {
               </table>
             </div>
 
-            {/* ── Pagination ───────────────────────────────────────────── */}
-            {totalPages > 0 && (
+                     {/* Pagination */}
+          {!isLoading && vouchers.length > 0 && totalPages > 1 && (
+            <div style={styles.paginationContainer}>
+              <span style={{ color: "#6b7280", fontWeight: "600" }}>
+                Showing {(currentPage - 1) * 10 + 1} to{" "}
+                {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
+                vouchers
+              </span>
               <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  borderTop: "1px solid #e9ecef",
-                  backgroundColor: "#f8f9fa",
-                  padding: "12px 24px",
-                  flexShrink: 0,
-                }}
+                style={{ display: "flex", gap: "8px", alignItems: "center" }}
               >
-                {/* Info text */}
-                <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
-                  Hiển thị trang{" "}
-                  <span style={{ fontWeight: "500" }}>{pageNum}</span>{" "}
-                  trong{" "}
-                  <span style={{ fontWeight: "500" }}>{totalPages}</span>{" "}
-                  trang ({" "}
-                  <span style={{ fontWeight: "500" }}>{totalItems}</span>{" "}
-                  voucher)
-                </p>
-
-                {/* Page buttons */}
-                <nav aria-label="Phân trang" style={{ display: "inline-flex" }}>
-                  {/* Prev */}
-                  <button
-                    onClick={() => handlePageChange(Math.max(1, pageNum - 1))}
-                    disabled={pageNum === 1}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: pageNum === 1 ? "#9ca3af" : "#374151",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderTopLeftRadius: "6px",
-                      borderBottomLeftRadius: "6px",
-                      borderRight: "none",
-                      cursor: pageNum === 1 ? "not-allowed" : "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (pageNum !== 1) {
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#d1d5db";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "white";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                    }}
-                  >
-                    Trước
-                  </button>
-
-                  {/* Page numbers */}
-                  {buildPageNumbers().map((page, i, arr) => (
-                    <button
-                      key={page}
-                      onClick={() => handlePageChange(page)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        minWidth: "40px",
-                        padding: "8px 12px",
-                        fontSize: "14px",
-                        fontWeight: pageNum === page ? "600" : "500",
-                        color: pageNum === page ? "white" : "#374151",
-                        backgroundColor: pageNum === page ? "#8B4513" : "white",
-                        border: "1px solid",
-                        borderColor: pageNum === page ? "#8B4513" : "#e5e7eb",
-                        borderRight: i < arr.length - 1 ? "none" : undefined,
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (pageNum !== page) {
-                          e.currentTarget.style.backgroundColor = "#f9fafb";
-                          e.currentTarget.style.borderColor = "#d1d5db";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (pageNum !== page) {
-                          e.currentTarget.style.backgroundColor = "white";
-                          e.currentTarget.style.borderColor = "#e5e7eb";
-                        } else {
-                          e.currentTarget.style.backgroundColor = "#8B4513";
-                          e.currentTarget.style.borderColor = "#8B4513";
-                        }
-                      }}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  {/* Next */}
-                  <button
-                    onClick={() =>
-                      handlePageChange(Math.min(totalPages, pageNum + 1))
+                {/* Previous Button */}
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === 1 ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === 1 ? "#9ca3af" : "#374151",
+                      cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                      e.currentTarget.style.borderColor = "#d1d5db";
                     }
-                    disabled={pageNum === totalPages}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "8px 16px",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                      color: pageNum === totalPages ? "#9ca3af" : "#374151",
-                      backgroundColor: "white",
-                      border: "1px solid #e5e7eb",
-                      borderTopRightRadius: "6px",
-                      borderBottomRightRadius: "6px",
-                      cursor: pageNum === totalPages ? "not-allowed" : "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (pageNum !== totalPages) {
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                        e.currentTarget.style.borderColor = "#d1d5db";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      e.currentTarget.style.backgroundColor = "#ffffff";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    }
+                  }}
+                >
+                  ‹
+                </button>
+
+                {/* Page Numbers */}
+                {(() => {
+                  const pages: (number | "...")[] = [...buildPageNumbers()];
+                  // if (pages[pages.length - 1] < totalPages - 1) pages.push("...");
+                  if (pages[pages.length - 1] !== totalPages) pages.push(totalPages);
+
+                  return pages.map((page, idx) =>
+                    page === "..." ? (
+                      <span
+                        key={`ellipsis-${idx}`}
+                        style={{
+                          padding: "0 4px",
+                          color: "#6b7280",
+                          fontWeight: "600",
+                          userSelect: "none",
+                          lineHeight: "36px",
+                        }}
+                      >
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        style={
+                          {
+                            ...getButtonStyles.pagination,
+                            backgroundColor:
+                              currentPage === page ? "#8B5A2B" : "#ffffff",
+                            color: currentPage === page ? "#ffffff" : "#374151",
+                            fontWeight:
+                              currentPage === page
+                                ? ("700" as const)
+                                : ("600" as const),
+                            minWidth: "40px",
+                            textAlign: "center" as const,
+                          } as React.CSSProperties
+                        }
+                        onMouseEnter={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#f9fafb";
+                            e.currentTarget.style.borderColor = "#d1d5db";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== page) {
+                            e.currentTarget.style.backgroundColor = "#ffffff";
+                            e.currentTarget.style.borderColor = "#e5e7eb";
+                          }
+                        }}
+                      >
+                        {page}
+                      </button>
+                    ),
+                  );
+                })()}
+
+                {/* Next Button */}
+                <button
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  style={
+                    {
+                      ...getButtonStyles.pagination,
+                      backgroundColor:
+                        currentPage === totalPages ? "#f3f4f6" : "#ffffff",
+                      color: currentPage === totalPages ? "#9ca3af" : "#374151",
+                      cursor:
+                        currentPage === totalPages ? "not-allowed" : "pointer",
+                    } as React.CSSProperties
+                  }
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                      e.currentTarget.style.borderColor = "#d1d5db";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      e.currentTarget.style.backgroundColor = "#ffffff";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    }
+                  }}
+                >
+                  ›
+                </button>
+
+                {/* Go to page */}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Jump to page</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const num = parseInt(pageInput, 10);
+                        if (!isNaN(num) && num >= 1 && num <= totalPages) {
+                          setCurrentPage(num);
+                        }
+                        setPageInput("");
                       }
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "white";
-                      e.currentTarget.style.borderColor = "#e5e7eb";
+                    placeholder={String(currentPage)}
+                    style={{
+                      width: "52px",
+                      height: "36px",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "6px",
+                      textAlign: "center",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#374151",
+                      outline: "none",
+                      padding: "0 4px",
                     }}
-                  >
-                    Sau
-                  </button>
-                </nav>
+                    onFocus={(e) => { e.currentTarget.style.borderColor = "#8B5A2B"; }}
+                    onBlur={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                  />
+                </div>
               </div>
-            )}
+            </div>
+          )}
           </div>
         </div>
       </main>
@@ -1277,12 +1343,8 @@ export default function VoucherTable() {
       <VoucherDetailsModal
         isOpen={!!detailVoucher}
         onClose={() => setDetailVoucher(null)}
-        voucher={detailVoucher}
-      />
-      <VoucherCreateModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={() => doSearch({ page: 1 })}
+        voucher={selectedVoucher || detailVoucher}
+        isLoading={isLoadingDetail}
       />
       <VoucherEditModal
         isOpen={!!editVoucherId}

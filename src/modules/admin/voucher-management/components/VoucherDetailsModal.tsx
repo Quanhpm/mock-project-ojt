@@ -5,6 +5,7 @@ interface VoucherDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   voucher: Voucher | null;
+  isLoading?: boolean;
 }
 
 const formatDate = (dateStr: string) => {
@@ -77,13 +78,11 @@ export default function VoucherDetailsModal({
   isOpen,
   onClose,
   voucher,
+  isLoading = false,
 }: VoucherDetailsModalProps) {
-  if (!isOpen || !voucher) return null;
+  if (!isOpen) return null;
 
-  const quotaPercent =
-    voucher.quota_total > 0
-      ? Math.round((voucher.quota_used / voucher.quota_total) * 100)
-      : 0;
+  const quotaPercent = voucher ? Math.round((voucher.quota_used / voucher.quota_total) * 100) : 0;
 
   return (
     <div
@@ -146,10 +145,10 @@ export default function VoucherDetailsModal({
               <h2
                 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}
               >
-                Chi Tiết Voucher
+                Detail Voucher
               </h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#6c757d", fontFamily: "monospace" }}>
-                {voucher.code || voucher.id}
+                {voucher?.code || voucher?.id || "—"}
               </p>
             </div>
           </div>
@@ -171,150 +170,188 @@ export default function VoucherDetailsModal({
 
         {/* Body */}
         <div style={{ padding: "24px" }}>
-          {/* Status badges */}
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-            <span
-              style={{
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "600",
-                backgroundColor: voucher.is_active ? "#e8f5e9" : "#fce4ec",
-                color: voucher.is_active ? "#2e7d32" : "#c62828",
-              }}
-            >
-              {voucher.is_active ? "Đang hoạt động" : "Ngừng hoạt động"}
-            </span>
-            <span
-              style={{
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "600",
-                backgroundColor: voucher.type === "FIXED" ? "#e3f2fd" : "#fff3e0",
-                color: voucher.type === "FIXED" ? "#1565c0" : "#e65100",
-              }}
-            >
-              {voucher.type === "FIXED" ? "Cố định (₫)" : "Phần trăm (%)"}
-            </span>
-            {voucher.is_deleted && (
-              <span
-                style={{
-                  padding: "4px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  backgroundColor: "#f3f4f6",
-                  color: "#6b7280",
-                }}
-              >
-                Đã xóa
-              </span>
-            )}
-          </div>
-
-          {/* Quota usage bar */}
-          <div
-            style={{
-              backgroundColor: "#f8f9fa",
-              borderRadius: "10px",
-              padding: "14px 16px",
-              marginBottom: "16px",
-              border: "1px solid #e9ecef",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "8px",
-              }}
-            >
-              <span style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>
-                Lượt sử dụng
-              </span>
-              <span style={{ fontSize: "13px", fontWeight: "700", color: "#8B4513" }}>
-                {voucher.quota_used} / {voucher.quota_total} lượt ({quotaPercent}%)
-              </span>
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "60px 40px" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                {/* Spinner */}
+                <div style={{ position: "relative", width: "64px", height: "64px" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      border: "4px solid #fed7aa",
+                      borderTopColor: "#b45309",
+                      borderRadius: "50%",
+                    }}
+                    className="modal-animate-spin"
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#b45309",
+                    }}
+                  >
+                    <Tag size={28} />
+                  </div>
+                </div>
+              </div>
             </div>
-            <div
-              style={{
-                height: "8px",
-                backgroundColor: "#e9ecef",
-                borderRadius: "4px",
-                overflow: "hidden",
-              }}
-            >
+          ) : voucher ? (
+            <>
+              {/* Status badges */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+                <span
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    backgroundColor: voucher?.is_active ? "#e8f5e9" : "#fce4ec",
+                    color: voucher?.is_active ? "#2e7d32" : "#c62828",
+                  }}
+                >
+                  {voucher?.is_active ? "Active" : "In Active"}
+                </span>
+                <span
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    backgroundColor: voucher?.type === "FIXED" ? "#e3f2fd" : "#fff3e0",
+                    color: voucher?.type === "FIXED" ? "#1565c0" : "#e65100",
+                  }}
+                >
+                  {voucher?.type === "FIXED" ? "FIXED (₫)" : "PERCENT (%)"}
+                </span>
+                {voucher?.is_deleted && (
+                  <span
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "20px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      backgroundColor: "#f3f4f6",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Deleted
+                  </span>
+                )}
+              </div>
+
+              {/* Quota usage bar */}
               <div
                 style={{
-                  height: "100%",
-                  width: `${quotaPercent}%`,
-                  backgroundColor:
-                    quotaPercent >= 90 ? "#ef4444" : quotaPercent >= 60 ? "#f59e0b" : "#8B4513",
-                  borderRadius: "4px",
-                  transition: "width 0.3s ease",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "10px",
+                  padding: "14px 16px",
+                  marginBottom: "16px",
+                  border: "1px solid #e9ecef",
                 }}
-              />
-            </div>
-          </div>
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <span style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>
+                    Used
+                  </span>
+                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#8B4513" }}>
+                    {voucher?.quota_used} / {voucher?.quota_total} lượt ({quotaPercent}%)
+                  </span>
+                </div>
+                <div
+                  style={{
+                    height: "8px",
+                    backgroundColor: "#e9ecef",
+                    borderRadius: "4px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${quotaPercent}%`,
+                      backgroundColor:
+                        quotaPercent >= 90 ? "#ef4444" : quotaPercent >= 60 ? "#f59e0b" : "#8B4513",
+                      borderRadius: "4px",
+                      transition: "width 0.3s ease",
+                    }}
+                  />
+                </div>
+              </div>
 
-          {/* Fields */}
-          <Field icon={<Hash size={16} />} label="Mã Voucher" value={voucher.code} mono />
-          <Field icon={<Tag size={16} />} label="Tên Voucher" value={voucher.name} />
-          {voucher.description && (
-            <Field
-              icon={<FileText size={16} />}
-              label="Mô tả"
-              value={voucher.description}
-            />
+              {/* Fields */}
+              <Field icon={<Hash size={16} />} label="Voucher Code" value={voucher.code} mono />
+              <Field icon={<Tag size={16} />} label="Voucher Name" value={voucher.name} />
+              {voucher.description && (
+                <Field
+                  icon={<FileText size={16} />}
+                  label="Description"
+                  value={voucher.description}
+                />
+              )}
+              <Field
+                icon={<Tag size={16} />}
+                label="Value"
+                value={formatValue(voucher.type, voucher.value)}
+              />
+              <Field
+                icon={<Building2 size={16} />}
+                label="Franchise"
+                value={
+                  voucher.franchise_name
+                    ? `${voucher.franchise_name}`
+                    : voucher.franchise_id
+                }
+              />
+              {(voucher.product_name || voucher.product_franchise_id) && (
+                <Field
+                  icon={<Package size={16} />}
+                  label="Product"
+                  value={voucher.product_name || voucher.product_franchise_id}
+                />
+              )}
+              <Field
+                icon={<BarChart2 size={16} />}
+                label="Number of Uses"
+                value={`${voucher.quota_used} đã dùng / ${voucher.quota_total} tổng`}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="Start Date"
+                value={formatDate(voucher.start_date)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="End Date"
+                value={formatDate(voucher.end_date)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="Created At"
+                value={formatDate(voucher.created_at)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="Updated At"
+                value={formatDate(voucher.updated_at)}
+              />
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              Voucher not found
+            </div>
           )}
-          <Field
-            icon={<Tag size={16} />}
-            label="Giá trị giảm"
-            value={formatValue(voucher.type, voucher.value)}
-          />
-          <Field
-            icon={<Building2 size={16} />}
-            label="Franchise"
-            value={
-              voucher.franchise_name
-                ? `${voucher.franchise_name}`
-                : voucher.franchise_id
-            }
-          />
-          {(voucher.product_name || voucher.product_franchise_id) && (
-            <Field
-              icon={<Package size={16} />}
-              label="Sản phẩm áp dụng"
-              value={voucher.product_name || voucher.product_franchise_id}
-            />
-          )}
-          <Field
-            icon={<BarChart2 size={16} />}
-            label="Số lượng"
-            value={`${voucher.quota_used} đã dùng / ${voucher.quota_total} tổng`}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày bắt đầu"
-            value={formatDate(voucher.start_date)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày kết thúc"
-            value={formatDate(voucher.end_date)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày tạo"
-            value={formatDate(voucher.created_at)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Cập nhật lần cuối"
-            value={formatDate(voucher.updated_at)}
-          />
         </div>
 
         {/* Footer */}
@@ -337,9 +374,10 @@ export default function VoucherDetailsModal({
               cursor: "pointer",
               backgroundColor: "white",
               color: "#374151",
+              marginRight: "auto",
             }}
           >
-            Đóng
+            Close
           </button>
         </div>
       </div>

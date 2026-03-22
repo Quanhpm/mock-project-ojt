@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Plus, Eye, Pencil, RotateCcw, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useGetPromotions } from "./hooks/useGetPromotions";
 import { useGetPromotionById } from "./hooks/useGetPromotionById";
 import { useDeletePromotion } from "./hooks/useDeletePromotion";
@@ -72,6 +73,7 @@ interface ModalState {
 const defaultModal: ModalState = { isOpen: false, id: "", name: "" };
 
 export default function PromotionTable() {
+  const navigate = useNavigate();
   const { promotions, isLoading, totalPages, totalItems, refetch } = useGetPromotions(true);
   const { deletePromotion, isDeleting } = useDeletePromotion();
   const { restorePromotion, isRestoring } = useRestorePromotion();
@@ -324,7 +326,7 @@ export default function PromotionTable() {
               </p>
             </div>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => navigate("/admin/promotions/create")}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -581,8 +583,8 @@ export default function PromotionTable() {
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
                 <option value="">Type</option>
-                <option value="FIXED">Fixed (₫)</option>
-                <option value="PERCENT">Percent (%)</option>
+                <option value="FIXED">FIXED (₫)</option>
+                <option value="PERCENT">PERCENT (%)</option>
               </select>
 
               {/* Status filter */}
@@ -810,12 +812,12 @@ export default function PromotionTable() {
                                 margin: "0 0 8px 0",
                               }}
                             >
-                              Không tìm thấy promotion 
+                              No promotions found
                             </h3>
                             <p style={{ fontSize: "14px", color: "#6c757d", margin: 0 }}>
                               {keyword
-                                ? `Không có promotion nào khớp với "${keyword}"`
-                                : "Không có dữ liệu để hiển thị"}
+                                ? `No promotions match "${keyword}"`
+                                : "No data available"}
                             </p>
                           </div>
                         </div>
@@ -894,7 +896,7 @@ export default function PromotionTable() {
                               color: v.type === "FIXED" ? "#1565c0" : "#e65100",
                             }}
                           >
-                            {v.type === "FIXED" ? "Fixed" : "Percent"}
+                            {v.type === "FIXED" ? "FIXED" : "PERCENT"}
                           </span>
                         </td>
 
@@ -939,7 +941,7 @@ export default function PromotionTable() {
                               color: v.is_active ? "#2e7d32" : "#c62828",
                             }}
                           >
-                            {v.is_active ? "Active" : "InActive"}
+                            {v.is_active ? "Active" : "In Active"}
                           </span>
                         </td>
 
@@ -1261,7 +1263,7 @@ export default function PromotionTable() {
 
                 {/* Go to page */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Jump to page</span>
                   <input
                     type="number"
                     min={1}
@@ -1324,11 +1326,6 @@ export default function PromotionTable() {
         }}
         promotion={selectedPromotion || detailPromotion}
         // isLoading={isLoadingDetail}
-      />
-      <PromotionCreateModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={() => doSearch({ page: 1 })}
       />
       <PromotionEditModal
         isOpen={!!editPromotionId}
