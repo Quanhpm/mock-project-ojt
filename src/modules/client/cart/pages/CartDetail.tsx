@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { CartDetailItemCard, CartEditModal, Confirm } from '../components';
 import { useCartDetail } from '../hook/use-cart-detail.hook';
+import { useCheckoutHandler } from '../hook/useCheckoutHandler';
 
 // --- CartDetail Page ---
 
@@ -41,6 +42,7 @@ function CartDetail() {
     removeAllVoucherFromCart,
     setEditNote,
   } = useCartDetail(cartId);
+  const { handleCheckout } = useCheckoutHandler(cartId);
 
   const formatCurrency = (amount: number) => `${amount.toLocaleString('vi-VN')} ₫`;
   const totalDiscount = (cart?.promotionDiscount ?? 0) + (cart?.voucherDiscount ?? 0) + (cart?.loyaltyDiscount ?? 0);
@@ -213,7 +215,7 @@ function CartDetail() {
               </div>
 
               <button
-                onClick={() => navigate(ROUTER_URL.HOME_ROUTER.CHECKOUT)}
+                onClick={handleCheckout}
                 className="w-full bg-[var(--cf-primary)] text-white font-extrabold py-4 rounded-xl hover:bg-[var(--cf-dark)] transition-all active:scale-[0.98] shadow-[0px_18px_34px_rgba(139,29,29,0.3)] uppercase tracking-[0.12em] text-base cursor-pointer"
               >
                 Tiến hành thanh toán
