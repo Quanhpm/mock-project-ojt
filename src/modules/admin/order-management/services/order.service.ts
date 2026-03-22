@@ -1,5 +1,6 @@
 import { httpClient } from "@/apis/httpClient";
 import type { FranchiseOrderListItem, OrderDetail, OrderStatus } from "../models/order.models";
+import type { ReadyForPickupPayload } from "../models/request.models";
 
 export const orderService = {
   getOrderByCartId(cartId: string) {
@@ -34,9 +35,10 @@ export const orderService = {
     });
   },
 
-  markReadyForPickup(orderId: string) {
-    return httpClient.put<null>({
+  markReadyForPickup(orderId: string, payload: ReadyForPickupPayload) {
+    return httpClient.put<null, ReadyForPickupPayload>({
       url: `/orders/${orderId}/ready-for-pickup`,
+      data: payload,
     });
   },
 };

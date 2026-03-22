@@ -15,6 +15,14 @@ const hashString = (value: string) => {
 
 const normalizeNote = (note: string) => note.trim();
 
+const normalizeOptionInputs = (
+  options: Array<{ product_franchise_id: string; quantity: number }> | undefined,
+) => {
+  return [...(options ?? [])]
+    .filter((option) => option.quantity > 0)
+    .sort((left, right) => left.product_franchise_id.localeCompare(right.product_franchise_id));
+};
+
 const normalizeToppings = (selection: PosProductCatalogSelection) => {
   return [...selection.toppings].sort((left, right) =>
     left.topping.product_franchise_id.localeCompare(right.topping.product_franchise_id),
@@ -108,4 +116,54 @@ export const buildStaffCartItemInputFromConfiguredProduct = (
       quantity,
     })),
   };
+};
+
+export const buildStaffCartItemInputFromCartItem = (item: CartItem): StaffCartItemInput => {
+  return {
+    product_franchise_id: item.product_franchise_id,
+    quantity: item.quantity,
+    note: normalizeNote(item.note),
+    options: normalizeOptionInputs(
+      item.options.map((option) => ({
+        product_franchise_id: option.product_franchise_id,
+        quantity: option.quantity,
+      })),
+    ),
+  };
+};
+
+export const buildStaffCartItemConfigKey = (
+  input: Pick<StaffCartItemInput, "product_franchise_id" | "note" | "options">,
+) => {
+  return [
+    input.product_franchise_id,
+    normalizeNote(input.note ?? ""),
+    normalizeOptionInputs(input.options)
+      .map((option) => `${option.product_franchise_id}:${option.quantity}`)
+      .join("|"),
+  ].join("::");
+};
+
+export const buildSelectedToppingMapFromCartItem = (item: CartItem) => {
+  return item.options.reduce<Record<string, number>>((accumulator, option) => {
+    if (option.quantity > 0) {
+      accumulator[option.product_franchise_id] = option.quantity;
+    }
+
+    return accumulator;
+  }, {});
+};
+
+export const buildStaffCartItemInputsFromDraftItems = (
+  draftItems: CartItem[],
+): StaffCartItemInput[] => {
+  return draftItems.map((item) => ({
+    product_franchise_id: item.product_franchise_id,
+    quantity: item.quantity,
+    note: normalizeNote(item.note),
+    options: item.options.map((option) => ({
+      product_franchise_id: option.product_franchise_id,
+      quantity: option.quantity,
+    })),
+  }));
 };

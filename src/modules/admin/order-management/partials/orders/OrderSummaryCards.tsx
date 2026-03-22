@@ -23,7 +23,7 @@ export const OrderSummaryCards = ({
         <p className="mt-3 text-3xl font-bold text-gray-900">{total}</p>
       </div>
       <div className={cardClass}>
-        <p className="text-sm text-gray-500">Draft</p>
+        <p className="text-sm text-gray-500">Chưa thanh toán</p>
         <p className="mt-3 text-3xl font-bold text-slate-700">{draft}</p>
       </div>
       <div className={cardClass}>

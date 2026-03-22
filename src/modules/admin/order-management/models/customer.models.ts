@@ -4,7 +4,12 @@ export interface CustomerOption {
   phone: string;
   email: string;
   address: string;
+  avatar_url?: string;
   is_active: boolean;
+  is_deleted?: boolean;
+  is_verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CustomerSearchPageInfo {
