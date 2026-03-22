@@ -166,17 +166,17 @@ export function useCartDetail(cartId: string) {
         const mappedToppings = (toppingMenu ?? [])
           .flatMap((category) => category.products)
           .map((product) => {
-            const selectedSize = product.sizes.find((size) => size.is_available)
-              ?? product.sizes.find((size) => size.size === 'DEFAULT')
-              ?? product.sizes[0];
+            const selectedSize = product.sizes.find((size) => size.is_available);
+
+            if (!selectedSize) return null;
 
             return {
-              productFranchiseId: selectedSize?.product_franchise_id ?? '',
+              productFranchiseId: selectedSize.product_franchise_id,
               productName: product.name,
-              priceSnapshot: selectedSize?.price ?? 0,
+              priceSnapshot: selectedSize.price,
             };
           })
-          .filter((option) => option.productFranchiseId);
+          .filter((option): option is AvailableToppingOption => option !== null);
 
         if (!isCancelled) {
           setAvailableToppings(
