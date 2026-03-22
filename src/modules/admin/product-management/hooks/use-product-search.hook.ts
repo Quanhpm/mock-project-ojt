@@ -61,6 +61,30 @@ interface UseProductSearchOptions {
   tableScope?: TableScope;
 }
 
+const PAGE_PARAM = "page";
+const PAGE_SIZE_PARAM = "pageSize";
+
+const parsePositiveInt = (value: string | null, fallback: number): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.floor(parsed);
+};
+
+const getInitialSearchState = () => {
+  const params = new URLSearchParams(window.location.search);
+
+  return {
+    currentPage: parsePositiveInt(params.get(PAGE_PARAM), 1),
+    pageSize: parsePositiveInt(params.get(PAGE_SIZE_PARAM), 10),
+    keyword: params.get("keyword") ?? "",
+    franchise_id: params.get("franchise_id") ?? "",
+    min_price: params.get("min_price") ?? "",
+    max_price: params.get("max_price") ?? "",
+    is_active: params.get("is_active") ?? "",
+    is_deleted: params.get("is_deleted") === "true",
+  };
+};
+
 export const useProductSearch = (
   options?: UseProductSearchOptions,
 ): UseProductSearchReturn => {
@@ -74,16 +98,18 @@ export const useProductSearch = (
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const initialSearchState = useMemo(() => getInitialSearchState(), []);
+
+  const [currentPage, setCurrentPage] = useState(initialSearchState.currentPage);
+  const [pageSize, setPageSize] = useState(initialSearchState.pageSize);
 
   const [filters, setFilters] = useState<SearchFilters>({
-    keyword: "",
-    franchise_id: "",
-    min_price: "",
-    max_price: "",
-    is_active: "",
-    is_deleted: false,
+    keyword: initialSearchState.keyword,
+    franchise_id: initialSearchState.franchise_id,
+    min_price: initialSearchState.min_price,
+    max_price: initialSearchState.max_price,
+    is_active: initialSearchState.is_active,
+    is_deleted: initialSearchState.is_deleted,
   });
 
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
@@ -324,6 +350,47 @@ export const useProductSearch = (
       setCurrentPage(1);
     }
   }, [activeFranchiseId, tableScope]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    params.set(PAGE_PARAM, String(currentPage));
+    params.set(PAGE_SIZE_PARAM, String(pageSize));
+
+    if (filters.keyword.trim()) params.set("keyword", filters.keyword.trim());
+    else params.delete("keyword");
+
+    if (filters.franchise_id?.trim()) params.set("franchise_id", filters.franchise_id.trim());
+    else params.delete("franchise_id");
+
+    if (filters.min_price?.trim()) params.set("min_price", filters.min_price.trim());
+    else params.delete("min_price");
+
+    if (filters.max_price?.trim()) params.set("max_price", filters.max_price.trim());
+    else params.delete("max_price");
+
+    if (filters.is_active?.trim()) params.set("is_active", filters.is_active.trim());
+    else params.delete("is_active");
+
+    if (filters.is_deleted) params.set("is_deleted", "true");
+    else params.delete("is_deleted");
+
+    const nextSearch = params.toString();
+    const currentSearch = window.location.search.replace(/^\?/, "");
+    if (nextSearch !== currentSearch) {
+      const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [
+    currentPage,
+    filters.franchise_id,
+    filters.is_active,
+    filters.is_deleted,
+    filters.keyword,
+    filters.max_price,
+    filters.min_price,
+    pageSize,
+  ]);
 
   return {
     // Data

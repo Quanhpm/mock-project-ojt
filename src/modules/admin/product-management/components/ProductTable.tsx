@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useProductSearch } from "../hooks/use-product-search.hook";
 import { useDeleteProduct } from "./hooks/useDeleteProduct";
 import { useRestoreProduct } from "./hooks/useRestoreProduct";
-import { useToggleProductStatus } from "./hooks/useToggleProductStatus";
 import { useGetProductById } from "./hooks/useGetProductById";
 import ProductDelete from "./ProductDelete";
 import ProductRestore from "./ProductRestore";
@@ -76,9 +75,7 @@ export default function ProductTable() {
   } = useProductSearch({ tableScope });
 
   const { deleteProduct: deleteProductAPI, isDeleting } = useDeleteProduct();
-  const { restoreProduct: restoreProductAPI, isRestoring } =
-    useRestoreProduct();
-  const { toggleStatus } = useToggleProductStatus();
+  const { restoreProduct: restoreProductAPI, isRestoring } = useRestoreProduct();
   const {
     product: selectedProduct,
     isLoading: isLoadingProduct,
@@ -99,6 +96,7 @@ export default function ProductTable() {
     productId: "",
     productName: "",
   });
+
   const [restoreModal, setRestoreModal] = useState<{
     isOpen: boolean;
     productId: string;
@@ -108,6 +106,7 @@ export default function ProductTable() {
     productId: "",
     productName: "",
   });
+
   const [detailsModal, setDetailsModal] = useState<{
     isOpen: boolean;
     productId: string;
@@ -134,6 +133,7 @@ export default function ProductTable() {
   });
   const [pageInput, setPageInput] = useState("");
   const hasInitializedFilterSearch = useRef(false);
+  const hasInitializedKeywordSearch = useRef(false);
 
   // Track if we need to check pagination after deletion
   const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
@@ -263,17 +263,16 @@ export default function ProductTable() {
   const handleSearch = async () => {
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
-    setCurrentPage(1);
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
     await executeSearch();
   };
 
   const handleClearSearch = () => {
     setFilters((prev) => ({ ...prev, keyword: "" }));
     searchInputRef.current?.focus();
-  };
-
-  const handleStatusFilterChange = (value: string) => {
-    setFilters((prev) => ({ ...prev, is_active: value }));
   };
 
   const handleDeletedFilterChange = (value: boolean) => {
@@ -296,7 +295,31 @@ export default function ProductTable() {
     }
 
     void executeSearch();
-  }, [executeSearch, filters.franchise_id, filters.is_active, filters.is_deleted]);
+    // Intentionally omit executeSearch from deps to avoid resetting currentPage when callback identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.franchise_id, filters.is_active, filters.is_deleted]);
+
+  useEffect(() => {
+    if (!hasInitializedKeywordSearch.current) {
+      hasInitializedKeywordSearch.current = true;
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+        return;
+      }
+
+      void executeSearch();
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+    // Intentionally omit executeSearch from deps to avoid unnecessary retriggers from callback identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.keyword]);
 
   const handleDeleteClick = (productId: string, productName: string) => {
     setDeleteModal({
@@ -314,22 +337,6 @@ export default function ProductTable() {
       setShouldCheckPagination(true);
       await executeSearch();
     });
-  };
-
-  const handleToggleStatus = async (
-    productId: string,
-    currentStatus: boolean,
-  ) => {
-    await toggleStatus(
-      productId,
-      currentStatus,
-      async () => {
-        await executeSearch();
-      },
-      async () => {
-        await executeSearch();
-      },
-    );
   };
 
   const handleRestoreClick = (productId: string, productName: string) => {
@@ -960,6 +967,7 @@ export default function ProductTable() {
               <table
                 style={{
                   width: "100%",
+                  tableLayout: "fixed",
                   textAlign: "left",
                   borderCollapse: "collapse",
                 }}
@@ -973,6 +981,7 @@ export default function ProductTable() {
                   >
                     <th
                       style={{
+                        width: "45%",
                         padding: "12px 16px",
                         fontSize: "11px",
                         fontWeight: "600",
@@ -985,6 +994,7 @@ export default function ProductTable() {
                     </th>
                     <th
                       style={{
+                        width: "18%",
                         padding: "12px 16px",
                         fontSize: "11px",
                         fontWeight: "600",
@@ -997,6 +1007,7 @@ export default function ProductTable() {
                     </th>
                     <th
                       style={{
+                        width: "22%",
                         padding: "12px 16px",
                         fontSize: "11px",
                         fontWeight: "600",
@@ -1009,18 +1020,7 @@ export default function ProductTable() {
                     </th>
                     <th
                       style={{
-                        padding: "12px 16px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        color: "#6c757d",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      Status
-                    </th>
-                    <th
-                      style={{
+                        width: "15%",
                         padding: "12px 16px",
                         fontSize: "11px",
                         fontWeight: "600",
@@ -1042,7 +1042,7 @@ export default function ProductTable() {
                         key={idx}
                         style={{ borderBottom: "1px solid #f8f9fa" }}
                       >
-                        <td colSpan={5} style={{ padding: "16px" }}>
+                        <td colSpan={4} style={{ padding: "16px" }}>
                           <div
                             style={{
                               display: "flex",
@@ -1088,7 +1088,7 @@ export default function ProductTable() {
                     // Empty State
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={4}
                         style={{ padding: "60px 40px", textAlign: "center" }}
                       >
                         <div
@@ -1275,61 +1275,6 @@ export default function ProductTable() {
                           {`${formatPrice(product.min_price ?? 0)} - ${formatPrice(product.max_price ?? product.min_price ?? 0)}`}
                         </td>
                         <td style={{ padding: "16px" }}>
-                          <label
-                            style={{
-                              position: "relative",
-                              display: "inline-block",
-                              width: "44px",
-                              height: "24px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={product.is_active}
-                              onChange={() =>
-                                handleToggleStatus(
-                                  product.masterProductId,
-                                  product.is_active,
-                                )
-                              }
-                              style={{
-                                opacity: 0,
-                                width: 0,
-                                height: 0,
-                              }}
-                            />
-                            <span
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: product.is_active
-                                  ? "#8B4513"
-                                  : "#ccc",
-                                borderRadius: "24px",
-                                transition: "background-color 0.3s",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  position: "absolute",
-                                  content: "",
-                                  height: "18px",
-                                  width: "18px",
-                                  left: product.is_active ? "23px" : "3px",
-                                  bottom: "3px",
-                                  backgroundColor: "white",
-                                  borderRadius: "50%",
-                                  transition: "left 0.3s",
-                                }}
-                              />
-                            </span>
-                          </label>
-                        </td>
-                        <td style={{ padding: "16px" }}>
                           <div
                             style={{
                               display: "flex",
@@ -1338,37 +1283,39 @@ export default function ProductTable() {
                               gap: "8px",
                             }}
                           >
-                            <button
-                              onClick={() => {
-                                void handleEditClick(product.masterProductId);
-                              }}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                width: "32px",
-                                height: "32px",
-                                border: "none",
-                                borderRadius: "6px",
-                                backgroundColor: "transparent",
-                                color: "#94a3b8",
-                                cursor: "pointer",
-                                transition: "all 0.2s",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(67, 56, 202, 0.08)";
-                                e.currentTarget.style.color = "#4338ca";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = "#94a3b8";
-                              }}
-                              title="Edit"
-                            >
-                              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-                                edit
-                              </span>
-                            </button>
+                            {!product.is_deleted && (
+                              <button
+                                onClick={() => {
+                                  void handleEditClick(product.masterProductId);
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "32px",
+                                  height: "32px",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  backgroundColor: "transparent",
+                                  color: "#94a3b8",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(67, 56, 202, 0.08)";
+                                  e.currentTarget.style.color = "#4338ca";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }}
+                                title="Edit"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                  edit
+                                </span>
+                              </button>
+                            )}
                             {/* View Details Button */}
                             <button
                               onClick={async () => {

@@ -47,6 +47,11 @@ export interface ProductFranchiseStatusPayload {
     is_active: boolean;
 }
 
+export interface ProductFranchiseStatusItem {
+    value: string;
+    label: string;
+}
+
 // ======================== API Endpoints ========================
 
 export const createProductFranchise = (
@@ -106,5 +111,11 @@ export const changeProductFranchiseStatus = (
     return httpClient.patch<null, ProductFranchiseStatusPayload>({
         url: `/product-franchises/${itemId}/status`,
         data,
+    });
+};
+
+export const getProductFranchiseStatuses = (): Promise<Array<string | Record<string, unknown>> | null> => {
+    return httpClient.get<Array<string | Record<string, unknown>>>({
+        url: "/product-franchises/status",
     });
 };
