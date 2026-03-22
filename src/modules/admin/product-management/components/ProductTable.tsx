@@ -8,6 +8,7 @@ import { useGetProductById } from "./hooks/useGetProductById";
 import ProductDelete from "./ProductDelete";
 import ProductRestore from "./ProductRestore";
 import ProductDetailsModal from "./ProductDetailsModal";
+import EditProductModal from "./EditProductModal";
 import AssignFranchiseModal from "./AssignFranchiseModal";
 import {
   getTableScope,
@@ -108,6 +109,13 @@ export default function ProductTable() {
     productName: "",
   });
   const [detailsModal, setDetailsModal] = useState<{
+    isOpen: boolean;
+    productId: string;
+  }>({
+    isOpen: false,
+    productId: "",
+  });
+  const [editModal, setEditModal] = useState<{
     isOpen: boolean;
     productId: string;
   }>({
@@ -340,6 +348,17 @@ export default function ProductTable() {
       await executeSearch();
     });
   };
+
+  const handleEditClick = async (productId: string) => {
+    setEditModal({
+      isOpen: true,
+      productId,
+    });
+    await fetchProduct(productId);
+  };
+
+  const editingProduct =
+    selectedProduct?.id === editModal.productId ? selectedProduct : null;
 
   return (
     <div
@@ -1320,9 +1339,8 @@ export default function ProductTable() {
                             }}
                           >
                             <button
-                              onClick={async () => {
-                                await fetchProduct(product.masterProductId);
-                                navigate(`/admin/products/edit/${product.masterProductId}`);
+                              onClick={() => {
+                                void handleEditClick(product.masterProductId);
                               }}
                               style={{
                                 display: "flex",
@@ -1751,6 +1769,18 @@ export default function ProductTable() {
         onClose={() => setDetailsModal({ isOpen: false, productId: "" })}
         product={selectedProduct}
         isLoading={isLoadingProduct}
+      />
+
+      {/* Edit Product Modal */}
+      <EditProductModal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, productId: "" })}
+        product={editingProduct}
+        isLoading={isLoadingProduct}
+        onUpdated={() => {
+          setEditModal({ isOpen: false, productId: "" });
+          void executeSearch();
+        }}
       />
 
       {/* Assign Franchise Modal (Flow 2: from table action) */}
