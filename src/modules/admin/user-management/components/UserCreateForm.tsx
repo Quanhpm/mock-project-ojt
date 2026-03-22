@@ -17,7 +17,7 @@ const userCreateSchema = z
     email: z.string().min(1, 'Email is required').email('Invalid email address'),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    phone: z.string().optional(),
+    phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), 'Phone number must be exactly 10 digits'),
     avatar_url: z.string().optional(),
     role_id: z.string().min(1, 'Role is required'),
     franchise_id: z.string().optional(),
@@ -338,8 +338,9 @@ export const UserCreateForm: React.FC = () => {
                 {...register('phone')}
                 className={inputClass}
                 placeholder="e.g. 0912345678"
+                maxLength={10}
               />
-              {errors.phone && <p className={errorClass}>{errors.phone.message}</p>}
+              {errors.phone && <p className={errorClass}>{errors.phone?.message as string}</p>}
             </div>
 
             {/* FOOTER */}

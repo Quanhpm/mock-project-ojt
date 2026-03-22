@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin, Calendar, AlertCircle, Loader, Phone } from "lucide-react";
+import { MapPin, Calendar, Loader, Phone } from "lucide-react";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
 import type { UpdateFranchiseRequest } from "../../../../apis/endpoints/franchise.api";
@@ -40,7 +40,6 @@ export default function FranchiseEditForm() {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isUpdating, setIsUpdating] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   // Load franchise data on component mount
   useEffect(() => {
@@ -73,8 +72,14 @@ export default function FranchiseEditForm() {
     if (!formData.code.trim()) errors.code = "Franchise Code is required";
     if (!formData.name.trim()) errors.name = "Franchise Name is required";
     if (!formData.hotline.trim()) errors.hotline = "Hotline is required";
-    if (!formData.opened_at) errors.opened_at = "Open Date is required";
-    if (!formData.closed_at) errors.closed_at = "Close Date is required";
+    if (!formData.opened_at) errors.opened_at = "Opening time is required";
+    if (!formData.closed_at) errors.closed_at = "Closing time is required";
+
+    if (formData.opened_at && formData.closed_at && formData.opened_at >= formData.closed_at) {
+      errors.opened_at = "Opened time must be before closed time";
+      errors.closed_at = "Closed time must be after opened time";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -84,7 +89,6 @@ export default function FranchiseEditForm() {
     if (!validate()) return;
 
     setIsUpdating(true);
-    setApiError(null);
 
     try {
       const payload: UpdateFranchiseRequest = {
@@ -106,7 +110,6 @@ export default function FranchiseEditForm() {
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message || err.message || "An error occurred while updating.";
-      setApiError(msg);
       showError?.(msg);
     } finally {
       setIsUpdating(false);
@@ -246,18 +249,18 @@ export default function FranchiseEditForm() {
               {/* Opened Date */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Open Date <span style={{ color: "#ef4444" }}>*</span>
+                  Opening Time <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" name="opened_at" value={formData.opened_at} onChange={handleChange} style={inputStyle("opened_at")} />
+                <input type="time" name="opened_at" value={formData.opened_at} onChange={handleChange} style={inputStyle("opened_at")} />
                 {formErrors.opened_at && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.opened_at}</p>}
               </div>
 
               {/* Closed Date */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Close Date <span style={{ color: "#ef4444" }}>*</span>
+                  Closing Time <span style={{ color: "#ef4444" }}>*</span>
                 </label>
-                <input type="date" name="closed_at" value={formData.closed_at || ""} onChange={handleChange} style={inputStyle("closed_at")} />
+                <input type="time" name="closed_at" value={formData.closed_at || ""} onChange={handleChange} style={inputStyle("closed_at")} />
                 {formErrors.closed_at && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.closed_at}</p>}
               </div>
 
@@ -290,17 +293,6 @@ export default function FranchiseEditForm() {
                 </label>
               </div>
             </div>
-
-            {/* Error Display */}
-            {apiError && (
-              <div style={{ backgroundColor: "#fee2e2", border: "1px solid #fecaca", borderRadius: "8px", padding: "16px", display: "flex", gap: "12px" }}>
-                <AlertCircle size={18} color="#dc2626" style={{ marginTop: "2px", flexShrink: 0 }} />
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: "600", color: "#991b1b", margin: "0 0 4px 0" }}>Error</p>
-                  <p style={{ fontSize: "12px", color: "#7f1d1d", margin: 0 }}>{apiError}</p>
-                </div>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div style={{ display: "flex", gap: "12px" }}>

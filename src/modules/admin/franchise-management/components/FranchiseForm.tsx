@@ -2,20 +2,33 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { MapPin, Calendar, AlertCircle } from "lucide-react";
+import { MapPin, Calendar } from "lucide-react";
 import { useCreateFranchise } from "./hooks/useCreateFranchise";
 
 // ──────── Zod Schema ────────
 const franchiseSchema = z.object({
   code:              z.string().min(1, "Franchise code is required"),
   name:              z.string().min(1, "Franchise name is required"),
-  hotline:           z.string().min(1, "Hotline is required").max(10, "Hotline has a maximum of 10 digits").regex(/^\d+$/, "Hotline must contain only digits"),
+  hotline:           z.string().min(1, "Hotline is required").length(10, "Hotline must be exactly 10 digits").regex(/^\d+$/, "Hotline must contain only digits"),
   logo_url:          z.string().optional(),
   address:           z.string().min(1, "Address is required"),
   opened_at:         z.string().min(1, "Opening time is required"),
   closed_at:         z.string().nullable().optional(),
   google_map_script: z.string().optional(),
   is_active:         z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.opened_at && data.closed_at && data.opened_at >= data.closed_at) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Opened time must be before closed time",
+      path: ["opened_at"],
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Closed time must be after opened time",
+      path: ["closed_at"],
+    });
+  }
 });
 
 type FranchiseFormValues = z.infer<typeof franchiseSchema>;
@@ -44,7 +57,7 @@ const errStyle: React.CSSProperties = {
 
 export default function FranchiseForm() {
   const navigate = useNavigate();
-  const { createFranchise, isCreating, error: apiError } = useCreateFranchise();
+  const { createFranchise, isCreating } = useCreateFranchise();
 
   const {
     register,
@@ -220,8 +233,9 @@ export default function FranchiseForm() {
                 <input
                   type="time"
                   {...register("closed_at")}
-                  style={inputStyle}
+                  style={errors.closed_at ? inputErrorStyle : inputStyle}
                 />
+                {errors.closed_at && <p style={errStyle}>{errors.closed_at.message}</p>}
               </div>
 
               {/* Google Map Script */}
@@ -254,17 +268,6 @@ export default function FranchiseForm() {
                 </label>
               </div>
             </div>
-
-            {/* API Error */}
-            {apiError && (
-              <div style={{ backgroundColor: "#fee2e2", border: "1px solid #fecaca", borderRadius: "8px", padding: "16px", display: "flex", gap: "12px" }}>
-                <AlertCircle size={18} color="#dc2626" style={{ marginTop: "2px", flexShrink: 0 }} />
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: "600", color: "#991b1b", margin: "0 0 4px 0" }}>Error</p>
-                  <p style={{ fontSize: "12px", color: "#7f1d1d", margin: 0 }}>{apiError}</p>
-                </div>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, MapPin, Calendar, AlertCircle, Phone } from "lucide-react";
+import { X, MapPin, Calendar, Phone } from "lucide-react";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 import { franchiseApi } from "../../../../apis/endpoints/franchise.api";
 import type { UpdateFranchiseRequest } from "../../../../apis/endpoints/franchise.api";
@@ -49,13 +49,11 @@ export default function FranchiseEditModal({
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isUpdating, setIsUpdating] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && franchiseId) {
       fetchFranchise(String(franchiseId));
       setFormErrors({});
-      setApiError(null);
     }
   }, [isOpen, franchiseId, fetchFranchise]);
 
@@ -101,8 +99,14 @@ export default function FranchiseEditModal({
     } else if (!/^\d{10}$/.test(formData.hotline.trim())) {
       errors.hotline = "Hotline must be exactly 10 digits";
     }
-    if (!formData.opened_at) errors.opened_at = "Open Time is required";
-    if (!formData.closed_at) errors.closed_at = "Close Time is required";
+    if (!formData.opened_at) errors.opened_at = "Opening time is required";
+    if (!formData.closed_at) errors.closed_at = "Closing time is required";
+
+    if (formData.opened_at && formData.closed_at && formData.opened_at >= formData.closed_at) {
+      errors.opened_at = "Opened time must be before closed time";
+      errors.closed_at = "Closed time must be after opened time";
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -112,7 +116,6 @@ export default function FranchiseEditModal({
     if (!validate()) return;
 
     setIsUpdating(true);
-    setApiError(null);
 
     try {
       const payload: UpdateFranchiseRequest = {
@@ -136,7 +139,6 @@ export default function FranchiseEditModal({
       }
     } catch (err: any) {
       const msg = err?.response?.data?.message || err.message || "An error occurred while updating.";
-      setApiError(msg);
       showError?.(msg);
     } finally {
       setIsUpdating(false);
@@ -278,16 +280,6 @@ export default function FranchiseEditModal({
                       />
                       <label htmlFor="is_active_modal">Active Franchise</label>
                     </div>
-
-                    {apiError && (
-                      <div className="fem-api-error">
-                        <AlertCircle size={18} />
-                        <div>
-                          <strong>Error</strong>
-                          <p>{apiError}</p>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </form>
