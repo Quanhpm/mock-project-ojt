@@ -50,7 +50,7 @@ export default function FranchiseDetailModal({
             {isLoading && (
               <div className="fdm-loading">
                 <div className="fdm-spinner"></div>
-                <p>Đang tải dữ liệu...</p>
+                <p>Loading data...</p>
               </div>
             )}
 
@@ -73,8 +73,8 @@ export default function FranchiseDetailModal({
                     }
                   >
                     {franchise.is_active
-                      ? "Đang hoạt động"
-                      : "Ngừng hoạt động"}
+                      ? "Active"
+                      : "Inactive"}
                   </span>
                 </div>
 
@@ -83,20 +83,17 @@ export default function FranchiseDetailModal({
                   <div className="fdm-card">
                     <MapPin size={18} />
                     <div>
-                      <label>Địa chỉ</label>
-                      <p>{franchise.address || "Chưa cập nhật"}</p>
+                      <label>Address</label>
+                      <p>{franchise.address || "Not updated"}</p>
                     </div>
                   </div>
 
                   <div className="fdm-card">
                     <Clock size={18} />
                     <div>
-                      <label>Mở cửa</label>
+                      <label>Open Time</label>
                       <p>
-                        {new Date(franchise.opened_at).toLocaleTimeString(
-                          "vi-VN",
-                          { hour: "2-digit", minute: "2-digit" }
-                        )}
+                        {franchise.opened_at || "Chưa cập nhật"}
                       </p>
                     </div>
                   </div>
@@ -104,14 +101,9 @@ export default function FranchiseDetailModal({
                   <div className="fdm-card">
                     <Clock size={18} />
                     <div>
-                      <label>Đóng cửa</label>
+                      <label>Close Time</label>
                       <p>
-                        {franchise.closed_at
-                          ? new Date(franchise.closed_at).toLocaleTimeString(
-                              "vi-VN",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )
-                          : "Chưa cập nhật"}
+                        {franchise.closed_at || "Chưa cập nhật"}
                       </p>
                     </div>
                   </div>
@@ -119,7 +111,7 @@ export default function FranchiseDetailModal({
                   <div className="fdm-card">
                     <Calendar size={18} />
                     <div>
-                      <label>Ngày tạo</label>
+                      <label>Created At</label>
                       <p>
                         {new Date(franchise.created_at).toLocaleDateString(
                           "vi-VN"
@@ -131,7 +123,7 @@ export default function FranchiseDetailModal({
                   <div className="fdm-card">
                     <Calendar size={18} />
                     <div>
-                      <label>Cập nhật</label>
+                      <label>Updated At</label>
                       <p>
                         {new Date(franchise.updated_at).toLocaleDateString(
                           "vi-VN"
@@ -146,7 +138,7 @@ export default function FranchiseDetailModal({
 
           {/* FOOTER */}
           <div className="fdm-footer">
-            <button onClick={onClose}>Đóng</button>
+            <button onClick={onClose}>Close</button>
           </div>
         </div>
       </div>
@@ -287,7 +279,7 @@ export default function FranchiseDetailModal({
         border-top:1px solid #eee;
         padding:18px 26px;
         display:flex;
-        justify-content:flex-end;
+        justify-content:flex-start;
       }
 
       .fdm-footer button{

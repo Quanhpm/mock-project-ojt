@@ -63,11 +63,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
       )
 
       setAvatarUrl(response.data.secure_url)
-      showSuccess('Tải ảnh lên thành công', 'Ảnh đại diện đã được cập nhật.')
+      showSuccess('Avatar uploaded successfully', 'Profile picture has been updated.')
     } catch (err: any) {
       console.error('Avatar Upload Error:', err)
-      showError('Upload thất bại', err.message || 'Không thể tải ảnh.')
-      setError('Upload ảnh thất bại. Tệp tin có thể quá lớn hoặc lỗi kết nối.')
+      showError('Upload failed', err.message || 'Unable to upload image.')
+      setError('Image upload failed. The file may be too large or there is a connection error.')
     } finally {
       setIsUploading(false)
     }
@@ -77,11 +77,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        showError('Lỗi file', 'Vui lòng chọn file ảnh hợp lệ.')
+        showError('Invalid file', 'Please select a valid image file.')
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        showError('Quá dung lượng', 'Kích thước ảnh tối đa là 5MB.')
+        showError('File too large', 'Maximum image size is 5MB.')
         return
       }
       handleImageUpload(file)
@@ -179,6 +179,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         avatar_url: avatarUrl,
       })
       setSuccessMsg('User information updated successfully!')
+      onSuccess()
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : 'Failed to update user.'
@@ -213,7 +214,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   }
 
   // ──────── Validation ────────
-  const isInfoValid = name.trim() && email.trim()
+  // Require phone to be exactly 10 digits if user provides one, OR require it outright if it's mandatory.
+  // The user prompt said: "khi nhập số điện thoại bắt buộc phải nhập đủ 10 số"
+  const isPhoneValid = /^\d{10}$/.test(phone.trim());
+  const isInfoValid = name.trim() && email.trim() && isPhoneValid;
   const isRoleValid = selectedRoleId && (isAdmin || selectedFranchiseId)
 
   return (
@@ -324,19 +328,22 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
               {/* Phone */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                  Phone Number{' '}
-                  <span className="text-gray-400 font-normal lowercase">(optional)</span>
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">phone</span>
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                    placeholder="+84 xxx xxx xxxx"
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                    maxLength={10}
+                    className={`w-full h-10 pl-9 pr-3 rounded-lg bg-gray-50 border ${!isPhoneValid && phone.length > 0 ? "border-red-300 focus:ring-red-200 focus:border-red-400" : "border-gray-200 focus:ring-primary/20 focus:border-primary"} text-gray-800 placeholder-gray-400 focus:ring-2 transition-all text-sm`}
+                    placeholder="0912345678"
                   />
                 </div>
+                {!isPhoneValid && phone.length > 0 && (
+                  <p className="text-xs text-red-500 mt-1">Phone number must be exactly 10 digits</p>
+                )}
               </div>
 
               {/* Avatar Upload */}
@@ -401,7 +408,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}
@@ -504,7 +511,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}

@@ -25,17 +25,17 @@ export const useDeleteFranchise = () => {
       await franchiseApi.deleteFranchise(String(id));
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Xóa nhượng quyền thành công", "Nhượng quyền đã được xóa.");
+      success("Franchise deleted successfully", "Franchise has been deleted.");
       if (onSuccess) onSuccess();
     } catch (err: any) {
       console.error("Lỗi khi xóa nhượng quyền:", err);
 
       const errorMessage =
         err.response?.data?.message ||
-        "Không thể xóa nhượng quyền lúc này. Vui lòng thử lại!";
+        "Unable to delete franchise right now. Please try again!";
       setError(errorMessage);
 
-      showErrorToast("Xóa nhượng quyền thất bại", errorMessage);
+      showErrorToast("Failed to delete franchise", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsDeleting(false);

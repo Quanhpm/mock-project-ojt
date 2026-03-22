@@ -36,10 +36,9 @@ export const useUserStatus = () => {
 
       console.log("✅ Toggle status success");
 
-      // Thông báo thành công
       success(
-        "Cập nhật trạng thái thành công",
-        `User đã được ${newStatus ? "kích hoạt" : "vô hiệu hóa"}.`,
+        "Status updated successfully",
+        `User has been ${newStatus ? "activated" : "deactivated"}.`,
       );
 
       if (onSuccess) onSuccess();
@@ -55,9 +54,9 @@ export const useUserStatus = () => {
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
-        "Không thể thay đổi trạng thái lúc này!";
+        "Cannot change status right now!";
 
-      showErrorToast("Cập nhật trạng thái thất bại", errorMessage);
+      showErrorToast("Failed to update status", errorMessage);
 
       // Nếu API lỗi, phải gọi onError để cái nút Toggle trên UI gạt ngược về chỗ cũ
       if (onError) onError();

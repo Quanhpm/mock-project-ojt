@@ -107,7 +107,7 @@ export const Pagination = ({
 
           {/* Go to page */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-500 whitespace-nowrap">Đến trang</span>
+            <span className="text-sm text-slate-500 whitespace-nowrap">Go to page</span>
             <input
               type="number"
               min={1}

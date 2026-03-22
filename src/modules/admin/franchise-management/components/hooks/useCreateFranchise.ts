@@ -24,7 +24,7 @@ export const useCreateFranchise = () => {
       const newFranchise = await franchiseApi.createFranchise(payload as any);
 
       // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Tạo nhượng quyền thành công", "Nhượng quyền đã được tạo.");
+      success("Franchise created successfully", "New franchise has been created.");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
       if (onSuccess) {
@@ -39,10 +39,10 @@ export const useCreateFranchise = () => {
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.data ||
-        "Có lỗi xảy ra khi tạo nhượng quyền mới. Vui lòng thử lại!";
+        "An error occurred while creating the franchise. Please try again!";
       setError(errorMessage);
 
-      showErrorToast("Tạo mới thất bại", errorMessage);
+      showErrorToast("Failed to create franchise", errorMessage);
     } finally {
       // Tắt trạng thái loading dù thành công hay thất bại
       setIsCreating(false);

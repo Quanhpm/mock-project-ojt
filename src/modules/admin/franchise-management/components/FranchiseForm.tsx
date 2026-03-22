@@ -1,252 +1,241 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, Calendar, AlertCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { MapPin, Calendar } from "lucide-react";
 import { useCreateFranchise } from "./hooks/useCreateFranchise";
-import type { Franchise } from "../../../../types/franchise.types";
+
+// ──────── Zod Schema ────────
+const franchiseSchema = z.object({
+  code:              z.string().min(1, "Franchise code is required"),
+  name:              z.string().min(1, "Franchise name is required"),
+  hotline:           z.string().min(1, "Hotline is required").length(10, "Hotline must be exactly 10 digits").regex(/^\d+$/, "Hotline must contain only digits"),
+  logo_url:          z.string().optional(),
+  address:           z.string().min(1, "Address is required"),
+  opened_at:         z.string().min(1, "Opening time is required"),
+  closed_at:         z.string().nullable().optional(),
+  google_map_script: z.string().optional(),
+  is_active:         z.boolean().optional(),
+}).superRefine((data, ctx) => {
+  if (data.opened_at && data.closed_at && data.opened_at >= data.closed_at) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Opened time must be before closed time",
+      path: ["opened_at"],
+    });
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Closed time must be after opened time",
+      path: ["closed_at"],
+    });
+  }
+});
+
+type FranchiseFormValues = z.infer<typeof franchiseSchema>;
+
+// ──────── Shared Styles ────────
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  border: "1px solid #e0e0e0",
+  borderRadius: "8px",
+  fontSize: "14px",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const inputErrorStyle: React.CSSProperties = {
+  ...inputStyle,
+  border: "1px solid #ef4444",
+};
+
+const errStyle: React.CSSProperties = {
+  fontSize: "11px",
+  color: "#ef4444",
+  margin: "4px 0 0 0",
+};
 
 export default function FranchiseForm() {
   const navigate = useNavigate();
-  const { createFranchise, isCreating, error: apiError } = useCreateFranchise();
+  const { createFranchise, isCreating } = useCreateFranchise();
 
-  const [formData, setFormData] = useState<Omit<Franchise, 'id' | 'created_at' | 'updated_at' | 'is_deleted'>>({
-    code: "",
-    name: "",
-    logo_url: "",
-    address: "",
-    opened_at: "",
-    closed_at: null,
-    google_map_script: "",
-    is_active: true,
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FranchiseFormValues>({
+    resolver: zodResolver(franchiseSchema),
+    mode: "onChange",
+    defaultValues: {
+      code:              "",
+      name:              "",
+      hotline:           "",
+      logo_url:          "",
+      address:           "",
+      opened_at:         "",
+      closed_at:         null,
+      google_map_script: "",
+      is_active:         true,
+    },
   });
 
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    const errors: Record<string, string> = {};
-    if (!formData.code.trim()) errors.code = "Mã nhượng quyền là bắt buộc";
-    if (!formData.name.trim()) errors.name = "Tên nhượng quyền là bắt buộc";
-    if (!formData.address.trim()) errors.address = "Địa chỉ là bắt buộc";
-    if (!formData.opened_at) errors.opened_at = "Giờ mở cửa là bắt buộc";
-
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-
-    // Call API
-    await createFranchise(formData as any, () => {
-      navigate("/admin/franchises");
-    });
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
-    
-    // Clear error for this field
-    if (formErrors[name]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-
-    let newValue: any = value;
-    if (type === "checkbox") {
-      newValue = (e.target as HTMLInputElement).checked;
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: newValue,
-    }));
+  const onSubmit = async (data: FranchiseFormValues) => {
+    await createFranchise(
+      {
+        code:              data.code,
+        name:              data.name,
+        hotline:           data.hotline,
+        logo_url:          data.logo_url ?? "",
+        address:           data.address,
+        opened_at:         data.opened_at,
+        closed_at:         data.closed_at ?? null,
+        google_map_script: data.google_map_script ?? "",
+        is_active:         data.is_active ?? true,
+      },
+      () => {
+        navigate("/admin/franchises");
+      },
+    );
   };
 
   return (
     <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
       {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        Franchises › <span style={{ color: "#212529" }}>Tạo Mới Nhượng Quyền</span>
+        Franchises &rsaquo; <span style={{ color: "#212529" }}>Create New Franchise</span>
       </div>
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
         <div>
           <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
-            Tạo Mới Nhượng Quyền
+            Create New Franchise
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            Thêm một nhượng quyền mới với các thông tin chi tiết.
+            Add a new franchise location with its details.
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
-          {/* Left Column */}
+
+          {/* ──── Left Column ──── */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Franchise Identity Section */}
+            {/* Basic Information Card */}
             <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
                 <MapPin size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Thông Tin Cơ Bản</h2>
+                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Basic Information</h2>
               </div>
 
               {/* Code and Name */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Mã Nhượng Quyền <span style={{ color: "#ef4444" }}>*</span>
+                    Franchise Code <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
-                    type="text"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleChange}
+                    {...register("code")}
                     placeholder="FR_001"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: formErrors.code ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box"
-                    }}
+                    style={errors.code ? inputErrorStyle : inputStyle}
                   />
-                  {formErrors.code && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.code}</p>}
+                  {errors.code && <p style={errStyle}>{errors.code.message}</p>}
                 </div>
 
-                {/* Name */}
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Tên Nhượng Quyền <span style={{ color: "#ef4444" }}>*</span>
+                    Franchise Name <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Nhượng quyền Hà Nội"
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: formErrors.name ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box"
-                    }}
+                    {...register("name")}
+                    placeholder="Hanoi Franchise"
+                    style={errors.name ? inputErrorStyle : inputStyle}
                   />
-                  {formErrors.name && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.name}</p>}
+                  {errors.name && <p style={errStyle}>{errors.name.message}</p>}
                 </div>
+              </div>
+
+              {/* Hotline */}
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+                  Hotline <span style={{ color: "#ef4444" }}>*</span>
+                </label>
+                <input
+                  {...register("hotline")}
+                  placeholder="0123456789"
+                  maxLength={10}
+                  style={errors.hotline ? inputErrorStyle : inputStyle}
+                />
+                {errors.hotline && <p style={errStyle}>{errors.hotline.message}</p>}
               </div>
 
               {/* Logo URL */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  URL Logo
+                  Logo URL
                 </label>
                 <input
-                  type="text"
-                  name="logo_url"
-                  value={formData.logo_url}
-                  onChange={handleChange}
+                  {...register("logo_url")}
                   placeholder="https://example.com/logo.jpg"
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
+                  style={inputStyle}
                 />
               </div>
 
               {/* Address */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Địa Chỉ <span style={{ color: "#ef4444" }}>*</span>
+                  Address <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Nhập địa chỉ nhượng quyền"
+                  {...register("address")}
+                  placeholder="Enter franchise address"
                   style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: formErrors.address ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box",
+                    ...inputStyle,
+                    ...(errors.address ? { border: "1px solid #ef4444" } : {}),
                     minHeight: "80px",
-                    fontFamily: "inherit"
+                    resize: "vertical",
+                    fontFamily: "inherit",
                   }}
                 />
-                {formErrors.address && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.address}</p>}
+                {errors.address && <p style={errStyle}>{errors.address.message}</p>}
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
+          {/* ──── Right Column ──── */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Timing Section */}
+            {/* Operating Hours Card */}
             <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
                 <Calendar size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Thời Gian Hoạt Động</h2>
+                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Operating Hours</h2>
               </div>
 
-              {/* Opened Date */}
+              {/* Opening Time */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Giờ Mở Cửa <span style={{ color: "#ef4444" }}>*</span>
+                  Opening Time <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   type="time"
-                  name="opened_at"
-                  value={formData.opened_at}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: formErrors.opened_at ? "1px solid #ef4444" : "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
+                  {...register("opened_at")}
+                  style={errors.opened_at ? inputErrorStyle : inputStyle}
                 />
-                {formErrors.opened_at && <p style={{ fontSize: "11px", color: "#ef4444", margin: "4px 0 0 0" }}>{formErrors.opened_at}</p>}
+                {errors.opened_at && <p style={errStyle}>{errors.opened_at.message}</p>}
               </div>
 
-              {/* Closed Date */}
+              {/* Closing Time */}
               <div style={{ marginBottom: "16px" }}>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Giờ Đóng Cửa
+                  Closing Time
                 </label>
                 <input
                   type="time"
-                  name="closed_at"
-                  value={formData.closed_at || ""}
-                  onChange={handleChange}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box"
-                  }}
+                  {...register("closed_at")}
+                  style={errors.closed_at ? inputErrorStyle : inputStyle}
                 />
+                {errors.closed_at && <p style={errStyle}>{errors.closed_at.message}</p>}
               </div>
 
               {/* Google Map Script */}
@@ -255,20 +244,13 @@ export default function FranchiseForm() {
                   Google Map Script
                 </label>
                 <textarea
-                  name="google_map_script"
-                  value={formData.google_map_script || ""}
-                  onChange={handleChange}
-                  placeholder="Nhập Google Map embed script"
+                  {...register("google_map_script")}
+                  placeholder="Enter Google Map embed script"
                   style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    outline: "none",
-                    boxSizing: "border-box",
+                    ...inputStyle,
                     minHeight: "80px",
-                    fontFamily: "monospace"
+                    resize: "vertical",
+                    fontFamily: "monospace",
                   }}
                 />
               </div>
@@ -277,36 +259,22 @@ export default function FranchiseForm() {
               <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: "#f0f4f8", borderRadius: "8px" }}>
                 <input
                   type="checkbox"
-                  name="is_active"
-                  checked={formData.is_active}
-                  onChange={handleChange}
                   id="is_active"
+                  {...register("is_active")}
                   style={{ cursor: "pointer" }}
                 />
                 <label htmlFor="is_active" style={{ cursor: "pointer", fontSize: "14px", fontWeight: "500", margin: 0 }}>
-                  Kích hoạt nhượng quyền
+                  Active Franchise
                 </label>
               </div>
             </div>
 
-            {/* Error Display */}
-            {apiError && (
-              <div style={{ backgroundColor: "#fee2e2", border: "1px solid #fecaca", borderRadius: "8px", padding: "16px", display: "flex", gap: "12px" }}>
-                <AlertCircle size={18} color="#dc2626" style={{ marginTop: "2px", flexShrink: 0 }} />
-                <div>
-                  <p style={{ fontSize: "13px", fontWeight: "600", color: "#991b1b", margin: "0 0 4px 0" }}>Lỗi</p>
-                  <p style={{ fontSize: "12px", color: "#7f1d1d", margin: 0 }}>{apiError}</p>
-                </div>
-              </div>
-            )}
-
             {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
               <button
                 type="button"
                 onClick={() => navigate("/admin/franchises")}
                 style={{
-                  flex: 1,
                   padding: "12px 20px",
                   backgroundColor: "#f3f4f6",
                   color: "#374151",
@@ -315,22 +283,17 @@ export default function FranchiseForm() {
                   fontSize: "14px",
                   fontWeight: "500",
                   cursor: "pointer",
-                  transition: "all 0.2s"
+                  transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e5e7eb";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f3f4f6";
-                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e5e7eb"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f3f4f6"; }}
               >
-                Hủy
+                Cancel
               </button>
               <button
                 type="submit"
                 disabled={isCreating}
                 style={{
-                  flex: 1,
                   padding: "12px 20px",
                   backgroundColor: isCreating ? "#d97706" : "#8B5A2B",
                   color: "white",
@@ -340,19 +303,16 @@ export default function FranchiseForm() {
                   fontWeight: "500",
                   cursor: isCreating ? "not-allowed" : "pointer",
                   opacity: isCreating ? 0.7 : 1,
-                  transition: "all 0.2s"
+                  transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) => {
-                  if (!isCreating) e.currentTarget.style.backgroundColor = "#7a4a1d";
-                }}
-                onMouseLeave={(e) => {
-                  if (!isCreating) e.currentTarget.style.backgroundColor = "#8B5A2B";
-                }}
+                onMouseEnter={(e) => { if (!isCreating) e.currentTarget.style.backgroundColor = "#7a4a1d"; }}
+                onMouseLeave={(e) => { if (!isCreating) e.currentTarget.style.backgroundColor = "#8B5A2B"; }}
               >
-                {isCreating ? "Đang lưu..." : "Tạo Nhượng Quyền"}
+                {isCreating ? "Creating..." : "Create Franchise"}
               </button>
             </div>
           </div>
+
         </div>
       </form>
     </div>

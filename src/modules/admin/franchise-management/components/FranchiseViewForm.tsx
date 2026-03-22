@@ -2,11 +2,13 @@ import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MapPin, Calendar, AlertCircle, Loader, Edit2, ArrowLeft } from "lucide-react";
 import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
+import FranchiseEditModal from "./FranchiseEditModal";
 
 export default function FranchiseViewForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { franchise, isLoading: isFetching, error, fetchFranchise } = useGetFranchiseById();
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
   // Load franchise data on component mount
   React.useEffect(() => {
@@ -95,7 +97,7 @@ export default function FranchiseViewForm() {
             Quay lại
           </button>
           <button
-            onClick={() => navigate(`/admin/franchises/edit/${franchise.id}`)}
+            onClick={() => setIsEditModalOpen(true)}
             style={{
               padding: "10px 16px",
               backgroundColor: "#8B5A2B",
@@ -204,17 +206,17 @@ export default function FranchiseViewForm() {
 
             {/* Opened Date */}
             <div style={{ marginBottom: "16px" }}>
-              <p style={{ fontSize: "13px", fontWeight: "500", color: "#6b7280", marginBottom: "8px" }}>Ngày Mở Cửa</p>
+              <p style={{ fontSize: "13px", fontWeight: "500", color: "#6b7280", marginBottom: "8px" }}>Giờ Mở Cửa</p>
               <p style={{ fontSize: "15px", color: "#1f2937", margin: 0, fontWeight: "500" }}>
-                {franchise.opened_at ? new Date(franchise.opened_at).toLocaleDateString('vi-VN') : '-'}
+                {franchise.opened_at || '-'}
               </p>
             </div>
 
             {/* Closed Date */}
             <div style={{ marginBottom: "16px" }}>
-              <p style={{ fontSize: "13px", fontWeight: "500", color: "#6b7280", marginBottom: "8px" }}>Ngày Đóng Cửa</p>
+              <p style={{ fontSize: "13px", fontWeight: "500", color: "#6b7280", marginBottom: "8px" }}>Giờ Đóng Cửa</p>
               <p style={{ fontSize: "15px", color: "#1f2937", margin: 0, fontWeight: "500" }}>
-                {franchise.closed_at ? new Date(franchise.closed_at).toLocaleDateString('vi-VN') : 'Chưa xác định'}
+                {franchise.closed_at || 'Chưa xác định'}
               </p>
             </div>
 
@@ -285,6 +287,13 @@ export default function FranchiseViewForm() {
           </div>
         </div>
       </div>
+
+      <FranchiseEditModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        franchiseId={franchise.id}
+        onSuccess={() => { if (id) fetchFranchise(id); }}
+      />
     </div>
   );
 }

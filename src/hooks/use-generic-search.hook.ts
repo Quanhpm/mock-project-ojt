@@ -111,7 +111,7 @@ export interface UseGenericSearchReturn<T, F extends BaseSearchFilters> {
   setPageSize: (size: number) => void;
 
   // Actions
-  executeSearch: () => Promise<void>;
+  executeSearch: (overrides?: Partial<F> & { page?: number }) => Promise<void>;
   clearFilters: () => void;
   refetch: () => Promise<void>;
 
@@ -229,7 +229,7 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
   // ──────── Search Execution ────────
 
   // Execute search with current filters and pagination
-  const executeSearch = useCallback(async () => {
+  const executeSearch = useCallback(async (overrides?: Partial<F> & { page?: number }) => {
     // Prevent concurrent requests
     if (isFetching.current) {
       return;
@@ -240,19 +240,25 @@ export const useGenericSearch = <T, F extends BaseSearchFilters>(
     setError(null);
 
     try {
+      // Merge current filters with overrides
+      const activeFilters = { ...filters, ...(overrides || {}) } as F;
+
       // Build search condition using the provided function
-      const searchCondition = buildSearchCondition(filters);
+      const searchCondition = buildSearchCondition(activeFilters);
 
       // Add keyword to history if present
-      if (filters.keyword.trim()) {
-        addToHistory(filters.keyword.trim());
+      if (activeFilters.keyword?.trim()) {
+        addToHistory(activeFilters.keyword.trim());
       }
+
+      // Determine page
+      const resolvedPage = overrides?.page !== undefined ? overrides.page : currentPage;
 
       // Build payload
       const payload: GenericSearchPayload<any> = {
         searchCondition,
         pageInfo: {
-          pageNum: currentPage,
+          pageNum: resolvedPage,
           pageSize: pageSize,
         },
       };

@@ -1,4 +1,5 @@
 import React from "react";
+import { RotateCcw } from "lucide-react";
 import type { UserItem } from "../hooks/useUserList.hook";
 
 interface UserTableRowProps {
@@ -9,6 +10,7 @@ interface UserTableRowProps {
   onView: (user: UserItem) => void;
   onEdit: (user: UserItem) => void;
   onDelete: (user: UserItem) => void;
+  onRestore?: (user: UserItem) => void;
 }
 
 export const UserTableRow: React.FC<UserTableRowProps> = ({
@@ -19,6 +21,7 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
   onView,
   onEdit,
   onDelete,
+  onRestore,
 }) => {
   const initial = user.name?.charAt(0)?.toUpperCase() || "?";
 
@@ -79,15 +82,15 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
         <label
           className="relative inline-flex items-center cursor-pointer"
           style={{
-            opacity: isUpdating ? 0.5 : 1,
-            cursor: isUpdating ? "not-allowed" : "pointer",
+            opacity: isUpdating || user.is_deleted ? 0.5 : 1,
+            cursor: isUpdating || user.is_deleted ? "not-allowed" : "pointer",
           }}
         >
           <input
             type="checkbox"
             checked={isActive}
             onChange={() => onToggleStatus(user.id)}
-            disabled={isUpdating}
+            disabled={isUpdating || user.is_deleted}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -129,63 +132,100 @@ export const UserTableRow: React.FC<UserTableRowProps> = ({
             </span>
           </button>
 
-          {/* Edit Button */}
-          <button
-            onClick={() => onEdit(user)}
-            style={{
-              padding: "8px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#4b5563",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#fef3c7";
-              e.currentTarget.style.color = "#92400e";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#4b5563";
-            }}
-            title="Edit"
-          >
-            <span className="material-symbols-outlined text-[20px]">edit</span>
-          </button>
-
           {/* Delete Button */}
-          <button
-            onClick={() => onDelete(user)}
-            style={{
-              padding: "8px",
-              backgroundColor: "transparent",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#4b5563",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#fee2e2";
-              e.currentTarget.style.color = "#dc2626";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#4b5563";
-            }}
-            title="Delete"
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              delete
-            </span>
-          </button>
+          {!user.is_deleted ? (
+            <>
+              {/* Edit Button */}
+              <button
+                onClick={() => onEdit(user)}
+                style={{
+                  padding: "8px",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#4b5563",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#fef3c7";
+                  e.currentTarget.style.color = "#92400e";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#4b5563";
+                }}
+                title="Edit"
+              >
+                <span className="material-symbols-outlined text-[20px]">edit</span>
+              </button>
+
+              {/* Delete Button */}
+              <button
+                onClick={() => onDelete(user)}
+                style={{
+                  padding: "8px",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#4b5563",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#fee2e2";
+                  e.currentTarget.style.color = "#dc2626";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#4b5563";
+                }}
+                title="Delete"
+              >
+                <span className="material-symbols-outlined text-[20px]">
+                  delete
+                </span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Restore Button */}
+              {onRestore && (
+                <button
+                  onClick={() => onRestore(user)}
+                  style={{
+                    padding: "6px",
+                    borderRadius: "6px",
+                    border: "none",
+                    backgroundColor: "transparent",
+                    color: "#4b5563",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#f3f4f6";
+                    e.currentTarget.style.color = "#1f2937";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                    e.currentTarget.style.color = "#4b5563";
+                  }}
+                  title="Restore"
+                >
+                <RotateCcw size={20} />
+                </button>
+              )}
+            </>
+          )}
         </div>
       </td>
     </tr>

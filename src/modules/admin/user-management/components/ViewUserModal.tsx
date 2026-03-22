@@ -29,21 +29,17 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
     onClose,
 }) => {
     const [roles, setRoles] = useState<UserFranchiseRoleDetail[]>([])
-    const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         if (isOpen && user) {
             const fetchRoles = async () => {
-                setIsLoading(true)
                 setError(null)
                 try {
                     const data = await getUserFranchiseRoles(user.id)
                     setRoles(data || [])
                 } catch (err: unknown) {
                     setError(err instanceof Error ? err.message : 'Failed to fetch roles')
-                } finally {
-                    setIsLoading(false)
                 }
             }
             fetchRoles()
@@ -109,11 +105,6 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
                                     Try again
                                 </button>
                             </div>
-                        ) : isLoading ? (
-                            <div className="p-8 flex flex-col items-center justify-center text-center gap-3">
-                                <span className="material-symbols-outlined text-[32px] text-primary animate-spin">progress_activity</span>
-                                <p className="text-gray-500 font-medium">Loading roles structure...</p>
-                            </div>
                         ) : roles.length === 0 ? (
                             <div className="p-8 flex flex-col items-center justify-center text-center gap-2">
                                 <span className="material-symbols-outlined text-[32px] text-gray-300">work_off</span>
@@ -172,7 +163,7 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
                 </div>
 
                 {/* ═══════════ Footer ═══════════ */}
-                <div className="flex items-center justify-end px-6 py-4 bg-white border-t border-gray-100">
+                <div className="flex items-center justify-start px-6 py-4 bg-white border-t border-gray-100">
                     <button
                         onClick={onClose}
                         className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"

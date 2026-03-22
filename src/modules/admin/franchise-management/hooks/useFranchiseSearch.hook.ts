@@ -6,37 +6,13 @@ import { useToast } from "@/hooks/use-toast.hook";
 const SEARCH_HISTORY_KEY = "franchise_search_history";
 const MAX_HISTORY_ITEMS = 5;
 
-interface SearchFilters {
+export interface SearchFilters {
   keyword: string;
   is_active?: boolean | null;
   is_deleted: boolean;
 }
 
-interface UseFranchiseSearchReturn {
-  franchises: Franchise[];
-  isLoading: boolean;
-  error: string | null;
-  totalPages: number;
-  totalItems: number;
-  filters: SearchFilters;
-  setFilters: React.Dispatch<React.SetStateAction<SearchFilters>>;
-  currentPage: number;
-  setCurrentPage: (page: number) => void;
-  pageSize: number;
-  setPageSize: (size: number) => void;
-  executeSearch: () => Promise<void>;
-  clearFilters: () => void;
-  searchHistory: string[];
-  addToHistory: (keyword: string) => void;
-  clearHistory: () => void;
-  isSearchDropdownOpen: boolean;
-  setIsSearchDropdownOpen: (open: boolean) => void;
-  deleteFranchise: (id: number | string) => Promise<void>;
-  toggleFranchiseStatus: (id: number | string, isActive: boolean) => Promise<void>;
-  restoreFranchise: (id: number | string) => Promise<void>;
-}
-
-export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
+export const useFranchiseSearch = () => {
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,28 +73,36 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
   }, []);
 
   // Execute search
-  const executeSearch = useCallback(async () => {
+  const executeSearch = useCallback(async (overrides?: {
+    is_deleted?: boolean;
+    is_active?: boolean | null;
+    keyword?: string;
+    page?: number;
+  }) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      const activeFilters = { ...filters, ...(overrides || {}) };
+      const resolvedPage = overrides?.page !== undefined ? overrides.page : currentPage;
+
       const searchCondition: any = {
-        is_deleted: filters.is_deleted,
+        is_deleted: activeFilters.is_deleted,
       };
 
-      if (filters.keyword.trim()) {
-        searchCondition.keyword = filters.keyword.trim();
-        addToHistory(filters.keyword.trim());
+      if (activeFilters.keyword.trim()) {
+        searchCondition.keyword = activeFilters.keyword.trim();
+        addToHistory(activeFilters.keyword.trim());
       }
 
-      if (filters.is_active !== null && filters.is_active !== undefined) {
-        searchCondition.is_active = filters.is_active;
+      if (activeFilters.is_active !== null && activeFilters.is_active !== undefined) {
+        searchCondition.is_active = activeFilters.is_active;
       }
 
       const payload: FranchiseSearchPayload = {
         searchCondition,
         pageInfo: {
-          pageNum: currentPage,
+          pageNum: resolvedPage,
           pageSize: pageSize,
         },
       };
@@ -136,9 +120,9 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải dữ liệu nhượng quyền";
+        err instanceof Error ? err.message : "Failed to load franchise data";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
       setFranchises([]);
       setTotalPages(0);
       setTotalItems(0);
@@ -163,12 +147,12 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
       setIsLoading(true);
       try {
         await franchiseApi.deleteFranchise(String(id));
-        showSuccess("Thành công", "Xóa nhượng quyền thành công");
+        showSuccess("Success", "Franchise deleted successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi xóa nhượng quyền";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to delete franchise";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -182,12 +166,12 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
       setIsLoading(true);
       try {
         await franchiseApi.toggleFranchiseStatus(String(id), { is_active: !isActive });
-        showSuccess("Thành công", "Cập nhật trạng thái thành công");
+        showSuccess("Success", "Status updated successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi cập nhật trạng thái";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to update status";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -201,12 +185,12 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
       setIsLoading(true);
       try {
         await franchiseApi.restoreFranchise(String(id));
-        showSuccess("Thành công", "Phục hồi nhượng quyền thành công");
+        showSuccess("Success", "Franchise restored successfully");
         await executeSearch();
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Lỗi phục hồi nhượng quyền";
-        showError("Lỗi", errorMessage);
+          err instanceof Error ? err.message : "Failed to restore franchise";
+        showError("Error", errorMessage);
       } finally {
         setIsLoading(false);
       }
@@ -243,3 +227,6 @@ export const useFranchiseSearch = (): UseFranchiseSearchReturn => {
     restoreFranchise,
   };
 };
+
+export type UseFranchiseSearchReturn = ReturnType<typeof useFranchiseSearch>;
+
