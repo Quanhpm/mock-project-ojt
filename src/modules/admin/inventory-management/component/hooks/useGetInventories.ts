@@ -79,9 +79,9 @@ export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesRe
       }
 
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải danh sách inventory";
+        err instanceof Error ? err.message : "Failed to load inventory list.";
       setError(errorMessage);
-      showErrorRef.current("Lỗi", errorMessage);
+      showErrorRef.current("Error", errorMessage);
     } finally {
       if (requestId === requestSequenceRef.current) {
         setIsLoading(false);

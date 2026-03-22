@@ -28,7 +28,7 @@ export const useAdjustInventory = () => {
       if (maybeErr.message) return maybeErr.message;
     }
 
-    return "Không thể điều chỉnh số lượng lúc này. Vui lòng thử lại!";
+    return "Unable to adjust quantity right now. Please try again.";
   };
 
   const adjustInventory = async (
@@ -42,8 +42,8 @@ export const useAdjustInventory = () => {
     try {
       await inventoryApi.adjustInventory(payload);
       success(
-        "Điều chỉnh thành công",
-        `Số lượng đã được ${payload.change > 0 ? "tăng" : "giảm"} ${Math.abs(payload.change)}.`,
+        "Adjusted",
+        `Quantity has been ${payload.change > 0 ? "increased" : "decreased"} by ${Math.abs(payload.change)}.`,
       );
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -62,15 +62,15 @@ export const useAdjustInventory = () => {
           });
 
           success(
-            "Điều chỉnh thành công",
-            `Số lượng đã được ${payload.change > 0 ? "tăng" : "giảm"} ${Math.abs(payload.change)}.`,
+            "Adjusted",
+            `Quantity has been ${payload.change > 0 ? "increased" : "decreased"} by ${Math.abs(payload.change)}.`,
           );
           if (onSuccess) onSuccess();
           return;
         } catch (fallbackErr) {
           const errorMessage = getErrorMessage(fallbackErr);
           setError(errorMessage);
-          showErrorToast("Điều chỉnh thất bại", errorMessage);
+          showErrorToast("Adjustment Failed", errorMessage);
           if (onError) onError(errorMessage);
           return;
         }
@@ -78,7 +78,7 @@ export const useAdjustInventory = () => {
 
       const errorMessage = getErrorMessage(err);
       setError(errorMessage);
-      showErrorToast("Điều chỉnh thất bại", errorMessage);
+      showErrorToast("Adjustment Failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsAdjusting(false);
