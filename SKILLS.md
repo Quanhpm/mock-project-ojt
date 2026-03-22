@@ -44,3 +44,25 @@ Tài liệu này dùng cho `admin auth`, nhưng có thể áp dụng cho các ch
 - folder rõ trách nhiệm
 - dễ tìm file
 - dễ mở rộng chức năng mà không bị rối
+
+## Rule khi làm Order Management
+
+- bám theo UI hiện tại của `src/modules/admin/order-management`
+- không nhét franchise context logic trực tiếp vào `page`
+- logic xác định franchise theo role phải để trong `hooks` hoặc `usecases`
+- `Staff` và `Manager` lấy franchise từ `activeContext` hoặc helper auth store, không tạo flow chọn franchise riêng
+- `Admin` dùng màn chọn franchise giống POS, ưu tiên tái sử dụng `PosFranchiseSelectionGate` hoặc tách component chung thay vì copy UI mới
+- `OrderListPage` chỉ ghép filter bar, list và detail panel
+- `use-order-list-page.ts` chịu trách nhiệm:
+  - load order theo franchise
+  - filter theo status
+  - giữ selected order
+  - refresh list
+- `use-order-detail-page.ts` chịu trách nhiệm:
+  - load order detail
+  - load payment nếu màn hình còn giữ payment panel
+  - update status rồi refetch
+- `order.service.ts` chỉ chứa API order, không nhét business branching theo role vào service
+- nếu có logic phân nhánh role `ADMIN / MANAGER / STAFF`, ưu tiên gom vào 1 hook context riêng thay vì rải điều kiện khắp page
+- khi chưa có yêu cầu mới từ backend, giữ search ở order list là local search như UI hiện tại
+- chỉ mở rộng API search theo code khi thật sự cần server-side search

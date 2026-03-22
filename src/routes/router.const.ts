@@ -46,6 +46,7 @@ export const ROUTER_URL = {
     PRODUCT: `products`,
     ORDER: `orders`,
     ORDER_POS: `orders/pos`,
+    ORDER_POS_REVIEW: `orders/pos/review`,
     ORDER_DETAIL: `orders/:orderId`,
     FRANCHISE: `franchises`,
     CUSTOMER: `customers`,

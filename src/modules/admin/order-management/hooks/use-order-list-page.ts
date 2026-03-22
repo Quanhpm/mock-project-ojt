@@ -1,22 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast.hook";
-import { getFranchiseId, useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { loadFranchiseOrdersUsecase } from "../usecases/load-franchise-orders.usecase";
 import type { FranchiseOrderListItem, OrderStatus } from "../models/order.models";
+import { useOrderFranchiseContext } from "./use-order-franchise-context";
 
 export const useOrderListPage = () => {
   const { error: showError } = useToast();
-  const store = useAdminAuthStore();
-  const franchiseId = getFranchiseId(store);
+  const {
+    franchiseId,
+    franchiseName,
+    franchiseOptions,
+    isSwitchingFranchise,
+    requiresFranchiseSelection,
+    hasInvalidFranchiseContext,
+    switchFranchise,
+  } = useOrderFranchiseContext();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [orders, setOrders] = useState<FranchiseOrderListItem[]>([]);
+  const [rawOrders, setRawOrders] = useState<FranchiseOrderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
 
   const loadOrders = useCallback(async () => {
     if (!franchiseId) {
-      setOrders([]);
+      setRawOrders([]);
       setIsLoading(false);
       return;
     }
@@ -24,23 +31,15 @@ export const useOrderListPage = () => {
     try {
       setIsLoading(true);
       const data = await loadFranchiseOrdersUsecase(franchiseId, statusFilter);
-      const newOrders = data ?? [];
-      setOrders(newOrders);
-      
-      // Auto-select first order if none is selected
-      if (newOrders.length > 0 && (!selectedOrderId || !newOrders.find(o => o._id === selectedOrderId))) {
-        setSelectedOrderId(newOrders[0]._id);
-      } else if (newOrders.length === 0) {
-        setSelectedOrderId(undefined);
-      }
+      setRawOrders(data ?? []);
     } catch (error) {
       console.error("[OrderList] Failed to load franchise orders", error);
       showError("Không tải được danh sách đơn hàng");
-      setOrders([]);
+      setRawOrders([]);
     } finally {
       setIsLoading(false);
     }
-  }, [franchiseId, selectedOrderId, showError, statusFilter]);
+  }, [franchiseId, showError, statusFilter]);
 
   useEffect(() => {
     void loadOrders();
@@ -50,26 +49,41 @@ export const useOrderListPage = () => {
     const keyword = searchQuery.trim().toLowerCase();
 
     if (!keyword) {
-      return orders;
+      return rawOrders;
     }
 
-    return orders.filter((order) => {
+    return rawOrders.filter((order) => {
       return (
         order.code.toLowerCase().includes(keyword) ||
         order.phone.toLowerCase().includes(keyword)
       );
     });
-  }, [orders, searchQuery]);
+  }, [rawOrders, searchQuery]);
+
+  useEffect(() => {
+    if (filteredOrders.length === 0) {
+      setSelectedOrderId(undefined);
+      return;
+    }
+
+    setSelectedOrderId((currentSelectedOrderId) => {
+      if (currentSelectedOrderId && filteredOrders.some((order) => order._id === currentSelectedOrderId)) {
+        return currentSelectedOrderId;
+      }
+
+      return filteredOrders[0]._id;
+    });
+  }, [filteredOrders]);
 
   const summary = useMemo(() => {
     return {
-      total: orders.length,
-      draft: orders.filter((item) => item.status === "DRAFT").length,
-      confirmed: orders.filter((item) => item.status === "CONFIRMED").length,
-      preparing: orders.filter((item) => item.status === "PREPARING").length,
-      ready: orders.filter((item) => item.status === "READY_FOR_PICKUP").length,
+      total: rawOrders.length,
+      draft: rawOrders.filter((item) => item.status === "DRAFT").length,
+      confirmed: rawOrders.filter((item) => item.status === "CONFIRMED").length,
+      preparing: rawOrders.filter((item) => item.status === "PREPARING").length,
+      ready: rawOrders.filter((item) => item.status === "READY_FOR_PICKUP").length,
     };
-  }, [orders]);
+  }, [rawOrders]);
 
   const selectOrder = useCallback(
     (orderId: string) => {
@@ -80,9 +94,14 @@ export const useOrderListPage = () => {
 
   return {
     franchiseId,
+    franchiseName,
+    franchiseOptions,
     isLoading,
+    isSwitchingFranchise,
+    requiresFranchiseSelection,
+    hasInvalidFranchiseContext,
     orders: filteredOrders,
-    rawOrders: orders,
+    rawOrders,
     statusFilter,
     searchQuery,
     summary,
@@ -91,5 +110,6 @@ export const useOrderListPage = () => {
     setSearchQuery,
     selectOrder,
     reload: loadOrders,
+    switchFranchise,
   };
 };

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Cake, Coffee, Plus, Star, UtensilsCrossed, Wine } from "lucide-react";
 import type { PosCategory } from "../../models/menu.models";
 
@@ -13,6 +13,37 @@ export const PosCategoryTabs = memo(({
   selectedCategory,
   onSelectCategory,
 }: PosCategoryTabsProps) => {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const [showMoreHint, setShowMoreHint] = useState(false);
+
+  const updateScrollHint = useCallback(() => {
+    const container = scrollContainerRef.current;
+
+    if (!container) {
+      setShowMoreHint(categories.length > 7);
+      return;
+    }
+
+    const canScrollMore = container.scrollWidth - container.clientWidth - container.scrollLeft > 8;
+    setShowMoreHint(canScrollMore);
+  }, [categories.length]);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      updateScrollHint();
+    });
+
+    const handleResize = () => {
+      updateScrollHint();
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateScrollHint]);
+
   const resolveIcon = (category: PosCategory) => {
     const code = category.category_code?.toLowerCase() || "";
     const name = category.category_name?.toLowerCase() || "";
@@ -37,32 +68,53 @@ export const PosCategoryTabs = memo(({
   };
 
   return (
-    <div className="hide-scroll flex items-center gap-3 overflow-x-auto bg-white px-6 pb-2 pt-2">
-      <button
-        onClick={() => onSelectCategory("all")}
-        className={`flex items-center gap-2 whitespace-nowrap rounded-xl border px-5 py-2.5 text-sm font-bold shadow-md transition-transform active:scale-95 ${
-          selectedCategory === "all"
-            ? "border-amber-700 bg-amber-700 text-white"
-            : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-amber-700"
-        }`}
-      >
-        <Star size={20} />
-        Tất cả
-      </button>
-      {categories.map((category) => (
-        <button
-          key={category.category_id}
-          onClick={() => onSelectCategory(category.category_id)}
-          className={`flex items-center gap-2 whitespace-nowrap rounded-xl border px-5 py-2.5 text-sm font-bold shadow-md transition-transform active:scale-95 ${
-            selectedCategory === category.category_id
-              ? "border-amber-700 bg-amber-700 text-white"
-              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-amber-700"
-          }`}
+    <div className="flex min-w-0 max-w-full items-center overflow-hidden px-6 pb-3 pt-2">
+      <div className="relative min-w-0 w-full max-w-[860px] overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          onScroll={updateScrollHint}
+          className="hide-scroll flex min-w-0 max-w-full items-center gap-2 overflow-x-auto overflow-y-hidden pr-12 scrollbar-hide"
         >
-          {resolveIcon(category)}
-          {category.category_name}
-        </button>
-      ))}
+          <button
+            onClick={() => onSelectCategory("all")}
+            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-bold transition-all active:scale-95 ${
+              selectedCategory === "all"
+                ? "bg-amber-700 text-white shadow-md shadow-amber-700/25 ring-1 ring-amber-700"
+                : "bg-white text-gray-600 shadow-sm hover:text-amber-700 hover:shadow-md hover:ring-1 hover:ring-black/5"
+            }`}
+          >
+            <Star size={18} />
+            <span className="truncate">Tất cả món</span>
+          </button>
+
+          {categories.map((category) => {
+            const isActive = selectedCategory === category.category_id;
+            return (
+              <button
+                key={category.category_id}
+                onClick={() => onSelectCategory(category.category_id)}
+                title={category.category_name}
+                className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-bold transition-all active:scale-95 ${
+                  isActive
+                    ? "bg-amber-700 text-white shadow-md shadow-amber-700/25 ring-1 ring-amber-700"
+                    : "bg-white text-gray-600 shadow-sm hover:text-amber-700 hover:shadow-md hover:ring-1 hover:ring-black/5"
+                }`}
+              >
+                {resolveIcon(category)}
+                <span className="max-w-[9.5rem] truncate">{category.category_name}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {categories.length > 7 && showMoreHint ? (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center bg-gradient-to-l from-gray-50 via-gray-50/95 to-transparent pl-10 pr-1">
+            <div className="rounded-full bg-white px-3 py-1 text-sm font-black tracking-[0.2em] text-gray-400 shadow-sm ring-1 ring-black/5">
+              ...
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 });

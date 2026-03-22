@@ -7,6 +7,35 @@ export type OrderStatus =
   | "COMPLETED"
   | "CANCELED";
 
+export interface DeliveryReference {
+  _id?: string;
+}
+
+export interface DeliveryDetail {
+  _id: string;
+  order_id: string;
+  customer_id: string;
+  assigned_by?: string;
+  assigned_to?: string;
+  status?: string;
+  assigned_at?: string;
+  is_active?: boolean;
+  is_deleted?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  __v?: number;
+  order_code?: string;
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  franchise_id?: string;
+  franchise_name?: string;
+  assigned_to_name?: string;
+  assigned_to_email?: string;
+  assigned_by_name?: string;
+  assigned_by_email?: string;
+}
+
 export interface OrderItemOption {
   quantity: number;
   product_franchise_id: string;
@@ -35,6 +64,8 @@ export interface OrderDetail {
   _id: string;
   customer_id: string;
   franchise_id: string;
+  delivery_id?: string;
+  delivery?: DeliveryReference | null;
   cart_id?: string;
   staff_id?: string;
   code: string;
@@ -63,6 +94,8 @@ export interface OrderDetail {
 
 export interface FranchiseOrderListItem {
   _id: string;
+  customer_id?: string;
+  customer_name?: string;
   code: string;
   status: OrderStatus;
   phone: string;
@@ -71,6 +104,8 @@ export interface FranchiseOrderListItem {
   created_at: string;
 }
 
+export type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
+
 export interface PaymentDetail {
   _id: string;
   franchise_id: string;
@@ -78,11 +113,12 @@ export interface PaymentDetail {
   order_id: string;
   code: string;
   method: string;
-  status: "PENDING" | "PAID" | "REFUNDED";
+  status: PaymentStatus;
   amount: number;
   is_active: boolean;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
   paid_at?: string;
+  __v?: number;
 }

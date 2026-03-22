@@ -1,11 +1,43 @@
 import { httpClient } from "@/apis/httpClient";
 import type { CartDetail, CartStatus } from "../models/cart.models";
 import type {
+  ApplyVoucherPayload,
+  RemoveCartItemOptionPayload,
   ReplaceCartItemOptionsPayload,
   StaffBulkAddToCartRequest,
+  UpdateCartItemOptionPayload,
   UpdateCartItemPayload,
   UpdateCartPayload,
 } from "../models/request.models";
+
+type CartMutationResponse =
+  | CartDetail
+  | {
+      cart?: CartDetail | null;
+    }
+  | null;
+
+const isCartDetail = (value: unknown): value is CartDetail => {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "_id" in value &&
+      typeof (value as { _id?: unknown })._id === "string",
+  );
+};
+
+const extractCartDetail = (response: CartMutationResponse): CartDetail | null => {
+  if (isCartDetail(response)) {
+    return response;
+  }
+
+  if (response && typeof response === "object" && "cart" in response) {
+    const nestedCart = (response as { cart?: unknown }).cart;
+    return isCartDetail(nestedCart) ? nestedCart : null;
+  }
+
+  return null;
+};
 
 export const cartService = {
   getCartsByCustomerId(customerId: string, status?: CartStatus) {
@@ -63,9 +95,41 @@ export const cartService = {
     });
   },
 
-  checkoutCart(cartId: string) {
-    return httpClient.put<CartDetail>({
+  updateCartItemOption(payload: UpdateCartItemOptionPayload) {
+    return httpClient.patch<null, UpdateCartItemOptionPayload>({
+      url: "/carts/items/update-option",
+      data: payload,
+    });
+  },
+
+  removeCartItemOption(payload: RemoveCartItemOptionPayload) {
+    return httpClient.patch<null, RemoveCartItemOptionPayload>({
+      url: "/carts/items/remove-option",
+      data: payload,
+    });
+  },
+
+  async applyVoucher(cartId: string, payload: ApplyVoucherPayload) {
+    const response = await httpClient.put<CartMutationResponse, ApplyVoucherPayload>({
+      url: `/carts/${cartId}/apply-voucher`,
+      data: payload,
+    });
+
+    return extractCartDetail(response) ?? this.getCartDetail(cartId);
+  },
+
+  async removeVoucher(cartId: string) {
+    const response = await httpClient.delete<CartMutationResponse>({
+      url: `/carts/${cartId}/remove-voucher`,
+    });
+
+    return extractCartDetail(response) ?? this.getCartDetail(cartId);
+  },
+
+  checkoutCart(cartId: string, payload?: UpdateCartPayload) {
+    return httpClient.put<CartDetail, UpdateCartPayload | undefined>({
       url: `/carts/${cartId}/checkout`,
+      data: payload,
     });
   },
 };
