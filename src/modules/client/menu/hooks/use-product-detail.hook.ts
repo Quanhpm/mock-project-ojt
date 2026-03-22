@@ -5,7 +5,6 @@ import {
   type ProductSize,
 } from '@/apis/endpointsCLIENT/productDetail.api';
 import { getMenuByFranchise } from '@/apis/endpointsCLIENT/client.api';
-import { filterNonToppingItems } from '../services/menu-page.service';
 
 export interface ProductToppingOption {
   product_id: string;
@@ -51,7 +50,9 @@ export function useProductDetail(
         if (!isMounted) return;
 
         setProduct(data);
-        setSelectedSize(data?.sizes?.[0] ?? null);
+        const firstAvailableSize =
+          data?.sizes?.find((size) => size.is_available) ?? data?.sizes?.[0] ?? null;
+        setSelectedSize(firstAvailableSize);
 
         // If product doesn't have toppings, skip fetching them
         if (!data?.is_have_topping) {
@@ -59,16 +60,15 @@ export function useProductDetail(
           return;
         }
 
-        // Fetch and filter toppings
+        // Fetch menu and extract topping category products
         const menu = await getMenuByFranchise(franchiseId, '');
         if (!isMounted) return;
 
-        const toppings = filterNonToppingItems(menu ?? [])
-          .filter((category) => category.category_name?.toLowerCase().includes('topping'))
+        const toppings = (menu ?? [])
+          .filter((category) => category.category_name?.trim().toLowerCase().includes('topping'))
           .flatMap((category) => category.products)
           .map((item) => {
-            const availableSize =
-              item.sizes.find((size) => size.is_available) ?? item.sizes[0];
+            const availableSize = item.sizes.find((size) => size.is_available);
             if (!availableSize) return null;
 
             return {
