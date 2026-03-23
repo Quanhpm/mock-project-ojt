@@ -24,9 +24,9 @@ export const useGetPromotionById = (): UseGetPromotionByIdReturn => {
       setPromotion(data);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải thông tin promotion";
+        err instanceof Error ? err.message : "Error loading promotion information";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

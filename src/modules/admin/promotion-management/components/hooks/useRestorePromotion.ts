@@ -17,15 +17,15 @@ export const useRestorePromotion = () => {
 
     try {
       await promotionApi.restorePromotion(id);
-      success("Khôi phục thành công", "Promotion đã được khôi phục.");
+      success("Restored successfully", "Promotion has been restored.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể khôi phục promotion lúc này. Vui lòng thử lại!";
+          : "Unable to restore promotion at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Khôi phục thất bại", errorMessage);
+      showErrorToast("Restoration failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsRestoring(false);

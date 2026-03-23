@@ -34,14 +34,23 @@ const franchiseSchema = z.object({
 type FranchiseFormValues = z.infer<typeof franchiseSchema>;
 
 // ──────── Shared Styles ────────
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "13px",
+  fontWeight: "600",
+  color: "#374151",
+  marginBottom: "6px",
+};
+
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #e0e0e0",
-  borderRadius: "8px",
+  padding: "9px 12px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
   fontSize: "14px",
   outline: "none",
   boxSizing: "border-box",
+  backgroundColor: "white",
 };
 
 const inputErrorStyle: React.CSSProperties = {
@@ -50,7 +59,7 @@ const inputErrorStyle: React.CSSProperties = {
 };
 
 const errStyle: React.CSSProperties = {
-  fontSize: "11px",
+  fontSize: "12px",
   color: "#ef4444",
   margin: "4px 0 0 0",
 };
@@ -99,92 +108,114 @@ export default function FranchiseForm() {
   };
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        Franchises &rsaquo; <span style={{ color: "#212529" }}>Create New Franchise</span>
-      </div>
-
+    <div style={{ backgroundColor: "#f9f7f4", minHeight: "100vh", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
-        <div>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
-            Create New Franchise
-          </h1>
-          <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            Add a new franchise location with its details.
-          </p>
-        </div>
+      <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "center", marginBottom: "40px" }}>
+        <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0, marginBottom: "8px" }}>
+          Create New Franchise
+        </h1>
+        <p style={{ color: "#9C6644", margin: 0, fontSize: "14px" }}>
+          Add a new franchise location with its details.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+          {/* Basic Information Card */}
+          <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #E6CCB2", boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)", padding: "32px", marginBottom: "24px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+              <MapPin size={18} color="#7F5539" />
+              <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0, color: "#7F5539" }}>Basic Information</h2>
+            </div>
 
-          {/* ──── Left Column ──── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Basic Information Card */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <MapPin size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Basic Information</h2>
-              </div>
-
-              {/* Code and Name */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Franchise Code <span style={{ color: "#ef4444" }}>*</span>
-                  </label>
-                  <input
-                    {...register("code")}
-                    placeholder="FR_001"
-                    style={errors.code ? inputErrorStyle : inputStyle}
-                  />
-                  {errors.code && <p style={errStyle}>{errors.code.message}</p>}
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Franchise Name <span style={{ color: "#ef4444" }}>*</span>
-                  </label>
-                  <input
-                    {...register("name")}
-                    placeholder="Hanoi Franchise"
-                    style={errors.name ? inputErrorStyle : inputStyle}
-                  />
-                  {errors.name && <p style={errStyle}>{errors.name.message}</p>}
-                </div>
-              </div>
-
-              {/* Hotline */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Hotline <span style={{ color: "#ef4444" }}>*</span>
+            {/* Code and Name */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                  Franchise Code <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
-                  {...register("hotline")}
-                  placeholder="0123456789"
-                  maxLength={10}
-                  style={errors.hotline ? inputErrorStyle : inputStyle}
+                  {...register("code")}
+                  placeholder="FR_001"
+                  style={errors.code ? inputErrorStyle : inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 />
-                {errors.hotline && <p style={errStyle}>{errors.hotline.message}</p>}
+                {errors.code && <p style={errStyle}>{errors.code.message}</p>}
               </div>
 
-              {/* Logo URL */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Logo URL
+              <div>
+                <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                  Franchise Name <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
-                  {...register("logo_url")}
-                  placeholder="https://example.com/logo.jpg"
-                  style={inputStyle}
+                  {...register("name")}
+                  placeholder="Hanoi Franchise"
+                  style={errors.name ? inputErrorStyle : inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 />
+                {errors.name && <p style={errStyle}>{errors.name.message}</p>}
               </div>
+            </div>
 
-              {/* Address */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
+            {/* Hotline */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                Hotline <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <input
+                {...register("hotline")}
+                placeholder="0123456789"
+                maxLength={10}
+                style={errors.hotline ? inputErrorStyle : inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#B08968";
+                  e.currentTarget.style.backgroundColor = "white";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                }}
+              />
+              {errors.hotline && <p style={errStyle}>{errors.hotline.message}</p>}
+            </div>
+
+            {/* Logo URL */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                Logo URL
+              </label>
+              <input
+                {...register("logo_url")}
+                placeholder="https://example.com/logo.jpg"
+                style={inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#B08968";
+                  e.currentTarget.style.backgroundColor = "white";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                }}
+              />
+            </div>
+
+            {/* Address */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
                   Address <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <textarea
@@ -197,122 +228,179 @@ export default function FranchiseForm() {
                     resize: "vertical",
                     fontFamily: "inherit",
                   }}
-                />
-                {errors.address && <p style={errStyle}>{errors.address.message}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* ──── Right Column ──── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Operating Hours Card */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                <Calendar size={18} color="#8B4513" />
-                <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Operating Hours</h2>
-              </div>
-
-              {/* Opening Time */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Opening Time <span style={{ color: "#ef4444" }}>*</span>
-                </label>
-                <input
-                  type="time"
-                  {...register("opened_at")}
-                  style={errors.opened_at ? inputErrorStyle : inputStyle}
-                />
-                {errors.opened_at && <p style={errStyle}>{errors.opened_at.message}</p>}
-              </div>
-
-              {/* Closing Time */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Closing Time
-                </label>
-                <input
-                  type="time"
-                  {...register("closed_at")}
-                  style={errors.closed_at ? inputErrorStyle : inputStyle}
-                />
-                {errors.closed_at && <p style={errStyle}>{errors.closed_at.message}</p>}
-              </div>
-
-              {/* Google Map Script */}
-              <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Google Map Script
-                </label>
-                <textarea
-                  {...register("google_map_script")}
-                  placeholder="Enter Google Map embed script"
-                  style={{
-                    ...inputStyle,
-                    minHeight: "80px",
-                    resize: "vertical",
-                    fontFamily: "monospace",
+                  onFocus={(e) => {
+                    if (!errors.address) {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!errors.address) {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }
                   }}
                 />
-              </div>
-
-              {/* Active Status */}
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: "#f0f4f8", borderRadius: "8px" }}>
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  {...register("is_active")}
-                  style={{ cursor: "pointer" }}
-                />
-                <label htmlFor="is_active" style={{ cursor: "pointer", fontSize: "14px", fontWeight: "500", margin: 0 }}>
-                  Active Franchise
-                </label>
-              </div>
+                {errors.address && <p style={errStyle}>{errors.address.message}</p>}
+              
             </div>
 
+          {/* Operating Hours Card */}
+          {/* <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #E6CCB2", boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)", padding: "32px", marginBottom: "24px" }}> */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+              <Calendar size={18} color="#7F5539" />
+              <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0, color: "#7F5539" }}>Operating Hours</h2>
+            </div>
+
+            {/* Opening Time */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                Opening Time <span style={{ color: "#ef4444" }}>*</span>
+              </label>
+              <input
+                type="time"
+                {...register("opened_at")}
+                style={errors.opened_at ? inputErrorStyle : inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#B08968";
+                  e.currentTarget.style.backgroundColor = "white";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                }}
+              />
+              {errors.opened_at && <p style={errStyle}>{errors.opened_at.message}</p>}
+            </div>
+
+            {/* Closing Time */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                Closing Time
+              </label>
+              <input
+                type="time"
+                {...register("closed_at")}
+                style={errors.closed_at ? inputErrorStyle : inputStyle}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#B08968";
+                  e.currentTarget.style.backgroundColor = "white";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                }}
+              />
+              {errors.closed_at && <p style={errStyle}>{errors.closed_at.message}</p>}
+            </div>
+
+            {/* Google Map Script */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
+                Google Map Script
+              </label>
+              <textarea
+                {...register("google_map_script")}
+                placeholder="Enter Google Map embed script"
+                style={{
+                  ...inputStyle,
+                  minHeight: "80px",
+                  resize: "vertical",
+                  fontFamily: "monospace",
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#B08968";
+                  e.currentTarget.style.backgroundColor = "white";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#DDB892";
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                }}
+              />
+            </div>
+
+            {/* Active Status */}
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px", backgroundColor: "#faf8f6", borderRadius: "8px", border: "1px solid #E6CCB2" }}>
+              <input
+                type="checkbox"
+                id="is_active"
+                {...register("is_active")}
+                style={{ cursor: "pointer" }}
+              />
+              <label htmlFor="is_active" style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", margin: 0, color: "#374151" }}>
+                Active Franchise
+              </label>
+            </div>
+            
             {/* Action Buttons */}
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-              <button
-                type="button"
-                onClick={() => navigate("/admin/franchises")}
-                style={{
-                  padding: "12px 20px",
-                  backgroundColor: "#f3f4f6",
-                  color: "#374151",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e5e7eb"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f3f4f6"; }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isCreating}
-                style={{
-                  padding: "12px 20px",
-                  backgroundColor: isCreating ? "#d97706" : "#8B5A2B",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: isCreating ? "not-allowed" : "pointer",
-                  opacity: isCreating ? 0.7 : 1,
-                  transition: "all 0.2s",
-                }}
-                onMouseEnter={(e) => { if (!isCreating) e.currentTarget.style.backgroundColor = "#7a4a1d"; }}
-                onMouseLeave={(e) => { if (!isCreating) e.currentTarget.style.backgroundColor = "#8B5A2B"; }}
-              >
-                {isCreating ? "Creating..." : "Create Franchise"}
-              </button>
-            </div>
+          <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                marginTop: "32px",
+                paddingTop: "24px",
+                borderTop: "1px solid #E6CCB2",
+              }}
+            >
+            <button
+              type="button"
+              onClick={() => navigate("/admin/franchises")}
+              disabled={isCreating}
+              style={{
+                padding: "11px 24px",
+                border: "1px solid #DDB892",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: isCreating ? "not-allowed" : "pointer",
+                backgroundColor: "white",
+                color: "#7F5539",
+                transition: "all 0.2s",
+                marginRight: "auto",
+              }}
+              onMouseEnter={(e) => {
+                if (!isCreating) {
+                  e.currentTarget.style.backgroundColor = "#faf8f6";
+                  e.currentTarget.style.borderColor = "#B08968";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "white";
+                e.currentTarget.style.borderColor = "#DDB892";
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isCreating}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "11px 28px",
+                backgroundColor: isCreating ? "#B08968" : "#7F5539",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isCreating ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (!isCreating) {
+                  e.currentTarget.style.backgroundColor = "#9C6644";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#7F5539";
+              }}
+            >
+              {isCreating ? "Creating..." : "Create Franchise"}
+            </button>
           </div>
-
+          </div>
         </div>
       </form>
     </div>

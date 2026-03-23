@@ -40,9 +40,11 @@ const STEP1_FIELDS: (keyof UserCreateFormValues)[] = [
 
 // ──────── Shared Styles ────────
 const inputClass =
-  'mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm'
+  'mt-2 w-full h-11 px-3 rounded-md border border-[#d1d5db] bg-white focus:bg-white focus:border-[#B08968] focus:outline-none text-sm transition-colors'
 
-const errorClass = 'mt-1 text-xs text-red-500'
+const errorClass = 'mt-1 text-xs text-[#ef4444]'
+
+const labelClass = 'text-sm font-semibold text-[#374151]'
 
 export const UserCreateForm: React.FC = () => {
   const navigate = useNavigate()
@@ -181,8 +183,8 @@ export const UserCreateForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen py-12 flex justify-center">
-      <div className="w-full max-w-6xl">
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
 
         {/* HEADER */}
         <div className="text-center mb-10">
@@ -274,7 +276,7 @@ export const UserCreateForm: React.FC = () => {
 
             {/* NAME */}
             <div className="mb-5">
-              <label className="text-sm font-medium text-slate-700">
+              <label className={labelClass}>
                 Full Name <span className="text-red-500">*</span>
               </label>
               <input
@@ -287,7 +289,7 @@ export const UserCreateForm: React.FC = () => {
 
             {/* EMAIL */}
             <div className="mb-5">
-              <label className="text-sm font-medium text-slate-700">
+              <label className={labelClass}>
                 Email Address <span className="text-red-500">*</span>
               </label>
               <input
@@ -302,7 +304,7 @@ export const UserCreateForm: React.FC = () => {
             {/* PASSWORD */}
             <div className="grid grid-cols-2 gap-5 mb-5">
               <div>
-                <label className="text-sm font-medium text-slate-700">
+                <label className={labelClass}>
                   Password <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -315,7 +317,7 @@ export const UserCreateForm: React.FC = () => {
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700">
+                <label className={labelClass}>
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -331,7 +333,7 @@ export const UserCreateForm: React.FC = () => {
 
             {/* PHONE */}
             <div className="mb-8">
-              <label className="text-sm font-medium text-slate-700">
+              <label className={labelClass}>
                 Phone Number
               </label>
               <input
@@ -344,7 +346,16 @@ export const UserCreateForm: React.FC = () => {
             </div>
 
             {/* FOOTER */}
-            <div className="flex justify-between items-center pt-6">
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "space-between",
+                marginTop: "32px",
+                paddingTop: "24px",
+                borderTop: "1px solid #E6CCB2",
+              }}
+            >
               <button
                 type="button"
                 onClick={handleCancel}
@@ -373,7 +384,7 @@ export const UserCreateForm: React.FC = () => {
 
             {/* ROLE */}
             <div className="mb-6">
-              <label className="text-sm font-medium text-slate-700">
+              <label className={labelClass}>
                 Role <span className="text-red-500">*</span>
               </label>
               <select
@@ -396,7 +407,7 @@ export const UserCreateForm: React.FC = () => {
 
             {/* FRANCHISE */}
             <div className="mb-8">
-              <label className="text-sm font-medium text-slate-700">
+              <label className={labelClass}>
                 Franchise {!isAdmin && <span className="text-red-500">*</span>}
               </label>
               <select
@@ -423,13 +434,22 @@ export const UserCreateForm: React.FC = () => {
             </div>
 
             {/* FOOTER */}
-            <div className="flex justify-between items-center pt-6">
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "space-between",
+                marginTop: "32px",
+                paddingTop: "24px",
+                borderTop: "1px solid #E6CCB2",
+              }}
+            >
               <button
                 type="button"
                 onClick={handleBackStep1}
                 className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
               >
-                Back
+                Close
               </button>
               <button
                 type="button"

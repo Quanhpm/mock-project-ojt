@@ -18,15 +18,15 @@ export const useCreateVoucher = () => {
 
     try {
       await voucherApi.createVoucher(data);
-      success("Tạo thành công", "Voucher đã được tạo mới.");
+      success("Created successfully", "Voucher has been created.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể tạo voucher lúc này. Vui lòng thử lại!";
+          : "Unable to create voucher at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Tạo thất bại", errorMessage);
+      showErrorToast("Creation failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsCreating(false);
