@@ -18,15 +18,15 @@ export const useCreatePromotion = () => {
 
     try {
       await promotionApi.createPromotion(data);
-      success("Tạo thành công", "Promotion đã được tạo mới.");
+      success("Created successfully", "Promotion has been created.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể tạo promotion lúc này. Vui lòng thử lại!";
+          : "Unable to create promotion at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Tạo thất bại", errorMessage);
+      showErrorToast("Creation failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsCreating(false);

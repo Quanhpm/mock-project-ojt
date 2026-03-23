@@ -17,15 +17,15 @@ export const useDeleteVoucher = () => {
 
     try {
       await voucherApi.deleteVoucher(id);
-      success("Xóa thành công", "Voucher đã được xóa.");
+      success("Deleted successfully", "Voucher has been deleted.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể xóa voucher lúc này. Vui lòng thử lại!";
+          : "Unable to delete voucher at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Xóa thất bại", errorMessage);
+      showErrorToast("Deletion failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsDeleting(false);

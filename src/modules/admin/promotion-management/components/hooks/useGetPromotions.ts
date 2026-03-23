@@ -32,9 +32,9 @@ export const useGetPromotions = (skipInitialFetch = false): UseGetPromotionsRetu
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải danh sách promotion";
+        err instanceof Error ? err.message : "Error loading promotion list";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

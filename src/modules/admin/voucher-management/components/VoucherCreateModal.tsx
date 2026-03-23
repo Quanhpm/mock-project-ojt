@@ -15,8 +15,8 @@ const createVoucherSchema = z
     franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
     type: z.enum(["FIXED", "PERCENT"]),
-    value: z.number().int().min(1, "Minimum is 1"),
-    quota_total: z.number().int().min(1, "Minimum is 1"),
+    value: z.number("Must be a number").int("Must be an integer").min(1, "Minimum is 1"),
+    quota_total: z.number("Must be a number").int("Must be an integer").min(1, "Minimum is 1"),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().min(1, "End date is required"),
   })
@@ -46,7 +46,7 @@ const createVoucherSchema = z
         ctx.addIssue({
           code: "custom",
           message: "Value must be between 1,000 and 100,000 VND",
-          path: ["quota_total"],
+          path: ["value"],
         });
       }
     }
@@ -67,28 +67,27 @@ type CreateVoucherFormValues = z.infer<typeof createVoucherSchema>;
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: "600",
-  color: "#444444",
-  marginBottom: "8px",
+  color: "#374151",
+  marginBottom: "6px",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "11px 14px",
-  border: "1px solid #DDB892",
-  borderRadius: "8px",
+  padding: "9px 12px",
+  border: "1px solid #d1d5db",
+  borderRadius: "6px",
   fontSize: "14px",
   outline: "none",
   boxSizing: "border-box",
-  backgroundColor: "#faf8f6",
-  transition: "all 0.2s",
+  backgroundColor: "white",
 };
 
 const errorStyle: React.CSSProperties = {
-  margin: "6px 0 0 0",
+  margin: "4px 0 0 0",
   fontSize: "12px",
-  color: "#dc2626",
+  color: "#ef4444",
 };
 
 
@@ -122,32 +121,6 @@ export default function VoucherCreateModal() {
   });
 
   const selectedFranchiseId = watch("franchise_id");
-  const selectedType = watch("type");
-  const currentValue = watch("value");
-
-  // Format value display based on type
-  const formatValueDisplay = (value: number) => {
-    if (selectedType === "PERCENT") {
-      return value.toString();
-    }
-    // FIXED: format as Vietnamese currency
-    return value.toLocaleString("vi-VN");
-  };
-
-  const getValuePlaceholder = () => {
-    return selectedType === "PERCENT" ? "0-100" : "0";
-  };
-
-  const getValueSuffix = () => {
-    return selectedType === "PERCENT" ? " %" : " VND";
-  };
-
-  // Handle value input with formatting
-  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric
-    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
-    setValue("value", numValue, { shouldValidate: true });
-  };
 
 useEffect(() => {
   setFranchisesLoading(true);
@@ -225,15 +198,12 @@ useEffect(() => {
               {/* Name */}
               <div>
                 <label style={labelStyle}>
-                  Voucher Name <span style={{ color: "#dc2626" }}>*</span>
+                  Voucher Name <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   {...register("name")}
                   placeholder="e.g. April Special Offer"
-                  style={{
-                    ...inputStyle,
-                    ':focus': { borderColor: "#B08968", backgroundColor: "white" }
-                  }}
+                  style={inputStyle}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = "#B08968";
                     e.currentTarget.style.backgroundColor = "white";
@@ -249,7 +219,7 @@ useEffect(() => {
               {/* Franchise */}
               <div>
                 <label style={labelStyle}>
-                  Franchise <span style={{ color: "#dc2626" }}>*</span>
+                  Franchise <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <select
                   {...register("franchise_id")}
@@ -322,7 +292,7 @@ useEffect(() => {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Discount Type <span style={{ color: "#dc2626" }}>*</span>
+                    Discount Type <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <select
                     {...register("type")}
@@ -343,7 +313,7 @@ useEffect(() => {
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Value <span style={{ color: "#dc2626" }}>*</span>
+                    Value <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -367,7 +337,7 @@ useEffect(() => {
               {/* Quota Total */}
               <div>
                 <label style={labelStyle}>
-                  Total Quantity <span style={{ color: "#dc2626" }}>*</span>
+                  Total Quantity <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -391,7 +361,7 @@ useEffect(() => {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Start Date <span style={{ color: "#dc2626" }}>*</span>
+                    Start Date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="datetime-local"
@@ -410,7 +380,7 @@ useEffect(() => {
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    End Date <span style={{ color: "#dc2626" }}>*</span>
+                    End Date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="datetime-local"

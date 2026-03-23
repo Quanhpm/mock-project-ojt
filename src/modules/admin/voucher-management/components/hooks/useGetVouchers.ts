@@ -32,9 +32,9 @@ export const useGetVouchers = (skipInitialFetch = false): UseGetVouchersReturn =
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải danh sách voucher";
+        err instanceof Error ? err.message : "Error loading voucher list";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

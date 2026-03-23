@@ -43,7 +43,7 @@ export const useUserStatus = () => {
 
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      console.error("❌ Lỗi cập nhật trạng thái:", err);
+      console.error("❌ Error Status:", err);
       console.error("Error details:", {
         message: err.message,
         response: err.response?.data,

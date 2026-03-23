@@ -19,15 +19,15 @@ export const useUpdateVoucher = () => {
 
     try {
       await voucherApi.updateVoucher(id, data);
-      success("Cập nhật thành công", "Voucher đã được cập nhật.");
+      success("Updated successfully", "Voucher has been updated.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể cập nhật voucher lúc này. Vui lòng thử lại!";
+          : "Unable to update voucher at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Cập nhật thất bại", errorMessage);
+      showErrorToast("Update failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsUpdating(false);

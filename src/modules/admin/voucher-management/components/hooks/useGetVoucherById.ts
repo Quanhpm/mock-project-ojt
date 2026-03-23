@@ -24,9 +24,9 @@ export const useGetVoucherById = (): UseGetVoucherByIdReturn => {
       setVoucher(data);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải thông tin voucher";
+        err instanceof Error ? err.message : "Error loading voucher information";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

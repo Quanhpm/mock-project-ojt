@@ -15,7 +15,7 @@ const createPromotionSchema = z
     franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
     type: z.enum(["FIXED", "PERCENT"]),
-    value: z.number().int().min(1, "Minimum is 1"),
+    value: z.number("Must be a number").int("Must be an integer").min(1, "Minimum is 1"),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().min(1, "End date is required"),
   })
@@ -215,10 +215,7 @@ export default function PromotionCreateModal() {
                 <input
                   {...register("name")}
                   placeholder="e.g. April Special Offer"
-                  style={{
-                    ...inputStyle,
-                    ':focus': { borderColor: "#B08968", backgroundColor: "white" }
-                  }}
+                  style={inputStyle}
                   onFocus={(e) => {
                     e.currentTarget.style.borderColor = "#B08968";
                     e.currentTarget.style.backgroundColor = "white";

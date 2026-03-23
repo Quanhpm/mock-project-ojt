@@ -17,15 +17,15 @@ export const useDeletePromotion = () => {
 
     try {
       await promotionApi.deletePromotion(id);
-      success("Xóa thành công", "Promotion đã được xóa.");
+      success("Deleted successfully", "Promotion has been deleted.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể xóa promotion lúc này. Vui lòng thử lại!";
+          : "Unable to delete promotion at this time. Please try again!";
       setError(errorMessage);
-      showErrorToast("Xóa thất bại", errorMessage);
+      showErrorToast("Deletion failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsDeleting(false);

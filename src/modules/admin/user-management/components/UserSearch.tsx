@@ -276,18 +276,6 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           <option value="false">Inactive</option>
         </select>
 
-        {/* Deleted Filter */}
-        <select
-          value={filters.is_deleted ? "true" : "false"}
-          onChange={(e) =>
-            handleDeletedFilterChange(e.target.value === "true")
-          }
-          className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-        >
-          <option value="false">Not deleted</option>
-          <option value="true">Deleted</option>
-        </select>
-
         {/* Deleted Toggle */}
         <button
           onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
