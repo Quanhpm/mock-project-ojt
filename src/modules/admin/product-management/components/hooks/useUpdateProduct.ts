@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { productApi } from "../../../../../apis/endpoints/product.api";
-import type { Product, ProductUpdatePayload } from "../../../../../types/product.types";
+import type {
+  Product,
+  ProductUpdatePayload,
+} from "../../../../../types/product.types";
 import { useToast } from "@/hooks/use-toast.hook";
 
 export const useUpdateProduct = () => {
@@ -17,9 +20,12 @@ export const useUpdateProduct = () => {
     setError(null);
 
     try {
-      const updatedProduct = await productApi.updateProduct(id, payload);
+      const updatedProduct = await productApi.updateProduct(
+        id,
+        payload as Parameters<typeof productApi.updateProduct>[1],
+      );
 
-      success("Cập nhật sản phẩm thành công", "Thông tin sản phẩm đã được lưu.");
+      success("Product updated", "The product details have been saved.");
 
       if (onSuccess && updatedProduct) {
         onSuccess(updatedProduct as Product);
@@ -27,7 +33,7 @@ export const useUpdateProduct = () => {
 
       return updatedProduct;
     } catch (err: any) {
-      console.error("Lỗi khi cập nhật sản phẩm:", err);
+      console.error("Failed to update product:", err);
       console.error("Update response payload:", err?.response?.data);
 
       const errorMessage =
@@ -36,9 +42,9 @@ export const useUpdateProduct = () => {
           ? err.response?.data?.data
           : err.response?.data?.data?.message) ||
         err.response?.data?.data ||
-        "Không thể cập nhật sản phẩm lúc này. Vui lòng thử lại.";
+        "Unable to update the product right now. Please try again.";
       setError(errorMessage);
-      showErrorToast("Cập nhật thất bại", errorMessage);
+      showErrorToast("Update failed", errorMessage);
       return null;
     } finally {
       setIsUpdating(false);
