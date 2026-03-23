@@ -7,12 +7,6 @@ export const useDeleteProduct = () => {
   const [error, setError] = useState<string | null>(null);
   const { success, error: showErrorToast } = useToast();
 
-  /**
-   * Hàm thực thi gọi API xóa sản phẩm
-   * @param id ID của sản phẩm cần xóa
-   * @param onSuccess Callback chạy khi xóa thành công (dùng để đóng Modal và Refresh bảng)
-   * @param onError Callback chạy khi xóa thất bại
-   */
   const deleteProduct = async (
     id: string,
     onSuccess?: () => void,
@@ -23,20 +17,18 @@ export const useDeleteProduct = () => {
 
     try {
       await productApi.deleteProduct(id);
-
-      // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Xóa sản phẩm thành công", "Sản phẩm đã được xóa.");
-      if (onSuccess) onSuccess();
+      success("Product deleted", "The product has been deleted.");
+      onSuccess?.();
     } catch (err: any) {
-      console.error("Lỗi khi xóa sản phẩm:", err);
+      console.error("Failed to delete product:", err);
 
       const errorMessage =
         err.response?.data?.message ||
-        "Không thể xóa sản phẩm lúc này. Vui lòng thử lại!";
+        "Unable to delete the product right now. Please try again.";
       setError(errorMessage);
 
-      showErrorToast("Xóa sản phẩm thất bại", errorMessage);
-      if (onError) onError(errorMessage);
+      showErrorToast("Delete failed", errorMessage);
+      onError?.(errorMessage);
     } finally {
       setIsDeleting(false);
     }

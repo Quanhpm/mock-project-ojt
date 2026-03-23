@@ -8,8 +8,19 @@ interface ProductDetailsModalProps {
   isLoading?: boolean;
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("vi-VN").format(price) + " đ";
+const formatPrice = (price: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(price);
+
+const formatPriceRange = (minPrice: number, maxPrice: number) => {
+  if (minPrice === maxPrice) {
+    return formatPrice(minPrice);
+  }
+
+  return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
 };
 
 const cleanHTML = (html: string) => {
@@ -50,7 +61,6 @@ export default function ProductDetailsModal({
           boxShadow: "0 25px 50px rgba(0,0,0,0.15)",
         }}
       >
-        {/* HEADER */}
         <div
           style={{
             display: "flex",
@@ -76,11 +86,114 @@ export default function ProductDetailsModal({
           </button>
         </div>
 
-        {/* CONTENT */}
         <div style={{ padding: "24px" }}>
           {isLoading ? (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              Loading...
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "28px",
+                alignItems: "start",
+              }}
+            >
+              <div>
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "100%",
+                    height: "320px",
+                    borderRadius: "14px",
+                    background: "#e5e7eb",
+                  }}
+                />
+                <div
+                  style={{
+                    marginTop: "12px",
+                    display: "flex",
+                    gap: "8px",
+                  }}
+                >
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="animate-pulse"
+                      style={{
+                        width: "70px",
+                        height: "70px",
+                        borderRadius: "8px",
+                        background: "#e5e7eb",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "92px",
+                    height: "26px",
+                    borderRadius: "999px",
+                    background: "#e5e7eb",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "70%",
+                    height: "34px",
+                    borderRadius: "10px",
+                    background: "#e5e7eb",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "40%",
+                    height: "28px",
+                    borderRadius: "10px",
+                    background: "#e5e7eb",
+                  }}
+                />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                  }}
+                >
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="animate-pulse"
+                      style={{
+                        height: "72px",
+                        borderRadius: "10px",
+                        background: "#e5e7eb",
+                      }}
+                    />
+                  ))}
+                </div>
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "100%",
+                    height: "110px",
+                    borderRadius: "10px",
+                    background: "#e5e7eb",
+                  }}
+                />
+                <div
+                  className="animate-pulse"
+                  style={{
+                    width: "100%",
+                    height: "180px",
+                    borderRadius: "10px",
+                    background: "#e5e7eb",
+                  }}
+                />
+              </div>
             </div>
           ) : product ? (
             <div
@@ -91,7 +204,6 @@ export default function ProductDetailsModal({
                 alignItems: "start",
               }}
             >
-              {/* LEFT IMAGE */}
               <div>
                 {product.image_url && (
                   <img
@@ -106,7 +218,6 @@ export default function ProductDetailsModal({
                   />
                 )}
 
-                {/* THUMBNAILS */}
                 {product.images_url && product.images_url.length > 0 && (
                   <div
                     style={{
@@ -115,10 +226,11 @@ export default function ProductDetailsModal({
                       gap: "8px",
                     }}
                   >
-                    {product.images_url.map((img, i) => (
+                    {product.images_url.map((img, index) => (
                       <img
-                        key={i}
+                        key={index}
                         src={img}
+                        alt={`${product.name} thumbnail ${index + 1}`}
                         style={{
                           width: "70px",
                           height: "70px",
@@ -132,9 +244,9 @@ export default function ProductDetailsModal({
                 )}
               </div>
 
-              {/* RIGHT INFO */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-                {/* STATUS */}
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "18px" }}
+              >
                 <div>
                   <span
                     style={{
@@ -142,19 +254,14 @@ export default function ProductDetailsModal({
                       borderRadius: "999px",
                       fontSize: "12px",
                       fontWeight: 600,
-                      background: product.is_active
-                        ? "#e6f6ec"
-                        : "#ffe9e9",
-                      color: product.is_active
-                        ? "#16a34a"
-                        : "#dc2626",
+                      background: product.is_active ? "#e6f6ec" : "#ffe9e9",
+                      color: product.is_active ? "#16a34a" : "#dc2626",
                     }}
                   >
                     {product.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
 
-                {/* NAME */}
                 <h2
                   style={{
                     margin: 0,
@@ -165,7 +272,6 @@ export default function ProductDetailsModal({
                   {product.name}
                 </h2>
 
-                {/* PRICE */}
                 <div
                   style={{
                     fontSize: "20px",
@@ -173,11 +279,9 @@ export default function ProductDetailsModal({
                     color: "#06b6d4",
                   }}
                 >
-                  {formatPrice(product.min_price)} –{" "}
-                  {formatPrice(product.max_price)}
+                  {formatPriceRange(product.min_price, product.max_price)}
                 </div>
 
-                {/* SMALL CARDS */}
                 <div
                   style={{
                     display: "grid",
@@ -203,9 +307,7 @@ export default function ProductDetailsModal({
                       SKU
                     </div>
 
-                    <div style={{ fontWeight: 600 }}>
-                      {product.SKU}
-                    </div>
+                    <div style={{ fontWeight: 600 }}>{product.SKU}</div>
                   </div>
 
                   <div
@@ -232,7 +334,6 @@ export default function ProductDetailsModal({
                   </div>
                 </div>
 
-                {/* DESCRIPTION */}
                 <div>
                   <div
                     style={{
@@ -260,39 +361,38 @@ export default function ProductDetailsModal({
                   </div>
                 </div>
 
-                {/* CONTENT */}
                 {product.content && (
-  <div>
-    <div
-      style={{
-        fontSize: "12px",
-        fontWeight: 700,
-        color: "#6b7280",
-        marginBottom: "6px",
-      }}
-    >
-      CONTENT
-    </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        color: "#6b7280",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      CONTENT
+                    </div>
 
-    <div
-      className="ck-content-preview"
-      style={{
-        padding: "14px",
-        borderRadius: "10px",
-        border: "1px solid #e5e7eb",
-        background: "#f9fafb",
-        maxHeight: "300px",
-        overflow: "auto",
-        lineHeight: "1.7",
-        fontSize: "14px",
-        color: "#374151",
-      }}
-      dangerouslySetInnerHTML={{
-        __html: cleanHTML(product.content),
-      }}
-    />
-  </div>
-)}
+                    <div
+                      className="ck-content-preview"
+                      style={{
+                        padding: "14px",
+                        borderRadius: "10px",
+                        border: "1px solid #e5e7eb",
+                        background: "#f9fafb",
+                        maxHeight: "300px",
+                        overflow: "auto",
+                        lineHeight: "1.7",
+                        fontSize: "14px",
+                        color: "#374151",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHTML(product.content),
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ) : (

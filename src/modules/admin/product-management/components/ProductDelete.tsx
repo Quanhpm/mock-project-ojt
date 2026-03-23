@@ -19,7 +19,6 @@ export default function ProductDelete({
 
   const handleConfirm = () => {
     onConfirm();
-    onClose();
   };
 
   return (
@@ -105,7 +104,7 @@ export default function ProductDelete({
               color: "#495057",
               lineHeight: "1.6"
             }}>
-              Are you sure ?? you want to delete this product? This action cannot be undone.
+              Are you sure you want to delete this product? This action cannot be undone.
             </p>
             
             <div style={{
@@ -158,8 +157,9 @@ export default function ProductDelete({
             padding: "16px 24px",
             borderTop: "1px solid #f0f0f0",
             display: "flex",
-            gap: "12px",
-            justifyContent: "flex-end"
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px"
           }}>
             <button
               onClick={onClose}
@@ -174,23 +174,25 @@ export default function ProductDelete({
                 color: "#374151"
               }}
             >
-              Cancel
+              Close
             </button>
-            <button
-              onClick={handleConfirm}
-              style={{
-                padding: "10px 20px",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                cursor: "pointer",
-                backgroundColor: "#f44336",
-                color: "white"
-              }}
-            >
-              Delete Product
-            </button>
+            <div style={{ display: "flex", justifyContent: "flex-end", flex: 1 }}>
+              <button
+                onClick={handleConfirm}
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  backgroundColor: "#f44336",
+                  color: "white"
+                }}
+              >
+                Delete Product
+              </button>
+            </div>
           </div>
         </div>
       </div>

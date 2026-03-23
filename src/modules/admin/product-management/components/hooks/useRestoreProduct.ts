@@ -7,12 +7,6 @@ export const useRestoreProduct = () => {
   const [error, setError] = useState<string | null>(null);
   const { success, error: showErrorToast } = useToast();
 
-  /**
-   * Hàm thực thi gọi API khôi phục sản phẩm đã xóa
-   * @param id ID của sản phẩm cần khôi phục
-   * @param onSuccess Callback chạy khi khôi phục thành công (dùng để đóng Modal và Refresh bảng)
-   * @param onError Callback chạy khi khôi phục thất bại
-   */
   const restoreProductAction = async (
     id: string,
     onSuccess?: () => void,
@@ -22,22 +16,19 @@ export const useRestoreProduct = () => {
     setError(null);
 
     try {
-      const response = await productApi.restoreProduct(id);
-
-      // httpClient tự động throw error nếu thất bại, vào đây = thành công
-      success("Khôi phục sản phẩm thành công", "Sản phẩm đã được khôi phục.");
-      
-      if (onSuccess) onSuccess();
+      await productApi.restoreProduct(id);
+      success("Product restored", "The product has been restored.");
+      onSuccess?.();
     } catch (err: any) {
-      console.error("Lỗi khi khôi phục sản phẩm:", err);
+      console.error("Failed to restore product:", err);
 
       const errorMessage =
         err.response?.data?.message ||
-        "Không thể khôi phục sản phẩm lúc này. Vui lòng thử lại!";
+        "Unable to restore the product right now. Please try again.";
       setError(errorMessage);
 
-      showErrorToast("Khôi phục sản phẩm thất bại", errorMessage);
-      if (onError) onError(errorMessage);
+      showErrorToast("Restore failed", errorMessage);
+      onError?.(errorMessage);
     } finally {
       setIsRestoring(false);
     }
