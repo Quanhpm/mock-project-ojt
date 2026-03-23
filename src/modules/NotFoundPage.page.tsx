@@ -23,7 +23,7 @@ const NotFoundPage = () => {
 
           <div className="flex items-center gap-2 rounded-full border border-[var(--cf-secondary)]/20 bg-[var(--cf-surface)]/55 px-3 py-2 text-sm text-[var(--cf-dark)]">
             <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">Ôi, có gì đó không ổn</span>
+            <span className="hidden sm:inline">Ôi,, có gì đó không ổn</span>
           </div>
         </nav>
 
