@@ -1,8 +1,10 @@
 import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 import type { CartItem } from "../models/cart.models";
 import type { CustomerOption } from "../models/customer.models";
 
 const DEFAULT_COUNTER_MESSAGE = "Mua tại quầy";
+const POS_SESSION_STORAGE_KEY = "admin-order-pos-session";
 
 const getDraftItemUnitPrice = (item: CartItem) => {
   const optionTotal = item.options.reduce((sum, option) => {
@@ -81,99 +83,119 @@ interface PosSessionState {
   resetSession: (payload?: { defaultAddress?: string; defaultMessage?: string }) => void;
 }
 
-export const usePosSessionStore = create<PosSessionState>((set) => ({
+const createDefaultSessionState = (
+  payload?: { defaultAddress?: string; defaultMessage?: string },
+) => ({
   selectedCustomer: null,
   activeCartId: null,
   reviewContactCustomerId: null,
-  selectedAdminFranchiseId: null,
-  selectedAdminFranchiseName: null,
   selectedCategory: "all",
   searchQuery: "",
   customerKeyword: "",
   draftItems: [],
-  draftAddress: "",
+  draftAddress: payload?.defaultAddress ?? "",
   draftPhone: "",
-  draftMessage: DEFAULT_COUNTER_MESSAGE,
+  draftMessage: payload?.defaultMessage ?? DEFAULT_COUNTER_MESSAGE,
   voucherCode: "",
-  setSelectedCustomer: (selectedCustomer) =>
-    set((state) => ({
-      selectedCustomer,
-      reviewContactCustomerId:
-        state.selectedCustomer?.id === selectedCustomer?.id
-          ? state.reviewContactCustomerId
-          : null,
-    })),
-  setActiveCartId: (activeCartId) => set({ activeCartId }),
-  setReviewContactCustomerId: (reviewContactCustomerId) => set({ reviewContactCustomerId }),
-  setSelectedAdminFranchiseId: (selectedAdminFranchiseId) => set({ selectedAdminFranchiseId }),
-  setSelectedAdminFranchiseName: (selectedAdminFranchiseName) => set({ selectedAdminFranchiseName }),
-  setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
-  setSearchQuery: (searchQuery) => set({ searchQuery }),
-  setCustomerKeyword: (customerKeyword) => set({ customerKeyword }),
-  setDraftItems: (draftItems) => set({ draftItems }),
-  setDraftAddress: (draftAddress) => set({ draftAddress }),
-  setDraftPhone: (draftPhone) => set({ draftPhone }),
-  setDraftMessage: (draftMessage) => set({ draftMessage }),
-  setVoucherCode: (voucherCode) => set({ voucherCode }),
-  addDraftItem: (draftItem) =>
-    set((state) => {
-      return {
-        draftItems: mergeDraftItemIntoList(state.draftItems, draftItem),
-      };
-    }),
-  replaceDraftItem: (cartItemId, draftItem) =>
-    set((state) => ({
-      draftItems: mergeDraftItemIntoList(
-        state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
-        draftItem,
-      ),
-    })),
-  incrementDraftItem: (cartItemId) =>
-    set((state) => ({
-      draftItems: state.draftItems.map((item) =>
-        item.cart_item_id === cartItemId
-          ? recalculateDraftItemTotals(item, item.quantity + 1)
-          : item,
-      ),
-    })),
-  decrementDraftItem: (cartItemId) =>
-    set((state) => {
-      const currentItem = state.draftItems.find((item) => item.cart_item_id === cartItemId);
+});
 
-      if (!currentItem) {
-        return state;
-      }
+export const usePosSessionStore = create<PosSessionState>()(
+  persist(
+    (set) => ({
+      ...createDefaultSessionState(),
+      selectedAdminFranchiseId: null,
+      selectedAdminFranchiseName: null,
+      setSelectedCustomer: (selectedCustomer) =>
+        set((state) => ({
+          selectedCustomer,
+          reviewContactCustomerId:
+            state.selectedCustomer?.id === selectedCustomer?.id
+              ? state.reviewContactCustomerId
+              : null,
+        })),
+      setActiveCartId: (activeCartId) => set({ activeCartId }),
+      setReviewContactCustomerId: (reviewContactCustomerId) => set({ reviewContactCustomerId }),
+      setSelectedAdminFranchiseId: (selectedAdminFranchiseId) => set({ selectedAdminFranchiseId }),
+      setSelectedAdminFranchiseName: (selectedAdminFranchiseName) =>
+        set({ selectedAdminFranchiseName }),
+      setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
+      setSearchQuery: (searchQuery) => set({ searchQuery }),
+      setCustomerKeyword: (customerKeyword) => set({ customerKeyword }),
+      setDraftItems: (draftItems) => set({ draftItems }),
+      setDraftAddress: (draftAddress) => set({ draftAddress }),
+      setDraftPhone: (draftPhone) => set({ draftPhone }),
+      setDraftMessage: (draftMessage) => set({ draftMessage }),
+      setVoucherCode: (voucherCode) => set({ voucherCode }),
+      addDraftItem: (draftItem) =>
+        set((state) => {
+          return {
+            draftItems: mergeDraftItemIntoList(state.draftItems, draftItem),
+          };
+        }),
+      replaceDraftItem: (cartItemId, draftItem) =>
+        set((state) => ({
+          draftItems: mergeDraftItemIntoList(
+            state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
+            draftItem,
+          ),
+        })),
+      incrementDraftItem: (cartItemId) =>
+        set((state) => ({
+          draftItems: state.draftItems.map((item) =>
+            item.cart_item_id === cartItemId
+              ? recalculateDraftItemTotals(item, item.quantity + 1)
+              : item,
+          ),
+        })),
+      decrementDraftItem: (cartItemId) =>
+        set((state) => {
+          const currentItem = state.draftItems.find((item) => item.cart_item_id === cartItemId);
 
-      if (currentItem.quantity <= 1) {
-        return {
+          if (!currentItem) {
+            return state;
+          }
+
+          if (currentItem.quantity <= 1) {
+            return {
+              draftItems: state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
+            };
+          }
+
+          return {
+            draftItems: state.draftItems.map((item) =>
+              item.cart_item_id === cartItemId
+                ? recalculateDraftItemTotals(item, item.quantity - 1)
+                : item,
+            ),
+          };
+        }),
+      removeDraftItem: (cartItemId) =>
+        set((state) => ({
           draftItems: state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
-        };
-      }
-
-      return {
-        draftItems: state.draftItems.map((item) =>
-          item.cart_item_id === cartItemId
-            ? recalculateDraftItemTotals(item, item.quantity - 1)
-            : item,
-        ),
-      };
+        })),
+      resetSession: (payload) =>
+        set({
+          ...createDefaultSessionState(payload),
+        }),
     }),
-  removeDraftItem: (cartItemId) =>
-    set((state) => ({
-      draftItems: state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
-    })),
-  resetSession: (payload) =>
-    set({
-      selectedCustomer: null,
-      activeCartId: null,
-      reviewContactCustomerId: null,
-      selectedCategory: "all",
-      searchQuery: "",
-      customerKeyword: "",
-      draftItems: [],
-      draftAddress: payload?.defaultAddress ?? "",
-      draftPhone: "",
-      draftMessage: payload?.defaultMessage ?? DEFAULT_COUNTER_MESSAGE,
-      voucherCode: "",
-    }),
-}));
+    {
+      name: POS_SESSION_STORAGE_KEY,
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        selectedCustomer: state.selectedCustomer,
+        activeCartId: state.activeCartId,
+        reviewContactCustomerId: state.reviewContactCustomerId,
+        selectedAdminFranchiseId: state.selectedAdminFranchiseId,
+        selectedAdminFranchiseName: state.selectedAdminFranchiseName,
+        selectedCategory: state.selectedCategory,
+        searchQuery: state.searchQuery,
+        customerKeyword: state.customerKeyword,
+        draftItems: state.draftItems,
+        draftAddress: state.draftAddress,
+        draftPhone: state.draftPhone,
+        draftMessage: state.draftMessage,
+        voucherCode: state.voucherCode,
+      }),
+    },
+  ),
+);

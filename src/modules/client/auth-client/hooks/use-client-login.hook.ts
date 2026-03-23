@@ -2,7 +2,7 @@ import { useState } from "react";
 import { loginCustomer, getCustomerProfile } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
-import { HttpError } from "@/apis";
+import { HttpError, resetAuthRedirecting } from "@/apis";
 import type { CustomerLoginRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
 
 export const useClientLogin = () => {
@@ -18,6 +18,8 @@ export const useClientLogin = () => {
     setError(null);
 
     try {
+      resetAuthRedirecting();
+
       // httpClient throw error nếu thất bại — không cần check success
       await loginCustomer(data);
 

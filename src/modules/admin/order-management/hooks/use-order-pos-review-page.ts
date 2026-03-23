@@ -48,6 +48,7 @@ export const useOrderPosReviewPage = () => {
     isMutatingCart: loader.isMutatingCart,
     canCheckout: actions.canCheckout,
     canApplyVoucher: actions.canApplyVoucher,
+    isCancelOrderModalOpen: actions.isCancelOrderModalOpen,
     isProductConfiguratorOpen: configurator.isOpen,
     productBeingConfigured: configurator.activeProduct,
     configuredSize: configurator.selectedSize,
@@ -76,6 +77,9 @@ export const useOrderPosReviewPage = () => {
     decreaseCartItemQuantity: actions.decreaseCartItemQuantity,
     removeCartItem: actions.removeCartItem,
     checkoutCart: actions.checkoutCart,
+    openCancelCurrentOrderModal: actions.openCancelCurrentOrderModal,
+    closeCancelCurrentOrderModal: actions.closeCancelCurrentOrderModal,
+    confirmCancelCurrentOrder: actions.confirmCancelCurrentOrder,
     goBackToBuilder,
   };
 };

@@ -16,6 +16,7 @@ import {
 import { addCartItemsUsecase } from "../usecases/add-cart-items.usecase";
 import { checkoutCartUsecase } from "../usecases/checkout-cart.usecase";
 import { replaceCartItemWithRestoreUsecase } from "../usecases/replace-cart-item-with-restore.usecase";
+import { usePosSession } from "./use-pos-session";
 
 interface UsePosReviewActionsOptions {
   cart: CartDetail | null;
@@ -68,7 +69,9 @@ export const usePosReviewActions = ({
 }: UsePosReviewActionsOptions) => {
   const navigate = useNavigate();
   const { success: showSuccess, error: showError } = useToast();
+  const { resetSession } = usePosSession();
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
+  const [isCancelOrderModalOpen, setIsCancelOrderModalOpen] = useState(false);
 
   const productCatalogLookup = useMemo<Record<string, PosProduct>>(() => {
     return products.reduce<Record<string, PosProduct>>((lookup, product) => {
@@ -421,14 +424,18 @@ export const usePosReviewActions = ({
         message: draftMessage,
       });
 
-      if (!order?._id) {
-        showError("Checkout thành công nhưng chưa lấy được order detail");
+      setActiveCartId(null);
+
+      if (order?._id) {
+        showSuccess("Checkout thành công");
+        navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
+          replace: true,
+        });
         return;
       }
 
-      setActiveCartId(null);
-      showSuccess("Checkout thành công");
-      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
+      showSuccess("Checkout thành công, đơn hàng đang được đồng bộ");
+      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
         replace: true,
       });
     } catch (error) {
@@ -449,6 +456,55 @@ export const usePosReviewActions = ({
     showSuccess,
   ]);
 
+  const openCancelCurrentOrderModal = useCallback(() => {
+    if (!cart?._id) {
+      return;
+    }
+
+    setIsCancelOrderModalOpen(true);
+  }, [cart?._id]);
+
+  const closeCancelCurrentOrderModal = useCallback(() => {
+    setIsCancelOrderModalOpen(false);
+  }, []);
+
+  const confirmCancelCurrentOrder = useCallback(async () => {
+    if (!cart?._id) {
+      setIsCancelOrderModalOpen(false);
+      return;
+    }
+
+    try {
+      setIsMutatingCart(true);
+      await cartService.cancelCart(cart._id);
+      setCart(null);
+      setActiveCartId(null);
+      resetSession();
+      closeProductConfigurator();
+      closeCancelCurrentOrderModal();
+      showSuccess("Đã hủy giỏ hàng hiện tại");
+      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("[OrderPOSReview] Failed to cancel current cart", error);
+      showError("Không xóa được giỏ hàng hiện tại");
+    } finally {
+      setIsMutatingCart(false);
+    }
+  }, [
+    cart?._id,
+    closeCancelCurrentOrderModal,
+    closeProductConfigurator,
+    navigate,
+    resetSession,
+    setActiveCartId,
+    setCart,
+    setIsMutatingCart,
+    showError,
+    showSuccess,
+  ]);
+
   const canCheckout = useMemo(() => {
     return Boolean(cart?._id && (cart.cart_items?.length ?? 0) > 0);
   }, [cart?._id, cart?.cart_items?.length]);
@@ -458,10 +514,13 @@ export const usePosReviewActions = ({
   }, [cart?._id, cart?.cart_items?.length, voucherCode]);
 
   return {
+    isCancelOrderModalOpen,
     canCheckout,
     canApplyVoucher,
     editCartItem,
     closeProductConfigurator,
+    openCancelCurrentOrderModal,
+    closeCancelCurrentOrderModal,
     applyVoucher,
     removeVoucher,
     addOneMoreOfCartItem,
@@ -469,5 +528,6 @@ export const usePosReviewActions = ({
     removeCartItem,
     saveEditedCartItem,
     checkoutCart,
+    confirmCancelCurrentOrder,
   };
 };

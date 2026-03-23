@@ -1,8 +1,9 @@
 import { Check, Loader2 } from "lucide-react";
-import type { OrderDetail, OrderStatus } from "../../models/order.models";
+import type { OrderDetail, OrderStatus, PaymentStatus } from "../../models/order.models";
 
 interface OrderProgressHeaderProps {
   order: OrderDetail;
+  paymentStatus?: PaymentStatus | null;
   isUpdatingStatus?: boolean;
   onMarkPreparing?: () => void;
   onMarkReadyForPickup?: () => void;
@@ -101,6 +102,7 @@ const getActionableStepConfig = ({
 
 export const OrderProgressHeader = ({
   order,
+  paymentStatus,
   isUpdatingStatus,
   onMarkPreparing,
   onMarkReadyForPickup,
@@ -124,6 +126,8 @@ export const OrderProgressHeader = ({
   }
 
   const currentStepIndex = getCurrentStepIndex(order.status);
+  const isDraftAwaitingPayment = order.status === "DRAFT" && paymentStatus !== "PAID";
+  const isDraftPaid = order.status === "DRAFT" && paymentStatus === "PAID";
   const actionableStep = getActionableStepConfig({
     status: order.status,
     onMarkPreparing,
@@ -147,13 +151,17 @@ export const OrderProgressHeader = ({
                 const isCurrent = index === currentStepIndex;
                 const isActionable = actionableStep?.index === index && Boolean(actionableStep.onClick);
                 const isPending = index > currentStepIndex && !isActionable;
+                const isDraftConfirmStep = index === 0 && order.status === "DRAFT";
+                const isMutedDraftConfirmStep = isDraftConfirmStep && isDraftAwaitingPayment;
                 const hasCompletedLeftConnector = index > 0 && index <= currentStepIndex;
                 const hasCompletedRightConnector = index < currentStepIndex;
                 const caption =
                   isActionable && isUpdatingStatus
                     ? "Đang cập nhật"
                     : order.status === "DRAFT" && index === 0
-                      ? "Chưa thanh toán"
+                      ? isDraftPaid
+                        ? "Đã thanh toán"
+                        : "Chưa thanh toán"
                       : isActionable && actionableStep
                         ? actionableStep.caption
                         : index === 0 && !isPending
@@ -195,7 +203,9 @@ export const OrderProgressHeader = ({
 
                     <div
                       className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full border-[3px] bg-white ${
-                        isCompleted
+                        isMutedDraftConfirmStep
+                          ? "border-gray-200 text-gray-300"
+                          : isCompleted
                           ? "border-[#A3581E] bg-[#A3581E] text-white"
                           : isCurrent || isActionable
                             ? "border-[#A3581E] text-[#A3581E]"
@@ -209,7 +219,11 @@ export const OrderProgressHeader = ({
                       ) : (
                         <div
                           className={`h-3 w-3 rounded-full ${
-                            isCurrent || isActionable ? "bg-[#A3581E]" : "bg-gray-200"
+                            isMutedDraftConfirmStep
+                              ? "bg-gray-300"
+                              : isCurrent || isActionable
+                                ? "bg-[#A3581E]"
+                                : "bg-gray-200"
                           }`}
                         />
                       )}
@@ -217,14 +231,26 @@ export const OrderProgressHeader = ({
 
                     <p
                       className={`mt-3 text-sm font-black tracking-tight ${
-                        isPending ? "text-gray-400" : isActionable ? "text-[#A3581E]" : "text-gray-900"
+                        isMutedDraftConfirmStep
+                          ? "text-gray-400"
+                          : isPending
+                            ? "text-gray-400"
+                            : isActionable || (isDraftConfirmStep && isDraftPaid)
+                              ? "text-[#A3581E]"
+                              : "text-gray-900"
                       }`}
                     >
                       {step.label}
                     </p>
                     <p
                       className={`mt-0.5 text-[11px] font-medium ${
-                        isPending ? "text-gray-300" : isActionable ? "text-[#C67A3F]" : "text-gray-500"
+                        isMutedDraftConfirmStep
+                          ? "text-gray-400"
+                          : isPending
+                            ? "text-gray-300"
+                            : isActionable || (isDraftConfirmStep && isDraftPaid)
+                              ? "text-[#C67A3F]"
+                              : "text-gray-500"
                       }`}
                     >
                       {caption}

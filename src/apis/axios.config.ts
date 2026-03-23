@@ -343,7 +343,19 @@ import { useLoadingStore } from "@/stores/loading.store";
 // ======================== Constants & Config ========================
 
 const AUTH_REDIRECTING_KEY = "__auth_redirecting";
-const SKIP_LOADING_URLS = ['/auth/refresh-token', '/auth/logout'];
+const ADMIN_AUTH_REFRESH_URL = "/auth/refresh-token";
+const ADMIN_AUTH_LOGOUT_URL = "/auth/logout";
+const CUSTOMER_AUTH_PREFIX = "/customer-auth";
+const CUSTOMER_AUTH_REFRESH_URL = "/customer-auth/refresh-token";
+const CUSTOMER_AUTH_LOGOUT_URL = "/customer-auth/logout";
+const SKIP_LOADING_URLS = [
+  ADMIN_AUTH_REFRESH_URL,
+  ADMIN_AUTH_LOGOUT_URL,
+  CUSTOMER_AUTH_REFRESH_URL,
+  CUSTOMER_AUTH_LOGOUT_URL,
+];
+
+type AuthScope = "admin" | "client";
 
 export const axiosClient = axios.create({
   baseURL: ENV.API_URL,
@@ -380,6 +392,39 @@ const processQueue = (error: unknown = null) => {
 // ======================== Helpers ========================
 
 const shouldSkipLoading = (url?: string) => SKIP_LOADING_URLS.some((skipUrl) => url?.includes(skipUrl));
+const isAdminRoute = () => window.location.pathname.startsWith("/admin");
+const isRefreshRequest = (url?: string) =>
+  [ADMIN_AUTH_REFRESH_URL, CUSTOMER_AUTH_REFRESH_URL].some((refreshUrl) => url?.includes(refreshUrl));
+
+const resolveAuthScope = (url?: string): AuthScope => {
+  if (url?.includes(CUSTOMER_AUTH_PREFIX)) return "client";
+  if (url?.includes("/auth")) return "admin";
+  return isAdminRoute() ? "admin" : "client";
+};
+
+const getRefreshUrl = (scope: AuthScope) =>
+  `${ENV.API_URL}${scope === "admin" ? ADMIN_AUTH_REFRESH_URL : CUSTOMER_AUTH_REFRESH_URL}`;
+
+const isAccessTokenExpiredError = (
+  scope: AuthScope,
+  status: number,
+  errorCode: string,
+  message?: string | null,
+) => {
+  if (status !== 401) return false;
+
+  if (scope === "client") {
+    return (
+      errorCode === API_ERROR_CODES.CUSTOMER_ACCESS_TOKEN_EXPIRED ||
+      message === API_ERROR_CODES.CUSTOMER_ACCESS_TOKEN_EXPIRED
+    );
+  }
+
+  return (
+    errorCode === API_ERROR_CODES.ACCESS_TOKEN_EXPIRED ||
+    message === "Access token has expired"
+  );
+};
 
 const incrementLoading = (url?: string) => {
   if (!shouldSkipLoading(url)) useLoadingStore.getState().increment();
@@ -389,16 +434,15 @@ const decrementLoading = (url?: string) => {
   if (!shouldSkipLoading(url)) useLoadingStore.getState().decrement();
 };
 
-const forceLogout = () => {
+const forceLogout = (scope: AuthScope = resolveAuthScope()) => {
   sessionStorage.setItem(AUTH_REDIRECTING_KEY, "true");
-  const isAdminRoute = window.location.pathname.startsWith('/admin');
 
-  if (isAdminRoute) {
+  if (scope === "admin") {
     useAdminAuthStore.setState({ admin: null, roles: [], activeContext: null, isLoggedIn: false, isLoading: false });
-    window.location.replace('/admin/login');
+    window.location.replace("/admin/login");
   } else {
     useClientAuthStore.getState().clearAuth();
-    window.location.replace('/client/login');
+    window.location.replace("/client/login");
   }
 };
 
@@ -411,8 +455,8 @@ const buildRetryConfig = (originalRequest: InternalAxiosRequestConfig & { _retry
   _retry: true,
 });
 
-const refreshAccessToken = async () => {
-  const refreshResponse = await fetch(`${ENV.API_URL}/auth/refresh-token`, {
+const refreshAccessToken = async (scope: AuthScope) => {
+  const refreshResponse = await fetch(getRefreshUrl(scope), {
     method: "GET",
     credentials: "include",
     cache: "no-store",
@@ -453,6 +497,7 @@ const responseInterceptor = () => {
     },
     async (error: AxiosError<ApiErrorResponse>) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+      const authScope = resolveAuthScope(originalRequest?.url);
 
       // ──────── 1. Validate & Network Errors ────────
       if (!originalRequest) {
@@ -484,15 +529,13 @@ const responseInterceptor = () => {
           isRefreshing = false;
         }
 
-        forceLogout();
+        forceLogout(authScope);
         throw new HttpError({ status: 401, message: "Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.", code: "TOKEN_REVOKED" });
       }
 
       // ──────── 3. Handle Token Expired (Refresh) ────────
-      const isAccessTokenExpired =
-        status === 401 &&
-        (errorCode === API_ERROR_CODES.ACCESS_TOKEN_EXPIRED || data?.message === "Access token has expired");
-      const canRetry = !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh-token');
+      const isAccessTokenExpired = isAccessTokenExpiredError(authScope, status, errorCode, data?.message);
+      const canRetry = !originalRequest._retry && !isRefreshRequest(originalRequest.url);
 
       if (isAccessTokenExpired && canRetry) {
         originalRequest._retry = true;
@@ -507,13 +550,13 @@ const responseInterceptor = () => {
         isRefreshing = true;
 
         try {
-          await refreshAccessToken();
+          await refreshAccessToken(authScope);
           processQueue();
           return axiosClient(buildRetryConfig(originalRequest));
         } catch (refreshError) {
           console.error("[Interceptor] Token refresh FAILED:", refreshError);
           processQueue(refreshError);
-          forceLogout();
+          forceLogout(authScope);
           
           throw new HttpError({ status: 401, message: "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.", code: "REFRESH_TOKEN_FAILED" });
         } finally {

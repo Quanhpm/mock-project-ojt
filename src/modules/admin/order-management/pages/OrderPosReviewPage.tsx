@@ -1,3 +1,4 @@
+import { PosCancelCartModal } from "../partials/pos/PosCancelCartModal";
 import { PosProductConfigModal } from "../partials/pos/PosProductConfigModal";
 import { PosReviewEmptyState } from "../partials/pos/PosReviewEmptyState";
 import { PosReviewMainColumn } from "../partials/pos/PosReviewMainColumn";
@@ -18,6 +19,7 @@ export const OrderPosReviewPage = () => {
     isMutatingCart,
     canCheckout,
     canApplyVoucher,
+    isCancelOrderModalOpen,
     isProductConfiguratorOpen,
     productBeingConfigured,
     configuredSize,
@@ -46,6 +48,9 @@ export const OrderPosReviewPage = () => {
     decreaseCartItemQuantity,
     removeCartItem,
     checkoutCart,
+    openCancelCurrentOrderModal,
+    closeCancelCurrentOrderModal,
+    confirmCancelCurrentOrder,
     goBackToBuilder,
   } = useOrderPosReviewPage();
 
@@ -76,6 +81,7 @@ export const OrderPosReviewPage = () => {
           onIncreaseItem={addOneMoreOfCartItem}
           onDecreaseItem={decreaseCartItemQuantity}
           onRemoveItem={removeCartItem}
+          onDeleteOrder={openCancelCurrentOrderModal}
         />
 
         <PosReviewSummarySidebar
@@ -123,6 +129,15 @@ export const OrderPosReviewPage = () => {
         onDecreaseQuantity={decreaseConfiguredQuantity}
         onIncreaseTopping={increaseConfiguredToppingQuantity}
         onDecreaseTopping={decreaseConfiguredToppingQuantity}
+      />
+
+      <PosCancelCartModal
+        open={isCancelOrderModalOpen}
+        isSubmitting={isMutatingCart}
+        onClose={closeCancelCurrentOrderModal}
+        onConfirm={() => {
+          void confirmCancelCurrentOrder();
+        }}
       />
     </div>
   );

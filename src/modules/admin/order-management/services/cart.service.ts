@@ -136,4 +136,10 @@ export const cartService = {
       data: payload,
     });
   },
+
+  cancelCart(cartId: string) {
+    return httpClient.put<null>({
+      url: `/carts/${cartId}/cancel`,
+    });
+  },
 };

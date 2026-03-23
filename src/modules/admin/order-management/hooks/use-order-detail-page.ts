@@ -191,6 +191,7 @@ export const useOrderDetailPage = (
         });
         showSuccess("Thanh toán thành công");
         await loadDetail();
+        await onStatusUpdated?.();
       } catch (error) {
         console.error("[OrderDetail] Failed to confirm payment", error);
         showError("Không xác nhận được thanh toán");
@@ -198,7 +199,7 @@ export const useOrderDetailPage = (
         setIsConfirmingPayment(false);
       }
     },
-    [loadDetail, payment?._id, showError, showSuccess],
+    [loadDetail, onStatusUpdated, payment?._id, showError, showSuccess],
   );
 
   return {

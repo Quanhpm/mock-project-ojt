@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { getCustomerProfile, logoutCustomer } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
-import { HttpError } from "@/apis";
+import { HttpError, isAuthRedirecting } from "@/apis";
 
 export const useClientAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +15,12 @@ export const useClientAuth = () => {
    * Should be called on app mount
    */
   const initializeAuth = useCallback(async () => {
+    if (isAuthRedirecting()) {
+      clearAuth();
+      setIsInitialized(true);
+      return false;
+    }
+
     setIsLoading(true);
     incrementGlobalLoading();
 
@@ -22,8 +28,15 @@ export const useClientAuth = () => {
       const user = await getCustomerProfile();
       setUser(user);
       return true;
-    } catch {
-      // If profile fetch fails, user is not authenticated
+    } catch (error) {
+      if (
+        error instanceof HttpError &&
+        (error.code === "REFRESH_TOKEN_FAILED" || error.code === "TOKEN_REVOKED")
+      ) {
+        clearAuth();
+        return false;
+      }
+
       clearAuth();
       return false;
     } finally {

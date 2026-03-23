@@ -11,6 +11,7 @@ export interface ApiSuccessResponse<T> {
 /** Constants cho các error codes từ backend */
 export const API_ERROR_CODES = {
   ACCESS_TOKEN_EXPIRED: "ACCESS_TOKEN_EXPIRED",
+  CUSTOMER_ACCESS_TOKEN_EXPIRED: "CUSTOMER_ACCESS_TOKEN_EXPIRED",
   REFRESH_TOKEN_FAILED: "REFRESH_TOKEN_FAILED",
   TOKEN_REVOKED: "Token has been revoked",
   NETWORK_ERROR: "NETWORK_ERROR",

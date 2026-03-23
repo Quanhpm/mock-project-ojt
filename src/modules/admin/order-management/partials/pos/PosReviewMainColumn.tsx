@@ -25,6 +25,7 @@ interface PosReviewMainColumnProps {
   onIncreaseItem: (item: CartItem) => void | Promise<void>;
   onDecreaseItem: (item: CartItem) => void | Promise<void>;
   onRemoveItem: (cartItemId: string) => void | Promise<void>;
+  onDeleteOrder: () => void | Promise<void>;
 }
 
 export const PosReviewMainColumn = ({
@@ -40,6 +41,7 @@ export const PosReviewMainColumn = ({
   onIncreaseItem,
   onDecreaseItem,
   onRemoveItem,
+  onDeleteOrder,
 }: PosReviewMainColumnProps) => {
   return (
     <div className="space-y-6 lg:col-span-8">
@@ -174,6 +176,19 @@ export const PosReviewMainColumn = ({
               </div>
             ))
           )}
+        </div>
+
+        <div className="flex justify-end border-t border-gray-100 pt-4">
+          <button
+            type="button"
+            onClick={() => {
+              void onDeleteOrder();
+            }}
+            disabled={isMutatingCart}
+            className="text-xs font-semibold text-gray-400 transition hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Xóa giỏ hàng
+          </button>
         </div>
 
         <div className="border-t border-gray-100 pt-6">

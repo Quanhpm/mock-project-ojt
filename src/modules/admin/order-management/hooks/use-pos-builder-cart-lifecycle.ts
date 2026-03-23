@@ -165,7 +165,7 @@ export const usePosBuilderCartLifecycle = ({
         return activeCart;
       } catch (error) {
         console.error("[OrderPOS] Failed to load active cart for customer", error);
-        showError("Không kiểm tra được cart active của khách hàng");
+        showError("Không kiểm tra được cart hiện tại của khách hàng");
         setExistingActiveCart(null);
         return null;
       } finally {
@@ -284,7 +284,7 @@ export const usePosBuilderCartLifecycle = ({
 
   const mergeDraftIntoExistingCart = useCallback(async () => {
     if (!selectedCustomer || !existingActiveCart?._id) {
-      showError("Không tìm thấy cart active để gộp món");
+      showError("Không tìm thấy cart để gộp món");
       return;
     }
 
@@ -298,11 +298,11 @@ export const usePosBuilderCartLifecycle = ({
       }
 
       setIsExistingCartModalOpen(false);
-      showSuccess("Đã thêm các món local vào cart active");
+      showSuccess("Đã thêm món vào cart hiện tại");
       goToReviewPage(nextCart._id, selectedCustomer.id);
     } catch (error) {
       console.error("[OrderPOS] Failed to merge draft into existing cart", error);
-      showError("Không gộp được món vào cart active");
+      showError("Không gộp được món vào cart hiện tại");
     } finally {
       setIsMutatingCart(false);
     }

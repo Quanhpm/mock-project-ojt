@@ -174,6 +174,7 @@ export const OrderDetailPage = ({
       <div className="space-y-8">
         <OrderProgressHeader
           order={order}
+          paymentStatus={payment?.status}
           isUpdatingStatus={isUpdatingStatus}
           onMarkPreparing={() => {
             void markPreparing();
