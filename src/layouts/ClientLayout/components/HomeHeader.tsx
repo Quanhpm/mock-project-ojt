@@ -32,10 +32,10 @@ const HomeHeader: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mobileMenuItems = [
-    { to: '/', label: 'Trang Chá»§', icon: House },
-    { to: '/menu', label: 'Sáº£n Pháº©m', icon: CupSoda },
-    { to: '/location', label: 'Äá»‹a Äiá»ƒm', icon: MapPin },
-    { to: '/franchise', label: 'NhÆ°á»£ng Quyá»n', icon: Building2 },
+    { to: '/', label: 'Trang Chủ', icon: House },
+    { to: '/menu', label: 'Sản Phẩm', icon: CupSoda },
+    { to: '/location', label: 'Địa Điểm', icon: MapPin },
+    { to: '/franchise', label: 'Nhượng Quyền', icon: Building2 },
   ];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
@@ -193,7 +193,7 @@ const HomeHeader: React.FC = () => {
               type="button"
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
               className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[var(--cf-primary)]/20 text-[var(--cf-primary)] hover:bg-[var(--cf-secondary)]/10 transition-colors"
-              aria-label={isMobileMenuOpen ? 'ÄÃ³ng menu' : 'Má»Ÿ menu'}
+              aria-label={isMobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -366,7 +366,7 @@ const HomeHeader: React.FC = () => {
               type="button"
               onClick={closeMobileMenu}
               className="inline-flex items-center justify-center w-9 h-9 rounded-lg text-[var(--cf-secondary)]"
-              aria-label="ÄÃ³ng menu"
+              aria-label="Đóng menu"
             >
               <X size={18} />
             </button>
@@ -402,7 +402,7 @@ const HomeHeader: React.FC = () => {
               className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/loyalty' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
             >
               <Sparkles size={18} className={location.pathname === '/loyalty' ? 'text-white' : 'text-[var(--cf-secondary)]'} />
-              <span>Loyalty của tôi</span>
+              <span>Khách hàng thân thiết</span>
             </Link>
 
             {franchises.length > 0 && (
@@ -456,7 +456,7 @@ const HomeHeader: React.FC = () => {
               <Globe size={16} />
               <Share2 size={16} />
             </div>
-            <p className="text-[11px] tracking-widest font-semibold">Â© 2024 BOUTIQUE BREWS CO.</p>
+            <p className="text-[11px] tracking-widest font-semibold">© 2024 BOUTIQUE BREWS CO.</p>
           </div>
         </div>
       </div>
