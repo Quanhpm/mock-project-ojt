@@ -1,4 +1,4 @@
-export { useMenuData } from './use-menu-data.hook';
+export { useMenu } from './use-menu.hook';
 export { useProductSearch } from './use-product-search.hook';
 export { useScrollSpy } from './use-scroll-spy.hook';
 export { useStore } from './use-store.hook';

@@ -39,6 +39,8 @@ export function useCartDetail(cartId: string) {
   const [isApplyingVoucher, setIsApplyingVoucher] = useState(false);
   const [isRemovingVoucher, setIsRemovingVoucher] = useState(false);
   const [isCancellingCart, setIsCancellingCart] = useState(false);
+  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  const [isSavingQuantityChanges, setIsSavingQuantityChanges] = useState(false);
 
   const loadCartDetail = useCallback(async () => {
     if (!cartId) {
@@ -53,10 +55,12 @@ export function useCartDetail(cartId: string) {
 
       if (!firstCart) {
         setCart(null);
+        setPendingQuantityChanges({});
         return;
       }
 
       setCart(toCartDetail(firstCart));
+      setPendingQuantityChanges({});
     } catch (err) {
       const message = err instanceof HttpError
         ? err.message
@@ -94,8 +98,42 @@ export function useCartDetail(cartId: string) {
     }
   }, [cart, isDeleting, loadCartDetail]);
 
-  const setCartItemQuantity = useCallback(async (cartItemId: string, nextQty: number) => {
-    if (!cart || isUpdatingQuantity) return;
+  const updateQuantityLocally = useCallback((cartItemId: string, nextQty: number) => {
+    setCart((prev) => {
+      if (!prev) return prev;
+
+      const updatedItems = prev.items.map((item) => {
+        if (item.id !== cartItemId) return item;
+
+        const perUnitLine = item.quantity > 0 ? item.lineTotal / item.quantity : item.unitPrice;
+        const perUnitFinal = item.quantity > 0 ? item.finalLineTotal / item.quantity : item.unitPrice;
+
+        return {
+          ...item,
+          quantity: nextQty,
+          lineTotal: Math.round(perUnitLine * nextQty),
+          finalLineTotal: Math.round(perUnitFinal * nextQty),
+        };
+      });
+
+      const subtotalAmount = updatedItems.reduce((sum, item) => sum + item.lineTotal, 0);
+      const finalAmount = Math.max(
+        0,
+        subtotalAmount - prev.promotionDiscount - prev.voucherDiscount - prev.loyaltyDiscount,
+      );
+
+      return {
+        ...prev,
+        items: updatedItems,
+        subtotalAmount,
+        finalAmount,
+        totalAmount: finalAmount,
+      };
+    });
+  }, []);
+
+  const setCartItemQuantity = useCallback((cartItemId: string, nextQty: number) => {
+    if (!cart) return;
 
     const targetItem = cart.items.find((item) => item.id === cartItemId);
     if (!targetItem) return;
@@ -103,23 +141,49 @@ export function useCartDetail(cartId: string) {
     const normalizedQty = Math.max(1, Math.min(999, Math.floor(nextQty)));
     if (normalizedQty === targetItem.quantity) return;
 
-    setIsUpdatingQuantity(cartItemId);
+    updateQuantityLocally(cartItemId, normalizedQty);
+    setPendingQuantityChanges((prev) => ({
+      ...prev,
+      [cartItemId]: normalizedQty,
+    }));
+  }, [cart, updateQuantityLocally]);
+
+  const hasPendingQuantityChanges = Object.keys(pendingQuantityChanges).length > 0;
+
+  const savePendingQuantityChanges = useCallback(async () => {
+    if (!cart) return false;
+    if (isSavingQuantityChanges) return false;
+
+    const entries = Object.entries(pendingQuantityChanges);
+    if (entries.length === 0) {
+      return true;
+    }
+
+    setIsSavingQuantityChanges(true);
     try {
-      await updateCartItemQuantity({
-        cart_item_id: cartItemId,
-        quantity: normalizedQty,
-      });
-      await loadCartDetail();
-      toast.success('Đã cập nhật số lượng sản phẩm');
+      for (const [cartItemId, quantity] of entries) {
+        setIsUpdatingQuantity(cartItemId);
+        await updateCartItemQuantity({
+          cart_item_id: cartItemId,
+          quantity,
+        });
+      }
+
+      setPendingQuantityChanges({});
+      toast.success('Đã lưu số lượng sản phẩm');
+      return true;
     } catch (err) {
       const message = err instanceof HttpError
         ? err.message
-        : 'Không thể cập nhật số lượng món.';
-      toast.error('Cập nhật số lượng thất bại', { description: message, duration: 5000 });
+        : 'Không thể lưu thay đổi số lượng.';
+      toast.error('Lưu số lượng thất bại', { description: message, duration: 5000 });
+      await loadCartDetail();
+      return false;
     } finally {
+      setIsSavingQuantityChanges(false);
       setIsUpdatingQuantity(null);
     }
-  }, [cart, isUpdatingQuantity, loadCartDetail]);
+  }, [cart, isSavingQuantityChanges, loadCartDetail, pendingQuantityChanges]);
 
   const increaseCartItemQuantity = useCallback((cartItemId: string) => {
     const targetItem = cart?.items.find((item) => item.id === cartItemId);
@@ -313,6 +377,13 @@ export function useCartDetail(cartId: string) {
   const applyVoucherForCart = useCallback(async () => {
     if (!cart) return;
 
+    if (hasPendingQuantityChanges) {
+      toast.error('Bạn có thay đổi số lượng chưa lưu', {
+        description: 'Vui lòng bấm "Lưu số lượng" trước khi áp dụng voucher.',
+      });
+      return;
+    }
+
     const trimmedCode = voucherCode.trim();
     if (!trimmedCode) {
       toast.error('Vui lòng nhập mã giảm giá');
@@ -337,10 +408,17 @@ export function useCartDetail(cartId: string) {
     } finally {
       setIsApplyingVoucher(false);
     }
-  }, [cart, isApplyingVoucher, isRemovingVoucher, loadCartDetail, voucherCode]);
+  }, [cart, hasPendingQuantityChanges, isApplyingVoucher, isRemovingVoucher, loadCartDetail, voucherCode]);
 
   const removeAllVoucherFromCart = useCallback(async () => {
     if (!cart || isRemovingVoucher || isApplyingVoucher) return;
+
+    if (hasPendingQuantityChanges) {
+      toast.error('Bạn có thay đổi số lượng chưa lưu', {
+        description: 'Vui lòng bấm "Lưu số lượng" trước khi gỡ voucher.',
+      });
+      return;
+    }
 
     setIsRemovingVoucher(true);
     try {
@@ -356,7 +434,7 @@ export function useCartDetail(cartId: string) {
     } finally {
       setIsRemovingVoucher(false);
     }
-  }, [cart, isRemovingVoucher, isApplyingVoucher, loadCartDetail]);
+  }, [cart, hasPendingQuantityChanges, isRemovingVoucher, isApplyingVoucher, loadCartDetail]);
 
   const handleCancelCart = useCallback(async () => {
     if (!cart || isCancellingCart) return false;
@@ -393,9 +471,13 @@ export function useCartDetail(cartId: string) {
     isApplyingVoucher,
     isRemovingVoucher,
     isCancellingCart,
+    isSavingQuantityChanges,
+    hasPendingQuantityChanges,
+    pendingQuantityChanges,
     loadCartDetail,
     handleDeleteItem,
     handleCancelCart,
+    savePendingQuantityChanges,
     setCartItemQuantity,
     increaseCartItemQuantity,
     decreaseCartItemQuantity,

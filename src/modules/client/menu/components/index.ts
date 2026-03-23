@@ -1,4 +1,4 @@
-export { CategorySideBar } from './CategorySideBar';
+export { CategorySidebar } from './CategorySideBar';
 export { default as ProductCard } from './ProductCard';
 export { default as MenuDesktopCategorySidebar } from './MenuDesktopCategorySidebar';
 export { default as MenuHero } from './MenuHero';
@@ -6,5 +6,6 @@ export { default as MenuMobileCategoryTabs } from './MenuMobileCategoryTabs';
 export { default as MenuControlBar } from './MenuControlBar';
 export { default as MenuSearchResultSection } from './MenuSearchResultSection';
 export { default as MenuCategorySections } from './MenuCategorySections';
+export { default as MenuSection } from './MenuSection';
 export { default as ItemImageGallery } from './ItemImageGallery';
 export { default as ItemPurchasePanel } from './ItemPurchasePanel';

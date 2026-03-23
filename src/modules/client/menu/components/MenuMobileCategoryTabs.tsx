@@ -1,9 +1,9 @@
-import type { CategoryResponse } from '@/apis/endpointsCLIENT/client.api';
+import type { MenuCategory } from '../services/menu-page.service';
 
 interface MenuMobileCategoryTabsProps {
-  categories: CategoryResponse[];
+  categories: MenuCategory[];
   activeCategory: string;
-  onSelectCategory: (categoryCode: string) => void;
+  onSelectCategory: (categoryId: string) => void;
 }
 
 function MenuMobileCategoryTabs({
@@ -12,19 +12,20 @@ function MenuMobileCategoryTabs({
   onSelectCategory,
 }: MenuMobileCategoryTabsProps) {
   return (
-    <div className="lg:hidden sticky top-[64px] z-20 -mx-4 border-y border-[var(--cf-secondary)]/10 bg-[var(--cf-bg)]/90 px-4 py-3 backdrop-blur-sm md:-mx-8 md:px-8">
+    <div className="sticky top-[64px] z-20 -mx-4 border-y border-[var(--cf-secondary)]/10 bg-[var(--cf-bg)]/90 px-4 py-3 backdrop-blur-sm lg:hidden md:-mx-8 md:px-8">
       <div className="scrollbar-hide flex gap-2 overflow-x-auto">
         {categories.map((category) => (
           <button
-            key={category.category_code}
-            onClick={() => onSelectCategory(category.category_code)}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all ${activeCategory === category.category_code
-              ? 'bg-[var(--cf-primary)] text-white shadow-md'
-              : 'border border-[var(--cf-secondary)]/20 bg-white/80 text-[var(--cf-secondary)]'
-              }`}
+            key={category.id}
+            onClick={() => onSelectCategory(category.id)}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+              activeCategory === category.id
+                ? 'bg-[var(--cf-primary)] text-white shadow-md'
+                : 'border border-[var(--cf-secondary)]/20 bg-white/80 text-[var(--cf-secondary)]'
+            }`}
             type="button"
           >
-            {category.category_name}
+            {category.name}
           </button>
         ))}
       </div>

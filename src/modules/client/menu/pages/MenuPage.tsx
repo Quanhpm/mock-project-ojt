@@ -14,26 +14,21 @@ function MenuPage() {
   return (
     <div className="min-h-screen bg-[var(--cf-bg)]">
       <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-6 md:px-8 lg:gap-10 lg:px-10">
-        {/* Desktop sidebar navigation */}
         <MenuDesktopCategorySidebar
-          categories={vm.validCategories}
+          categories={vm.categories}
           activeCategory={vm.activeCategory}
           onSelectCategory={vm.scrollToSection}
         />
 
-        {/* Main content section */}
         <section className="flex min-w-0 flex-1 flex-col gap-8">
-          {/* Hero banner */}
           <MenuHero />
 
-          {/* Mobile category tabs navigation */}
           <MenuMobileCategoryTabs
-            categories={vm.validCategories}
+            categories={vm.categories}
             activeCategory={vm.activeCategory}
             onSelectCategory={vm.scrollToSection}
           />
 
-          {/* Search and filter controls */}
           <MenuControlBar
             search={vm.search}
             franchiseId={vm.franchiseId}
@@ -43,7 +38,6 @@ function MenuPage() {
             onFranchiseChange={vm.setFranchiseId}
           />
 
-          {/* Products display: search results or categories */}
           {vm.showSearchResults ? (
             <MenuSearchResultSection
               search={vm.search}
@@ -52,9 +46,8 @@ function MenuPage() {
             />
           ) : (
             <MenuCategorySections
-              categories={vm.validCategories}
+              sections={vm.sections}
               franchiseId={vm.franchiseId}
-              getProductByCategory={vm.getProductByCategory}
               setSectionRef={vm.setSectionRef}
             />
           )}

@@ -1,91 +1,78 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
-import type { CategoryResponse } from '@/apis/endpointsCLIENT/client.api';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { MenuCategory } from '../services/menu-page.service';
 
 interface UseScrollSpyReturn {
   activeCategory: string;
-  scrollToSection: (code: string) => void;
+  scrollToSection: (categoryId: string) => void;
   sectionRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
-  setSectionRef: (code: string, el: HTMLDivElement | null) => void;
+  setSectionRef: (categoryId: string, el: HTMLDivElement | null) => void;
 }
 
-export function useScrollSpy(
-  categories: CategoryResponse[],
-  validCount: number,
-): UseScrollSpyReturn {
+export function useScrollSpy(categories: MenuCategory[]): UseScrollSpyReturn {
   const sectionRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const [activeCategory, setActiveCategory] = useState<string>('');
-  const [refsReady, setRefsReady] = useState(false);
+  const [trackedCategory, setTrackedCategory] = useState<string>('');
+  const [sectionRefVersion, setSectionRefVersion] = useState(0);
 
-  // Initialize active category and reset refs when categories change
   useEffect(() => {
-    if (categories.length > 0) {
-      setActiveCategory(categories[0].category_code);
-    }
-    sectionRefs.current = {};
-    setRefsReady(false);
+    sectionRefs.current = categories.reduce<{ [key: string]: HTMLDivElement | null }>(
+      (refs, category) => {
+        refs[category.id] = sectionRefs.current[category.id] ?? null;
+        return refs;
+      },
+      {},
+    );
   }, [categories]);
 
-  // Register section references
-  const setSectionRef = useCallback(
-    (code: string, el: HTMLDivElement | null) => {
-      if (!el) return;
-      sectionRefs.current[code] = el;
+  const setSectionRef = useCallback((categoryId: string, el: HTMLDivElement | null) => {
+    if (sectionRefs.current[categoryId] === el) {
+      return;
+    }
 
-      // When all refs are registered, mark as ready
-      if (Object.keys(sectionRefs.current).length === validCount) {
-        setRefsReady(true);
-      }
-    },
-    [validCount],
-  );
+    sectionRefs.current[categoryId] = el;
+    setSectionRefVersion((currentVersion) => currentVersion + 1);
+  }, []);
 
-  // Scroll to specific section smoothly
-  const scrollToSection = (code: string) => {
-    sectionRefs.current[code]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setActiveCategory(code);
-  };
+  const scrollToSection = useCallback((categoryId: string) => {
+    sectionRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTrackedCategory(categoryId);
+  }, []);
 
-  // Observe section visibility and sync sidebar scroll
   useEffect(() => {
-    if (!refsReady) return;
+    if (categories.length === 0) return;
+
+    const sections = categories
+      .map((category) => sectionRefs.current[category.id])
+      .filter((section): section is HTMLDivElement => section !== null);
+
+    if (sections.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveCategory(entry.target.id);
+        const visibleEntries = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((entryA, entryB) => entryA.boundingClientRect.top - entryB.boundingClientRect.top);
 
-            // Sync sidebar scroll position with visible section
-            const sidebar = document.querySelector('aside');
-            if (sidebar) {
-              const categoryElement = entry.target as HTMLElement;
-              const categoryOffset = categoryElement.offsetTop;
-              const sidebarHeight = sidebar.offsetHeight;
-              const categoryHeight = categoryElement.offsetHeight;
+        const nextCategoryId = visibleEntries[0]?.target.getAttribute('data-category-id');
+        if (!nextCategoryId) return;
 
-              const isOutOfView =
-                categoryOffset < sidebar.scrollTop ||
-                categoryOffset + categoryHeight > sidebar.scrollTop + sidebarHeight;
-
-              if (isOutOfView) {
-                sidebar.scrollTop = categoryOffset - 1200;
-              }
-            }
-          }
-        });
+        setTrackedCategory((currentCategory) =>
+          currentCategory === nextCategoryId ? currentCategory : nextCategoryId,
+        );
       },
       {
-        rootMargin: '-120px 0px -60% 0px',
-        threshold: 0.1,
+        rootMargin: '-140px 0px -55% 0px',
+        threshold: [0.1, 0.25, 0.5, 0.75],
       },
     );
 
-    Object.values(sectionRefs.current).forEach((section) => {
-      if (section) observer.observe(section);
-    });
+    sections.forEach((section) => observer.observe(section));
 
     return () => observer.disconnect();
-  }, [refsReady]);
+  }, [categories, sectionRefVersion]);
+
+  const activeCategory = categories.some((category) => category.id === trackedCategory)
+    ? trackedCategory
+    : (categories[0]?.id ?? '');
 
   return { activeCategory, scrollToSection, sectionRefs, setSectionRef };
 }
