@@ -69,7 +69,7 @@ export default function VoucherRestore({
               <RotateCcw size={24} color="#4caf50" />
             </div>
             <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "#212529" }}>
-              Khôi Phục Voucher
+              Restore Voucher
             </h2>
           </div>
           <button
@@ -91,7 +91,7 @@ export default function VoucherRestore({
         {/* Body */}
         <div style={{ padding: "24px" }}>
           <p style={{ margin: 0, marginBottom: "16px", fontSize: "15px", color: "#495057", lineHeight: "1.6" }}>
-            Bạn có chắc chắn muốn khôi phục voucher này không?
+            Are you sure you want to restore this voucher?
           </p>
           <div style={{
             backgroundColor: "#f8f9fa",
@@ -109,7 +109,7 @@ export default function VoucherRestore({
             </div>
             <div>
               <span style={{ fontSize: "12px", color: "#6c757d", textTransform: "uppercase", fontWeight: "600" }}>
-                Tên Voucher
+               Voucher Name
               </span>
               <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#212529", fontWeight: "500" }}>
                 {voucherName}
@@ -139,7 +139,7 @@ export default function VoucherRestore({
               color: "#374151",
             }}
           >
-            Hủy
+            Close
           </button>
           <button
             onClick={handleConfirm}
@@ -154,7 +154,7 @@ export default function VoucherRestore({
               color: "white",
             }}
           >
-            Khôi Phục
+            Restore
           </button>
         </div>
       </div>

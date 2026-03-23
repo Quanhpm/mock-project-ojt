@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2, Tag } from "lucide-react";
 import { useCreatePromotion } from "./hooks/useCreatePromotion";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpoints/product-franchise.api";
+import { useNavigate } from "react-router-dom";
+import { ROUTER_URL } from "@/routes/router.const";
 
 const createPromotionSchema = z
   .object({
@@ -14,7 +15,7 @@ const createPromotionSchema = z
     franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
     type: z.enum(["FIXED", "PERCENT"]),
-    value: z.number({ message: "Value must be a number" }),
+    value: z.number().int().min(1, "Minimum is 1"),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().min(1, "End date is required"),
   })
@@ -78,15 +79,10 @@ const errorStyle: React.CSSProperties = {
   color: "#ef4444",
 };
 
-interface PromotionCreateModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
 
-export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: PromotionCreateModalProps) {
+export default function PromotionCreateModal() {
   const { createPromotion, isCreating } = useCreatePromotion();
-
+  const navigate = useNavigate();
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
   const [productFranchises, setProductFranchises] = useState<ProductFranchiseItem[]>([]);
   const [franchisesLoading, setFranchisesLoading] = useState(false);
@@ -97,7 +93,6 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
     handleSubmit,
     watch,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<CreatePromotionFormValues>({
     resolver: zodResolver(createPromotionSchema),
@@ -107,7 +102,6 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
       product_franchise_id: "",
       type: "FIXED",
       value: undefined,
-      // quota_total: 1,
       start_date: "",
       end_date: "",
     },
@@ -140,17 +134,10 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
     return selectedType === "PERCENT" ? " %" : " VND";
   };
 
-  // Reset form khi mở modal
-  useEffect(() => {
-    if (isOpen) {
-      reset();
-      setProductFranchises([]);
-    }
-  }, [isOpen, reset]);
+
 
   // Load franchises khi mở modal
   useEffect(() => {
-    if (!isOpen) return;
     setFranchisesLoading(true);
     franchiseApi
       .searchFranchises({
@@ -160,7 +147,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
       .then((res) => setFranchises(res?.data ?? []))
       .catch(() => setFranchises([]))
       .finally(() => setFranchisesLoading(false));
-  }, [isOpen]);
+  }, []);
 
   // Load product franchises khi chọn franchise
   useEffect(() => {
@@ -188,108 +175,58 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
         product_franchise_id: data.product_franchise_id || undefined,
         type: data.type,
         value: data.value,
-        // quota_total: data.quota_total,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       },
-      () => {
-        onSuccess();
-        onClose();
-      },
+      () => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.PROMOTION}`)
     );
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: "white",
-          borderRadius: "12px",
-          width: "90%",
-          maxWidth: "620px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-          fontFamily: "Inter, sans-serif",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid #f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            backgroundColor: "white",
-            zIndex: 1,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                backgroundColor: "#fdf3eb",
-                padding: "10px",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Tag size={22} color="#8B4513" />
-            </div>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-              Create Promotion 
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              display: "flex",
-              alignItems: "center",
-              color: "#6c757d",
-            }}
-          >
-            <X size={20} />
-          </button>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+        {/* HEADER */}
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
+          <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0 }}>
+            Create New Promotion
+          </h1>
+          <p style={{ fontSize: "14px", color: "#9C6644", marginTop: "8px" }}>
+            Add a new promotion to your franchise promotion
+          </p>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "24px" }}>
+        {/* FORM CARD */}
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            border: "1px solid #E6CCB2",
+            boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)",
+            padding: "32px",
+          }}
+        >
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Name */}
               <div>
                 <label style={labelStyle}>
-                 Promotion Name <span style={{ color: "#ef4444" }}>*</span>
+                  Promotion Name <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   {...register("name")}
-                  placeholder="VD: Promotion Month 4"
-                  style={inputStyle}
+                  placeholder="e.g. April Special Offer"
+                  style={{
+                    ...inputStyle,
+                    ':focus': { borderColor: "#B08968", backgroundColor: "white" }
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 />
                 {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
               </div>
@@ -297,12 +234,23 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               {/* Franchise */}
               <div>
                 <label style={labelStyle}>
-                  Franchise <span style={{ color: "#ef4444" }}>*</span>
+                  Franchise <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <select
                   {...register("franchise_id")}
                   disabled={franchisesLoading}
-                  style={{ ...inputStyle, cursor: franchisesLoading ? "wait" : "pointer" }}
+                  style={{
+                    ...inputStyle,
+                    cursor: franchisesLoading ? "wait" : "pointer",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 >
                   <option value="">
                     {franchisesLoading ? "Loading..." : "-- Select franchise --"}
@@ -320,13 +268,24 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
 
               {/* Product Franchise */}
               <div>
-                <label style={labelStyle}>Products (optional)</label>
+                <label style={labelStyle}>Products (Optional)</label>
                 <select
                   {...register("product_franchise_id")}
                   disabled={!selectedFranchiseId || pfLoading}
                   style={{
                     ...inputStyle,
                     cursor: !selectedFranchiseId || pfLoading ? "not-allowed" : "pointer",
+                    opacity: !selectedFranchiseId ? 0.6 : 1,
+                  }}
+                  onFocus={(e) => {
+                    if (selectedFranchiseId && !pfLoading) {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
                   }}
                 >
                   <option value="">
@@ -334,11 +293,11 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                       ? "Loading..."
                       : !selectedFranchiseId
                         ? "Select franchise first"
-                        : "-- Apply to all products --"}
+                        : "-- Applicable to all products --"}
                   </option>
                   {productFranchises.map((pf) => (
                     <option key={pf.id} value={pf.id}>
-                      {pf.product_name ?? pf.id}
+                     {pf.product_name}
                     </option>
                   ))}
                 </select>
@@ -348,37 +307,44 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Discount Type <span style={{ color: "#ef4444" }}>*</span>
+                    Discount Type <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="FIXED">Fixed (₫)</option>
-                    <option value="PERCENT">Percent (%)</option>
+                  <select
+                    {...register("type")}
+                    style={{ ...inputStyle, cursor: "pointer" }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  >
+                    <option value="FIXED">FIXED (₫)</option>
+                    <option value="PERCENT">PERCENT (%)</option>
                   </select>
                   {errors.type && <p style={errorStyle}>{errors.type.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Value <span style={{ color: "#ef4444" }}>*</span>
+                    Value <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formatValueDisplay(currentValue)}
-                      onChange={handleValueChange}
-                      placeholder={getValuePlaceholder()}
-                      style={inputStyle}
-                    />
-                    <span style={{
-                      position: "absolute",
-                      right: "12px",
-                      color: "#9ca3af",
-                      fontSize: "14px",
-                      pointerEvents: "none",
-                    }}>
-                      {getValueSuffix()}
-                    </span>
-                  </div>
+                  <input
+                    type="number"
+                    step="any"
+                    {...register("value", { valueAsNumber: true })}
+                    placeholder="0"
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
                 </div>
               </div>
@@ -387,16 +353,40 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Start date <span style={{ color: "#ef4444" }}>*</span>
+                    Start Date <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <input type="datetime-local" {...register("start_date")} style={inputStyle} />
+                  <input
+                    type="datetime-local"
+                    {...register("start_date")}
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.start_date && <p style={errorStyle}>{errors.start_date.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    End date <span style={{ color: "#ef4444" }}>*</span>
+                    End Date <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <input type="datetime-local" {...register("end_date")} style={inputStyle} />
+                  <input
+                    type="datetime-local"
+                    {...register("end_date")}
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.end_date && <p style={errorStyle}>{errors.end_date.message}</p>}
                 </div>
               </div>
@@ -407,26 +397,36 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               style={{
                 display: "flex",
                 gap: "12px",
-                marginTop: "24px",
-                justifyContent: "flex-end",
-                paddingTop: "20px",
-                borderTop: "1px solid #f0f0f0",
+                marginTop: "32px",
+                paddingTop: "24px",
+                borderTop: "1px solid #E6CCB2",
               }}
             >
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.PROMOTION}`)}
                 disabled={isCreating}
                 style={{
-                  padding: "10px 20px",
-                  border: "1px solid #e5e7eb",
+                  padding: "11px 24px",
+                  border: "1px solid #DDB892",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
                   cursor: isCreating ? "not-allowed" : "pointer",
                   backgroundColor: "white",
-                  color: "#374151",
+                  color: "#7F5539",
+                  transition: "all 0.2s",
                   marginRight: "auto",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isCreating) {
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                    e.currentTarget.style.borderColor = "#B08968";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.borderColor = "#DDB892";
                 }}
               >
                 Cancel
@@ -438,14 +438,23 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  padding: "10px 24px",
-                  backgroundColor: isCreating ? "#c4956a" : "#8B4513",
+                  padding: "11px 28px",
+                  backgroundColor: isCreating ? "#B08968" : "#7F5539",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: isCreating ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isCreating) {
+                    e.currentTarget.style.backgroundColor = "#9C6644";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#7F5539";
                 }}
               >
                 {isCreating && (

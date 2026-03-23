@@ -69,7 +69,7 @@ export default function VoucherDelete({
               <AlertTriangle size={24} color="#f44336" />
             </div>
             <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "600", color: "#212529" }}>
-              Xóa Voucher
+              Delete Voucher
             </h2>
           </div>
           <button
@@ -91,7 +91,7 @@ export default function VoucherDelete({
         {/* Body */}
         <div style={{ padding: "24px" }}>
           <p style={{ margin: 0, marginBottom: "16px", fontSize: "15px", color: "#495057", lineHeight: "1.6" }}>
-            Bạn có chắc chắn muốn xóa voucher này không? Hành động này có thể hoàn tác bằng cách khôi phục.
+            Are you sure you want to delete this promotion? This action can not be undone.
           </p>
           <div style={{
             backgroundColor: "#f8f9fa",
@@ -109,7 +109,7 @@ export default function VoucherDelete({
             </div>
             <div>
               <span style={{ fontSize: "12px", color: "#6c757d", textTransform: "uppercase", fontWeight: "600" }}>
-                Tên Voucher
+               Voucher Name
               </span>
               <p style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#212529", fontWeight: "500" }}>
                 {voucherName}
@@ -137,9 +137,10 @@ export default function VoucherDelete({
               cursor: "pointer",
               backgroundColor: "white",
               color: "#374151",
+              marginRight: "auto",
             }}
           >
-            Hủy
+            Close
           </button>
           <button
             onClick={handleConfirm}
@@ -154,7 +155,7 @@ export default function VoucherDelete({
               color: "white",
             }}
           >
-            Xóa Voucher
+            Delete Voucher
           </button>
         </div>
       </div>

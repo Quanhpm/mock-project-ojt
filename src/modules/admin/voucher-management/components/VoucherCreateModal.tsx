@@ -2,82 +2,100 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2, Tag } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useCreateVoucher } from "./hooks/useCreateVoucher";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpoints/product-franchise.api";
+import { useNavigate } from "react-router-dom";
+import { ROUTER_URL } from "@/routes/router.const";
 
 const createVoucherSchema = z
   .object({
-    name: z.string().min(1, "Tên voucher là bắt buộc"),
-    franchise_id: z.string().min(1, "Franchise là bắt buộc"),
+    name: z.string().min(1, "Promotion name is required"),
+    franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
-    type: z.enum(["FIXED", "PERCENT"], { required_error: "Loại voucher là bắt buộc" }),
-    value: z
-      .number({ invalid_type_error: "Giá trị phải là số" })
-      .positive("Giá trị phải lớn hơn 0"),
-    quota_total: z
-      .number({ invalid_type_error: "Số lượng phải là số" })
-      .int("Số lượng phải là số nguyên")
-      .positive("Số lượng phải lớn hơn 0"),
-    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
-    end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
+    type: z.enum(["FIXED", "PERCENT"]),
+    value: z.number().int().min(1, "Minimum is 1"),
+    quota_total: z.number().int().min(1, "Minimum is 1"),
+    start_date: z.string().min(1, "Start date is required"),
+    end_date: z.string().min(1, "End date is required"),
   })
-  .refine(
-    (data) => {
-      if (data.start_date && data.end_date) {
-        return new Date(data.start_date) < new Date(data.end_date);
+  .superRefine((data, ctx) => {
+    if (data.type === "PERCENT") {
+      if (data.value <= 0 || data.value > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Percentage must be between 1 and 100",
+          path: ["value"],
+        });
       }
-      return true;
-    },
-    { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
-  )
-  .refine(
-    (data) => {
-      if (data.type === "PERCENT" && data.value > 100) {
-        return false;
+    }
+
+    if (data.type === "FIXED") {
+      if (data.value < 1000 || data.value > 100000) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Value must be between 1,000 and 100,000 VND",
+          path: ["value"],
+        });
       }
-      return true;
-    },
-    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
-  );
+    }
+
+    if (data.quota_total) {
+      if (data.quota_total < 1000 || data.quota_total > 100000) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Value must be between 1,000 and 100,000 VND",
+          path: ["quota_total"],
+        });
+      }
+    }
+
+    // validate date
+    if (data.start_date && data.end_date) {
+      if (new Date(data.start_date) >= new Date(data.end_date)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "End date must be after start date",
+          path: ["end_date"],
+        });
+      }
+    }
+  });
 
 type CreateVoucherFormValues = z.infer<typeof createVoucherSchema>;
 
 const labelStyle: React.CSSProperties = {
   display: "block",
-  fontSize: "13px",
+  fontSize: "14px",
   fontWeight: "600",
-  color: "#374151",
-  marginBottom: "6px",
+  color: "#444444",
+  marginBottom: "8px",
 };
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "9px 12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
+  padding: "11px 14px",
+  border: "1px solid #DDB892",
+  borderRadius: "8px",
   fontSize: "14px",
   outline: "none",
   boxSizing: "border-box",
-  backgroundColor: "white",
+  backgroundColor: "#faf8f6",
+  transition: "all 0.2s",
 };
 
 const errorStyle: React.CSSProperties = {
-  margin: "4px 0 0 0",
+  margin: "6px 0 0 0",
   fontSize: "12px",
-  color: "#ef4444",
+  color: "#dc2626",
 };
 
-interface VoucherCreateModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}
 
-export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: VoucherCreateModalProps) {
+
+export default function VoucherCreateModal() {
   const { createVoucher, isCreating } = useCreateVoucher();
-
+  const navigate = useNavigate();
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
   const [productFranchises, setProductFranchises] = useState<ProductFranchiseItem[]>([]);
   const [franchisesLoading, setFranchisesLoading] = useState(false);
@@ -88,7 +106,6 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
     handleSubmit,
     watch,
     setValue,
-    reset,
     formState: { errors },
   } = useForm<CreateVoucherFormValues>({
     resolver: zodResolver(createVoucherSchema),
@@ -97,8 +114,8 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
       franchise_id: "",
       product_franchise_id: "",
       type: "FIXED",
-      value: 0,
-      quota_total: 1,
+      value: undefined,
+      quota_total: undefined,
       start_date: "",
       end_date: "",
     },
@@ -132,27 +149,17 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
     setValue("value", numValue, { shouldValidate: true });
   };
 
-  // Reset form khi mở modal
-  useEffect(() => {
-    if (isOpen) {
-      reset();
-      setProductFranchises([]);
-    }
-  }, [isOpen, reset]);
-
-  // Load franchises khi mở modal
-  useEffect(() => {
-    if (!isOpen) return;
-    setFranchisesLoading(true);
-    franchiseApi
-      .searchFranchises({
-        searchCondition: { is_deleted: false, is_active: true },
-        pageInfo: { pageNum: 1, pageSize: 100 },
-      })
-      .then((res) => setFranchises(res?.data ?? []))
-      .catch(() => setFranchises([]))
-      .finally(() => setFranchisesLoading(false));
-  }, [isOpen]);
+useEffect(() => {
+  setFranchisesLoading(true);
+  franchiseApi
+    .searchFranchises({
+      searchCondition: { is_deleted: false, is_active: true },
+      pageInfo: { pageNum: 1, pageSize: 100 },
+    })
+    .then((res) => setFranchises(res?.data ?? []))
+    .catch(() => setFranchises([]))
+    .finally(() => setFranchisesLoading(false));
+}, []);
 
   // Load product franchises khi chọn franchise
   useEffect(() => {
@@ -184,104 +191,57 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       },
-      () => {
-        onSuccess();
-        onClose();
-      },
+      () => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.VOUCHER}`)
     );
   };
 
-  if (!isOpen) return null;
+
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        zIndex: 999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: "white",
-          borderRadius: "12px",
-          width: "90%",
-          maxWidth: "620px",
-          maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
-          fontFamily: "Inter, sans-serif",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid #f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            position: "sticky",
-            top: 0,
-            backgroundColor: "white",
-            zIndex: 1,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                backgroundColor: "#fdf3eb",
-                padding: "10px",
-                borderRadius: "8px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Tag size={22} color="#8B4513" />
-            </div>
-            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-              Tạo Voucher Mới
-            </h2>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "4px",
-              display: "flex",
-              alignItems: "center",
-              color: "#6c757d",
-            }}
-          >
-            <X size={20} />
-          </button>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+        {/* HEADER */}
+        <div style={{ textAlign: "center", marginBottom: "40px" }}>
+          <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0 }}>
+            Create New Voucher
+          </h1>
+          <p style={{ fontSize: "14px", color: "#9C6644", marginTop: "8px" }}>
+            Add a new voucher to your franchise promotion
+          </p>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: "24px" }}>
+        {/* FORM CARD */}
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "12px",
+            border: "1px solid #E6CCB2",
+            boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)",
+            padding: "32px",
+          }}
+        >
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               {/* Name */}
               <div>
                 <label style={labelStyle}>
-                  Tên voucher <span style={{ color: "#ef4444" }}>*</span>
+                  Voucher Name <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   {...register("name")}
-                  placeholder="VD: Voucher KM Tháng 4"
-                  style={inputStyle}
+                  placeholder="e.g. April Special Offer"
+                  style={{
+                    ...inputStyle,
+                    ':focus': { borderColor: "#B08968", backgroundColor: "white" }
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 />
                 {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
               </div>
@@ -289,15 +249,26 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               {/* Franchise */}
               <div>
                 <label style={labelStyle}>
-                  Franchise <span style={{ color: "#ef4444" }}>*</span>
+                  Franchise <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <select
                   {...register("franchise_id")}
                   disabled={franchisesLoading}
-                  style={{ ...inputStyle, cursor: franchisesLoading ? "wait" : "pointer" }}
+                  style={{
+                    ...inputStyle,
+                    cursor: franchisesLoading ? "wait" : "pointer",
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 >
                   <option value="">
-                    {franchisesLoading ? "Đang tải..." : "-- Chọn franchise --"}
+                    {franchisesLoading ? "Loading..." : "-- Select franchise --"}
                   </option>
                   {franchises.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -312,25 +283,36 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
 
               {/* Product Franchise */}
               <div>
-                <label style={labelStyle}>Sản phẩm (tùy chọn)</label>
+                <label style={labelStyle}>Products (Optional)</label>
                 <select
                   {...register("product_franchise_id")}
                   disabled={!selectedFranchiseId || pfLoading}
                   style={{
                     ...inputStyle,
                     cursor: !selectedFranchiseId || pfLoading ? "not-allowed" : "pointer",
+                    opacity: !selectedFranchiseId ? 0.6 : 1,
+                  }}
+                  onFocus={(e) => {
+                    if (selectedFranchiseId && !pfLoading) {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
                   }}
                 >
                   <option value="">
                     {pfLoading
-                      ? "Đang tải..."
+                      ? "Loading..."
                       : !selectedFranchiseId
-                        ? "Chọn franchise trước"
-                        : "-- Áp dụng cho tất cả sản phẩm --"}
+                        ? "Select franchise first"
+                        : "-- Applicable to all products --"}
                   </option>
                   {productFranchises.map((pf) => (
                     <option key={pf.id} value={pf.id}>
-                      {pf.product_name ?? pf.id}
+                     {pf.product_name}
                     </option>
                   ))}
                 </select>
@@ -340,37 +322,44 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Loại giảm giá <span style={{ color: "#ef4444" }}>*</span>
+                    Discount Type <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="FIXED">Cố định (₫)</option>
-                    <option value="PERCENT">Phần trăm (%)</option>
+                  <select
+                    {...register("type")}
+                    style={{ ...inputStyle, cursor: "pointer" }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  >
+                    <option value="FIXED">FIXED (₫)</option>
+                    <option value="PERCENT">PERCENT (%)</option>
                   </select>
                   {errors.type && <p style={errorStyle}>{errors.type.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Giá trị <span style={{ color: "#ef4444" }}>*</span>
+                    Value <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={formatValueDisplay(currentValue)}
-                      onChange={handleValueChange}
-                      placeholder={getValuePlaceholder()}
-                      style={inputStyle}
-                    />
-                    <span style={{
-                      position: "absolute",
-                      right: "12px",
-                      color: "#9ca3af",
-                      fontSize: "14px",
-                      pointerEvents: "none",
-                    }}>
-                      {getValueSuffix()}
-                    </span>
-                  </div>
+                  <input
+                    type="number"
+                    step="any"
+                    {...register("value", { valueAsNumber: true })}
+                    placeholder="0"
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
                 </div>
               </div>
@@ -378,15 +367,22 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               {/* Quota Total */}
               <div>
                 <label style={labelStyle}>
-                  Số lượng tổng <span style={{ color: "#ef4444" }}>*</span>
+                  Total Quantity <span style={{ color: "#dc2626" }}>*</span>
                 </label>
                 <input
                   type="number"
-                  min={1}
-                  step={1}
+                  step="any"
                   {...register("quota_total", { valueAsNumber: true })}
                   placeholder="10"
                   style={inputStyle}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "#B08968";
+                    e.currentTarget.style.backgroundColor = "white";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "#DDB892";
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                  }}
                 />
                 {errors.quota_total && <p style={errorStyle}>{errors.quota_total.message}</p>}
               </div>
@@ -395,16 +391,40 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Ngày bắt đầu <span style={{ color: "#ef4444" }}>*</span>
+                    Start Date <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <input type="datetime-local" {...register("start_date")} style={inputStyle} />
+                  <input
+                    type="datetime-local"
+                    {...register("start_date")}
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.start_date && <p style={errorStyle}>{errors.start_date.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Ngày kết thúc <span style={{ color: "#ef4444" }}>*</span>
+                    End Date <span style={{ color: "#dc2626" }}>*</span>
                   </label>
-                  <input type="datetime-local" {...register("end_date")} style={inputStyle} />
+                  <input
+                    type="datetime-local"
+                    {...register("end_date")}
+                    style={inputStyle}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#B08968";
+                      e.currentTarget.style.backgroundColor = "white";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
+                    }}
+                  />
                   {errors.end_date && <p style={errorStyle}>{errors.end_date.message}</p>}
                 </div>
               </div>
@@ -415,28 +435,39 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               style={{
                 display: "flex",
                 gap: "12px",
-                marginTop: "24px",
-                justifyContent: "flex-end",
-                paddingTop: "20px",
-                borderTop: "1px solid #f0f0f0",
+                marginTop: "32px",
+                paddingTop: "24px",
+                borderTop: "1px solid #E6CCB2",
               }}
             >
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.VOUCHER}`)}
                 disabled={isCreating}
                 style={{
-                  padding: "10px 20px",
-                  border: "1px solid #e5e7eb",
+                  padding: "11px 24px",
+                  border: "1px solid #DDB892",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "500",
                   cursor: isCreating ? "not-allowed" : "pointer",
                   backgroundColor: "white",
-                  color: "#374151",
+                  color: "#7F5539",
+                  transition: "all 0.2s",
+                  marginRight: "auto",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isCreating) {
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                    e.currentTarget.style.borderColor = "#B08968";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "white";
+                  e.currentTarget.style.borderColor = "#DDB892";
                 }}
               >
-                Hủy
+                Cancel
               </button>
               <button
                 type="submit"
@@ -445,20 +476,29 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  padding: "10px 24px",
-                  backgroundColor: isCreating ? "#c4956a" : "#8B4513",
+                  padding: "11px 28px",
+                  backgroundColor: isCreating ? "#B08968" : "#7F5539",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontWeight: "600",
                   cursor: isCreating ? "not-allowed" : "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isCreating) {
+                    e.currentTarget.style.backgroundColor = "#9C6644";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#7F5539";
                 }}
               >
                 {isCreating && (
                   <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                 )}
-                Tạo Voucher
+                Create Voucher
               </button>
             </div>
           </form>

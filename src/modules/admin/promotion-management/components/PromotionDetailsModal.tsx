@@ -1,29 +1,6 @@
 import { X, Tag, Calendar, Building2, Package, Coffee } from "lucide-react";
 import type { Promotion } from "./promotion.types";
 
-// Inject animation styles
-// const styleSheet = document.createElement("style");
-// styleSheet.textContent = `
-//   @keyframes spin {
-//     from { transform: rotate(0deg); }
-//     to { transform: rotate(360deg); }
-//   }
-//   @keyframes pulse {
-//     0%, 100% { opacity: 1; }
-//     50% { opacity: 0.5; }
-//   }
-//   .modal-animate-spin {
-//     animation: spin 1s linear infinite;
-//   }
-//   .modal-animate-pulse {
-//     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-//   }
-// `;
-// if (!document.head.querySelector("style[data-promotion-modal]")) {
-//   styleSheet.setAttribute("data-promotion-modal", "true");
-//   document.head.appendChild(styleSheet);
-// }
-
 interface PromotionDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,7 +9,7 @@ interface PromotionDetailsModalProps {
 }
 
 const formatDate = (dateStr: string) => {
-  if (!dateStr) return "â€”";
+  if (!dateStr) return "—";
   return new Date(dateStr).toLocaleString("vi-VN", {
     year: "numeric",
     month: "2-digit",
@@ -43,7 +20,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const formatValue = (type: string, value: number) => {
-  if (type === "FIXED") return `${value.toLocaleString("vi-VN")} â‚«`;
+  if (type === "FIXED") return `${value.toLocaleString("vi-VN")} ₫`;
   return `${value}%`;
 };
 
@@ -219,16 +196,7 @@ export default function PromotionDetailsModal({
                     <Coffee size={28} />
                   </div>
                 </div>
-                {/* <p
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#92400e",
-                  }}
-                  className="modal-animate-pulse"
-                >
-                  Đang tải...
-                </p> */}
+
               </div>
             </div>
           ) : promotion ? (
