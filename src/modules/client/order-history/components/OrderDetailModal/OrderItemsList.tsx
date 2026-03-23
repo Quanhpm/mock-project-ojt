@@ -9,8 +9,8 @@ interface OrderItemsListProps {
 function OrderItemsList({ items }: OrderItemsListProps) {
   if (items.length === 0) {
     return (
-      <div className="p-5 rounded-xl bg-slate-50 dark:bg-[#221a11]/50 border border-slate-100 dark:border-[#483623]">
-        <p className="text-sm font-medium text-slate-500 dark:text-[#c9ad92]">
+      <div className="p-5 rounded-xl bg-slate-50/50 border border-slate-100">
+        <p className="text-sm font-medium text-slate-500">
           Chưa có sản phẩm trong đơn hàng này.
         </p>
       </div>
@@ -18,8 +18,8 @@ function OrderItemsList({ items }: OrderItemsListProps) {
   }
 
   return (
-    <section className="p-5 rounded-xl bg-slate-50 dark:bg-[#221a11]/50 border border-slate-100 dark:border-[#483623] space-y-3">
-      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-[#c9ad92]">
+    <section className="p-5 rounded-xl bg-slate-50/50 border border-slate-100 space-y-3">
+      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500">
         Danh sách sản phẩm
       </h3>
 
@@ -27,12 +27,12 @@ function OrderItemsList({ items }: OrderItemsListProps) {
         {items.map((item) => (
           <article
             key={item.id}
-            className="group flex items-start gap-3 rounded-lg border border-transparent px-2 py-2 transition-colors hover:bg-white hover:border-slate-200 dark:hover:bg-[#2a2016] dark:hover:border-[#5d4a37]"
+            className="group flex items-start gap-3 rounded-lg border border-transparent px-2 py-2 transition-colors hover:bg-white hover:border-slate-200"
           >
             <img
               src={item.productImageUrl || fallbackProductImage}
               alt={item.productName || 'Boutique Brews'}
-              className="size-14 rounded-lg object-cover border border-slate-200 dark:border-[#5d4a37] shrink-0"
+              className="size-14 rounded-lg object-cover border border-slate-200 shrink-0"
               loading="lazy"
               onError={(event) => {
                 event.currentTarget.src = fallbackProductImage;
@@ -40,8 +40,8 @@ function OrderItemsList({ items }: OrderItemsListProps) {
             />
 
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{item.productName}</p>
-              <p className="text-xs text-slate-500 dark:text-[#c9ad92]">
+              <p className="text-sm font-semibold text-[#1a130c] truncate">{item.productName}</p>
+              <p className="text-xs text-slate-700">
                 Đơn giá: {formatCurrency(item.priceSnapshot)}
               </p>
 
@@ -50,7 +50,7 @@ function OrderItemsList({ items }: OrderItemsListProps) {
                   {item.options.map((option) => (
                     <li
                       key={option.id}
-                      className="flex items-center gap-1 text-xs text-slate-500 dark:text-[#c9ad92]"
+                      className="flex items-center gap-1 text-xs text-slate-700"
                     >
                       <span className="material-symbols-outlined text-[12px] leading-none">fiber_manual_record</span>
                       <span className="truncate">
@@ -63,8 +63,8 @@ function OrderItemsList({ items }: OrderItemsListProps) {
             </div>
 
             <div className="text-right shrink-0">
-              <p className="text-xs text-slate-500 dark:text-[#c9ad92]">x{item.quantity}</p>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">
+              <p className="text-xs text-slate-600">x{item.quantity}</p>
+              <p className="text-sm font-bold text-[#1a130c]">
                 {formatCurrency(item.finalLineTotal)}
               </p>
             </div>

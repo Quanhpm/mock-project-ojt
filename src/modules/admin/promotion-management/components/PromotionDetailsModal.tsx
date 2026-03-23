@@ -1,10 +1,11 @@
-import { X, Tag, Calendar, Building2, Package } from "lucide-react";
+import { X, Tag, Calendar, Building2, Package, Coffee } from "lucide-react";
 import type { Promotion } from "./promotion.types";
 
 interface PromotionDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   promotion: Promotion | null;
+  isLoading?: boolean;
 }
 
 const formatDate = (dateStr: string) => {
@@ -67,7 +68,7 @@ const Field = ({
           wordBreak: "break-all",
         }}
       >
-        {value || "—"}
+        {value || "â€”"}
       </p>
     </div>
   </div>
@@ -77,8 +78,9 @@ export default function PromotionDetailsModal({
   isOpen,
   onClose,
   promotion,
+  isLoading = false,
 }: PromotionDetailsModalProps) {
-  if (!isOpen || !promotion) return null;
+  if (!isOpen) return null;
 
   return (
     <div
@@ -141,10 +143,10 @@ export default function PromotionDetailsModal({
               <h2
                 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}
               >
-                Chi Tiết promotion
+                Details promotion
               </h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#6c757d", fontFamily: "monospace" }}>
-                {promotion.code || promotion.id}
+                {promotion?.code || promotion?.id || "—"}
               </p>
             </div>
           </div>
@@ -166,90 +168,129 @@ export default function PromotionDetailsModal({
 
         {/* Body */}
         <div style={{ padding: "24px" }}>
-          {/* Status badges */}
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
-            <span
-              style={{
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "600",
-                backgroundColor: promotion.is_active ? "#e8f5e9" : "#fce4ec",
-                color: promotion.is_active ? "#2e7d32" : "#c62828",
-              }}
-            >
-              {promotion.is_active ? "Đang hoạt động" : "Ngừng hoạt động"}
-            </span>
-            <span
-              style={{
-                padding: "4px 12px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "600",
-                backgroundColor: promotion.type === "FIXED" ? "#e3f2fd" : "#fff3e0",
-                color: promotion.type === "FIXED" ? "#1565c0" : "#e65100",
-              }}
-            >
-              {promotion.type === "FIXED" ? "Cố định (₫)" : "Phần trăm (%)"}
-            </span>
-            {promotion.is_deleted && (
-              <span
-                style={{
-                  padding: "4px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  backgroundColor: "#f3f4f6",
-                  color: "#6b7280",
-                }}
-              >
-                Đã xóa
-              </span>
-            )}
-          </div>
+          {isLoading ? (
+            <div style={{ textAlign: "center", padding: "60px 40px" }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+                {/* Spinner */}
+                <div style={{ position: "relative", width: "64px", height: "64px" }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      border: "4px solid #fed7aa",
+                      borderTopColor: "#b45309",
+                      borderRadius: "50%",
+                    }}
+                    className="modal-animate-spin"
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#b45309",
+                    }}
+                  >
+                    <Coffee size={28} />
+                  </div>
+                </div>
 
-          {/* Fields */}
-          <Field
-            icon={<Tag size={16} />}
-            label="Giá trị giảm"
-            value={formatValue(promotion.type, promotion.value)}
-          />
-          <Field
-            icon={<Building2 size={16} />}
-            label="Franchise"
-            value={
-              promotion.franchise_name
-                ? `${promotion.franchise_name}`
-                : promotion.franchise_id
-            }
-          />
-          {(promotion.product_name || promotion.product_franchise_id) && (
-            <Field
-              icon={<Package size={16} />}
-              label="Sản phẩm áp dụng"
-              value={promotion.product_name || promotion.product_franchise_id}
-            />
+              </div>
+            </div>
+          ) : promotion ? (
+            <>
+              {/* Status badges */}
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+                <span
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    backgroundColor: promotion.is_active ? "#e8f5e9" : "#fce4ec",
+                    color: promotion.is_active ? "#2e7d32" : "#c62828",
+                  }}
+                >
+                  {promotion.is_active ? "Active" : "InActive"}
+                </span>
+                <span
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    backgroundColor: promotion.type === "FIXED" ? "#e3f2fd" : "#fff3e0",
+                    color: promotion.type === "FIXED" ? "#1565c0" : "#e65100",
+                  }}
+                >
+                  {promotion.type === "FIXED" ? "FIXED (₫)" : "PERCENT (%)"}
+                </span>
+                {promotion.is_deleted && (
+                  <span
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "20px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      backgroundColor: "#f3f4f6",
+                      color: "#6b7280",
+                    }}
+                  >
+                    Deleted
+                  </span>
+                )}
+              </div>
+
+              {/* Fields */}
+              <Field
+                icon={<Tag size={16} />}
+                label="Discount Value"
+                value={formatValue(promotion.type, promotion.value)}
+              />
+              <Field
+                icon={<Building2 size={16} />}
+                label="Franchise"
+                value={
+                  promotion.franchise_name
+                    ? `${promotion.franchise_name}`
+                    : promotion.franchise_id
+                }
+              />
+              {(promotion.name || promotion.product_franchise_id) && (
+                <Field
+                  icon={<Package size={16} />}
+                  label="Product Name"
+                  value={promotion.name || promotion.product_franchise_id}
+                />
+              )}
+              <Field
+                icon={<Calendar size={16} />}
+                label="Start Date"
+                value={formatDate(promotion.start_date)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="End Date"
+                value={formatDate(promotion.end_date)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="Created At"
+                value={formatDate(promotion.created_at)}
+              />
+              <Field
+                icon={<Calendar size={16} />}
+                label="Updated At"
+                value={formatDate(promotion.updated_at)}
+              />
+            </>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px" }}>
+              Promotion not found
+            </div>
           )}
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày bắt đầu"
-            value={formatDate(promotion.start_date)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày kết thúc"
-            value={formatDate(promotion.end_date)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Ngày tạo"
-            value={formatDate(promotion.created_at)}
-          />
-          <Field
-            icon={<Calendar size={16} />}
-            label="Cập nhật lần cuối"
-            value={formatDate(promotion.updated_at)}
-          />
         </div>
 
         {/* Footer */}
@@ -272,9 +313,10 @@ export default function PromotionDetailsModal({
               cursor: "pointer",
               backgroundColor: "white",
               color: "#374151",
+              marginRight: "auto",
             }}
           >
-            Đóng
+            Close
           </button>
         </div>
       </div>

@@ -35,11 +35,14 @@ function CartDetail() {
             items={vm.cart.items}
             isDeleting={vm.isDeleting}
             isUpdatingQuantity={vm.isUpdatingQuantity}
+            pendingQuantityChanges={vm.pendingQuantityChanges}
+            isSavingQuantityChanges={vm.isSavingQuantityChanges}
             onDelete={vm.openDeleteConfirm}
             onEdit={vm.openEditPopup}
             onDecreaseQty={vm.decreaseCartItemQuantity}
             onIncreaseQty={vm.increaseCartItemQuantity}
             onSubmitQty={vm.setCartItemQuantity}
+            onSaveQuantityChanges={vm.savePendingQuantityChanges}
             onContinueShopping={vm.goToMenu}
             formatCurrency={vm.formatCurrency}
           />
@@ -56,6 +59,7 @@ function CartDetail() {
             onApplyVoucher={vm.applyVoucherForCart}
             onRemoveVouchers={vm.removeAllVoucherFromCart}
             onCheckout={vm.handleCheckout}
+            getCheckoutPrefill={vm.getCheckoutPrefill}
             formatCurrency={vm.formatCurrency}
           />
         </div>

@@ -62,9 +62,9 @@ export function useInventoryExcel({
         const items = getValues("items");
         const exported = exportInventoryToExcel(items, "all");
         if (!exported) {
-            toastError("Export thất bại", "Không có dữ liệu để export");
+            toastError("Export Failed", "No data available to export.");
         } else {
-            toastSuccess("Export thành công", `Đã xuất ${items.length} dòng ra file Excel`);
+            toastSuccess("Exported", `Exported ${items.length} rows to Excel.`);
         }
     }, [getValues, toastError, toastSuccess]);
 
@@ -74,9 +74,9 @@ export function useInventoryExcel({
         const selectedCount = items.filter((r) => r._selected).length;
         const exported = exportInventoryToExcel(items, "selected");
         if (!exported) {
-            toastError("Export thất bại", "Vui lòng chọn ít nhất 1 row để export");
+            toastError("Export Failed", "Please select at least one row to export.");
         } else {
-            toastSuccess("Export thành công", `Đã xuất ${selectedCount} dòng ra file Excel`);
+            toastSuccess("Exported", `Exported ${selectedCount} rows to Excel.`);
         }
     }, [getValues, toastError, toastSuccess]);
 
@@ -103,7 +103,7 @@ export function useInventoryExcel({
                 const parseResult = await parseImportFile(file);
 
                 if (!parseResult.success) {
-                    toastError("Import thất bại", parseResult.error);
+                    toastError("Import Failed", parseResult.error);
                     setIsParsingFile(false);
                     return;
                 }
@@ -209,19 +209,19 @@ export function useInventoryExcel({
 
                 if (skippedCount > 0) {
                     toastWarning(
-                        "Import hoàn tất (có cảnh báo)",
-                        `Đã import ${matchedCount} dòng, bỏ qua ${skippedCount} dòng không khớp.`,
+                        "Import Completed (with warnings)",
+                        `Imported ${matchedCount} rows, skipped ${skippedCount} unmatched rows.`,
                     );
                 } else {
                     toastSuccess(
-                        "Import thành công",
-                        `Đã import ${matchedCount} dòng vào bảng`,
+                        "Imported",
+                        `Imported ${matchedCount} rows into the table.`,
                     );
                 }
             } catch {
                 toastError(
-                    "Import thất bại",
-                    "Lỗi không xác định khi import file",
+                    "Import Failed",
+                    "Unknown error while importing file.",
                 );
             } finally {
                 setIsParsingFile(false);

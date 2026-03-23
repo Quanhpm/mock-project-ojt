@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { OrderData } from '../order.types';
-import { filterOptions } from '../order.config';
+import type { FilterOption } from '../order.types';
+import { filterOptions, statusConfig } from '../order.config';
 import { useOrders } from '../hooks/useOrders';
 import {
   OrderDetailModal,
@@ -10,6 +11,32 @@ import {
   OrderListContainer,
   OrderPagination,
 } from '../components';
+
+const FILTER_ACTIVE_BASE_CLASS = 'bg-white border border-zinc-200 shadow-md';
+
+const FILTER_ACTIVE_TEXT_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'text-primary',
+  completed: statusConfig.COMPLETED.textColor,
+  pending: statusConfig.PREPARING.textColor,
+  cancelled: statusConfig.CANCELLED.textColor,
+};
+
+const FILTER_ACTIVE_HOVER_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'hover:text-primary hover:bg-primary/10',
+  completed: 'hover:text-emerald-700 hover:bg-emerald-50',
+  pending: 'hover:text-blue-700 hover:bg-blue-50',
+  cancelled: 'hover:text-rose-700 hover:bg-rose-50',
+};
+
+const FILTER_INACTIVE_CLASS =
+  'text-zinc-600 border border-transparent';
+
+const FILTER_INACTIVE_HOVER_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'hover:text-primary hover:bg-primary/10',
+  completed: 'hover:text-emerald-600 hover:bg-emerald-50',
+  pending: 'hover:text-blue-600 hover:bg-blue-50',
+  cancelled: 'hover:text-rose-600 hover:bg-rose-50',
+};
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
@@ -88,24 +115,27 @@ function OrderHistoryPage() {
   return (
     <main className="flex-1 px-4 md:px-20 py-10 max-w-[1280px] mx-auto w-full space-y-12">
       <OrderHero onContinueShopping={() => navigate('/menu')} />
-
+    
       <OrderStatsCards stats={stats} />
 
       <section className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="inline-flex h-12 items-center gap-1 rounded-xl bg-[#f5f1ed] p-1.5 shadow-inner">
-            {filterOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => actions.handleFilterChange(option.value)}
-                className={`h-full rounded-lg px-6 text-sm font-semibold transition-all cursor-pointer active:scale-95 ${selectedFilter === option.value
-                  ? 'bg-white shadow-md text-zinc-800 border border-zinc-200'
-                  : 'text-zinc-600 hover:text-zinc-800 hover:bg-white/50'
+          <div className="w-full md:w-auto overflow-x-auto scrollbar-hide">
+            <div className="inline-flex h-12 min-w-max items-center gap-1 rounded-xl bg-[#f5f1ed] p-1.5 shadow-inner">
+              {filterOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => actions.handleFilterChange(option.value)}
+                  className={`h-full w-fit whitespace-nowrap rounded-lg px-4 text-sm font-semibold transition-all cursor-pointer active:scale-95 ${
+                    selectedFilter === option.value
+                      ? `${FILTER_ACTIVE_BASE_CLASS} ${FILTER_ACTIVE_TEXT_CLASS_MAP[option.value]} ${FILTER_ACTIVE_HOVER_CLASS_MAP[option.value]}`
+                      : `${FILTER_INACTIVE_CLASS} ${FILTER_INACTIVE_HOVER_CLASS_MAP[option.value]}`
                   }`}
-              >
-                {option.label}
-              </button>
-            ))}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex items-center gap-4 self-end">
             <p className="text-sm text-zinc-500">

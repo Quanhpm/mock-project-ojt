@@ -19,16 +19,16 @@ export const useBulkAdjustInventory = () => {
         try {
             await inventoryApi.bulkAdjustInventory(payload);
             success(
-                "Cập nhật thành công",
-                `Đã cập nhật ${payload.items.length} inventory items.`,
+                "Updated",
+                `Updated ${payload.items.length} inventory items.`,
             );
             if (onSuccess) onSuccess();
         } catch (err: any) {
             const errorMessage =
                 err.response?.data?.message ||
-                "Không thể cập nhật lúc này. Vui lòng thử lại!";
+                "Unable to update right now. Please try again.";
             setError(errorMessage);
-            showErrorToast("Cập nhật thất bại", errorMessage);
+            showErrorToast("Update Failed", errorMessage);
             if (onError) onError(errorMessage);
         } finally {
             setIsAdjusting(false);

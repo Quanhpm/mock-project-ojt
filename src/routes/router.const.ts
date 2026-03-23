@@ -29,6 +29,7 @@ export const ROUTER_URL = {
     CHECKOUT: "/checkout",
     PAYMENT: "/payment",
     PROFILE: "/profile",
+    LOYALTY: "/loyalty",
     CHANGE_PASSWORD: "/change-password",
     ORDER_HISTORY: "/order-history",
     LOCATION: "/location",

@@ -1,5 +1,5 @@
-import VoucherForm from "../components/VoucherForm";
+import VoucherCreateModal from "../components/VoucherCreateModal";
 
 export default function VoucherCreatePage() {
-  return <VoucherForm />;
+  return <VoucherCreateModal />;
 }

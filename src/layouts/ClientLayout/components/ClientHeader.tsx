@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle, Menu, X, House, CupSoda, MapPin, Info, LogIn, UserPlus, Globe, Share2 } from 'lucide-react';
 import { useClientLogout } from '@/modules/client/auth-client/hooks/use-client-logout.hook';
+import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
+import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import logo2 from '@/assets/img/logo2.png';
 
 /**
@@ -17,6 +19,9 @@ const ClientHeader = () => {
   const { logout } = useClientLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+  const selectedFranchiseId = useMenuStore((state) => state.franchiseId);
+  const setFranchiseId = useMenuStore((state) => state.setFranchiseId);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mobileMenuItems = [
@@ -27,6 +32,37 @@ const ClientHeader = () => {
   ];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFranchises = async () => {
+      try {
+        const response = await getAllFranchises();
+        const nextFranchises = response ?? [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setFranchises(nextFranchises);
+
+        if (!selectedFranchiseId && nextFranchises.length > 0) {
+          setFranchiseId(nextFranchises[0].id);
+        }
+      } catch {
+        if (isMounted) {
+          setFranchises([]);
+        }
+      }
+    };
+
+    fetchFranchises();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedFranchiseId, setFranchiseId]);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
@@ -111,6 +147,24 @@ const ClientHeader = () => {
               Vị Trí
             </Link>
           </nav>
+
+          {franchises.length > 0 && (
+            <div className="hidden lg:flex items-center gap-2 min-w-[230px]">
+              <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+              <select
+                value={selectedFranchiseId}
+                onChange={(event) => setFranchiseId(event.target.value)}
+                className="h-10 w-full cursor-pointer rounded-xl border border-[var(--cf-secondary)]/25 bg-white px-3 text-sm text-[var(--cf-dark)] shadow-sm transition-all focus:border-[var(--cf-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--cf-primary)]/20"
+                aria-label="Chọn chi nhánh"
+              >
+                {franchises.map((franchise) => (
+                  <option key={franchise.id} value={franchise.id}>
+                    {franchise.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Right Side */}
           <div className="flex items-center gap-2 md:gap-4">
@@ -223,6 +277,27 @@ const ClientHeader = () => {
                 </Link>
               );
             })}
+
+            {franchises.length > 0 && (
+              <div className="mt-4 rounded-xl border border-[var(--cf-secondary)]/20 bg-white/70 px-3 py-3">
+                <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--cf-secondary)]">
+                  <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+                  Chọn chi nhánh
+                </label>
+                <select
+                  value={selectedFranchiseId}
+                  onChange={(event) => setFranchiseId(event.target.value)}
+                  className="h-11 w-full cursor-pointer rounded-lg border border-[var(--cf-secondary)]/25 bg-white px-3 text-sm text-[var(--cf-dark)] focus:border-[var(--cf-primary)] focus:outline-none"
+                  aria-label="Chọn chi nhánh"
+                >
+                  {franchises.map((franchise) => (
+                    <option key={franchise.id} value={franchise.id}>
+                      {franchise.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </nav>
 
           <div className="mt-7 mx-4 border-t border-[var(--cf-secondary)]/20" />

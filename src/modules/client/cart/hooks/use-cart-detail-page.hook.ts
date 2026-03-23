@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useCartDetail } from './use-cart-detail.hook';
 import { useCheckoutHandler } from './use-checkout-handler.hook';
@@ -12,7 +13,7 @@ export function useCartDetailPage() {
   const [isCancelCartConfirmOpen, setIsCancelCartConfirmOpen] = useState(false);
 
   const cartDetail = useCartDetail(cartId);
-  const { handleCheckout } = useCheckoutHandler(cartId);
+  const { handleCheckout: runCheckout, getCheckoutPrefill } = useCheckoutHandler(cartId);
 
   const totalDiscount = useMemo(() => getCartTotalDiscount(cartDetail.cart), [cartDetail.cart]);
 
@@ -57,12 +58,24 @@ export function useCartDetailPage() {
     goToCartList();
   }, [cartDetail, goToCartList]);
 
+  const handleCheckout = useCallback(async (payload: { address: string; phone: string; message?: string }) => {
+    if (cartDetail.hasPendingQuantityChanges) {
+      toast.error('Bạn có thay đổi số lượng chưa lưu', {
+        description: 'Vui lòng bấm "Lưu số lượng" trước khi thanh toán.',
+      });
+      return false;
+    }
+
+    return runCheckout(payload);
+  }, [cartDetail.hasPendingQuantityChanges, runCheckout]);
+
   return {
     ...cartDetail,
     cartId,
     formatCurrency: formatCurrencyVnd,
     totalDiscount,
     handleCheckout,
+    getCheckoutPrefill,
     goToCartList,
     goToMenu,
     pendingDeleteItemId,
