@@ -23,11 +23,14 @@ interface CartDetailItemCardProps {
   item: CartDetailItemView;
   isDeleting: boolean;
   isUpdatingQuantity: boolean;
+  isSavingQuantityChanges: boolean;
+  hasPendingQuantityChange: boolean;
   onDelete: (itemId: string) => void;
   onEdit: (item: CartDetailItemView) => void;
   onDecreaseQty: (itemId: string) => void;
   onIncreaseQty: (itemId: string) => void;
   onSubmitQty: (itemId: string, nextQty: number) => void;
+  onSaveQuantityChanges: () => void | Promise<boolean>;
   formatCurrency: (amount: number) => string;
 }
 
@@ -35,11 +38,14 @@ function CartDetailItemCard({
   item,
   isDeleting,
   isUpdatingQuantity,
+  isSavingQuantityChanges,
+  hasPendingQuantityChange,
   onDelete,
   onEdit,
   onDecreaseQty,
   onIncreaseQty,
   onSubmitQty,
+  onSaveQuantityChanges,
   formatCurrency,
 }: CartDetailItemCardProps) {
   const {
@@ -121,7 +127,30 @@ function CartDetailItemCard({
         {formatCurrency(item.unitPrice)}
       </div>
 
-      <div className="col-span-1 md:col-span-2 flex flex-col justify-center items-center">
+      <div className="col-span-1 md:col-span-2 flex flex-col justify-center items-center relative">
+        {hasPendingQuantityChange && (
+          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-20" onClick={(e) => e.stopPropagation()}>
+            <div className="relative w-max rounded-xl border border-[var(--cf-dark)]/25 bg-[var(--cf-primary)] px-3 py-2.5 shadow-[0px_14px_28px_rgba(139,29,29,0.22)]">
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] leading-4 font-semibold text-white/95 whitespace-nowrap">
+                  Đã thay đổi số lượng
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void onSaveQuantityChanges();
+                  }}
+                  disabled={isSavingQuantityChanges}
+                  className="px-2.5 py-1 rounded-md border border-white/55 bg-[var(--cf-bg)]/10 text-[11px] font-bold text-white whitespace-nowrap hover:bg-[var(--cf-bg)]/20 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSavingQuantityChanges ? 'Đang lưu...' : 'Lưu'}
+                </button>
+              </div>
+              <div className="absolute left-1/2 -translate-x-1/2 -bottom-[7px] w-0 h-0 border-x-[7px] border-x-transparent border-t-[7px] border-t-[var(--cf-primary)]" />
+            </div>
+          </div>
+        )}
+
         <div
           className={`inline-flex items-center bg-[var(--cf-bg)] rounded-full px-2 py-1 gap-3 border ${hasQuantityError ? 'border-red-400 bg-red-50/40' : 'border-[var(--cf-primary)]/15'}`}
           onClick={(e) => e.stopPropagation()}

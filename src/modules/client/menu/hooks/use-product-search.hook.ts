@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { MenuByFranchise, MenuProduct } from '@/apis/endpointsCLIENT/client.api';
+import type { MenuProduct } from '@/apis/endpointsCLIENT/client.api';
+import type { MenuSectionData } from '../services/menu-page.service';
 
 interface UseProductSearchReturn {
   search: string;
@@ -9,23 +10,21 @@ interface UseProductSearchReturn {
   handleKeyDown: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
-export function useProductSearch(products: MenuByFranchise[]): UseProductSearchReturn {
+export function useProductSearch(sections: MenuSectionData[]): UseProductSearchReturn {
   const [search, setSearch] = useState<string>('');
   const [filteredProducts, setFilteredProducts] = useState<MenuProduct[]>([]);
   const [showSearchResults, setShowSearchResults] = useState<boolean>(false);
 
-  // Filter products by search term
   const filterProductsBySearch = (searchTerm: string): MenuProduct[] => {
-    return products.flatMap((category) =>
-      category.products.filter(
+    return sections.flatMap((section) =>
+      section.products.filter(
         (product) =>
           product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          category.category_name.toLowerCase().includes(searchTerm.toLowerCase()),
+          section.name.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
     );
   };
 
-  // Handle Enter key press
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       const results = filterProductsBySearch(search);
@@ -34,13 +33,12 @@ export function useProductSearch(products: MenuByFranchise[]): UseProductSearchR
     }
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value;
     setSearch(searchTerm);
 
-    // Clear results when search input is empty
     if (searchTerm === '') {
+      setFilteredProducts([]);
       setShowSearchResults(false);
     }
   };

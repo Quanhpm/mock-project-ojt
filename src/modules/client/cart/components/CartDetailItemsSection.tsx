@@ -6,11 +6,14 @@ interface CartDetailItemsSectionProps {
   items: CartDetailItemView[];
   isDeleting: string | null;
   isUpdatingQuantity: string | null;
+  pendingQuantityChanges: Record<string, number>;
+  isSavingQuantityChanges: boolean;
   onDelete: (itemId: string) => void;
   onEdit: (item: CartDetailItemView) => void;
   onDecreaseQty: (itemId: string) => void;
   onIncreaseQty: (itemId: string) => void;
   onSubmitQty: (itemId: string, nextQty: number) => void;
+  onSaveQuantityChanges: () => Promise<boolean>;
   onContinueShopping: () => void;
   formatCurrency: (amount: number) => string;
 }
@@ -19,11 +22,14 @@ function CartDetailItemsSection({
   items,
   isDeleting,
   isUpdatingQuantity,
+  pendingQuantityChanges,
+  isSavingQuantityChanges,
   onDelete,
   onEdit,
   onDecreaseQty,
   onIncreaseQty,
   onSubmitQty,
+  onSaveQuantityChanges,
   onContinueShopping,
   formatCurrency,
 }: CartDetailItemsSectionProps) {
@@ -42,7 +48,9 @@ function CartDetailItemsSection({
           return (
             <CartDetailItemCard
               formatCurrency={formatCurrency}
+              hasPendingQuantityChange={pendingQuantityChanges[item.id] !== undefined}
               isDeleting={isDeleting === item.id}
+              isSavingQuantityChanges={isSavingQuantityChanges}
               isUpdatingQuantity={isUpdatingQuantity === item.id}
               item={item}
               key={item.id}
@@ -50,6 +58,7 @@ function CartDetailItemsSection({
               onDelete={onDelete}
               onEdit={onEdit}
               onIncreaseQty={onIncreaseQty}
+              onSaveQuantityChanges={onSaveQuantityChanges}
               onSubmitQty={onSubmitQty}
             />
           );
@@ -66,6 +75,7 @@ function CartDetailItemsSection({
           Tiếp tục mua sắm
         </button>
       </div>
+
     </section>
   );
 }
