@@ -17,15 +17,15 @@ export const useRestoreInventory = () => {
 
     try {
       await inventoryApi.restoreInventory(id);
-      success("Khôi phục thành công", "Inventory item đã được khôi phục.");
+      success("Restored", "Inventory item has been restored.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể khôi phục inventory lúc này. Vui lòng thử lại!";
+          : "Unable to restore inventory right now. Please try again.";
       setError(errorMessage);
-      showErrorToast("Khôi phục thất bại", errorMessage);
+      showErrorToast("Restore Failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsRestoring(false);

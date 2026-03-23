@@ -17,15 +17,15 @@ export const useDeleteInventory = () => {
 
     try {
       await inventoryApi.deleteInventory(id);
-      success("Xóa thành công", "Inventory item đã được xóa.");
+      success("Deleted", "Inventory item has been deleted.");
       if (onSuccess) onSuccess();
     } catch (err) {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Không thể xóa inventory lúc này. Vui lòng thử lại!";
+          : "Unable to delete inventory right now. Please try again.";
       setError(errorMessage);
-      showErrorToast("Xóa thất bại", errorMessage);
+      showErrorToast("Delete Failed", errorMessage);
       if (onError) onError(errorMessage);
     } finally {
       setIsDeleting(false);
