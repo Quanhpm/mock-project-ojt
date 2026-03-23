@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Loader2, Tag } from "lucide-react";
@@ -9,38 +10,46 @@ import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpo
 
 const createPromotionSchema = z
   .object({
-    name: z.string().min(1, "Tên promotion là bắt buộc"),
-    franchise_id: z.string().min(1, "Franchise là bắt buộc"),
+    name: z.string().min(1, "Promotion name is required"),
+    franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
-    type: z.enum(["FIXED", "PERCENT"], { required_error: "Loại promotion là bắt buộc" }),
-    value: z
-      .number({ invalid_type_error: "Giá trị phải là số" })
-      .positive("Giá trị phải lớn hơn 0"),
-    quota_total: z
-      .number({ invalid_type_error: "Số lượng phải là số" })
-      .int("Số lượng phải là số nguyên")
-      .positive("Số lượng phải lớn hơn 0"),
-    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
-    end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
+    type: z.enum(["FIXED", "PERCENT"]),
+    value: z.number({ message: "Value must be a number" }),
+    start_date: z.string().min(1, "Start date is required"),
+    end_date: z.string().min(1, "End date is required"),
   })
-  .refine(
-    (data) => {
-      if (data.start_date && data.end_date) {
-        return new Date(data.start_date) < new Date(data.end_date);
+  .superRefine((data, ctx) => {
+    if (data.type === "PERCENT") {
+      if (data.value <= 0 || data.value > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Percentage must be between 1 and 100",
+          path: ["value"],
+        });
       }
-      return true;
-    },
-    { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
-  )
-  .refine(
-    (data) => {
-      if (data.type === "PERCENT" && data.value > 100) {
-        return false;
+    }
+
+    if (data.type === "FIXED") {
+      if (data.value < 1000 || data.value > 100000) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Value must be between 1,000 and 100,000 VND",
+          path: ["value"],
+        });
       }
-      return true;
-    },
-    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
-  );
+    }
+
+    // validate date
+    if (data.start_date && data.end_date) {
+      if (new Date(data.start_date) >= new Date(data.end_date)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "End date must be after start date",
+          path: ["end_date"],
+        });
+      }
+    }
+  });
 
 type CreatePromotionFormValues = z.infer<typeof createPromotionSchema>;
 
@@ -97,8 +106,8 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
       franchise_id: "",
       product_franchise_id: "",
       type: "FIXED",
-      value: 0,
-      quota_total: 1,
+      value: undefined,
+      // quota_total: 1,
       start_date: "",
       end_date: "",
     },
@@ -179,7 +188,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
         product_franchise_id: data.product_franchise_id || undefined,
         type: data.type,
         value: data.value,
-        quota_total: data.quota_total,
+        // quota_total: data.quota_total,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       },
@@ -249,7 +258,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               <Tag size={22} color="#8B4513" />
             </div>
             <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-              Tạo Promotion Mới
+              Create Promotion 
             </h2>
           </div>
           <button
@@ -275,11 +284,11 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               {/* Name */}
               <div>
                 <label style={labelStyle}>
-                  Tên Promotion <span style={{ color: "#ef4444" }}>*</span>
+                 Promotion Name <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   {...register("name")}
-                  placeholder="VD: Promotion KM Tháng 4"
+                  placeholder="VD: Promotion Month 4"
                   style={inputStyle}
                 />
                 {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
@@ -296,7 +305,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                   style={{ ...inputStyle, cursor: franchisesLoading ? "wait" : "pointer" }}
                 >
                   <option value="">
-                    {franchisesLoading ? "Đang tải..." : "-- Chọn franchise --"}
+                    {franchisesLoading ? "Loading..." : "-- Select franchise --"}
                   </option>
                   {franchises.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -311,7 +320,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
 
               {/* Product Franchise */}
               <div>
-                <label style={labelStyle}>Sản phẩm (tùy chọn)</label>
+                <label style={labelStyle}>Products (optional)</label>
                 <select
                   {...register("product_franchise_id")}
                   disabled={!selectedFranchiseId || pfLoading}
@@ -322,10 +331,10 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                 >
                   <option value="">
                     {pfLoading
-                      ? "Đang tải..."
+                      ? "Loading..."
                       : !selectedFranchiseId
-                        ? "Chọn franchise trước"
-                        : "-- Áp dụng cho tất cả sản phẩm --"}
+                        ? "Select franchise first"
+                        : "-- Apply to all products --"}
                   </option>
                   {productFranchises.map((pf) => (
                     <option key={pf.id} value={pf.id}>
@@ -339,17 +348,17 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Loại giảm giá <span style={{ color: "#ef4444" }}>*</span>
+                    Discount Type <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="FIXED">Cố định (₫)</option>
-                    <option value="PERCENT">Phần trăm (%)</option>
+                    <option value="FIXED">Fixed (₫)</option>
+                    <option value="PERCENT">Percent (%)</option>
                   </select>
                   {errors.type && <p style={errorStyle}>{errors.type.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Giá trị <span style={{ color: "#ef4444" }}>*</span>
+                    Value <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                     <input
@@ -374,34 +383,18 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                 </div>
               </div>
 
-              {/* Quota Total */}
-              <div>
-                <label style={labelStyle}>
-                  Số lượng tổng <span style={{ color: "#ef4444" }}>*</span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  step={1}
-                  {...register("quota_total", { valueAsNumber: true })}
-                  placeholder="10"
-                  style={inputStyle}
-                />
-                {errors.quota_total && <p style={errorStyle}>{errors.quota_total.message}</p>}
-              </div>
-
               {/* Date range */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Ngày bắt đầu <span style={{ color: "#ef4444" }}>*</span>
+                    Start date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input type="datetime-local" {...register("start_date")} style={inputStyle} />
                   {errors.start_date && <p style={errorStyle}>{errors.start_date.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Ngày kết thúc <span style={{ color: "#ef4444" }}>*</span>
+                    End date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input type="datetime-local" {...register("end_date")} style={inputStyle} />
                   {errors.end_date && <p style={errorStyle}>{errors.end_date.message}</p>}
@@ -433,9 +426,10 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                   cursor: isCreating ? "not-allowed" : "pointer",
                   backgroundColor: "white",
                   color: "#374151",
+                  marginRight: "auto",
                 }}
               >
-                Hủy
+                Cancel
               </button>
               <button
                 type="submit"
@@ -457,7 +451,7 @@ export default function PromotionCreateModal({ isOpen, onClose, onSuccess }: Pro
                 {isCreating && (
                   <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                 )}
-                Tạo Promotion
+                Create Promotion
               </button>
             </div>
           </form>
