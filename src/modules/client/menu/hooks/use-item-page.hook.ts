@@ -51,6 +51,11 @@ export function useItemPage() {
     return (selectedSize.price + toppingsPrice) * qty;
   }, [selectedSize, toppingsPrice, qty]);
 
+  const isProductAvailable = useMemo(
+    () => (product?.sizes ?? []).some((size) => size.is_available),
+    [product],
+  );
+
   // Toggle topping selection
   const toggleTopping = (productFranchiseId: string) => {
     setSelectedToppings((current) => {
@@ -90,6 +95,11 @@ export function useItemPage() {
     }
 
     if (!product || !selectedSize) return;
+
+    if (!isProductAvailable || !selectedSize.is_available) {
+      error('Sản phẩm tạm hết hàng', 'Sản phẩm này hiện không khả dụng để thêm vào giỏ hàng');
+      return;
+    }
 
     // Validate franchise selection
     if (!franchiseId) {
@@ -153,6 +163,7 @@ export function useItemPage() {
     activeImg,
     images,
     totalPrice,
+    isProductAvailable,
     setActiveImg,
     toggleTopping,
     decreaseQty,

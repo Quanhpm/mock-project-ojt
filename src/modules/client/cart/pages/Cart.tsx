@@ -5,16 +5,53 @@ import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
 import { CartSummaryCard } from '../components';
 import { useCartList } from '../hooks/use-cart-list.hook';
 
+interface CartGridConfig {
+  containerClassName: string;
+  getItemClassName: (index: number) => string;
+}
+
+const getCartGridConfig = (cartCount: number): CartGridConfig => {
+  if (cartCount <= 1) {
+    return {
+      containerClassName: 'grid-cols-1',
+      getItemClassName: () => 'col-span-full',
+    };
+  }
+
+  if (cartCount === 2) {
+    return {
+      containerClassName: 'grid-cols-2',
+      getItemClassName: () => 'col-span-1',
+    };
+  }
+
+  return {
+    // Use a 6-column base grid to keep the visual 3-column layout,
+    // while still allowing the last row to split evenly for remainder cases.
+    containerClassName: 'grid-cols-6',
+    getItemClassName: (index: number) => {
+      const remainingItems = cartCount - index;
+      const remainder = cartCount % 3;
+
+      if (remainder === 1 && remainingItems === 1) {
+        return 'col-span-full';
+      }
+
+      if (remainder === 2 && remainingItems <= 2) {
+        return 'col-span-3';
+      }
+
+      return 'col-span-2';
+    },
+  };
+};
+
 function Cart() {
   const navigate = useNavigate();
   const user = useClientAuthStore((state) => state.user);
   const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
-  const {
-    carts,
-    totalItems,
-    totalAmount,
-    formatUpdatedAt,
-  } = useCartList(user?.id, isLoggedIn);
+  const { carts, totalItems, totalAmount, formatUpdatedAt } = useCartList(user?.id, isLoggedIn);
+  const cartGridConfig = getCartGridConfig(carts.length);
 
   const openCartDetail = (cartId: string) => {
     navigate(`${ROUTER_URL.HOME_ROUTER.CART}/${cartId}`);
@@ -32,6 +69,7 @@ function Cart() {
             <button
               onClick={() => navigate(ROUTER_URL.MENU)}
               className="group flex items-center gap-2 bg-[var(--cf-primary)] text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-[var(--cf-primary)]/20 cursor-pointer"
+              type="button"
             >
               <ArrowLeft size={18} />
               Tiếp tục mua sắm
@@ -49,6 +87,7 @@ function Cart() {
             <button
               onClick={() => navigate(ROUTER_URL.MENU)}
               className="bg-[var(--cf-primary)] text-white px-10 py-4 rounded-full font-bold shadow-xl shadow-[var(--cf-primary)]/20 hover:bg-[var(--cf-dark)] transition-colors cursor-pointer"
+              type="button"
             >
               Khám phá ngay
             </button>
@@ -71,20 +110,22 @@ function Cart() {
           <button
             onClick={() => navigate(ROUTER_URL.MENU)}
             className="group flex items-center gap-2 bg-[var(--cf-primary)] text-white px-8 py-4 rounded-xl font-bold transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-[var(--cf-primary)]/20 cursor-pointer"
+            type="button"
           >
             <ArrowLeft size={18} />
             Tiếp tục mua sắm
           </button>
         </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {carts.map((cart) => (
-            <CartSummaryCard
-              cart={cart}
-              formatUpdatedAt={formatUpdatedAt}
-              key={cart.id}
-              onOpenDetail={openCartDetail}
-            />
+        <div className={`grid gap-8 ${cartGridConfig.containerClassName}`}>
+          {carts.map((cart, index) => (
+            <div className={cartGridConfig.getItemClassName(index)} key={cart.id}>
+              <CartSummaryCard
+                cart={cart}
+                formatUpdatedAt={formatUpdatedAt}
+                onOpenDetail={openCartDetail}
+              />
+            </div>
           ))}
         </div>
 

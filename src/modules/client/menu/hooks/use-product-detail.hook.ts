@@ -50,8 +50,7 @@ export function useProductDetail(
         if (!isMounted) return;
 
         setProduct(data);
-        const firstAvailableSize =
-          data?.sizes?.find((size) => size.is_available) ?? data?.sizes?.[0] ?? null;
+        const firstAvailableSize = data?.sizes?.find((size) => size.is_available) ?? null;
         setSelectedSize(firstAvailableSize);
 
         // If product doesn't have toppings, skip fetching them
