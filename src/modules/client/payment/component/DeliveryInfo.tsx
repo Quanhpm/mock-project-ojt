@@ -1,79 +1,59 @@
-import type { ReactNode } from "react"
-
-interface InfoRowProps {
-    icon: ReactNode;
-    label: string;
-    value: string;
-}
+import { MapPin, Phone, UserRound } from "lucide-react";
 
 interface DeliveryInfoProps {
-    franchiseName: string;
-    address: string;
+  franchiseName: string;
+  address: string;
+  customerName?: string;
+  phone?: string;
 }
 
-function LocationIcon() {
-    return (
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--cf-accent-light)] text-[var(--cf-primary)]">
-            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                    fillRule="evenodd"
-                    d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                    clipRule="evenodd"
-                />
-            </svg>
-        </span>
-    )
-}
-
-function TruckIcon() {
-    return (
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--cf-accent-light)] text-[var(--cf-dark)]">
-            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1v-5h2.038A2 2 0 0115 11.1V14h.95a2.5 2.5 0 014.9 0H20a1 1 0 001-1V8a1 1 0 00-.293-.707l-2-2A1 1 0 0018 5h-5V4a1 1 0 00-1-1H3z" />
-            </svg>
-        </span>
-    )
-}
-
-function InfoRow({ icon, label, value }: InfoRowProps) {
-    return (
-        <div className="flex items-start gap-3">
-            {icon}
-            <div>
-                <p className="mb-0.5 text-[10px] text-[var(--cf-secondary)]">{label}</p>
-                <p className="text-sm font-semibold text-[var(--cf-primary)]">
-                    {value}
-                </p>
-            </div>
+export function DeliveryInfo({
+  franchiseName,
+  address,
+  customerName,
+  phone,
+}: DeliveryInfoProps) {
+  return (
+    <section className="rounded-[24px] border border-[var(--cf-primary)]/10 bg-white/85 p-4 shadow-[0_16px_36px_rgba(127,85,57,0.06)] backdrop-blur-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[var(--cf-primary)] text-white shadow-[0_10px_20px_rgba(127,85,57,0.14)]">
+          <MapPin className="h-4 w-4" />
         </div>
-    )
-}
 
-export function DeliveryInfo({ franchiseName, address }: DeliveryInfoProps) {
-    return (
-        <div className="rounded-2xl border border-[var(--cf-accent-light)] bg-[var(--cf-surface)] p-4 shadow-sm">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-primary)]">
-                Thông tin giao hàng
-            </p>
-
-            <div className="flex flex-col gap-3">
-                {/* Đặt tại */}
-                <InfoRow
-                    icon={<LocationIcon />}
-                    label="Đặt tại"
-                    value={franchiseName}
-                />
-
-                {/* Giao đến */}
-                <div className="flex items-start gap-3">
-                    <InfoRow
-                        icon={<TruckIcon />}
-                        label="Giao đến"
-                        value={address}
-                    />
-                </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--cf-secondary)]">
+                Giao hàng tới
+              </p>
+              <h2 className="mt-1 text-base font-bold text-[var(--cf-primary)]">
+                {franchiseName || "Đang cập nhật chi nhánh"}
+              </h2>
             </div>
+
+            {(customerName || phone) && (
+              <div className="mt-1 flex flex-wrap gap-2 sm:mt-0 sm:justify-end">
+                {customerName && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--cf-bg)] px-2.5 py-1 text-xs font-medium text-[var(--cf-primary)]">
+                    <UserRound className="h-3 w-3" />
+                    {customerName}
+                  </span>
+                )}
+                {phone && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--cf-bg)] px-2.5 py-1 text-xs font-medium text-[var(--cf-primary)]">
+                    <Phone className="h-3 w-3" />
+                    {phone}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <p className="mt-2 text-sm leading-6 text-[var(--cf-dark)]">
+            {address || "Chưa có địa chỉ giao hàng cho đơn này."}
+          </p>
         </div>
-    )
+      </div>
+    </section>
+  );
 }

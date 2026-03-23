@@ -1,119 +1,117 @@
-import type { ReactNode } from "react"
-import momoIcon from "./assets/momo.webp"
-import vnpayIcon from "./assets/vnpay.webp"
-
-export type PaymentMethod = {
-    id: string;
-    label: string;
-    icon: ReactNode;
-};
+import { Landmark, Wallet } from "lucide-react";
+import type { PaymentMethod } from "./payment-methods";
+import { paymentMethods } from "./payment-methods";
 
 interface PaymentItemProps {
-    isSelected: boolean;
-    method: PaymentMethod;
-    onSelect: (methodId: string) => void;
+  isSelected: boolean;
+  method: PaymentMethod;
+  onSelect: (methodId: string) => void;
 }
 
 interface SelectPaymentMethodProps {
-    selectedPayment: string;
-    onSelect: (methodId: string) => void;
+  selectedPayment: string;
+  onSelect: (methodId: string) => void;
 }
 
-export const paymentMethods = [
-    {
-        id: "CASH",
-        label: "Tiền mặt",
-        icon: (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M2 7h20v10H2V7zm3 3h.01M19 14h.01M12 12a2 2 0 100-4 2 2 0 000 4z"
-                />
-            </svg>
-        ),
-    },
-    {
-        id: "MOMO",
-        label: "Ví MoMo",
-        icon: (
-            <img
-                src={momoIcon}
-                alt="momo"
-                className="w-5 h-5 object-contain"
-            />
-        ),
-    },
-    {
-        id: "CARD",
-        label: "Thẻ",
-        icon: (
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-        ),
-    },
-    {
-        id: "VNPAY",
-        label: "VNPay",
-        icon: (
-            <img
-                src={vnpayIcon}
-                alt="vnpay"
-                className="w-5 h-5 object-contain"
-            />
-        ),
-    },
-];
-
-function PaymentMethodItem({ isSelected, method, onSelect }: PaymentItemProps) {
-    return (
-        <button
-            key={method.id}
-            onClick={() => onSelect(method.id)}
-            className={`flex items-center gap-2.5 rounded-xl border-2 px-3 py-3 text-left transition-all duration-200 ${isSelected
-                ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white"
-                : "border-[var(--cf-accent-light)] bg-[var(--cf-bg)] text-[var(--cf-primary)]"
-                }`}
+function PaymentMethodItem({
+  isSelected,
+  method,
+  onSelect,
+}: PaymentItemProps) {
+  return (
+    <button
+      className={`rounded-[16px] border px-3 py-2.5 text-left transition-all duration-200 ${
+        isSelected
+          ? "border-[var(--cf-primary)] bg-[var(--cf-primary)] text-white shadow-[0_12px_24px_rgba(127,85,57,0.14)]"
+          : "border-[var(--cf-primary)]/10 bg-[var(--cf-bg)]/72 text-[var(--cf-primary)] hover:bg-white"
+      }`}
+      onClick={() => onSelect(method.id)}
+      type="button"
+    >
+      <div className="flex items-start gap-2.5">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+            isSelected ? "bg-white/16 text-white" : method.iconClassName
+          }`}
         >
-            <span className="flex-shrink-0">{method.icon}</span>
-            <span className="text-sm font-semibold leading-tight">{method.label}</span>
+          {method.icon}
+        </div>
 
-            {isSelected && (
-                <span className="ml-auto flex-shrink-0">
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                </span>
-            )}
-        </button>
-    );
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <p className="truncate text-sm font-bold">{method.label}</p>
+              {method.id === "VNPAY" && (
+                <Landmark
+                  className={`h-3.5 w-3.5 ${
+                    isSelected ? "text-white/80" : "text-[var(--cf-secondary)]"
+                  }`}
+                />
+              )}
+              {method.id === "MOMO" && (
+                <Wallet
+                  className={`h-3.5 w-3.5 ${
+                    isSelected ? "text-white/80" : "text-[var(--cf-secondary)]"
+                  }`}
+                />
+              )}
+            </div>
+
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
+                isSelected
+                  ? "border-white/30 bg-white text-[var(--cf-primary)]"
+                  : "border-[var(--cf-primary)]/10 bg-white text-transparent"
+              }`}
+            >
+              ✓
+            </span>
+          </div>
+
+          <p
+            className={`mt-0.5 text-[11px] leading-[1.15rem] ${
+              isSelected ? "text-white/80" : "text-[var(--cf-secondary)]"
+            }`}
+          >
+            {method.description}
+          </p>
+        </div>
+      </div>
+    </button>
+  );
 }
 
-export function SelectPaymentMethod({ selectedPayment, onSelect }: SelectPaymentMethodProps) {
-    return (
-        <div className="rounded-2xl border border-[var(--cf-accent-light)] bg-[var(--cf-surface)] p-4 shadow-sm">
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-[var(--cf-primary)]">
-                Phương thức thanh toán
-            </p>
-
-            <div className="grid grid-cols-1 gap-2">
-                {paymentMethods.map((method) => {
-                    const isSelected = selectedPayment === method.id;
-                    console.log("isSelected: ", selectedPayment);
-                    return (
-                        <PaymentMethodItem
-                            isSelected={isSelected}
-                            method={method}
-                            onSelect={onSelect}
-                        />
-                    );
-                })}
-            </div>
+export function SelectPaymentMethod({
+  selectedPayment,
+  onSelect,
+}: SelectPaymentMethodProps) {
+  return (
+    <section className="rounded-[22px] border border-[var(--cf-primary)]/10 bg-white/85 p-3.5 shadow-[0_16px_36px_rgba(127,85,57,0.06)] backdrop-blur-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--cf-secondary)]">
+            Phương thức
+          </p>
+          <h2 className="mt-0.5 text-[15px] font-bold text-[var(--cf-primary)]">
+            Chọn thanh toán
+          </h2>
         </div>
-    )
+
+        <span className="rounded-full border border-[var(--cf-primary)]/10 bg-[var(--cf-bg)] px-2.5 py-1 text-xs font-semibold text-[var(--cf-primary)]">
+          {paymentMethods.length} lựa chọn
+        </span>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-1.5">
+        {paymentMethods.map((method) => (
+          <PaymentMethodItem
+            isSelected={selectedPayment === method.id}
+            key={method.id}
+            method={method}
+            onSelect={onSelect}
+          />
+        ))}
+      </div>
+    </section>
+  );
 }
