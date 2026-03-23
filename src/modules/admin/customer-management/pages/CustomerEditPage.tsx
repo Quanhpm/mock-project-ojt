@@ -29,7 +29,7 @@ export default function CustomerEditPage() {
             color: "#8B5A2B",
           }}
         >
-          Đang tải dữ liệu khách hàng...
+          Loading customer data...
         </div>
       </div>
     );
@@ -49,7 +49,7 @@ export default function CustomerEditPage() {
             color: "#dc2626",
           }}
         >
-          ❌ Đã xảy ra lỗi
+          An error occurred
         </div>
         <p style={{ fontSize: "14px", marginBottom: "16px" }}>{error}</p>
         <button
@@ -62,7 +62,7 @@ export default function CustomerEditPage() {
             cursor: "pointer",
           }}
         >
-          Quay lại danh sách
+          Back to list
         </button>
       </div>
     );
@@ -93,7 +93,7 @@ export default function CustomerEditPage() {
             cursor: "pointer",
           }}
         >
-          Quay lại danh sách
+          Back to list
         </button>
       </div>
     );

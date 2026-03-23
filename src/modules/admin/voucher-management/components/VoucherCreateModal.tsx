@@ -9,19 +9,19 @@ import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpo
 
 const createVoucherSchema = z
   .object({
-    name: z.string().min(1, "Tên voucher là bắt buộc"),
-    franchise_id: z.string().min(1, "Franchise là bắt buộc"),
+    name: z.string().min(1, "Voucher name is required"),
+    franchise_id: z.string().min(1, "Franchise is required"),
     product_franchise_id: z.string().optional(),
-    type: z.enum(["FIXED", "PERCENT"], { required_error: "Loại voucher là bắt buộc" }),
+    type: z.enum(["FIXED", "PERCENT"], { error: "Voucher type is required" }),
     value: z
-      .number({ invalid_type_error: "Giá trị phải là số" })
-      .positive("Giá trị phải lớn hơn 0"),
+      .number({ error: "Value must be a number" })
+      .positive("Value must be greater than 0"),
     quota_total: z
-      .number({ invalid_type_error: "Số lượng phải là số" })
-      .int("Số lượng phải là số nguyên")
-      .positive("Số lượng phải lớn hơn 0"),
-    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
-    end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
+      .number({ error: "Quota must be a number" })
+      .int("Quota must be an integer")
+      .positive("Quota must be greater than 0"),
+    start_date: z.string().min(1, "Start date is required"),
+    end_date: z.string().min(1, "End date is required"),
   })
   .refine(
     (data) => {
@@ -30,7 +30,7 @@ const createVoucherSchema = z
       }
       return true;
     },
-    { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
+    { message: "End date must be after start date", path: ["end_date"] },
   )
   .refine(
     (data) => {
@@ -39,7 +39,7 @@ const createVoucherSchema = z
       }
       return true;
     },
-    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
+    { message: "Percentage cannot exceed 100%", path: ["value"] },
   );
 
 type CreateVoucherFormValues = z.infer<typeof createVoucherSchema>;
@@ -92,6 +92,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
     formState: { errors },
   } = useForm<CreateVoucherFormValues>({
     resolver: zodResolver(createVoucherSchema),
+    mode: 'onChange',
     defaultValues: {
       name: "",
       franchise_id: "",
@@ -250,7 +251,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               <Tag size={22} color="#8B4513" />
             </div>
             <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-              Tạo Voucher Mới
+              Create New Voucher
             </h2>
           </div>
           <button
@@ -276,11 +277,11 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               {/* Name */}
               <div>
                 <label style={labelStyle}>
-                  Tên voucher <span style={{ color: "#ef4444" }}>*</span>
+                  Voucher Name <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   {...register("name")}
-                  placeholder="VD: Voucher KM Tháng 4"
+                  placeholder="e.g. Seasonal Promotion"
                   style={inputStyle}
                 />
                 {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
@@ -297,7 +298,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
                   style={{ ...inputStyle, cursor: franchisesLoading ? "wait" : "pointer" }}
                 >
                   <option value="">
-                    {franchisesLoading ? "Đang tải..." : "-- Chọn franchise --"}
+                    {franchisesLoading ? "Loading..." : "-- Select franchise --"}
                   </option>
                   {franchises.map((f) => (
                     <option key={f.id} value={f.id}>
@@ -312,7 +313,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
 
               {/* Product Franchise */}
               <div>
-                <label style={labelStyle}>Sản phẩm (tùy chọn)</label>
+                <label style={labelStyle}>Product (Optional)</label>
                 <select
                   {...register("product_franchise_id")}
                   disabled={!selectedFranchiseId || pfLoading}
@@ -323,10 +324,10 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
                 >
                   <option value="">
                     {pfLoading
-                      ? "Đang tải..."
+                      ? "Loading..."
                       : !selectedFranchiseId
-                        ? "Chọn franchise trước"
-                        : "-- Áp dụng cho tất cả sản phẩm --"}
+                        ? "Select franchise first"
+                        : "-- Apply to all products --"}
                   </option>
                   {productFranchises.map((pf) => (
                     <option key={pf.id} value={pf.id}>
@@ -340,17 +341,17 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Loại giảm giá <span style={{ color: "#ef4444" }}>*</span>
+                    Discount Type <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
-                    <option value="FIXED">Cố định (₫)</option>
-                    <option value="PERCENT">Phần trăm (%)</option>
+                    <option value="FIXED">Fixed (₫)</option>
+                    <option value="PERCENT">Percent (%)</option>
                   </select>
                   {errors.type && <p style={errorStyle}>{errors.type.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Giá trị <span style={{ color: "#ef4444" }}>*</span>
+                    Value <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                     <input
@@ -378,7 +379,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               {/* Quota Total */}
               <div>
                 <label style={labelStyle}>
-                  Số lượng tổng <span style={{ color: "#ef4444" }}>*</span>
+                  Total Quota <span style={{ color: "#ef4444" }}>*</span>
                 </label>
                 <input
                   type="number"
@@ -395,14 +396,14 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
-                    Ngày bắt đầu <span style={{ color: "#ef4444" }}>*</span>
+                    Start Date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input type="datetime-local" {...register("start_date")} style={inputStyle} />
                   {errors.start_date && <p style={errorStyle}>{errors.start_date.message}</p>}
                 </div>
                 <div>
                   <label style={labelStyle}>
-                    Ngày kết thúc <span style={{ color: "#ef4444" }}>*</span>
+                    End Date <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input type="datetime-local" {...register("end_date")} style={inputStyle} />
                   {errors.end_date && <p style={errorStyle}>{errors.end_date.message}</p>}
@@ -436,7 +437,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
                   color: "#374151",
                 }}
               >
-                Hủy
+                Cancel
               </button>
               <button
                 type="submit"
@@ -458,7 +459,7 @@ export default function VoucherCreateModal({ isOpen, onClose, onSuccess }: Vouch
                 {isCreating && (
                   <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                 )}
-                Tạo Voucher
+                Create Voucher
               </button>
             </div>
           </form>

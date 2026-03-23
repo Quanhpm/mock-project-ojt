@@ -10,7 +10,7 @@ interface UseGetVoucherByIdReturn {
   fetchById: (id: string) => Promise<void>;
 }
 
-export const useGetVoucherById = (): UseGetVoucherByIdReturn => {
+export const useGetVoucherById = (voucherId: string): UseGetVoucherByIdReturn => {
   const [voucher, setVoucher] = useState<Voucher | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

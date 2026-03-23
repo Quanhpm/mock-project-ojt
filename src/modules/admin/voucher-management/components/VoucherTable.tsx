@@ -9,7 +9,7 @@ import VoucherDetailsModal from "./VoucherDetailsModal";
 import VoucherCreateModal from "./VoucherCreateModal";
 import VoucherEditModal from "./VoucherEditModal";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
-import type { Voucher, VoucherSearchCondition, VoucherType } from "./voucher.types";
+import type { VoucherSearchCondition, VoucherType } from "./voucher.types";
 
 // Inject keyframe animations once
 const styleSheet = document.createElement("style");
@@ -53,7 +53,7 @@ export default function VoucherTable() {
   // Modal states
   const [deleteModal, setDeleteModal] = useState<ModalState>(defaultModal);
   const [restoreModal, setRestoreModal] = useState<ModalState>(defaultModal);
-  const [detailVoucher, setDetailVoucher] = useState<Voucher | null>(null);
+  const [detailVoucherId, setDetailVoucherId] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editVoucherId, setEditVoucherId] = useState<string>("");
 
@@ -277,10 +277,10 @@ export default function VoucherTable() {
                   margin: 0,
                 }}
               >
-                Quản lý Voucher
+                Voucher Management
               </h2>
               <p style={{ color: "#6c757d", margin: 0 }}>
-                Tổng cộng: {isLoading ? "..." : totalItems} voucher
+                Total: {isLoading ? "..." : totalItems} vouchers
               </p>
             </div>
             <button
@@ -304,7 +304,7 @@ export default function VoucherTable() {
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#8B4513")}
             >
               <Plus size={18} />
-              <span>Tạo Voucher</span>
+              <span>Create Voucher</span>
             </button>
           </div>
         </header>
@@ -370,7 +370,7 @@ export default function VoucherTable() {
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  placeholder="Tìm theo mã hoặc tên voucher..."
+                  placeholder="Search by code or voucher name..."
                   style={{
                     display: "block",
                     width: "100%",
@@ -465,7 +465,7 @@ export default function VoucherTable() {
                     >
                       <path d="M21 12a9 9 0 1 1-6.219-8.56" />
                     </svg>
-                    Đang tìm...
+                    Searching...
                   </>
                 ) : (
                   <>
@@ -480,7 +480,7 @@ export default function VoucherTable() {
                       <circle cx="11" cy="11" r="8" />
                       <path d="m21 21-4.35-4.35" />
                     </svg>
-                    Tìm kiếm
+                    Search
                   </>
                 )}
               </button>
@@ -514,7 +514,7 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả Franchise</option>
+                <option value="">All Franchise</option>
                 {franchises.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.name}
@@ -540,9 +540,9 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả loại</option>
-                <option value="FIXED">Cố định (₫)</option>
-                <option value="PERCENT">Phần trăm (%)</option>
+                <option value="">All types</option>
+                <option value="FIXED">Fixed (₫)</option>
+                <option value="PERCENT">Percentage (%)</option>
               </select>
 
               {/* Status filter */}
@@ -563,9 +563,9 @@ export default function VoucherTable() {
                 onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#bdbdbd")}
                 onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#e0e0e0")}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">All statuses</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
               </select>
 
               {/* Toggle deleted */}
@@ -605,7 +605,7 @@ export default function VoucherTable() {
                   <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
                   <path d="M10 11v6M14 11v6" />
                 </svg>
-                {showDeleted ? "Đã xóa" : "Hiện tại"}
+                {showDeleted ? "Deleted" : "Current"}
               </button>
 
               {/* Clear all filters */}
@@ -632,7 +632,7 @@ export default function VoucherTable() {
                   e.currentTarget.style.borderColor = "#e0e0e0";
                 }}
               >
-                Xóa bộ lọc
+                Clear filters
               </button>
             </div>
           </div>
@@ -657,15 +657,15 @@ export default function VoucherTable() {
                 <thead>
                   <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
                     {[
-                      "Mã voucher",
-                      "Tên voucher",
+                      "Voucher Code",
+                      "Voucher Name",
                       "Franchise",
-                      "Loại",
-                      "Giá trị",
-                      "Đã dùng / Tổng",
-                      "Hiệu lực",
-                      "Trạng thái",
-                      "Thao tác",
+                      "Type",
+                      "Value",
+                      "Used / Total",
+                      "Validity",
+                      "Status",
+                      "Actions",
                     ].map((h, i) => (
                       <th
                         key={h}
@@ -772,12 +772,12 @@ export default function VoucherTable() {
                                 margin: "0 0 8px 0",
                               }}
                             >
-                              Không tìm thấy voucher
+                              No vouchers found
                             </h3>
                             <p style={{ fontSize: "14px", color: "#6c757d", margin: 0 }}>
                               {keyword
-                                ? `Không có voucher nào khớp với "${keyword}"`
-                                : "Không có dữ liệu để hiển thị"}
+                                ? `No vouchers match "${keyword}"`
+                                : "No data to display"}
                             </p>
                           </div>
                         </div>
@@ -873,7 +873,7 @@ export default function VoucherTable() {
                               color: v.type === "FIXED" ? "#1565c0" : "#e65100",
                             }}
                           >
-                            {v.type === "FIXED" ? "Cố định" : "Phần trăm"}
+                            {v.type === "FIXED" ? "Fixed" : "Percentage"}
                           </span>
                         </td>
 
@@ -950,7 +950,7 @@ export default function VoucherTable() {
                               color: v.is_active ? "#2e7d32" : "#c62828",
                             }}
                           >
-                            {v.is_active ? "Hoạt động" : "Ngừng"}
+                            {v.is_active ? "Active" : "Inactive"}
                           </span>
                         </td>
 
@@ -966,8 +966,8 @@ export default function VoucherTable() {
                           >
                             {/* View */}
                             <button
-                              onClick={() => setDetailVoucher(v)}
-                              title="Xem chi tiết"
+                              onClick={() => setDetailVoucherId(v.id)}
+                              title="View"
                               style={{
                                 display: "flex",
                                 alignItems: "center",
@@ -999,7 +999,7 @@ export default function VoucherTable() {
                                 {/* Edit */}
                                 <button
                                   onClick={() => setEditVoucherId(v.id)}
-                                  title="Chỉnh sửa"
+                                  title="Edit"
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -1036,7 +1036,7 @@ export default function VoucherTable() {
                                     })
                                   }
                                   disabled={isActionLoading}
-                                  title="Xóa"
+                                  title="Delete"
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -1078,7 +1078,7 @@ export default function VoucherTable() {
                                   })
                                 }
                                 disabled={isActionLoading}
-                                title="Khôi phục"
+                                title="Restore"
                                 style={{
                                   display: "flex",
                                   alignItems: "center",
@@ -1132,17 +1132,17 @@ export default function VoucherTable() {
               >
                 {/* Info text */}
                 <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
-                  Hiển thị trang{" "}
+                  Page{" "}
                   <span style={{ fontWeight: "500" }}>{pageNum}</span>{" "}
-                  trong{" "}
+                  of{" "}
                   <span style={{ fontWeight: "500" }}>{totalPages}</span>{" "}
-                  trang ({" "}
+                  ({" "}
                   <span style={{ fontWeight: "500" }}>{totalItems}</span>{" "}
-                  voucher)
+                  vouchers)
                 </p>
 
                 {/* Page buttons */}
-                <nav aria-label="Phân trang" style={{ display: "inline-flex" }}>
+                <nav aria-label="Pagination" style={{ display: "inline-flex" }}>
                   {/* Prev */}
                   <button
                     onClick={() => handlePageChange(Math.max(1, pageNum - 1))}
@@ -1174,7 +1174,7 @@ export default function VoucherTable() {
                       e.currentTarget.style.borderColor = "#e5e7eb";
                     }}
                   >
-                    Trước
+                    Previous
                   </button>
 
                   {/* Page numbers */}
@@ -1250,7 +1250,7 @@ export default function VoucherTable() {
                       e.currentTarget.style.borderColor = "#e5e7eb";
                     }}
                   >
-                    Sau
+                    Next
                   </button>
                 </nav>
               </div>
@@ -1275,9 +1275,9 @@ export default function VoucherTable() {
         voucherName={restoreModal.name}
       />
       <VoucherDetailsModal
-        isOpen={!!detailVoucher}
-        onClose={() => setDetailVoucher(null)}
-        voucher={detailVoucher}
+        isOpen={!!detailVoucherId}
+        onClose={() => setDetailVoucherId("")}
+        voucherId={detailVoucherId}
       />
       <VoucherCreateModal
         isOpen={showCreateModal}

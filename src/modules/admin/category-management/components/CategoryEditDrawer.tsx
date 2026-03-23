@@ -55,15 +55,14 @@ export default function CategoryEditDrawer({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop overlay */}
+    <div
+      className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 border-l border-slate-200">
+        className="bg-white w-full max-w-[540px] max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Drawer Header */}
         <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
           <div>
@@ -215,6 +214,6 @@ export default function CategoryEditDrawer({
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

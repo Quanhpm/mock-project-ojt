@@ -1,10 +1,11 @@
-import { X, Tag, Calendar, Hash, Building2, Package, BarChart2, FileText } from "lucide-react";
-import type { Voucher } from "./voucher.types";
+import { useEffect } from "react";
+import { X, Tag, Calendar, Hash, Building2, Package, BarChart2, FileText, Loader2 } from "lucide-react";
+import { useGetVoucherById } from "./hooks/useGetVoucherById";
 
 interface VoucherDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  voucher: Voucher | null;
+  voucherId: string;
 }
 
 const formatDate = (dateStr: string) => {
@@ -76,19 +77,29 @@ const Field = ({
 export default function VoucherDetailsModal({
   isOpen,
   onClose,
-  voucher,
+  voucherId,
 }: VoucherDetailsModalProps) {
-  if (!isOpen || !voucher) return null;
+  const { voucher, isLoading, fetchById } = useGetVoucherById(voucherId);
+
+  useEffect(() => {
+    if (isOpen && voucherId) {
+      fetchById(voucherId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, voucherId]);
+
+  if (!isOpen) return null;
 
   const quotaPercent =
-    voucher.quota_total > 0
+    voucher && voucher.quota_total > 0
       ? Math.round((voucher.quota_used / voucher.quota_total) * 100)
       : 0;
 
   return (
-    <div
-      onClick={onClose}
-      style={{
+    <>
+      <div
+        onClick={onClose}
+        style={{
         position: "fixed",
         top: 0,
         left: 0,
@@ -146,10 +157,10 @@ export default function VoucherDetailsModal({
               <h2
                 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}
               >
-                Chi Tiết Voucher
+                Voucher Details
               </h2>
               <p style={{ margin: 0, fontSize: "13px", color: "#6c757d", fontFamily: "monospace" }}>
-                {voucher.code || voucher.id}
+                {voucher ? (voucher.code || voucher.id) : "…"}
               </p>
             </div>
           </div>
@@ -171,6 +182,22 @@ export default function VoucherDetailsModal({
 
         {/* Body */}
         <div style={{ padding: "24px" }}>
+          {isLoading ? (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: "40px",
+                gap: "12px",
+                color: "#6b7280",
+              }}
+            >
+              <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
+              <span>Loading voucher details...</span>
+            </div>
+          ) : voucher ? (
+            <>
           {/* Status badges */}
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
             <span
@@ -183,7 +210,7 @@ export default function VoucherDetailsModal({
                 color: voucher.is_active ? "#2e7d32" : "#c62828",
               }}
             >
-              {voucher.is_active ? "Đang hoạt động" : "Ngừng hoạt động"}
+              {voucher.is_active ? "Active" : "Inactive"}
             </span>
             <span
               style={{
@@ -195,7 +222,7 @@ export default function VoucherDetailsModal({
                 color: voucher.type === "FIXED" ? "#1565c0" : "#e65100",
               }}
             >
-              {voucher.type === "FIXED" ? "Cố định (₫)" : "Phần trăm (%)"}
+              {voucher.type === "FIXED" ? "Fixed (₫)" : "Percent (%)"}
             </span>
             {voucher.is_deleted && (
               <span
@@ -208,7 +235,7 @@ export default function VoucherDetailsModal({
                   color: "#6b7280",
                 }}
               >
-                Đã xóa
+                Deleted
               </span>
             )}
           </div>
@@ -232,10 +259,10 @@ export default function VoucherDetailsModal({
               }}
             >
               <span style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>
-                Lượt sử dụng
+                Usage
               </span>
               <span style={{ fontSize: "13px", fontWeight: "700", color: "#8B4513" }}>
-                {voucher.quota_used} / {voucher.quota_total} lượt ({quotaPercent}%)
+                {voucher.quota_used} / {voucher.quota_total} uses ({quotaPercent}%)
               </span>
             </div>
             <div
@@ -260,18 +287,18 @@ export default function VoucherDetailsModal({
           </div>
 
           {/* Fields */}
-          <Field icon={<Hash size={16} />} label="Mã Voucher" value={voucher.code} mono />
-          <Field icon={<Tag size={16} />} label="Tên Voucher" value={voucher.name} />
+          <Field icon={<Hash size={16} />} label="Voucher Code" value={voucher.code} mono />
+          <Field icon={<Tag size={16} />} label="Voucher Name" value={voucher.name} />
           {voucher.description && (
             <Field
               icon={<FileText size={16} />}
-              label="Mô tả"
+              label="Description"
               value={voucher.description}
             />
           )}
           <Field
             icon={<Tag size={16} />}
-            label="Giá trị giảm"
+            label="Discount Value"
             value={formatValue(voucher.type, voucher.value)}
           />
           <Field
@@ -286,35 +313,37 @@ export default function VoucherDetailsModal({
           {(voucher.product_name || voucher.product_franchise_id) && (
             <Field
               icon={<Package size={16} />}
-              label="Sản phẩm áp dụng"
+              label="Applied Product"
               value={voucher.product_name || voucher.product_franchise_id}
             />
           )}
           <Field
             icon={<BarChart2 size={16} />}
-            label="Số lượng"
-            value={`${voucher.quota_used} đã dùng / ${voucher.quota_total} tổng`}
+            label="Quota"
+            value={`${voucher.quota_used} used / ${voucher.quota_total} total`}
           />
           <Field
             icon={<Calendar size={16} />}
-            label="Ngày bắt đầu"
+            label="Start Date"
             value={formatDate(voucher.start_date)}
           />
           <Field
             icon={<Calendar size={16} />}
-            label="Ngày kết thúc"
+            label="End Date"
             value={formatDate(voucher.end_date)}
           />
           <Field
             icon={<Calendar size={16} />}
-            label="Ngày tạo"
+            label="Created At"
             value={formatDate(voucher.created_at)}
           />
           <Field
             icon={<Calendar size={16} />}
-            label="Cập nhật lần cuối"
+            label="Last Updated"
             value={formatDate(voucher.updated_at)}
           />
+            </>
+          ) : null}
         </div>
 
         {/* Footer */}
@@ -323,7 +352,7 @@ export default function VoucherDetailsModal({
             padding: "16px 24px",
             borderTop: "1px solid #f0f0f0",
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "flex-start",
           }}
         >
           <button
@@ -339,10 +368,15 @@ export default function VoucherDetailsModal({
               color: "#374151",
             }}
           >
-            Đóng
+            Close
           </button>
         </div>
       </div>
     </div>
+
+    <style>{`
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    `}</style>
+    </>
   );
 }

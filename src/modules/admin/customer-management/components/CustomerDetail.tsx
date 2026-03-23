@@ -52,7 +52,7 @@ export default function CustomerDetail({
             {customer.is_verified && (
               <div
                 className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1 border-2 border-white shadow-sm"
-                title="Tài khoản đã xác thực"
+                title="Verified account"
               >
                 <CheckCircle2 className="w-5 h-5 text-white" />
               </div>
@@ -70,14 +70,14 @@ export default function CustomerDetail({
               {customer.is_verified && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200 w-fit mx-auto sm:mx-0">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Đã xác thực
+                  Verified
                 </span>
               )}
             </div>
 
             <p className="text-sm text-gray-500 flex items-center justify-center sm:justify-start gap-1.5">
               <Shield className="w-4 h-4" />
-              Khách hàng VIP
+              VIP Customer
             </p>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function CustomerDetail({
       {/* Contact Information Grid */}
       <div className="px-6 py-8 sm:px-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-200">
-          Thông tin liên hệ
+          Contact Information
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -119,7 +119,7 @@ export default function CustomerDetail({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                  Số điện thoại
+                  Phone Number
                 </p>
                 <p className="text-sm sm:text-base font-medium text-gray-900">
                   {customer.phone}
@@ -138,7 +138,7 @@ export default function CustomerDetail({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
-                  Địa chỉ
+                  Address
                 </p>
                 <p className="text-sm sm:text-base font-medium text-gray-900">
                   {customer.address}
@@ -154,18 +154,18 @@ export default function CustomerDetail({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Thông tin được cập nhật từ hệ thống
+            Information synced from system
           </div>
 
           {customer.is_verified ? (
             <div className="flex items-center gap-2 text-xs font-medium text-green-600">
               <CheckCircle2 className="w-4 h-4" />
-              Tài khoản đã được xác minh
+              Account verified
             </div>
           ) : (
             <div className="flex items-center gap-2 text-xs font-medium text-amber-600">
               <Shield className="w-4 h-4" />
-              Chờ xác minh tài khoản
+              Pending verification
             </div>
           )}
         </div>

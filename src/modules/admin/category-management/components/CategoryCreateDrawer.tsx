@@ -64,7 +64,7 @@ export default function CategoryCreateDrawer({
         console.error("Failed to load categories:", error);
         setLoadCategoriesError(true);
         if (showError) {
-          showError("Không thể tải danh sách danh mục");
+          showError("Failed to load categories");
         }
       } finally {
         setIsLoadingCategories(false);
@@ -88,7 +88,7 @@ export default function CategoryCreateDrawer({
         console.error("Failed to load franchises:", error);
         setLoadFranchisesError(true);
         if (showError) {
-          showError("Không thể tải danh sách franchise");
+          showError("Failed to load franchises");
         }
       } finally {
         setIsLoadingFranchises(false);

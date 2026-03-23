@@ -2,9 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2 } from "lucide-react";
 import CustomerDelete from "./CustomerDelete";
+import CustomerForm from "./CustomerForm";
+import CustomerDetail from "./CustomerDetail";
 import { useCustomerSearch } from "../hooks";
 import { useCustomerStatus } from "./hooks/useCustomerStatus";
 import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
+import { useGetCustomer } from "./hooks/useGetCustomer";
 import type { Customer } from "../../../../types/customer.types";
 
 // ============================================================================
@@ -15,6 +18,16 @@ interface DeleteModal {
   isOpen: boolean;
   customerId: string;
   customerName: string;
+}
+
+interface EditModal {
+  isOpen: boolean;
+  customerId: string;
+}
+
+interface ViewModal {
+  isOpen: boolean;
+  customerId: string;
 }
 
 // ============================================================================
@@ -213,6 +226,8 @@ export default function CustomerTable() {
   // ========================================================================
   const { toggleStatus, updatingId } = useCustomerStatus();
   const { deleteCustomer, isDeleting } = useDeleteCustomer();
+  const { customer: editCustomer, isLoading: isEditLoading, fetchCustomer } = useGetCustomer();
+  const { customer: viewCustomer, isLoading: isViewLoading, fetchCustomer: fetchViewCustomer } = useGetCustomer();
 
   // ========================================================================
   // LOCAL STATE
@@ -224,6 +239,14 @@ export default function CustomerTable() {
     isOpen: false,
     customerId: "",
     customerName: "",
+  });
+  const [editModal, setEditModal] = useState<EditModal>({
+    isOpen: false,
+    customerId: "",
+  });
+  const [viewModal, setViewModal] = useState<ViewModal>({
+    isOpen: false,
+    customerId: "",
   });
   const [pageInput, setPageInput] = useState("");
 
@@ -275,6 +298,20 @@ export default function CustomerTable() {
       setCurrentPage(totalPages);
     }
   }, [totalPages, currentPage, setCurrentPage]);
+
+  // Fetch customer data when edit modal opens
+  useEffect(() => {
+    if (editModal.isOpen && editModal.customerId) {
+      fetchCustomer(editModal.customerId);
+    }
+  }, [editModal.isOpen, editModal.customerId, fetchCustomer]);
+
+  // Fetch customer data when view modal opens
+  useEffect(() => {
+    if (viewModal.isOpen && viewModal.customerId) {
+      fetchViewCustomer(viewModal.customerId);
+    }
+  }, [viewModal.isOpen, viewModal.customerId, fetchViewCustomer]);
 
   // ========================================================================
   // EVENT HANDLERS
@@ -502,7 +539,7 @@ export default function CustomerTable() {
           >
             {/* View Button */}
             <button
-              onClick={() => navigate(`/admin/customers/${customer.id}`)}
+              onClick={() => setViewModal({ isOpen: true, customerId: customer.id.toString() })}
               style={
                 {
                   ...getButtonStyles.actionButton,
@@ -524,7 +561,7 @@ export default function CustomerTable() {
 
             {/* Edit Button */}
             <button
-              onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+              onClick={() => setEditModal({ isOpen: true, customerId: customer.id.toString() })}
               style={
                 {
                   ...getButtonStyles.actionButton,
@@ -658,185 +695,62 @@ export default function CustomerTable() {
 
         {/* Content Area */}
         <div style={styles.contentArea}>
-          {/* Filters */}
-          <div style={styles.filterContainer}>
-            {/* Search Bar with History */}
-            <div
-              style={{ flex: 1, minWidth: "300px", position: "relative" }}
-              ref={dropdownRef}
-            >
-              <div style={{ position: "relative" }}>
-                {/* Search Icon */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    left: "12px",
-                    transform: "translateY(-50%)",
-                    pointerEvents: "none",
-                    color: "#9ca3af",
-                  }}
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
+          {/* Filters & Search Bar */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+            {/* Row 1: keyword input + Search button */}
+            <div className="flex gap-3 items-center mb-3">
+              {/* Search Bar */}
+              <div className="flex-1 relative" ref={dropdownRef}>
+                <div className="relative">
+                  {/* Search Icon */}
+                  <div className="absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                  </div>
+
+                  {/* Search Input */}
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search by name, email, phone... (Ctrl+K)"
+                    value={filters.keyword}
+                    onChange={(e) => {
+                      setFilters((prev) => ({ ...prev, keyword: e.target.value }));
+                      if (e.target.value.trim()) setIsSearchDropdownOpen(false);
+                    }}
+                    onFocus={() => {
+                      if (!filters.keyword.trim() && searchHistory.length > 0) setIsSearchDropdownOpen(true);
+                    }}
+                    onKeyDown={handleSearchKeyDown}
+                    className="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
+                  />
+
+                  {/* Clear Button */}
+                  {filters.keyword && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900 transition-all"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
 
-                {/* Search Input */}
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Tìm kiếm theo tên, email, số điện thoại... (Ctrl+K)"
-                  value={filters.keyword}
-                  onChange={(e) => {
-                    setFilters((prev) => ({
-                      ...prev,
-                      keyword: e.target.value,
-                    }));
-                    if (e.target.value.trim()) {
-                      setIsSearchDropdownOpen(false);
-                    }
-                  }}
-                  onFocus={() => {
-                    if (!filters.keyword.trim() && searchHistory.length > 0) {
-                      setIsSearchDropdownOpen(true);
-                    }
-                  }}
-                  onKeyDown={handleSearchKeyDown}
-                  style={
-                    {
-                      ...getButtonStyles.filterInput,
-                      paddingLeft: "40px",
-                      paddingRight: filters.keyword ? "40px" : "14px",
-                      flex: 1,
-                    } as React.CSSProperties
-                  }
-                  onFocusCapture={(e) => {
-                    e.currentTarget.style.borderColor = "#8B5A2B";
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                  }}
-                  onBlurCapture={(e) => {
-                    e.currentTarget.style.borderColor = "#e5e7eb";
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }}
-                />
-
-                {/* Clear Button */}
-                {filters.keyword && (
-                  <button
-                    onClick={handleClearSearch}
-                    style={{
-                      position: "absolute",
-                      top: "50%",
-                      right: "12px",
-                      transform: "translateY(-50%)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "20px",
-                      height: "20px",
-                      border: "none",
-                      borderRadius: "50%",
-                      backgroundColor: "#e0e0e0",
-                      color: "#6c757d",
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#bdbdbd";
-                      e.currentTarget.style.color = "#212529";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#e0e0e0";
-                      e.currentTarget.style.color = "#6c757d";
-                    }}
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                )}
-              </div>
-
-              {/* Search Dropdown - History */}
-              {isSearchDropdownOpen &&
-                searchHistory.length > 0 &&
-                !filters.keyword && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "calc(100% + 4px)",
-                      left: 0,
-                      right: 0,
-                      backgroundColor: "white",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                      zIndex: 50,
-                      maxHeight: "250px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: "8px 12px",
-                        borderBottom: "1px solid #f0f0f0",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "12px",
-                          fontWeight: "600",
-                          color: "#6c757d",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        Tìm kiếm gần đây
-                      </span>
+                {/* Search Dropdown - History */}
+                {isSearchDropdownOpen && searchHistory.length > 0 && !filters.keyword && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center">
+                      <span className="text-xs font-semibold text-slate-500 uppercase">Recent searches</span>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          clearHistory();
-                          setIsSearchDropdownOpen(false);
-                        }}
-                        style={{
-                          fontSize: "11px",
-                          color: "#ef4444",
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          transition: "all 0.2s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "#fee")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor =
-                            "transparent")
-                        }
+                        onClick={(e) => { e.stopPropagation(); clearHistory(); setIsSearchDropdownOpen(false); }}
+                        className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                       >
-                        Xóa
+                        Clear
                       </button>
                     </div>
                     {searchHistory.map((item, index) => (
@@ -847,106 +761,63 @@ export default function CustomerTable() {
                           setIsSearchDropdownOpen(false);
                           setSelectedHistoryIndex(-1);
                         }}
-                        style={{
-                          padding: "10px 12px",
-                          cursor: "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          backgroundColor:
-                            selectedHistoryIndex === index
-                              ? "#f3f4f6"
-                              : "transparent",
-                          transition: "background-color 0.2s",
-                        }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.backgroundColor = "#f9fafb")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.backgroundColor =
-                            selectedHistoryIndex === index
-                              ? "#f3f4f6"
-                              : "transparent")
-                        }
+                        className={`px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-slate-50 ${selectedHistoryIndex === index ? "bg-slate-100" : ""}`}
                       >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          style={{ color: "#9ca3af" }}
-                        >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400">
                           <circle cx="12" cy="12" r="10" />
                           <polyline points="12 6 12 12 16 14" />
                         </svg>
-                        <span style={{ fontSize: "14px", color: "#374151" }}>
-                          {item}
-                        </span>
+                        <span className="text-sm text-slate-700">{item}</span>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Search Button */}
+              <button
+                onClick={handleSearch}
+                className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-[#6c4830] transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                Search
+              </button>
             </div>
 
-            {/* Search Button */}
-            <button
-              type="button"
-              onClick={handleSearch}
-              style={{
-                ...getButtonStyles.primary,
-                minWidth: "110px",
-                height: "42px",
-              }}
-              aria-label="Search customers"
-            >
-              <span className="material-symbols-outlined">search</span>
-              <span>Tìm kiếm</span>
-            </button>
-            
-            {/* Status Filter */}
-            <div style={{ minWidth: "140px" }}>
+            {/* Row 2: Filters + Clear button */}
+            <div className="flex gap-3 items-center flex-wrap">
+              {/* Status Filter */}
               <select
                 value={filters.is_active}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                style={getButtonStyles.filterInput as React.CSSProperties}
+                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Đang hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">All statuses</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
               </select>
-            </div>
 
-            {/* Deleted Filter */}
-            <div style={{ minWidth: "140px" }}>
+              {/* Deleted Filter */}
               <select
                 value={filters.is_deleted ? "true" : "false"}
-                onChange={(e) =>
-                  handleDeletedFilterChange(e.target.value === "true")
-                }
-                style={getButtonStyles.filterInput as React.CSSProperties}
+                onChange={(e) => handleDeletedFilterChange(e.target.value === "true")}
+                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="false">Chưa xóa</option>
-                <option value="true">Đã xóa</option>
+                <option value="false">Not deleted</option>
+                <option value="true">Deleted</option>
               </select>
+
+              {/* Clear Filters Button */}
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap"
+              >
+                Clear filters
+              </button>
             </div>
-
-          
-
-            {/* Clear Filters Button */}
-            <button
-              onClick={clearFilters}
-              style={getButtonStyles.clearFilter as React.CSSProperties}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e5e7eb";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-              }}
-            >
-              Xóa bộ lọc
-            </button>
           </div>
 
           {/* Table */}
@@ -1045,7 +916,7 @@ export default function CustomerTable() {
                           color: "#8B5A2B",
                         }}
                       >
-                        Đang tải dữ liệu khách hàng...
+                        Loading customers...
                       </div>
                     </td>
                   </tr>
@@ -1069,7 +940,7 @@ export default function CustomerTable() {
                           color: "#dc2626",
                         }}
                       >
-                        ❌ Có lỗi xảy ra
+                        ❌ An error occurred
                       </div>
                       <p
                         style={{
@@ -1317,6 +1188,123 @@ export default function CustomerTable() {
         customerId={deleteModal.customerId}
         isDeleting={isDeleting}
       />
+
+      {/* Edit Modal */}
+      {editModal.isOpen && (
+        <div
+          onClick={() => setEditModal({ isOpen: false, customerId: "" })}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "center",
+            overflowY: "auto",
+            padding: "40px 16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "900px",
+            }}
+          >
+            {isEditLoading ? (
+              <div style={{ padding: "48px 24px", textAlign: "center", color: "#6c757d" }}>
+                <div style={{ fontSize: "16px", fontWeight: "600", color: "#8B5A2B" }}>
+                  Loading customer data...
+                </div>
+              </div>
+            ) : editCustomer ? (
+              <CustomerForm
+                customer={editCustomer}
+                onSuccess={() => {
+                  setEditModal({ isOpen: false, customerId: "" });
+                  executeSearch();
+                }}
+                onCancel={() => setEditModal({ isOpen: false, customerId: "" })}
+              />
+            ) : (
+              <div style={{ padding: "48px 24px", textAlign: "center", color: "#6c757d" }}>
+                <div style={{ fontSize: "16px", fontWeight: "600" }}>Customer not found</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* View Modal */}
+      {viewModal.isOpen && (
+        <div
+          onClick={() => setViewModal({ isOpen: false, customerId: "" })}
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 50,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px 16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              width: "100%",
+              maxWidth: "900px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {isViewLoading ? (
+              <div style={{ padding: "48px 24px", textAlign: "center", color: "#6c757d" }}>
+                <div style={{ fontSize: "16px", fontWeight: "600", color: "#8B5A2B" }}>
+                  Loading customer data...
+                </div>
+              </div>
+            ) : viewCustomer ? (
+              <CustomerDetail customer={viewCustomer} />
+            ) : (
+              <div style={{ padding: "48px 24px", textAlign: "center", color: "#6c757d" }}>
+                <div style={{ fontSize: "16px", fontWeight: "600" }}>Customer not found</div>
+              </div>
+            )}
+            <div style={{
+              padding: "16px 24px",
+              borderTop: "1px solid #f0f0f0",
+              display: "flex",
+              justifyContent: "flex-start",
+            }}>
+              <button
+                onClick={() => setViewModal({ isOpen: false, customerId: "" })}
+                style={{
+                  padding: "10px 24px",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  backgroundColor: "white",
+                  color: "#374151",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

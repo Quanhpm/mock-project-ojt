@@ -8,17 +8,17 @@ import { useUpdateVoucher } from "./hooks/useUpdateVoucher";
 
 const updateVoucherSchema = z
   .object({
-    name: z.string().min(1, "Tên voucher là bắt buộc"),
-    type: z.enum(["FIXED", "PERCENT"], { required_error: "Loại voucher là bắt buộc" }),
+    name: z.string().min(1, "Voucher name is required"),
+    type: z.enum(["FIXED", "PERCENT"], { error: "Voucher type is required" }),
     value: z
-      .number({ invalid_type_error: "Giá trị phải là số" })
-      .positive("Giá trị phải lớn hơn 0"),
+      .number({ error: "Value must be a number" })
+      .positive("Value must be greater than 0"),
     quota_total: z
-      .number({ invalid_type_error: "Số lượng phải là số" })
-      .int("Số lượng phải là số nguyên")
-      .positive("Số lượng phải lớn hơn 0"),
-    start_date: z.string().min(1, "Ngày bắt đầu là bắt buộc"),
-    end_date: z.string().min(1, "Ngày kết thúc là bắt buộc"),
+      .number({ error: "Quota must be a number" })
+      .int("Quota must be an integer")
+      .positive("Quota must be greater than 0"),
+    start_date: z.string().min(1, "Start date is required"),
+    end_date: z.string().min(1, "End date is required"),
   })
   .refine(
     (data) => {
@@ -27,7 +27,7 @@ const updateVoucherSchema = z
       }
       return true;
     },
-    { message: "Ngày kết thúc phải sau ngày bắt đầu", path: ["end_date"] },
+    { message: "End date must be after start date", path: ["end_date"] },
   )
   .refine(
     (data) => {
@@ -36,7 +36,7 @@ const updateVoucherSchema = z
       }
       return true;
     },
-    { message: "Phần trăm không được vượt quá 100%", path: ["value"] },
+    { message: "Percentage cannot exceed 100%", path: ["value"] },
   );
 
 type UpdateVoucherFormValues = z.infer<typeof updateVoucherSchema>;
@@ -86,7 +86,7 @@ export default function VoucherEditModal({
   onClose,
   onSuccess,
 }: VoucherEditModalProps) {
-  const { voucher, isLoading, fetchById } = useGetVoucherById();
+  const { voucher, isLoading, fetchById } = useGetVoucherById(voucherId);
   const { updateVoucher, isUpdating } = useUpdateVoucher();
 
   const {
@@ -98,6 +98,7 @@ export default function VoucherEditModal({
     formState: { errors },
   } = useForm<UpdateVoucherFormValues>({
     resolver: zodResolver(updateVoucherSchema),
+    mode: 'onChange',
   });
 
   const selectedType = watch("type");
@@ -225,11 +226,11 @@ export default function VoucherEditModal({
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
-                Chỉnh Sửa Voucher
+                Edit Voucher
               </h2>
               {voucher && (
                 <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>
-                  Mã: {voucher.code || voucher.id}
+                  Code: {voucher.code || voucher.id}
                 </p>
               )}
             </div>
@@ -264,7 +265,7 @@ export default function VoucherEditModal({
               }}
             >
               <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
-              <span>Đang tải dữ liệu...</span>
+              <span>Loading data...</span>
             </div>
           ) : (
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -288,7 +289,7 @@ export default function VoucherEditModal({
                       · Product Franchise ID: <strong>{voucher.product_franchise_id}</strong>
                     </>
                   )}
-                  &nbsp;· Những trường này không thể thay đổi sau khi tạo.
+                  &nbsp;· These fields cannot be changed after creation.
                 </div>
               )}
 
@@ -298,11 +299,11 @@ export default function VoucherEditModal({
                 {/* Name */}
                 <div>
                   <label style={labelStyle}>
-                    Tên voucher <span style={{ color: "#ef4444" }}>*</span>
+                    Voucher Name <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     {...register("name")}
-                    placeholder="VD: Voucher KM Tháng 4"
+                    placeholder="e.g. Seasonal Promotion"
                     style={inputStyle}
                   />
                   {errors.name && <p style={errorStyle}>{errors.name.message}</p>}
@@ -312,17 +313,17 @@ export default function VoucherEditModal({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div>
                     <label style={labelStyle}>
-                      Loại giảm giá <span style={{ color: "#ef4444" }}>*</span>
+                      Discount Type <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
-                      <option value="FIXED">Cố định (₫)</option>
-                      <option value="PERCENT">Phần trăm (%)</option>
+                      <option value="FIXED">Fixed (₫)</option>
+                      <option value="PERCENT">Percent (%)</option>
                     </select>
                     {errors.type && <p style={errorStyle}>{errors.type.message}</p>}
                   </div>
                   <div>
                     <label style={labelStyle}>
-                      Giá trị <span style={{ color: "#ef4444" }}>*</span>
+                      Value <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                       <input
@@ -350,7 +351,7 @@ export default function VoucherEditModal({
                 {/* Quota Total */}
                 <div>
                   <label style={labelStyle}>
-                    Số lượng tổng <span style={{ color: "#ef4444" }}>*</span>
+                    Total Quota <span style={{ color: "#ef4444" }}>*</span>
                   </label>
                   <input
                     type="number"
@@ -367,14 +368,14 @@ export default function VoucherEditModal({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                   <div>
                     <label style={labelStyle}>
-                      Ngày bắt đầu <span style={{ color: "#ef4444" }}>*</span>
+                      Start Date <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <input type="datetime-local" {...register("start_date")} style={inputStyle} />
                     {errors.start_date && <p style={errorStyle}>{errors.start_date.message}</p>}
                   </div>
                   <div>
                     <label style={labelStyle}>
-                      Ngày kết thúc <span style={{ color: "#ef4444" }}>*</span>
+                      End Date <span style={{ color: "#ef4444" }}>*</span>
                     </label>
                     <input type="datetime-local" {...register("end_date")} style={inputStyle} />
                     {errors.end_date && <p style={errorStyle}>{errors.end_date.message}</p>}
@@ -388,7 +389,7 @@ export default function VoucherEditModal({
                   display: "flex",
                   gap: "12px",
                   marginTop: "24px",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
                   paddingTop: "20px",
                   borderTop: "1px solid #f0f0f0",
                 }}
@@ -408,7 +409,7 @@ export default function VoucherEditModal({
                     color: "#374151",
                   }}
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   type="submit"
@@ -430,7 +431,7 @@ export default function VoucherEditModal({
                   {isUpdating && (
                     <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
                   )}
-                  Lưu thay đổi
+                  Save Changes
                 </button>
               </div>
             </form>

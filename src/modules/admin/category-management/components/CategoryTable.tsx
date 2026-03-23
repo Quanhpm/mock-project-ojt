@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, RotateCcw, Plus, FolderPlus } from "lucide-react";
+import { Edit2, Trash2, RotateCcw, Eye, FolderPlus } from "lucide-react";
 import { useCategorySearch } from "../hooks/useCategorySearch.hook";
 import { useDeleteCategory } from "./hooks/useDeleteCategory";
 import { useRestoreCategory } from "./hooks/useRestoreCategory";
 import { useToggleStatus } from "./hooks/useToggleStatus";
 import { ROUTER_URL } from "@/routes/router.const";
 import CategoryEditDrawer from "./CategoryEditDrawer";
-import CategoryCreateDrawer from "./CategoryCreateDrawer";
 import MasterCategoryCreateDrawer from "./MasterCategoryCreateDrawer";
 import type { CategoryFranchise } from "../api/category-franchise.types";
 import {
@@ -55,10 +54,6 @@ interface DeleteModal {
 interface EditModal {
   isOpen: boolean;
   categoryId: string;
-}
-
-interface CreateModal {
-  isOpen: boolean;
 }
 
 interface CreateMasterModal {
@@ -272,10 +267,6 @@ export default function CategoryTable() {
     categoryId: "",
   });
 
-  const [createModal, setCreateModal] = useState<CreateModal>({
-    isOpen: false,
-  });
-
   const [createMasterModal, setCreateMasterModal] = useState<CreateMasterModal>({
     isOpen: false,
   });
@@ -423,15 +414,13 @@ export default function CategoryTable() {
   };
 
   const handleCreateNew = () => {
-    setCreateModal({ isOpen: true });
-  };
-
-  const handleCloseCreateModal = () => {
-    setCreateModal({ isOpen: false });
-  };
-
-  const handleCreateSuccess = () => {
-    setCurrentPage(1); // Reset to first page (will auto-trigger refetch via hook)
+    navigate(
+      `/admin/${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/assign${
+        isGlobalScope && filters.franchise_id
+          ? `?franchise_id=${filters.franchise_id}`
+          : ""
+      }`
+    );
   };
 
   const handleCreateMaster = () => {
@@ -559,131 +548,78 @@ export default function CategoryTable() {
 
         {/* Content Area */}
         <div style={styles.contentArea}>
-          {/* Filters */}
-          <div style={styles.filterContainer}>
-            {/* Search Bar */}
-            <div style={{ flex: 1, minWidth: "400px", position: "relative" }}>
-              {/* Search Icon */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "12px",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                  color: "#9ca3af",
+          {/* Filters & Search Bar */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+            {/* Row 1: keyword input + Search button */}
+            <div className="flex gap-3 items-center mb-3">
+              {/* Search Bar */}
+              <div className="flex-1 relative">
+                <div className="relative">
+                  {/* Search Icon */}
+                  <div className="absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.35-4.35" />
+                    </svg>
+                  </div>
+
+                  {/* Search Input */}
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search by category name... (Ctrl+K)"
+                    value={filters.keyword}
+                    onChange={(e) => {
+                      setFilters((prev) => ({ ...prev, keyword: e.target.value }));
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        setCurrentPage(1);
+                        setTimeout(() => refetch(), 0);
+                      }
+                    }}
+                    className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Search Button */}
+              <button
+                onClick={() => {
+                  setCurrentPage(1);
+                  setTimeout(() => refetch(), 0);
                 }}
+                className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-[#6c4830] transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.35-4.35" />
                 </svg>
-              </div>
-
-              {/* Search Input */}
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search by title or location..."
-                value={filters.keyword}
-                onChange={(e) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    keyword: e.target.value,
-                  }));
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    setCurrentPage(1);
-                    setTimeout(() => refetch(), 0);
-                  }
-                }}
-                style={{
-                  width: "100%",
-                  padding: "10px 14px 10px 44px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                  backgroundColor: "#f8fafc",
-                  transition: "all 0.2s",
-                  color: "#1e293b",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = "#ffffff";
-                  e.currentTarget.style.borderColor = "#8B5A2B";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                }}
-              />
+                Search
+              </button>
             </div>
 
-            {/* Status Filter */}
-            <div style={{ minWidth: "140px" }}>
+            {/* Row 2: Filters + Clear button */}
+            <div className="flex gap-3 items-center flex-wrap">
+              {/* Status Filter */}
               <select
                 value={String(filters.is_active ?? "")}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "10px 14px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                  backgroundColor: "#f8fafc",
-                  cursor: "pointer",
-                  appearance: "none",
-                  backgroundImage:
-                    "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 10px center",
-                  backgroundSize: "16px",
-                  paddingRight: "36px",
-                }}
+                className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               >
-                <option value="">All Status</option>
+                <option value="">All statuses</option>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
-            </div>
 
-            {isGlobalScope && (
-              <div style={{ minWidth: "200px" }}>
+              {isGlobalScope && (
                 <select
                   value={filters.franchise_id || ""}
                   onChange={(e) => {
-                    setFilters((prev) => ({
-                      ...prev,
-                      franchise_id: e.target.value,
-                    }));
+                    setFilters((prev) => ({ ...prev, franchise_id: e.target.value }));
                   }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontFamily: "inherit",
-                    backgroundColor: "#f8fafc",
-                    cursor: "pointer",
-                    appearance: "none",
-                    backgroundImage:
-                      "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "16px",
-                    paddingRight: "36px",
-                  }}
+                  className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 >
                   <option value="">All Franchise</option>
                   {franchiseOptions.map((franchise) => (
@@ -692,82 +628,19 @@ export default function CategoryTable() {
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
+              )}
 
-            {/* Clear Filters */}
-            <button
-              onClick={() => {
-                setFilters((prev) => ({
-                  ...prev,
-                  keyword: "",
-                  franchise_id: "",
-                  is_active: "",
-                }));
-                searchInputRef.current?.focus();
-              }}
-              style={{
-                padding: "10px 16px",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#8B5A2B",
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                transition: "color 0.2s",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#6d4423";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#8B5A2B";
-              }}
-            >
-              Clear Filters
-            </button>
-
-            {/* Search Button */}
-            <button
-              onClick={() => {
-                setCurrentPage(1);
-                setTimeout(() => refetch(), 0);
-              }}
-              style={{
-                padding: "10px 16px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: "#8b5a2b",
-                color: "white",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#6d4522";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#8b5a2b";
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+              {/* Clear Filters Button */}
+              <button
+                onClick={() => {
+                  setFilters((prev) => ({ ...prev, keyword: "", franchise_id: "", is_active: "" }));
+                  searchInputRef.current?.focus();
+                }}
+                className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap"
               >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              Tìm kiếm
-            </button>
+                Clear filters
+              </button>
+            </div>
           </div>
 
           {/* Table */}
@@ -1062,7 +935,7 @@ export default function CategoryTable() {
                               e.currentTarget.style.color = "#64748b";
                             }}
                           >
-                            <Plus size={18} />
+                            <Eye size={18} />
                           </button>
                           <button
                             onClick={() => handleEdit(category.id)}
@@ -1328,14 +1201,6 @@ export default function CategoryTable() {
         isOpen={editModal.isOpen}
         onClose={handleCloseEditModal}
         onSuccess={handleEditSuccess}
-      />
-
-      {/* Create Drawer */}
-      <CategoryCreateDrawer
-        isOpen={createModal.isOpen}
-        onClose={handleCloseCreateModal}
-        onSuccess={handleCreateSuccess}
-          franchiseId={isGlobalScope ? filters.franchise_id || null : undefined}
       />
 
       {/* Create Master Category Drawer */}

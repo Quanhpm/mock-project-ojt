@@ -13,11 +13,56 @@ import { useToast } from '@/hooks/use-toast.hook'
 // ──────── Zod Schema ────────
 const userCreateSchema = z
   .object({
-    name: z.string().min(1, 'Full name is required'),
-    email: z.string().min(1, 'Email is required').email('Invalid email address'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-    phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), 'Phone number must be exactly 10 digits'),
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Full name is required')
+      .min(5, 'Full name must be at least 5 characters')
+      .max(100, 'Full name must not exceed 100 characters')
+      .regex(
+        /^[a-zA-Z0-9. ]+$/,
+        'Full name can only contain letters, numbers, dots, and spaces',
+      )
+      .refine((value) => !value.includes('..'), {
+        message: 'Full name must not contain consecutive dots',
+      })
+      .refine((value) => !/ {2,}/.test(value), {
+        message: 'Full name must not contain consecutive spaces',
+      })
+      .refine(
+        (value) => !value.startsWith('.') && !value.endsWith('.'),
+        {
+          message: 'Full name must not start or end with a dot',
+        },
+      ),
+
+    email: z
+      .string()
+      .trim()
+      .min(1, 'Email is required')
+      .min(8, 'Email must be at least 8 characters')
+      .max(50, 'Email must not exceed 50 characters')
+      .regex(
+        /^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/,
+        'Email format is invalid',
+      ),
+
+    password: z
+      .string()
+      .min(1, 'Password is required')
+      .min(8, 'Password must be at least 8 characters'),
+
+    confirmPassword: z
+      .string()
+      .min(1, 'Please confirm your password'),
+
+    phone: z
+      .string()
+      .min(1, 'Phone number is required')
+      .regex(
+        /^(\+84|0)(3[2-9]|5[2689]|7[06-9]|8\d|9\d)\d{7}$/,
+        'Invalid phone number',
+      ),
     avatar_url: z.string().optional(),
     role_id: z.string().min(1, 'Role is required'),
     franchise_id: z.string().optional(),

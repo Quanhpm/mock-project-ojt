@@ -71,7 +71,7 @@ const toDatetimeLocal = (iso: string) => {
 export default function VoucherEditForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { voucher, isLoading, fetchById } = useGetVoucherById();
+  const { voucher, isLoading, fetchById } = useGetVoucherById(id ?? "");
   const { updateVoucher, isUpdating } = useUpdateVoucher();
 
   const {

@@ -13,6 +13,8 @@ import { ENV } from "@/config/env.config";
 
 interface CustomerFormProps {
   customer?: Customer;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // ============================================================================
@@ -20,25 +22,61 @@ interface CustomerFormProps {
 // ============================================================================
 const createValidationSchema = (isEditMode: boolean) =>
   yup.object().shape({
+
     email: yup
       .string()
+      .trim()
       .required("Email là bắt buộc")
-      .email("Email không đúng định dạng"),
-    phone: yup.string().required("Số điện thoại là bắt buộc"),
-    name: yup.string().default(""),
+      .matches(/^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/, "Email không đúng định dạng")
+      .max(50, "Email không được vượt quá 50 ký tự")
+      .min(8, "Email phải có ít nhất 8 ký tự"),
+
+    phone: yup
+      .string()
+      .required("Số điện thoại là bắt buộc")
+      .matches(
+        /^(\+84|0)(3[2-9]|5[2689]|7[06-9]|8\d|9\d)\d{7}$/,
+        "Số điện thoại không hợp lệ ",
+      ),
+
+    name: yup
+      .string()
+      .trim()
+      .required("Tên là bắt buộc")
+      .min(5, "Tên phải có ít nhất 5 ký tự")
+      .matches(/^[a-zA-Z0-9. ]+$/, "Tên chỉ được chứa chữ thường, chữ hoa, số, dấu chấm và khoảng trắng")
+      .test(
+        "no-consecutive-dots",
+        "Không được chứa hai dấu chấm liên tiếp",
+        (value) => !value || !value.includes("..")
+      )
+      .test(
+        "no-multiple-spaces",
+        "Không được chứa nhiều khoảng trắng liên tiếp",
+        (value) => !value || !/ {2,}/.test(value)
+      )
+      .test(
+        "no-edge-dot",
+        "Không được bắt đầu hoặc kết thúc bằng dấu chấm",
+        (value) => !value || (!value.startsWith(".") && !value.endsWith("."))
+      )
+      .default(""),
+
     avatarUrl: yup.string().default(""),
+
     password: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Mật khẩu là bắt buộc")
-          .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+        .string()
+        .required("Mật khẩu là bắt buộc")
+        .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+
     confirmPassword: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Xác nhận mật khẩu là bắt buộc")
-          .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp"),
+        .string()
+        .required("Xác nhận mật khẩu là bắt buộc")
+        .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp"),
     isActive: yup.boolean().default(true),
   });
 
@@ -52,7 +90,7 @@ interface FormValues {
   isActive: boolean;
 }
 
-export default function CustomerForm({ customer }: CustomerFormProps) {
+export default function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProps) {
   const navigate = useNavigate();
   const { success, error } = useToast();
   const isEditMode = !!customer;
@@ -76,6 +114,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     watch,
   } = useForm<FormValues>({
     resolver: yupResolver(createValidationSchema(isEditMode)),
+    mode: 'onChange',
     defaultValues: {
       email: "",
       phone: "",
@@ -128,7 +167,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
-      formData.append("folder", "customers/avatars"); // Tổ chức file theo folder
+      formData.append("folder", "customers/avatars");
 
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -143,14 +182,14 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
       const { secure_url } = response.data;
       setValue("avatarUrl", secure_url);
       setPreviewUrl(secure_url);
-      success("Upload thành công", "Ảnh đại diện đã được tải lên.");
+      success("Upload successful", "Avatar has been uploaded.");
     } catch (err) {
       console.error("Upload error:", err);
       error(
-        "Upload thất bại",
+        "Upload failed",
         err instanceof Error
           ? err.message
-          : "Không thể tải ảnh lên. Vui lòng thử lại.",
+          : "Unable to upload image. Please try again.",
       );
     } finally {
       setIsUploading(false);
@@ -165,13 +204,13 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        error("File không hợp lệ", "Vui lòng chọn file ảnh.");
+        error("Invalid file", "Please select an image file.");
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        error("File quá lớn", "Kích thước file không được vượt quá 5MB.");
+        error("File too large", "Maximum file size is 5MB.");
         return;
       }
 
@@ -204,7 +243,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const onSubmit = async (data: FormValues) => {
     try {
       if (isEditMode) {
-        // UPDATE MODE: Không gửi password và is_active (API CUSTOMER-05 không yêu cầu)
+        // UPDATE MODE: skip password and is_active (not required by API)
         const updatePayload = {
           email: data.email,
           phone: data.phone,
@@ -214,13 +253,17 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
 
         await updateCustomer(customer.id, updatePayload, () => {
           success(
-            "Cập nhật thành công",
-            `Khách hàng "${data.name || data.email}" đã được cập nhật.`,
+            "Customer updated",
+            `Customer "${data.name || data.email}" has been updated.`,
           );
-          navigate("/admin/customers");
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            navigate("/admin/customers");
+          }
         });
       } else {
-        // CREATE MODE: Gửi cả password
+        // CREATE MODE: send password too
         const createPayload = {
           email: data.email,
           phone: data.phone,
@@ -232,8 +275,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
 
         await createCustomer(createPayload, () => {
           success(
-            "Tạo mới thành công",
-            `Khách hàng "${data.name || data.email}" đã được tạo.`,
+            "Customer created",
+            `Customer "${data.name || data.email}" has been created.`,
           );
           navigate("/admin/customers");
         });
@@ -241,8 +284,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     } catch (err) {
       console.error("Submit error:", err);
       error(
-        "Có lỗi xảy ra",
-        err instanceof Error ? err.message : "Vui lòng thử lại sau.",
+        "An error occurred",
+        err instanceof Error ? err.message : "Please try again later.",
       );
     }
   };
@@ -292,7 +335,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
         <div style={{ display: "flex", gap: "12px" }}>
           <button
             type="button"
-            onClick={() => navigate("/admin/customers")}
+            onClick={() => onCancel ? onCancel() : navigate("/admin/customers")}
             style={{
               padding: "10px 20px",
               border: "1px solid #e0e0e0",
@@ -330,7 +373,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
             }}
           >
             {isLoading
-              ? "Đang lưu..."
+              ? "Saving..."
               : isEditMode
                 ? "Update Customer"
                 : "Create Customer"}
@@ -676,7 +719,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                         color: "#212529",
                       }}
                     >
-                      Avatar đã được tải lên
+                      Avatar uploaded
                     </p>
                     <p
                       style={{
@@ -763,8 +806,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     }}
                   >
                     {isUploading
-                      ? "Đang tải lên..."
-                      : "Click để chọn ảnh đại diện"}
+                      ? "Uploading..."
+                      : "Click to select an avatar"}
                   </p>
                   <p
                     style={{
@@ -774,8 +817,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     }}
                   >
                     {isUploading
-                      ? "Vui lòng đợi..."
-                      : "Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)"}
+                      ? "Please wait..."
+                      : "Supported: JPG, PNG, GIF (max 5MB)"}
                   </p>
                 </div>
               )}
@@ -831,8 +874,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       opacity: 0,
                       width: 0,
                       height: 0,
+                      position: "absolute",
                     }}
-                    onChange={(e) => setValue("isActive", e.target.checked)}
                   />
                   <span
                     style={{
@@ -846,7 +889,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       transition: ".3s",
                       borderRadius: "24px",
                     }}
-                    onClick={() => setValue("isActive", !isActive)}
                   />
                   <span
                     style={{

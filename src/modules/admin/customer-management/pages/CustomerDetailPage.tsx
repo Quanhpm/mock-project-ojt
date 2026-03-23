@@ -1,15 +1,60 @@
-import { X, MapPin, Clock, Calendar, Store } from "lucide-react";
-import type { Franchise } from "../../../../types/common.type";
+import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useGetCustomer } from "../components/hooks/useGetCustomer";
+import CustomerDetail from "../components/CustomerDetail";
 
-interface FranchiseDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  franchise: Franchise | null;
-  isLoading?: boolean;
-  error?: string | null;
+export default function CustomerDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { customer, isLoading, fetchCustomer } = useGetCustomer();
+
+  useEffect(() => {
+    if (id) {
+      fetchCustomer(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  return (
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8f9fa", padding: "32px 40px" }}>
+      <button
+        onClick={() => navigate("/admin/customers")}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          backgroundColor: "transparent",
+          border: "none",
+          color: "#6c757d",
+          fontSize: "14px",
+          cursor: "pointer",
+          marginBottom: "24px",
+          padding: "8px 0",
+        }}
+      >
+        <ArrowLeft size={16} />
+        Back to list
+      </button>
+
+      {isLoading ? (
+        <div style={{ textAlign: "center", padding: "80px", color: "#8B5A2B", fontSize: "16px", fontWeight: "600" }}>
+          Loading customer data...
+        </div>
+      ) : customer ? (
+        <CustomerDetail customer={customer} />
+      ) : (
+        <div style={{ textAlign: "center", padding: "80px", color: "#6c757d", fontSize: "16px" }}>
+          Customer not found
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default function FranchiseDetailModal({
+// --- end of file ---
+// Legacy dead code removed — replaced by CustomerDetailPage above
+function _unusedSentinel({
   isOpen,
   onClose,
   franchise,
