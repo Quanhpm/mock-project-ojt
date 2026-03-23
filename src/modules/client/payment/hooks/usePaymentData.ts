@@ -20,8 +20,6 @@ export function usePaymentData(paymentId: string) {
 
                 const userRes = await getCustomerProfile();
                 if (userRes) setUserInfo(userRes);
-
-                console.log("payment data: ", paymentRes);
             } catch (error) {
                 console.error("Fetch data failed:", error);
             }
@@ -43,7 +41,7 @@ export function usePaymentData(paymentId: string) {
         };
 
         fetchFranchise();
-    }, [paymentData]);
+    }, [paymentData?.franchise_id]);
 
     return { paymentData, userInfo, franchiseName };
 }

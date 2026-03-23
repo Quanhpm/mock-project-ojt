@@ -22,7 +22,6 @@ export function useOrderData(cartId: string) {
 
   // 2. Fetch payment (khi đã có orderData)
   useEffect(() => {
-    console.log("cart id: ", cartId)
     const fetchPaymentData = async () => {
       if (!orderData?._id) return;
 
