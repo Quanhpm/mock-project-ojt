@@ -15,9 +15,9 @@ export function usePaymentRefund() {
         try {
             await refundPayment(paymentId, { refund_reason: message });
             success("Hoàn tiền thành công");
-            setTimeout(() => {
-                navigate("/");
-            }, 3000);
+            // setTimeout(() => {
+            //     navigate("/");
+            // }, 3000);
         } catch (e) {
             console.error("Payment error:", e);
             error("Hoàn tiền thất bại");

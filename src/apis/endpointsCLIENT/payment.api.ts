@@ -86,20 +86,20 @@ export const getPaymentByOrderId = (orderId: string): Promise<PaymentResponse | 
     })
 }
 
-export const getPaymentByCustomerId = (customerId: string): Promise<PaymentResponse[] | null> => {
-    return httpClient.get<PaymentResponse[]>({
+export const getPaymentByCustomerId = (customerId: string): Promise<PaymentResponse | null> => {
+    return httpClient.get<PaymentResponse>({
         url: `payments/customer/${customerId}`
     })
 }
 
-export const getPaymentByCode = (code: string): Promise<PaymentResponse[] | null> => {
-    return httpClient.get<PaymentResponse[]>({
+export const getPaymentByCode = (code: string): Promise<PaymentResponse | null> => {
+    return httpClient.get<PaymentResponse>({
         url: `payments/code?code=${code}`
     })
 }
 
-export const getPaymentById = (id: string): Promise<PaymentResponse[] | null> => {
-    return httpClient.get<PaymentResponse[]>({
+export const getPaymentById = (id: string): Promise<PaymentResponse | null> => {
+    return httpClient.get<PaymentResponse>({
         url: `payments/${id}`
     })
 }

@@ -1,41 +1,49 @@
 import { useState, useEffect } from "react";
-import { getPaymentByOrderId, getOrderbyCartId } from "@/apis/endpointsCLIENT/payment.api";
-import type { PaymentResponse, OrderResponse } from "@/apis/endpointsCLIENT/payment.api";
+import { getPaymentById } from "@/apis/endpointsCLIENT/payment.api";
+import type { PaymentResponse } from "@/apis/endpointsCLIENT/payment.api";
+import { getCustomerProfile } from "@/apis";
+import type { CustomerUser } from "@/apis";
+import { getFranchiseDetail } from "@/apis";
 
-export function usePaymentData(cartId: string) {
-  const [orderData, setOrderData] = useState<OrderResponse | null>(null);
-  const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
+export function usePaymentData(paymentId: string) {
+    const [paymentData, setPaymentData] = useState<PaymentResponse | null>(null);
+    const [userInfo, setUserInfo] = useState<CustomerUser>();
+    const [franchiseName, setFranchiseName] = useState<string>();
 
-  // 1. Fetch order
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      try {
-        const response = await getOrderbyCartId(cartId);
-        if (response) setOrderData(response);
-      } catch (error) {
-        console.error("Failed to fetch order data:", error);
-      }
-    };
+    useEffect(() => {
+        if (!paymentId) return;
 
-    if (cartId) fetchOrderData();
-  }, [cartId]);
+        const fetchData = async () => {
+            try {
+                const paymentRes = await getPaymentById(paymentId);
+                if (paymentRes) setPaymentData(paymentRes);
 
-  // 2. Fetch payment (khi đã có orderData)
-  useEffect(() => {
-    console.log("cart id: ", cartId)
-    const fetchPaymentData = async () => {
-      if (!orderData?._id) return;
+                const userRes = await getCustomerProfile();
+                if (userRes) setUserInfo(userRes);
 
-      try {
-        const response = await getPaymentByOrderId(orderData._id);
-        if (response) setPaymentData(response);
-      } catch (error) {
-        console.error("Failed to fetch payment data:", error);
-      }
-    };
+                console.log("payment data: ", paymentRes);
+            } catch (error) {
+                console.error("Fetch data failed:", error);
+            }
+        };
 
-    fetchPaymentData();
-  }, [orderData]);
+        fetchData();
+    }, [paymentId]);
 
-  return { orderData, paymentData };
+    useEffect(() => {
+        if (!paymentData?.franchise_id) return;
+
+        const fetchFranchise = async () => {
+            try {
+                const response = await getFranchiseDetail(paymentData.franchise_id);
+                setFranchiseName(response?.name);
+            } catch (error) {
+                console.error("Failed to fetch franchise:", error);
+            }
+        };
+
+        fetchFranchise();
+    }, [paymentData]);
+
+    return { paymentData, userInfo, franchiseName };
 }
