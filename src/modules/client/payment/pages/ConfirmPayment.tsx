@@ -135,7 +135,7 @@ export default function PaymentSuccess() {
                                     onClick={() => setShowModal(true)}
                                     className="rounded-full bg-[var(--cf-primary)] py-4 text-base font-semibold text-[var(--cf-bg)] shadow-[0_8px_18px_rgba(127,85,57,0.22)] transition-all duration-200 hover:translate-y-[-1px] hover:opacity-95 lg:py-4 lg:text-[17px]"
                                 >
-                                    Tôi muốn hủy đơn
+                                    Hủy Đơn Hàng
                                 </button>
 
                                 <button

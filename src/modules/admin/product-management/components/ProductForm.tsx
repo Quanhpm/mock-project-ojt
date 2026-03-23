@@ -1,48 +1,35 @@
-import { useRef, useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, X, AlertCircle } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
+import { AlertCircle, Check, LoaderCircle, Upload, X } from "lucide-react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import axios from "axios";
 import { useCreateProduct } from "./hooks/useCreateProduct";
-import type { ProductCreatePayload } from "../../../../types/product.types";
 import { useAssignProductFranchise } from "../hooks/useAssignProductFranchise.hook";
 import { CKEditorField } from "@/components/ui";
 import { SIZE_OPTIONS } from "@/types/product-option.type";
-import { ENV } from "@/config/env.config";
-import { useToast } from "@/hooks/use-toast.hook";
-
-const step1Schema = z
-  .object({
-    SKU: z.string().min(1, "SKU is required"),
-    name: z.string().min(1, "Product name is required"),
-    description: z.string().min(1, "Description is required"),
-    content: z.string().min(1, "Content is required"),
-    image_url: z.string().min(1, "Main image is required"),
-    images_url: z.array(z.string()).default([]),
-    min_price: z.number().positive("Min price must be greater than 0"),
-    max_price: z.number().positive("Max price must be greater than 0"),
-    is_have_topping: z.boolean().default(false),
-  })
-  .refine((data) => data.max_price >= data.min_price, {
-    message: "Max price must be greater than or equal to min price",
-    path: ["max_price"],
-  });
+import {
+  DEFAULT_PRODUCT_FORM_VALUES,
+  buildPriceSchema,
+  productFormSchema,
+  toProductPayload,
+  type ProductFormInput,
+  type ProductFormValues,
+} from "./productForm.schema";
+import { useProductImageUpload } from "./hooks/useProductImageUpload";
 
 const step2Schema = z.object({
   franchise_id: z.string().min(1, "Franchise is required"),
   size: z.string().min(1, "Size is required"),
-  price_base: z.number().positive("Price base must be greater than 0"),
+  price_base: buildPriceSchema("Base price"),
 });
 
-type Step1FormValues = z.input<typeof step1Schema>;
-type Step2FormValues = z.infer<typeof step2Schema>;
+type Step2FormInput = z.input<typeof step2Schema>;
+type Step2FormValues = z.output<typeof step2Schema>;
 
 export default function ProductForm() {
   const navigate = useNavigate();
   const { createProduct, isCreating, error } = useCreateProduct();
-  const { success: showSuccess, error: showError } = useToast();
 
   const {
     currentStep,
@@ -61,60 +48,61 @@ export default function ProductForm() {
     control,
     handleSubmit,
     setValue,
-    watch,
-    formState: { errors, isValid },
-  } = useForm<Step1FormValues>({
-    resolver: zodResolver(step1Schema),
+    getValues,
+    formState: { errors },
+  } = useForm<ProductFormInput, undefined, ProductFormValues>({
+    resolver: zodResolver(productFormSchema),
     mode: "onChange",
-    defaultValues: {
-      SKU: "",
-      name: "",
-      description: "",
-      content: "",
-      image_url: "",
-      images_url: [],
-      min_price: 0,
-      max_price: 0,
-      is_have_topping: false,
-    },
+    defaultValues: DEFAULT_PRODUCT_FORM_VALUES,
   });
 
   const {
     register: registerStep2,
     handleSubmit: handleSubmitStep2,
-    formState: { errors: step2Errors, isValid: isStep2Valid },
-  } = useForm<Step2FormValues>({
+    formState: { errors: step2Errors },
+  } = useForm<Step2FormInput, undefined, Step2FormValues>({
     resolver: zodResolver(step2Schema),
     mode: "onChange",
     defaultValues: {
       franchise_id: "",
       size: "",
-      price_base: 0,
+      price_base: "",
     },
   });
-
-  const mainImageUrl = watch("image_url");
-  const additionalImages = watch("images_url");
-  const hasTopping = watch("is_have_topping");
 
   const mainFileInputRef = useRef<HTMLInputElement>(null);
   const additionalFileInputRef = useRef<HTMLInputElement>(null);
 
+  const {
+    uploadMainImage,
+    uploadGalleryImages,
+    isUploadingMainImage,
+    isUploadingGalleryImages,
+  } = useProductImageUpload({
+    setValue,
+    getValues,
+  });
+
+  const mainImageUrl = useWatch({ control, name: "image_url" });
+  const additionalImages = useWatch({ control, name: "images_url" });
+  const hasTopping = useWatch({ control, name: "is_have_topping" });
+
   const isStep1Submitting = useMemo(
-    () => isCreating || isAssigning,
-    [isAssigning, isCreating],
+    () =>
+      isCreating ||
+      isAssigning ||
+      isUploadingMainImage ||
+      isUploadingGalleryImages,
+    [
+      isAssigning,
+      isCreating,
+      isUploadingGalleryImages,
+      isUploadingMainImage,
+    ],
   );
 
-  const onSubmitStep1 = async (values: Step1FormValues) => {
-    const payload: ProductCreatePayload = {
-      ...values,
-      images_url: values.images_url ?? [],
-      is_have_topping: values.is_have_topping ?? false,
-      min_price: Number(values.min_price),
-      max_price: Number(values.max_price),
-    };
-
-    await createProduct(payload, (newProduct) => {
+  const onSubmitStep1 = async (values: ProductFormValues) => {
+    await createProduct(toProductPayload(values), (newProduct) => {
       goToStep2(newProduct.id);
     });
   };
@@ -127,89 +115,23 @@ export default function ProductForm() {
     });
   };
 
-  const handleUploadMainImage = async (file: File) => {
-    try {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
-      uploadData.append("folder", "products/main");
-
-      const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
-        uploadData,
-        { headers: { "Content-Type": "multipart/form-data" } },
-      );
-
-      setValue("image_url", response.data.secure_url, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      showSuccess("Upload success", "Main image uploaded successfully.");
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to upload main image.";
-      showError("Upload failed", message);
-    }
-  };
-
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      showError("Invalid file", "Please select an image file.");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      showError("File too large", "Maximum size is 5MB.");
-      return;
-    }
-
-    void handleUploadMainImage(file);
-  };
-
-  const handleUploadAdditionalImages = async (files: FileList) => {
-    try {
-      const uploadPromises = Array.from(files).map(async (file) => {
-        if (!file.type.startsWith("image/")) {
-          throw new Error("One of selected files is not an image.");
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error("One of selected files exceeds 5MB.");
-        }
-
-        const uploadData = new FormData();
-        uploadData.append("file", file);
-        uploadData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
-        uploadData.append("folder", "products/additional");
-
-        const response = await axios.post(
-          `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
-          uploadData,
-          { headers: { "Content-Type": "multipart/form-data" } },
-        );
-
-        return response.data.secure_url as string;
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      setValue("images_url", [...(additionalImages ?? []), ...urls], {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      showSuccess("Upload success", `${urls.length} additional image(s) uploaded.`);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to upload additional images.";
-      showError("Upload failed", message);
-    } finally {
-      if (additionalFileInputRef.current) additionalFileInputRef.current.value = "";
-    }
+    void uploadMainImage(file).finally(() => {
+      if (mainFileInputRef.current) {
+        mainFileInputRef.current.value = "";
+      }
+    });
   };
 
   const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    void handleUploadAdditionalImages(e.target.files);
+    void uploadGalleryImages(e.target.files).finally(() => {
+      if (additionalFileInputRef.current) {
+        additionalFileInputRef.current.value = "";
+      }
+    });
   };
 
   const removeMainImage = () => {
@@ -244,7 +166,7 @@ export default function ProductForm() {
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 1 ? "bg-[#7F5539] text-white" : "bg-[#9C6644] text-white"}`}
             >
-              {currentStep > 1 ? "✓" : "1"}
+              {currentStep > 1 ? <Check size={16} /> : "1"}
             </div>
             <span className="text-sm font-medium text-slate-700">Product Info</span>
           </div>
@@ -282,14 +204,34 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700">Min Price (VND) *</label>
-                <input type="number" step="1000" {...register("min_price", { valueAsNumber: true })} placeholder="30000" className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm" />
+                <label className="text-sm font-medium text-slate-700">Minimum Price (VND) *</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  {...register("min_price")}
+                  placeholder="30000"
+                  className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Enter a whole number from 1000 to 100000.
+                </p>
                 {errors.min_price && <p className="text-xs text-red-600 mt-1">{errors.min_price.message}</p>}
               </div>
 
               <div>
-                <label className="text-sm font-medium text-slate-700">Max Price (VND) *</label>
-                <input type="number" step="1000" {...register("max_price", { valueAsNumber: true })} placeholder="50000" className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm" />
+                <label className="text-sm font-medium text-slate-700">Maximum Price (VND) *</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  {...register("max_price")}
+                  placeholder="50000"
+                  className="mt-2 w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-[#B08968] outline-none text-sm"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Enter a whole number from 1000 to 100000.
+                </p>
                 {errors.max_price && <p className="text-xs text-red-600 mt-1">{errors.max_price.message}</p>}
               </div>
             </div>
@@ -324,9 +266,18 @@ export default function ProductForm() {
                 <label className="text-sm font-medium text-slate-700">Main Image *</label>
                 <input ref={mainFileInputRef} type="file" accept="image/*" hidden onChange={handleMainImageChange} />
                 {!mainImageUrl ? (
-                  <button type="button" onClick={() => mainFileInputRef.current?.click()} className="mt-2 w-full h-28 border-2 border-dashed border-[#DDB892] rounded-lg flex flex-col items-center justify-center text-sm text-[#7F5539] hover:border-[#B08968] transition">
-                    <Upload size={20} className="mb-2" />
-                    Click to select main image
+                  <button
+                    type="button"
+                    disabled={isUploadingMainImage}
+                    onClick={() => mainFileInputRef.current?.click()}
+                    className="mt-2 w-full h-28 border-2 border-dashed border-[#DDB892] rounded-lg flex flex-col items-center justify-center text-sm text-[#7F5539] hover:border-[#B08968] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {isUploadingMainImage ? (
+                      <LoaderCircle size={20} className="mb-2 animate-spin" />
+                    ) : (
+                      <Upload size={20} className="mb-2" />
+                    )}
+                    {isUploadingMainImage ? "Uploading main image..." : "Click to select main image"}
                   </button>
                 ) : (
                   <div className="mt-2 border border-slate-200 rounded-lg p-3 bg-slate-50 relative">
@@ -342,8 +293,16 @@ export default function ProductForm() {
               <div>
                 <label className="text-sm font-medium text-slate-700">Additional Images</label>
                 <input ref={additionalFileInputRef} type="file" accept="image/*" multiple hidden onChange={handleAdditionalImagesChange} />
-                <button type="button" onClick={() => additionalFileInputRef.current?.click()} className="mt-2 w-full h-11 rounded-lg border border-[#DDB892] text-[#7F5539] text-sm font-medium hover:bg-[#fdf7f2] transition">
-                  Upload Additional Images
+                <button
+                  type="button"
+                  disabled={isUploadingGalleryImages}
+                  onClick={() => additionalFileInputRef.current?.click()}
+                  className="mt-2 w-full h-11 rounded-lg border border-[#DDB892] text-[#7F5539] text-sm font-medium hover:bg-[#fdf7f2] transition disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  {isUploadingGalleryImages && (
+                    <LoaderCircle size={16} className="animate-spin" />
+                  )}
+                  {isUploadingGalleryImages ? "Uploading..." : "Upload Additional Images"}
                 </button>
                 {(additionalImages ?? []).length > 0 && (
                   <div className="mt-3 grid grid-cols-4 gap-2">
@@ -375,12 +334,16 @@ export default function ProductForm() {
             </div>
 
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
-              <button type="button" onClick={() => navigate("/admin/products")} className="text-sm text-slate-500 hover:text-slate-700">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/products")}
+                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
+              >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={!isValid || isStep1Submitting}
+                disabled={isStep1Submitting}
                 className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCreating ? "Creating..." : "Next Step"}
@@ -419,22 +382,36 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold text-gray-700">Price Base (VND) *</label>
-                <input type="number" step="1000" min="0" {...registerStep2("price_base", { valueAsNumber: true })} className="mt-2 w-full h-11 px-4 rounded-lg bg-gray-50 border border-gray-200 text-sm" placeholder="35000" />
+                <label className="text-sm font-semibold text-gray-700">Base Price (VND) *</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  {...registerStep2("price_base")}
+                  className="mt-2 w-full h-11 px-4 rounded-lg bg-gray-50 border border-gray-200 text-sm"
+                  placeholder="35000"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Enter a whole number from 1000 to 100000.
+                </p>
                 {step2Errors.price_base && <p className="text-xs text-red-600 mt-1">{step2Errors.price_base.message}</p>}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
-              <button type="button" onClick={() => navigate("/admin/products")} className="text-sm text-slate-500 hover:text-slate-700">
+              <button
+                type="button"
+                onClick={() => navigate("/admin/products")}
+                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
+              >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={!isStep2Valid || isAssigning}
+                disabled={isAssigning}
                 className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isAssigning ? "Saving..." : "Save & Finish"}
+                {isAssigning ? "Saving..." : "Save"}
               </button>
             </div>
           </form>

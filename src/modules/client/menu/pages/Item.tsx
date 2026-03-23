@@ -41,6 +41,7 @@ function Item() {
           selectedToppings={vm.selectedToppings}
           qty={vm.qty}
           totalPrice={vm.totalPrice}
+          isProductAvailable={vm.isProductAvailable}
           isAddingToCart={vm.isAddingToCart}
           onSelectSize={vm.setSelectedSize}
           onToggleTopping={vm.toggleTopping}

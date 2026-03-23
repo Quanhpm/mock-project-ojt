@@ -47,10 +47,19 @@ if (!document.head.querySelector("style[data-product-table]")) {
 
 // Helper to format price
 const formatPrice = (price: number) => {
-  return new Intl.NumberFormat("vi-VN", {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "VND",
+    maximumFractionDigits: 0,
   }).format(price);
+};
+
+const formatPriceRange = (minPrice: number, maxPrice: number) => {
+  if (minPrice === maxPrice) {
+    return formatPrice(minPrice);
+  }
+
+  return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
 };
 
 export default function ProductTable() {
@@ -80,6 +89,7 @@ export default function ProductTable() {
     product: selectedProduct,
     isLoading: isLoadingProduct,
     fetchProduct,
+    clearProduct,
   } = useGetProductById();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -160,7 +170,13 @@ export default function ProductTable() {
     } else if (shouldCheckPagination && !isLoading) {
       setShouldCheckPagination(false);
     }
-  }, [shouldCheckPagination, products.length, currentPage, isLoading]);
+  }, [
+    shouldCheckPagination,
+    products.length,
+    currentPage,
+    isLoading,
+    setCurrentPage,
+  ]);
 
   useEffect(() => {
     if (!isGlobalScope) {
@@ -356,16 +372,36 @@ export default function ProductTable() {
     });
   };
 
-  const handleEditClick = async (productId: string) => {
+  const handleEditClick = (productId: string) => {
     setEditModal({
       isOpen: true,
       productId,
     });
-    await fetchProduct(productId);
+    void fetchProduct(productId);
+  };
+
+  const handleViewClick = (productId: string) => {
+    setDetailsModal({
+      isOpen: true,
+      productId,
+    });
+    void fetchProduct(productId);
   };
 
   const editingProduct =
     selectedProduct?.id === editModal.productId ? selectedProduct : null;
+  const detailProduct =
+    selectedProduct?.id === detailsModal.productId ? selectedProduct : null;
+
+  const handleCloseDetailsModal = () => {
+    setDetailsModal({ isOpen: false, productId: "" });
+    clearProduct();
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModal({ isOpen: false, productId: "" });
+    clearProduct();
+  };
 
   return (
     <div
@@ -419,7 +455,7 @@ export default function ProductTable() {
               >
                 Home
               </a>
-              <span style={{ fontSize: "16px" }}>›</span>
+              <span style={{ fontSize: "16px" }}>{">"}</span>
               <span style={{ color: "#212529", fontWeight: "500" }}>
                 Products
               </span>
@@ -449,7 +485,8 @@ export default function ProductTable() {
                 Product Management
               </h2>
               <p style={{ color: "#6c757d", margin: 0 }}>
-                Total Products: {isLoading ? "..." : totalItems}
+                {filters.is_deleted ? "Deleted Products" : "Current Products"}:{" "}
+                {isLoading ? "..." : totalItems}
               </p>
             </div>
             <button
@@ -500,11 +537,10 @@ export default function ProductTable() {
           {/* Filters & Toolbar - Fixed */}
           <div
             style={{
-              backgroundColor: "white",
+              backgroundColor: "#ffffff",
               padding: "16px",
-              borderRadius: "12px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              border: "1px solid #e9ecef",
+              borderRadius: "14px",
+              border: "1px solid #e5e7eb",
               marginBottom: "24px",
               flexShrink: 0,
             }}
@@ -512,24 +548,23 @@ export default function ProductTable() {
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
                 gap: "12px",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
+                alignItems: "stretch",
               }}
             >
               <div
                 style={{
                   display: "flex",
-                  gap: "12px",
-                  alignItems: "flex-start",
-                  flex: 1,
-                  minWidth: "300px",
+                  gap: "10px",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  width: "100%",
                 }}
               >
                 {/* Advanced Search Bar */}
                 <div
-                  style={{ flex: 1, position: "relative" }}
+                  style={{ flex: "1 1 480px", minWidth: "280px", position: "relative" }}
                   ref={dropdownRef}
                 >
                   <div style={{ position: "relative" }}>
@@ -580,17 +615,18 @@ export default function ProductTable() {
                         }
                       }}
                       onKeyDown={handleSearchKeyDown}
-                      placeholder="Search by product name, SKU... (Ctrl+K)"
-                      className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                      placeholder="Search by product name or SKU... (Ctrl+K)"
+                      className="focus:outline-none focus:ring-2 focus:ring-[#c6a27f] focus:border-transparent transition-all duration-200 placeholder-gray-400"
                       style={{
                         display: "block",
                         width: "100%",
-                        borderRadius: "8px",
-                        border: "1px solid #e0e0e0",
-                        padding: "10px 40px 10px 40px",
+                        height: "42px",
+                        borderRadius: "10px",
+                        border: "1px solid #e5e7eb",
+                        padding: "0 40px 0 40px",
                         color: "#212529",
-                        backgroundColor: "white",
-                        fontSize: "14px",
+                        backgroundColor: "#ffffff",
+                        fontSize: "13px",
                         boxSizing: "border-box",
                       }}
                     />
@@ -610,19 +646,19 @@ export default function ProductTable() {
                           width: "20px",
                           height: "20px",
                           border: "none",
-                          borderRadius: "50%",
-                          backgroundColor: "#e0e0e0",
-                          color: "#6c757d",
+                          borderRadius: "999px",
+                          backgroundColor: "#f1f5f9",
+                          color: "#64748b",
                           cursor: "pointer",
                           transition: "all 0.2s",
                         }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "#bdbdbd";
-                          e.currentTarget.style.color = "#212529";
+                          e.currentTarget.style.backgroundColor = "#e2e8f0";
+                          e.currentTarget.style.color = "#334155";
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "#e0e0e0";
-                          e.currentTarget.style.color = "#6c757d";
+                          e.currentTarget.style.backgroundColor = "#f1f5f9";
+                          e.currentTarget.style.color = "#64748b";
                         }}
                       >
                         <svg
@@ -647,13 +683,13 @@ export default function ProductTable() {
                       <div
                         style={{
                           position: "absolute",
-                          top: "calc(100% + 4px)",
+                          top: "calc(100% + 6px)",
                           left: 0,
                           right: 0,
                           backgroundColor: "white",
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: "10px",
+                          boxShadow: "0 10px 24px rgba(15, 23, 42, 0.08)",
                           zIndex: 50,
                           maxHeight: "250px",
                           overflowY: "auto",
@@ -662,7 +698,7 @@ export default function ProductTable() {
                         <div
                           style={{
                             padding: "8px 12px",
-                            borderBottom: "1px solid #f0f0f0",
+                            borderBottom: "1px solid #f1f5f9",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
@@ -725,13 +761,13 @@ export default function ProductTable() {
                               gap: "8px",
                               backgroundColor:
                                 selectedHistoryIndex === index
-                                  ? "#f8f9fa"
+                                  ? "#f8fafc"
                                   : "transparent",
                             }}
                             onMouseEnter={(e) => {
                               if (selectedHistoryIndex !== index) {
                                 e.currentTarget.style.backgroundColor =
-                                  "#f8f9fa";
+                                  "#f8fafc";
                               }
                             }}
                             onMouseLeave={(e) => {
@@ -769,27 +805,30 @@ export default function ProductTable() {
                   onClick={handleSearch}
                   disabled={isLoading}
                   style={{
-                    padding: "10px 20px",
-                    borderRadius: "8px",
+                    height: "42px",
+                    padding: "0 14px",
+                    borderRadius: "10px",
                     border: "none",
-                    backgroundColor: "#8b5a2b",
+                    backgroundColor: "#8B5A2B",
                     color: "white",
                     fontWeight: "600",
-                    fontSize: "14px",
+                    fontSize: "13px",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                     whiteSpace: "nowrap",
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
+                    justifyContent: "center",
                     gap: "6px",
                     opacity: isLoading ? 0.6 : 1,
+                    boxShadow: "0 1px 2px rgba(139, 90, 43, 0.2)",
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading)
                       e.currentTarget.style.backgroundColor = "#6d4522";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#8b5a2b";
+                    e.currentTarget.style.backgroundColor = "#8B5A2B";
                   }}
                 >
                   {isLoading ? (
@@ -827,53 +866,38 @@ export default function ProductTable() {
               </div>
 
               <div
-                style={{ display: "flex", gap: "12px", alignItems: "center" }}
+                style={{
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  flexWrap: "wrap",
+                }}
               >
-                {/* Status Filter */}
-                <select
-                  value={filters.is_active}
-                  onChange={(e) => handleStatusFilterChange(e.target.value)}
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: "8px",
-                    border: "1px solid #e0e0e0",
-                    backgroundColor: "white",
-                    color: "#212529",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: "pointer",
-                    outline: "none",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.borderColor = "#bdbdbd")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.borderColor = "#e0e0e0")
-                  }
-                >
-                  <option value="">All Status</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
-
                 {isGlobalScope && (
                   <select
                     value={filters.franchise_id || ""}
                     onChange={(e) => handleFranchiseFilterChange(e.target.value)}
                     style={{
-                      padding: "10px 16px",
-                      borderRadius: "8px",
-                      border: "1px solid #e0e0e0",
-                      backgroundColor: "white",
-                      color: "#212529",
+                      height: "42px",
+                      padding: "0 16px",
+                      borderRadius: "12px",
+                      border: "1px solid #d1d5db",
+                      backgroundColor: "#ffffff",
+                      color: "#374151",
                       fontSize: "14px",
-                      fontWeight: "500",
+                      fontWeight: "600",
                       cursor: "pointer",
                       outline: "none",
                       transition: "all 0.2s",
-                      minWidth: "220px",
+                      minWidth: "160px",
                     }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor = "#bdbdbd")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor = "#d1d5db")
+                    }
                   >
                     <option value="">All Franchise</option>
                     {franchiseOptions.map((franchise) => (
@@ -884,31 +908,51 @@ export default function ProductTable() {
                   </select>
                 )}
 
-                {/* Show Deleted Toggle */}
                 <button
+                  type="button"
                   onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
                   style={{
-                    padding: "10px 16px",
+                    height: "36px",
+                    padding: "0 14px",
                     borderRadius: "8px",
-                    border: "1px solid #e0e0e0",
-                    backgroundColor: filters.is_deleted ? "#fff3e0" : "white",
-                    color: filters.is_deleted ? "#f57c00" : "#6c757d",
-                    fontWeight: "500",
+                    border: `1px solid ${filters.is_deleted ? "#f2d1a1" : "#d1d5db"}`,
+                    backgroundColor: filters.is_deleted ? "#fbf2e3" : "#ffffff",
+                    color: filters.is_deleted ? "#f97316" : "#64748b",
+                    fontWeight: 600,
                     fontSize: "14px",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     whiteSpace: "nowrap",
-                    display: "flex",
+                    display: "inline-flex",
                     alignItems: "center",
+                    justifyContent: "center",
                     gap: "6px",
+                    width: "100px",
+                    boxShadow: filters.is_deleted
+                      ? "0 1px 2px rgba(249, 115, 22, 0.08)"
+                      : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = filters.is_deleted
-                      ? "#f57c00"
-                      : "#bdbdbd";
+                      ? "#edc58f"
+                      : "#cbd5e1";
+                    e.currentTarget.style.backgroundColor = filters.is_deleted
+                      ? "#faebd7"
+                      : "#f8fafc";
+                    e.currentTarget.style.color = filters.is_deleted
+                      ? "#ea580c"
+                      : "#475569";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "#e0e0e0";
+                    e.currentTarget.style.borderColor = filters.is_deleted
+                      ? "#f2d1a1"
+                      : "#d1d5db";
+                    e.currentTarget.style.backgroundColor = filters.is_deleted
+                      ? "#fbf2e3"
+                      : "#ffffff";
+                    e.currentTarget.style.color = filters.is_deleted
+                      ? "#f97316"
+                      : "#64748b";
                   }}
                 >
                   <span
@@ -917,34 +961,38 @@ export default function ProductTable() {
                   >
                     delete_outline
                   </span>
-                  {filters.is_deleted ? "Deleted" : "Undeleted"}
+                  {filters.is_deleted ? "Deleted" : "Current"}
                 </button>
 
                 {/* Clear Filters */}
                 <button
                   onClick={clearFilters}
                   style={{
-                    padding: "10px 16px",
+                    height: "36px",
+                    padding: "0 14px",
                     borderRadius: "8px",
-                    border: "1px solid #e0e0e0",
-                    backgroundColor: "white",
-                    color: "#6c757d",
-                    fontWeight: "500",
+                    border: "1px solid #e5e7eb",
+                    backgroundColor: "#f3f4f6",
+                    color: "#334155",
+                    fontWeight: "600",
                     fontSize: "14px",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     whiteSpace: "nowrap",
+                    width: "100px",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.color = "#212529";
-                    e.currentTarget.style.borderColor = "#bdbdbd";
+                    e.currentTarget.style.color = "#1f2937";
+                    e.currentTarget.style.borderColor = "#d1d5db";
+                    e.currentTarget.style.backgroundColor = "#e5e7eb";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.color = "#6c757d";
-                    e.currentTarget.style.borderColor = "#e0e0e0";
+                    e.currentTarget.style.color = "#334155";
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.backgroundColor = "#f3f4f6";
                   }}
                 >
-                  Clear Filters
+                  Clear filters
                 </button>
               </div>
             </div>
@@ -1142,7 +1190,9 @@ export default function ProductTable() {
                             >
                               {filters.keyword
                                 ? `No products match "${filters.keyword}"`
-                                : "No products available to display"}
+                                : filters.is_deleted
+                                  ? "No deleted products are available to display"
+                                  : "No products are available to display"}
                             </p>
                           </div>
                           {(filters.keyword ||
@@ -1272,7 +1322,10 @@ export default function ProductTable() {
                             color: "#212529",
                           }}
                         >
-                          {`${formatPrice(product.min_price ?? 0)} - ${formatPrice(product.max_price ?? product.min_price ?? 0)}`}
+                          {formatPriceRange(
+                            product.min_price ?? 0,
+                            product.max_price ?? product.min_price ?? 0,
+                          )}
                         </td>
                         <td style={{ padding: "16px" }}>
                           <div
@@ -1283,47 +1336,9 @@ export default function ProductTable() {
                               gap: "8px",
                             }}
                           >
-                            {!product.is_deleted && (
-                              <button
-                                onClick={() => {
-                                  void handleEditClick(product.masterProductId);
-                                }}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  width: "32px",
-                                  height: "32px",
-                                  border: "none",
-                                  borderRadius: "6px",
-                                  backgroundColor: "transparent",
-                                  color: "#94a3b8",
-                                  cursor: "pointer",
-                                  transition: "all 0.2s",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = "rgba(67, 56, 202, 0.08)";
-                                  e.currentTarget.style.color = "#4338ca";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = "transparent";
-                                  e.currentTarget.style.color = "#94a3b8";
-                                }}
-                                title="Edit"
-                              >
-                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
-                                  edit
-                                </span>
-                              </button>
-                            )}
-                            {/* View Details Button */}
                             <button
-                              onClick={async () => {
-                                setDetailsModal({
-                                  isOpen: true,
-                                  productId: product.masterProductId,
-                                });
-                                await fetchProduct(product.masterProductId);
+                              onClick={() => {
+                                void handleViewClick(product.masterProductId);
                               }}
                               style={{
                                 display: "flex",
@@ -1357,6 +1372,39 @@ export default function ProductTable() {
                                 visibility
                               </span>
                             </button>
+                            {!product.is_deleted && (
+                              <button
+                                onClick={() => {
+                                  void handleEditClick(product.masterProductId);
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: "32px",
+                                  height: "32px",
+                                  border: "none",
+                                  borderRadius: "6px",
+                                  backgroundColor: "transparent",
+                                  color: "#94a3b8",
+                                  cursor: "pointer",
+                                  transition: "all 0.2s",
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = "rgba(67, 56, 202, 0.08)";
+                                  e.currentTarget.style.color = "#4338ca";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = "transparent";
+                                  e.currentTarget.style.color = "#94a3b8";
+                                }}
+                                title="Edit"
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>
+                                  edit
+                                </span>
+                              </button>
+                            )}
                             {isGlobalScope && !filters.is_deleted && (
                               <button
                                 onClick={() =>
@@ -1713,19 +1761,19 @@ export default function ProductTable() {
       {/* Product Details Modal */}
       <ProductDetailsModal
         isOpen={detailsModal.isOpen}
-        onClose={() => setDetailsModal({ isOpen: false, productId: "" })}
-        product={selectedProduct}
-        isLoading={isLoadingProduct}
+        onClose={handleCloseDetailsModal}
+        product={detailProduct}
+        isLoading={detailsModal.isOpen && isLoadingProduct}
       />
 
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={editModal.isOpen}
-        onClose={() => setEditModal({ isOpen: false, productId: "" })}
+        onClose={handleCloseEditModal}
         product={editingProduct}
-        isLoading={isLoadingProduct}
+        isLoading={editModal.isOpen && isLoadingProduct}
         onUpdated={() => {
-          setEditModal({ isOpen: false, productId: "" });
+          handleCloseEditModal();
           void executeSearch();
         }}
       />

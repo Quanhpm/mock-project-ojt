@@ -9,6 +9,7 @@ interface ItemPurchasePanelProps {
   selectedToppings: ProductToppingOption[];
   qty: number;
   totalPrice: number;
+  isProductAvailable: boolean;
   isAddingToCart: boolean;
   onSelectSize: (size: ProductSize) => void;
   onToggleTopping: (productFranchiseId: string) => void;
@@ -25,6 +26,7 @@ function ItemPurchasePanel({
   selectedToppings,
   qty,
   totalPrice,
+  isProductAvailable,
   isAddingToCart,
   onSelectSize,
   onToggleTopping,
@@ -146,11 +148,11 @@ function ItemPurchasePanel({
 
           <button
             onClick={onAddToCart}
-            disabled={isAddingToCart}
+            disabled={isAddingToCart || !isProductAvailable}
             className="w-full py-5 bg-[var(--cf-primary)] text-white rounded-2xl font-bold text-lg uppercase tracking-wider shadow-lg hover:scale-101 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             type="button"
           >
-            {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
+            {!isProductAvailable ? 'Sản phẩm tạm hết hàng' : isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
           </button>
         </footer>
       </div>
