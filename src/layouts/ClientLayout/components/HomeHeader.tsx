@@ -10,7 +10,7 @@ import { normalizeOrdersPayload } from '@/modules/client/order-history/order.uti
 import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
 import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import { useLoadingStore } from '@/stores/loading.store';
-import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2, Sparkles } from 'lucide-react';
+import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2, Sparkles, Gem } from 'lucide-react';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
@@ -334,7 +334,7 @@ const HomeHeader: React.FC = () => {
                       navigateWithLoading('/loyalty', { closeDropdown: true });
                     }}
                   >
-                    <Sparkles className="w-4 h-4" /> Khách hàng thân thiết
+                    <Gem className="w-4 h-4" /> Khách hàng thân thiết
                   </Link>
                   <hr className="my-2" />
                   <button

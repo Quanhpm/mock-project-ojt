@@ -5,6 +5,7 @@ import { usePaymentData } from "../hooks/usePaymentData";
 import { formatDateTime } from "@/utils";
 import { ConfirmRefundModal } from "../component/ConfirmRefundModal"
 import { RefundSuccessPopup } from "../component/RefundSuccessPopup";
+import { formatConfirmPaymentTotal } from "../service/confirm-payment.service";
 
 export default function PaymentSuccess() {
     const location = useLocation();
@@ -12,9 +13,10 @@ export default function PaymentSuccess() {
     const { handleRefund } = usePaymentRefund();
     const [showModal, setShowModal] = useState(false);
     const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-    const state = location.state as { total?: string; paymentId?: string } | null;
-    const total: string = state?.total ?? "";
+    const state = location.state as { total?: number | string; paymentId?: string } | null;
+    const total = state?.total;
     const paymentId: string = state?.paymentId ?? "";
+    const formattedTotal = formatConfirmPaymentTotal(total);
     const { paymentData, userInfo, franchiseName } = usePaymentData(paymentId);
 
     useEffect(() => {
@@ -111,7 +113,7 @@ export default function PaymentSuccess() {
                                         Tổng tiền
                                     </span>
                                     <span className="text-[22px] font-bold text-[var(--cf-primary)] lg:text-[32px]">
-                                        {total}
+                                        {formattedTotal}
                                     </span>
                                 </div>
 
@@ -151,7 +153,7 @@ export default function PaymentSuccess() {
                                     onClick={() => setShowModal(true)}
                                     className="rounded-full bg-[var(--cf-primary)] py-4 text-base font-semibold text-[var(--cf-bg)] shadow-[0_8px_18px_rgba(127,85,57,0.22)] transition-all duration-200 hover:translate-y-[-1px] hover:opacity-95 lg:py-4 lg:text-[17px]"
                                 >
-                                    Tôi muốn hủy đơn
+                                    Hủy Đơn Hàng
                                 </button>
 
                                 <button
