@@ -14,17 +14,21 @@ export function usePaymentHandler(paymentId: string) {
   //   method !== "CASH" && method !== "CARD";
 
   const handleConfirm = async () => {
+    if (!paymentId) {
+      error("Chưa có paymentId");
+      return null;
+    }
+
     setPaying(true);
     try {
-      await confirmPayment(paymentId, { method: selectedPayment });
-
-      // Chỉ show QR sau khi confirm thành công
-      // if (isQrMethod(selectedPayment)) setShowQr(true);
-
+      const response = await confirmPayment(paymentId, { method: selectedPayment });
+      console.log("confirmPayment response:", response);
       success("Thanh toán thành công");
+      return response;
     } catch (e) {
       console.error("Payment error:", e);
       error("Thanh toán thất bại");
+      return null;
     } finally {
       setPaying(false);
     }

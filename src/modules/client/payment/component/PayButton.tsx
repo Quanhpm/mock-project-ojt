@@ -18,16 +18,7 @@ export function PayButton({ paying, onConfirmPayment }: PayButtonProps) {
           className="flex-1 rounded-2xl bg-white py-4 text-sm font-bold uppercase tracking-widest text-[var(--cf-primary)] shadow-sm transition-all duration-300 hover:opacity-90 active:scale-[0.98]"
         >
           <span className="flex items-center justify-center gap-2">
-            <svg
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-            Thoát
+            Thoát đơn
           </span>
         </button>
 

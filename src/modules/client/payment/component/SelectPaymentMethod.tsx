@@ -104,6 +104,7 @@ export function SelectPaymentMethod({ selectedPayment, onSelect }: SelectPayment
             <div className="grid grid-cols-1 gap-2">
                 {paymentMethods.map((method) => {
                     const isSelected = selectedPayment === method.id;
+                    console.log("isSelected: ", selectedPayment);
                     return (
                         <PaymentMethodItem
                             isSelected={isSelected}

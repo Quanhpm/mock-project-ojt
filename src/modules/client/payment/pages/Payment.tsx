@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { QRPaymentModal } from "../component/QRPaymentModal";
-import { usePaymentData } from "../hooks/usePaymentData";
+import { useOrderData } from "../hooks/useOrderData";
 import { PayButton } from "../component/PayButton";
 import { usePaymentHandler } from "../hooks/usePaymentHandler";
 import { DeliveryInfo } from "../component/DeliveryInfo";
@@ -17,9 +17,8 @@ export default function Payment() {
   const cartId: string = (location.state as { cartId?: string })?.cartId ?? '';
   const navigate = useNavigate();
 
-  const { orderData, paymentData } = usePaymentData(cartId);
-  const paymentId = paymentData ? paymentData._id : "";
-  const { paying, selectedPayment, setSelectedPayment, showQr, setShowQr, handleConfirm } = usePaymentHandler(paymentId);
+  const { orderData, paymentId } = useOrderData(cartId);
+  const { paying, selectedPayment, setSelectedPayment, showQr, setShowQr, handleConfirm } = usePaymentHandler(paymentId ?? "");
 
   return (
     <div className="h-full w-full bg-[var(--cf-bg)] px-4 py-6">
@@ -28,18 +27,18 @@ export default function Payment() {
           Thanh toán thành công! Vui lòng kiểm tra đơn hàng của bạn.
         </div>
       )}
-      <div className="mx-auto grid w-full max-w-xl grid-cols-1 gap-4">
+      <div className="mx-auto grid w-full max-w-6xl lg:grid-cols-[2fr_1fr] gap-4">
         {/* Cột trái */}
-        {/* <div className="flex flex-col gap-4"> */}
-        {/* ── Block 1: Địa điểm ── */}
-        {/* <DeliveryInfo 
-              franchiseName={orderData?.franchise_name ?? ""}
-              address={orderData?.address ?? ""}
-            /> */}
+        <div className="flex flex-col gap-4">
+          {/* ── Block 1: Địa điểm ── */}
+          <DeliveryInfo
+            franchiseName={orderData?.franchise_name ?? ""}
+            address={orderData?.address ?? ""}
+          />
 
-        {/* ── Block 2: Đơn hàng ── */}
-        {/* <OrderSummary order_items={orderData?.order_items ?? []} /> */}
-        {/* </div> */}
+          {/* ── Block 2: Đơn hàng ── */}
+          <OrderSummary order_items={orderData?.order_items ?? []} />
+        </div>
 
         {/* Cột phải */}
         <div className="flex flex-col gap-4 lg:sticky lg:top-6">
@@ -63,11 +62,13 @@ export default function Payment() {
       <QRPaymentModal
         isOpen={showQr}
         onClose={() => setShowQr(false)}
-        onConfirm={() => {
-          handleConfirm();
+        onConfirm={async () => {
+          const result = await handleConfirm();
+          if (!result) return;
+
           navigate("/payment", {
             state: {
-              paymentId: paymentId,
+              paymentId,
               total: orderData?.final_amount ?? 0,
             },
           });

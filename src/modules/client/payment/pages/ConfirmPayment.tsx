@@ -1,56 +1,167 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePaymentRefund } from "../hooks/usePaymentRefund";
+import { usePaymentData } from "../hooks/usePaymentData";
+import { formatDateTime } from "@/utils";
+import { ConfirmRefundModal } from "../component/ConfirmRefundModal"
+import { RefundSuccessPopup } from "../component/RefundSuccessPopup";
 
 export default function PaymentSuccess() {
     const location = useLocation();
     const navigate = useNavigate();
     const { handleRefund } = usePaymentRefund();
     const [showModal, setShowModal] = useState(false);
+    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
     const state = location.state as { total?: string; paymentId?: string } | null;
     const total: string = state?.total ?? "";
     const paymentId: string = state?.paymentId ?? "";
+    const { paymentData, userInfo, franchiseName } = usePaymentData(paymentId);
+
+    useEffect(() => {
+        if (!showSuccessPopup) return;
+
+        const timer = setTimeout(() => {
+            setShowSuccessPopup(false);
+            navigate("/menu");
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, [showSuccessPopup, navigate]);
 
     return (
         <>
-            <div className="flex min-h-screen items-center justify-center bg-[var(--cf-bg)] p-4">
-                <div className="w-full max-w-sm rounded-[20px] border border-[var(--cf-secondary)] bg-[var(--cf-surface)] px-8 py-8 flex flex-col items-center">
+            <div className="flex flex-col items-center justify-center bg-[var(--cf-bg)] px-4 py-10">
+                <div className="w-full max-w-[430px] rounded-[30px] bg-[var(--cf-surface)] px-7 py-8 shadow-[0_18px_40px_rgba(127,85,57,0.12)] lg:max-w-[980px] lg:px-10 lg:py-10">
+                    <div className="lg:flex lg:items-stretch lg:gap-10">
+                        {/* Left side */}
+                        <div className="lg:flex lg:w-[48%] lg:flex-col lg:justify-center">
+                            {/* Checkmark */}
+                            <div className="mb-5 flex justify-center lg:mb-6">
+                                <div className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-[var(--cf-primary)] shadow-[0_8px_18px_rgba(127,85,57,0.25)] lg:h-[72px] lg:w-[72px]">
+                                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-white lg:h-[34px] lg:w-[34px]">
+                                        <svg
+                                            className="h-4 w-4 lg:h-5 lg:w-5"
+                                            viewBox="0 0 32 32"
+                                            fill="none"
+                                        >
+                                            <path
+                                                d="M9 16.5L14 21.5L23 11.5"
+                                                stroke="var(--cf-primary)"
+                                                strokeWidth="3"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
 
-                    {/* Label */}
-                    <span className="mb-6 text-[11px] font-medium uppercase tracking-widest text-[var(--cf-primary)]">
-                        Đơn xác nhận
-                    </span>
+                            {/* Heading */}
+                            <div className="mb-7 text-center lg:mb-8">
+                                <h1 className="text-[20px] font-bold text-[var(--cf-primary)] lg:text-[28px]">
+                                    Đơn xác nhận
+                                </h1>
+                            </div>
 
-                    {/* Checkmark */}
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--cf-primary)]">
-                        <svg className="h-8 w-8" viewBox="0 0 32 32" fill="none">
-                            <path d="M7 16.5L13.5 23L25 10" stroke="#EDE0D4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </div>
+                            {/* Customer info */}
+                            <div className="mb-7 rounded-[28px] bg-[var(--cf-bg)] px-6 py-6 lg:mb-0 lg:px-7 lg:py-7">
+                                <div className="grid grid-cols-[110px_1fr] gap-y-5 text-[15px] leading-relaxed lg:grid-cols-[130px_1fr] lg:gap-y-6 lg:text-[16px]">
+                                    <p className="text-[var(--cf-primary)]/80">Khách hàng</p>
+                                    <p className="text-right font-semibold text-[var(--cf-primary)]">
+                                        {userInfo?.name}
+                                    </p>
 
-                    <p className="text-[17px] font-medium text-[var(--cf-primary)]">Đã thanh toán thành công</p>
-                    <p className="mb-6 mt-1 text-[13px] text-[var(--cf-dark)]">Cảm ơn bạn đã đặt hàng!</p>
+                                    <p className="text-[var(--cf-primary)]/80">Số điện thoại</p>
+                                    <p className="text-right font-semibold text-[var(--cf-primary)]">
+                                        {userInfo?.phone}
+                                    </p>
 
-                    <div className="mb-5 w-full border-t border-[var(--cf-secondary)] opacity-50" />
+                                    <p className="text-[var(--cf-primary)]/80">Đặt từ</p>
+                                    <p className="text-right font-semibold text-[var(--cf-primary)]">
+                                        {franchiseName}
+                                    </p>
 
-                    {/* Total */}
-                    <div className="mb-7 flex w-full items-baseline justify-between">
-                        <span className="text-[13px] text-[var(--cf-dark)]">Tổng tiền</span>
-                        <span className="text-[22px] font-medium text-[var(--cf-primary)]">{total}</span>
-                    </div>
+                                    <p className="text-[var(--cf-primary)]/80">Giao đến</p>
+                                    <p className="text-right font-semibold leading-snug text-[var(--cf-primary)]">
+                                        {userInfo?.address}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
-                    {/* Buttons */}
-                    <div className="flex w-full flex-col gap-2.5">
-                        <button
-                            onClick={() => navigate("/menu")}
-                            className="rounded-[14px] border-[1.5px] border-[var(--cf-secondary)] bg-transparent py-3 text-sm font-medium text-[var(--cf-primary)] transition-colors hover:bg-[var(--cf-accent-light)]">
-                            Trở về
-                        </button>
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="rounded-[14px] bg-[var(--cf-primary)] py-3 text-sm font-medium text-[var(--cf-bg)] opacity-90 transition-opacity hover:opacity-100">
-                            Hoàn tiền
-                        </button>
+                        {/* Divider */}
+                        <div className="relative mb-8 lg:mb-0 lg:flex lg:w-[40px] lg:shrink-0 lg:items-center lg:justify-center">
+                            {/* Mobile divider ngang */}
+                            <div className="border-t border-[var(--cf-secondary)]/40 lg:hidden" />
+                            <div className="absolute -left-9 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[var(--cf-bg)] lg:hidden" />
+                            <div className="absolute -right-9 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[var(--cf-bg)] lg:hidden" />
+
+                            {/* Laptop divider dọc */}
+                            <div className="hidden h-full min-h-[420px] border-l border-[var(--cf-secondary)]/40 lg:block" />
+                            <div className="absolute left-1/2 top-0 hidden h-5 w-5 -translate-x-1/2 rounded-full bg-[var(--cf-bg)] lg:block" />
+                            <div className="absolute bottom-0 left-1/2 hidden h-5 w-5 -translate-x-1/2 rounded-full bg-[var(--cf-bg)] lg:block" />
+                        </div>
+
+                        {/* Right side */}
+                        <div className="lg:flex lg:w-[52%] lg:flex-col lg:justify-center">
+                            {/* Payment info */}
+                            <div className="mb-9 lg:mb-10">
+                                <div className="mb-8 flex items-end justify-between lg:mb-10">
+                                    <span className="text-[16px] font-semibold text-[var(--cf-primary)] lg:text-[20px]">
+                                        Tổng tiền
+                                    </span>
+                                    <span className="text-[22px] font-bold text-[var(--cf-primary)] lg:text-[32px]">
+                                        {total}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-5 lg:space-y-6">
+                                    <div className="grid grid-cols-[120px_1fr] items-center lg:grid-cols-[140px_1fr]">
+                                        <p className="text-[13px] uppercase tracking-wide text-[var(--cf-dark)]/80 lg:text-[14px]">
+                                            Mã giao dịch
+                                        </p>
+                                        <p className="text-right text-[15px] font-semibold text-[var(--cf-primary)] lg:text-[17px]">
+                                            {paymentData?.code}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-[120px_1fr] items-center lg:grid-cols-[140px_1fr]">
+                                        <p className="text-[13px] uppercase tracking-wide text-[var(--cf-dark)]/80 lg:text-[14px]">
+                                            Phương thức
+                                        </p>
+                                        <p className="text-right text-[15px] font-semibold text-[var(--cf-primary)] lg:text-[17px]">
+                                            {paymentData?.method}
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-[120px_1fr] items-center lg:grid-cols-[140px_1fr]">
+                                        <p className="text-[13px] uppercase tracking-wide text-[var(--cf-dark)]/80 lg:text-[14px]">
+                                            Thời gian
+                                        </p>
+                                        <p className="text-right text-[15px] font-semibold text-[var(--cf-primary)] lg:text-[17px]">
+                                            {formatDateTime(paymentData?.paid_at ?? "")}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="flex flex-col gap-4 lg:mt-auto">
+                                <button
+                                    onClick={() => setShowModal(true)}
+                                    className="rounded-full bg-[var(--cf-primary)] py-4 text-base font-semibold text-[var(--cf-bg)] shadow-[0_8px_18px_rgba(127,85,57,0.22)] transition-all duration-200 hover:translate-y-[-1px] hover:opacity-95 lg:py-4 lg:text-[17px]"
+                                >
+                                    Tôi muốn hủy đơn
+                                </button>
+
+                                <button
+                                    onClick={() => navigate("/menu")}
+                                    className="rounded-full border border-[var(--cf-secondary)] bg-transparent py-4 text-base font-semibold text-[var(--cf-primary)] transition-colors duration-200 hover:bg-[var(--cf-accent-light)]/35 lg:py-4 lg:text-[17px]"
+                                >
+                                    Quay lại trang chủ
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -58,79 +169,23 @@ export default function PaymentSuccess() {
             {showModal && (
                 <ConfirmRefundModal
                     onClose={() => setShowModal(false)}
-                    onConfirm={(message) => {
-                        handleRefund({ paymentId, message });
-                        setShowModal(false);
+                    onConfirm={async (message) => {
+                        try {
+                            await handleRefund({ paymentId, message });
+                            setShowModal(false);
+                            setShowSuccessPopup(true);
+                        } catch (error) {
+                            console.error("Refund failed:", error);
+                        }
                     }}
                 />
             )}
-        </>
-    );
-}
 
-interface ConfirmModalProps {
-    onClose: () => void;
-    onConfirm: (message: string) => void;
-}
-
-function ConfirmRefundModal({ onClose, onConfirm }: ConfirmModalProps) {
-    const [message, setMessage] = useState("");
-
-    return (
-        /* Backdrop */
-        <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-sm sm:items-center"
-            onClick={(e) => e.target === e.currentTarget && onClose()}
-        >
-            {/* Modal panel */}
-            <div className="w-full max-w-sm rounded-t-[24px] bg-[var(--cf-surface)] px-6 pb-8 pt-6 sm:rounded-[20px] animate-[slideUp_0.22s_ease-out]">
-
-                {/* Drag handle (mobile) */}
-                <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--cf-secondary)] opacity-50 sm:hidden" />
-
-                {/* Icon + Title */}
-                <div className="mb-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--cf-accent-light)]">
-                        <svg className="h-5 w-5 text-[var(--cf-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
-                    </div>
-                    <h3 className="text-base font-semibold text-[var(--cf-primary)]">
-                        Xác nhận hoàn tiền
-                    </h3>
-                </div>
-
-                {/* Description */}
-                <p className="mb-3 text-[13px] leading-relaxed text-[var(--cf-dark)]">
-                    Bạn có chắc chắn muốn hoàn tiền? Nếu có, hãy cho chúng tôi biết lý do:
-                </p>
-
-                {/* Reason input */}
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Nhập lý do hoàn tiền..."
-                    rows={3}
-                    className="w-full resize-none rounded-[12px] border border-[var(--cf-secondary)] bg-[var(--cf-bg)] px-4 py-3 text-[13px] text-[var(--cf-primary)] placeholder:text-[var(--cf-secondary)] outline-none transition-colors focus:border-[var(--cf-primary)] focus:ring-1 focus:ring-[var(--cf-primary)]"
+            {showSuccessPopup && (
+                <RefundSuccessPopup
+                    onClose={() => setShowSuccessPopup(false)}
                 />
-
-                {/* Actions */}
-                <div className="mt-4 flex gap-2.5">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 rounded-[14px] border border-[var(--cf-secondary)] bg-transparent py-3 text-sm font-medium text-[var(--cf-primary)] transition-colors hover:bg-[var(--cf-accent-light)] active:scale-[0.98]"
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        onClick={() => onConfirm(message)}
-                        disabled={!message.trim()}
-                        className="flex-1 rounded-[14px] bg-[var(--cf-primary)] py-3 text-sm font-medium text-[var(--cf-bg)] opacity-90 transition-all hover:opacity-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                        Xác nhận
-                    </button>
-                </div>
-            </div>
-        </div>
+            )}
+        </>
     );
 }
