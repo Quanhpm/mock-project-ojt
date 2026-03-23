@@ -24,9 +24,9 @@ export const useGetInventoryLogs = (): UseGetInventoryLogsReturn => {
       setLogs(response ?? []);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải lịch sử inventory";
+        err instanceof Error ? err.message : "Failed to load inventory history.";
       setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      showError("Error", errorMessage);
     } finally {
       setIsLoading(false);
     }

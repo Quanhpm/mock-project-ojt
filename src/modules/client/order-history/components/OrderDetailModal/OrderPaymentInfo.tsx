@@ -21,20 +21,20 @@ function OrderPaymentInfo({ pricing, status }: OrderPaymentInfoProps) {
   );
 
   return (
-    <div className="p-6 rounded-xl bg-slate-50 dark:bg-[#221a11]/50 border border-slate-100 dark:border-[#483623]">
-      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-[#c9ad92] mb-4">
+    <div className="p-6 rounded-xl bg-slate-50/50 border border-slate-100">
+      <h3 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">
         Chi tiết thanh toán
       </h3>
       <div className="space-y-3">
         <div className="flex justify-between text-sm">
-          <span className="text-slate-500 dark:text-[#c9ad92]">Tổng tiền hàng</span>
-          <span className="text-slate-900 dark:text-white font-medium">{formatCurrency(calculatedPricing.subtotal)}</span>
+          <span className="text-slate-600">Tổng tiền hàng</span>
+          <span className="text-[#1a130c] font-medium">{formatCurrency(calculatedPricing.subtotal)}</span>
         </div>
 
         {calculatedPricing.promotionDiscount > 0 ? (
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500 dark:text-[#c9ad92]">Giảm giá hệ thống</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="text-slate-600">Giảm giá hệ thống</span>
+            <span className="text-emerald-700 font-medium">
               -{formatCurrency(calculatedPricing.promotionDiscount)}
             </span>
           </div>
@@ -42,23 +42,23 @@ function OrderPaymentInfo({ pricing, status }: OrderPaymentInfoProps) {
 
         {calculatedPricing.voucherDiscount > 0 ? (
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500 dark:text-[#c9ad92]">Voucher giảm giá</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="text-slate-600">Voucher giảm giá</span>
+            <span className="text-emerald-700 font-medium">
               -{formatCurrency(calculatedPricing.voucherDiscount)}
             </span>
           </div>
         ) : null}
 
-        <div className="mt-4 rounded-2xl bg-zinc-900 dark:bg-zinc-950 border border-zinc-700 px-4 py-4 shadow-inner">
+        <div className="mt-4 rounded-2xl bg-slate-50 border border-slate-200 px-4 py-4 shadow-sm">
           <div className="flex items-end justify-between">
-            <span className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Tổng cộng</span>
-            <span className="text-3xl font-black text-white tracking-tight">{formatCurrency(calculatedPricing.final)}</span>
+            <span className="text-sm font-semibold uppercase tracking-wide text-slate-600">Tổng cộng</span>
+            <span className="text-3xl font-black text-primary tracking-tight">{formatCurrency(calculatedPricing.final)}</span>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400">Đã bao gồm mọi khoản giảm giá áp dụng.</p>
+          <p className="mt-1 text-[11px] text-slate-500">Đã bao gồm mọi khoản giảm giá áp dụng.</p>
         </div>
 
-        <div className="pt-3 border-t border-slate-200 dark:border-[#483623] flex justify-between items-end">
-          <span className="text-xs text-slate-500 dark:text-[#c9ad92]">Thanh toán bằng</span>
+        <div className="pt-3 border-t border-slate-100 flex justify-between items-end">
+          <span className="text-xs text-slate-500">Thanh toán bằng</span>
           <span className={`text-sm font-bold ${STATUS_COLORS[status].text}`}>{statusConfig[status].label}</span>
         </div>
       </div>

@@ -40,7 +40,7 @@ interface RawOrderApi {
   code?: string;
   franchise_id?: string;
   franchise_name?: string;
-  status?: string;
+  status?: string | { code?: string; label?: string; color?: string };
   final_amount?: number;
   subtotal_amount?: number;
   promotion_discount?: number;
@@ -104,14 +104,26 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null;
 };
 
-const mapBackendStatusToUi = (status?: string): OrderData['status']['code'] => {
-  const normalized = (status || '').toUpperCase();
+const normalizeStatusCode = (status: RawOrderApi['status']): string => {
+  if (typeof status === 'string') {
+    return status.toUpperCase();
+  }
+
+  if (isRecord(status) && typeof status.code === 'string') {
+    return status.code.toUpperCase();
+  }
+
+  return '';
+};
+
+const mapBackendStatusToUi = (status?: RawOrderApi['status']): OrderData['status']['code'] => {
+  const normalized = normalizeStatusCode(status);
 
   if (normalized === 'COMPLETED' || normalized === 'DELIVERED') {
     return 'COMPLETED';
   }
 
-  if (normalized === 'CANCELLED' || normalized === 'FAILED') {
+  if (normalized === 'CANCELLED' || normalized === 'CANCELED' || normalized === 'FAILED') {
     return 'CANCELLED';
   }
 
@@ -232,6 +244,7 @@ export const buildSummaryFromOrders = (
     cancelled_orders: orders.filter((order) => order.status.code === 'CANCELLED').length,
     preparing_orders: orders.filter(
       (order) =>
+        order.status.code === 'DRAFT' ||
         order.status.code === 'PREPARING' ||
         order.status.code === 'CONFIRMED' ||
         order.status.code === 'READY_FOR_PICKUP',
