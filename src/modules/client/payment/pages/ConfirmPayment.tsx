@@ -1,32 +1,16 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"
-import { usePaymentRefund } from "../hooks/usePaymentRefund";
-import { usePaymentData } from "../hooks/usePaymentData";
 import { formatDateTime } from "@/utils";
 import { ConfirmRefundModal } from "../component/ConfirmRefundModal"
 import { RefundSuccessPopup } from "../component/RefundSuccessPopup";
+import { usePaymentSuccess } from "../hooks/usePaymentSuccess";
+import { formatCurrencyShort } from "@/utils";
 
 export default function PaymentSuccess() {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { handleRefund } = usePaymentRefund();
-    const [showModal, setShowModal] = useState(false);
-    const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-    const state = location.state as { total?: string; paymentId?: string } | null;
-    const total: string = state?.total ?? "";
-    const paymentId: string = state?.paymentId ?? "";
-    const { paymentData, userInfo, franchiseName } = usePaymentData(paymentId);
-
-    useEffect(() => {
-        if (!showSuccessPopup) return;
-
-        const timer = setTimeout(() => {
-            setShowSuccessPopup(false);
-            navigate("/menu");
-        }, 5000);
-
-        return () => clearTimeout(timer);
-    }, [showSuccessPopup, navigate]);
+    const {
+        paymentData, userInfo, franchiseName,
+        showModal, setShowModal,
+        showSuccessPopup, setShowSuccessPopup,
+        onConfirmRefund, goToMenu,
+    } = usePaymentSuccess();
 
     return (
         <>
@@ -111,7 +95,7 @@ export default function PaymentSuccess() {
                                         Tổng tiền
                                     </span>
                                     <span className="text-[22px] font-bold text-[var(--cf-primary)] lg:text-[32px]">
-                                        {total}
+                                        {formatCurrencyShort(paymentData?.amount ?? 0)}
                                     </span>
                                 </div>
 
@@ -155,7 +139,7 @@ export default function PaymentSuccess() {
                                 </button>
 
                                 <button
-                                    onClick={() => navigate("/menu")}
+                                    onClick={goToMenu}
                                     className="rounded-full border border-[var(--cf-secondary)] bg-transparent py-4 text-base font-semibold text-[var(--cf-primary)] transition-colors duration-200 hover:bg-[var(--cf-accent-light)]/35 lg:py-4 lg:text-[17px]"
                                 >
                                     Quay lại trang chủ
@@ -169,15 +153,7 @@ export default function PaymentSuccess() {
             {showModal && (
                 <ConfirmRefundModal
                     onClose={() => setShowModal(false)}
-                    onConfirm={async (message) => {
-                        try {
-                            await handleRefund({ paymentId, message });
-                            setShowModal(false);
-                            setShowSuccessPopup(true);
-                        } catch (error) {
-                            console.error("Refund failed:", error);
-                        }
-                    }}
+                    onConfirm={onConfirmRefund}
                 />
             )}
 
