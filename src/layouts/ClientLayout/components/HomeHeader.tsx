@@ -7,8 +7,10 @@ import logo2 from '@/assets/img/logo2.png';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { normalizeOrdersPayload } from '@/modules/client/order-history/order.utils';
+import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
+import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import { useLoadingStore } from '@/stores/loading.store';
-import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2 } from 'lucide-react';
+import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2, Sparkles } from 'lucide-react';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
@@ -21,6 +23,9 @@ const HomeHeader: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [processingOrdersCount, setProcessingOrdersCount] = useState(0);
+  const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
+  const selectedFranchiseId = useMenuStore((state) => state.franchiseId);
+  const setFranchiseId = useMenuStore((state) => state.setFranchiseId);
   const incrementLoading = useLoadingStore((state) => state.increment);
   const decrementLoading = useLoadingStore((state) => state.decrement);
   const { success, error } = useToast();
@@ -34,6 +39,37 @@ const HomeHeader: React.FC = () => {
   ];
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFranchises = async () => {
+      try {
+        const response = await getAllFranchises();
+        const nextFranchises = response ?? [];
+
+        if (!isMounted) {
+          return;
+        }
+
+        setFranchises(nextFranchises);
+
+        if (!selectedFranchiseId && nextFranchises.length > 0) {
+          setFranchiseId(nextFranchises[0].id);
+        }
+      } catch {
+        if (isMounted) {
+          setFranchises([]);
+        }
+      }
+    };
+
+    fetchFranchises();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedFranchiseId, setFranchiseId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -68,6 +104,7 @@ const HomeHeader: React.FC = () => {
         const normalized = normalizeOrdersPayload(response);
         const count = normalized.orders.filter(
           (order) =>
+            order.status.code === 'DRAFT' ||
             order.status.code === 'PREPARING' ||
             order.status.code === 'CONFIRMED' ||
             order.status.code === 'READY_FOR_PICKUP',
@@ -198,6 +235,24 @@ const HomeHeader: React.FC = () => {
             </Link>
           </nav>
 
+          {franchises.length > 0 && (
+            <div className="hidden lg:flex items-center gap-2 min-w-[230px]">
+              <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+              <select
+                value={selectedFranchiseId}
+                onChange={(event) => setFranchiseId(event.target.value)}
+                className="h-10 w-full cursor-pointer rounded-xl border border-[var(--cf-secondary)]/25 bg-white px-3 text-sm text-[var(--cf-dark)] shadow-sm transition-all focus:border-[var(--cf-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--cf-primary)]/20"
+                aria-label="Chọn chi nhánh"
+              >
+                {franchises.map((franchise) => (
+                  <option key={franchise.id} value={franchise.id}>
+                    {franchise.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 md:gap-4">
             <Link
               to="/cart"
@@ -271,6 +326,16 @@ const HomeHeader: React.FC = () => {
                   >
                     <User className="w-4 h-4" /> Hồ sơ cá nhân
                   </Link>
+                  <Link
+                    to="/loyalty"
+                    className="flex items-center gap-2 px-4 py-2 text-[var(--cf-primary)] hover:bg-[var(--cf-accent-light)] transition-colors rounded-lg"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      navigateWithLoading('/loyalty', { closeDropdown: true });
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4" /> Khách hàng thân thiết
+                  </Link>
                   <hr className="my-2" />
                   <button
                     onClick={handleLogout}
@@ -331,6 +396,35 @@ const HomeHeader: React.FC = () => {
               <ClipboardClock size={18} className={location.pathname === '/order-history' ? 'text-white' : 'text-[var(--cf-secondary)]'} />
               <span>Lịch Sử Đơn Hàng</span>
             </Link>
+            <Link
+              to="/loyalty"
+              onClick={closeMobileMenu}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/loyalty' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
+            >
+              <Sparkles size={18} className={location.pathname === '/loyalty' ? 'text-white' : 'text-[var(--cf-secondary)]'} />
+              <span>Loyalty của tôi</span>
+            </Link>
+
+            {franchises.length > 0 && (
+              <div className="mt-4 rounded-xl border border-[var(--cf-secondary)]/20 bg-white/70 px-3 py-3">
+                <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--cf-secondary)]">
+                  <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+                  Chọn chi nhánh
+                </label>
+                <select
+                  value={selectedFranchiseId}
+                  onChange={(event) => setFranchiseId(event.target.value)}
+                  className="h-11 w-full cursor-pointer rounded-lg border border-[var(--cf-secondary)]/25 bg-white px-3 text-sm text-[var(--cf-dark)] focus:border-[var(--cf-primary)] focus:outline-none"
+                  aria-label="Chọn chi nhánh"
+                >
+                  {franchises.map((franchise) => (
+                    <option key={franchise.id} value={franchise.id}>
+                      {franchise.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </nav>
 
           <div className="mt-7 mx-4 border-t border-[var(--cf-secondary)]/20" />

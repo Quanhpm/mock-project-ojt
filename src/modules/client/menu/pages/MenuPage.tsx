@@ -36,11 +36,8 @@ function MenuPage() {
           {/* Search and filter controls */}
           <MenuControlBar
             search={vm.search}
-            franchiseId={vm.franchiseId}
-            franchises={vm.franchises}
             onSearchChange={vm.handleSearchChange}
             onSearchKeyDown={vm.handleKeyDown}
-            onFranchiseChange={vm.setFranchiseId}
           />
 
           {/* Products display: search results or categories */}
