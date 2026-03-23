@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw, AlertTriangle, X } from "lucide-react";
 import { searchProductCategoryFranchises, type ProductCategoryFranchise } from "../api/product-category-franchise.api";
 import { getCategoryFranchiseById } from "../api/category-franchise.api";
 import { useProductCategoryActions } from "../hooks/useProductCategoryActions.hook";
@@ -380,36 +380,206 @@ export default function ProductsByCategoryPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="text-red-600" size={24} />
+        <div
+          onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              width: "90%",
+              maxWidth: "480px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "20px 24px",
+                borderBottom: "1px solid #f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    backgroundColor: "#ffebee",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <AlertTriangle size={24} color="#f44336" />
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "20px",
+                    fontWeight: "600",
+                    color: "#212529",
+                  }}
+                >
+                  Remove Product
+                </h2>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">Remove Product</h3>
-                <p className="text-sm text-slate-500">This action can be undone later</p>
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#6c757d",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "24px" }}>
+              <p
+                style={{
+                  margin: 0,
+                  marginBottom: "16px",
+                  fontSize: "15px",
+                  color: "#495057",
+                  lineHeight: "1.6",
+                }}
+              >
+                Are you sure you want to remove this product from the category? This action can be undone later.
+              </p>
+              <div
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e9ecef",
+                }}
+              >
+                <div style={{ marginBottom: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Product ID
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    #{deleteModal.productId}
+                  </p>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Product Name
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {deleteModal.productName}
+                  </p>
+                </div>
               </div>
             </div>
-            <p className="text-slate-600 mb-6">
-              Are you sure you want to remove <span className="font-semibold">{deleteModal.productName}</span> from this category?
-            </p>
-            <div className="flex gap-3">
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #f0f0f0",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+                style={{
+                  padding: "10px 20px",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  opacity: isDeleting ? 0.5 : 1,
+                }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  backgroundColor: isDeleting ? "#fca5a5" : "#f44336",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
               >
                 {isDeleting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        border: "2px solid white",
+                        borderTop: "2px solid transparent",
+                        borderRadius: "50%",
+                        animation: "spin 0.6s linear infinite",
+                      }}
+                    />
                     Removing...
                   </>
                 ) : (
@@ -427,10 +597,13 @@ export default function ProductsByCategoryPage() {
           setIsEditDrawerOpen(false);
           setSelectedProduct(null);
         }}
-        onSuccess={() => {
+        onSuccess={(itemId, newDisplayOrder) => {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === itemId ? { ...p, display_order: newDisplayOrder } : p))
+          );
           setIsEditDrawerOpen(false);
           setSelectedProduct(null);
-          fetchProducts();
+          void fetchProducts();
         }}
         productCategory={selectedProduct}
       />

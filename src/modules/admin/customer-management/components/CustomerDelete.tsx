@@ -25,176 +25,198 @@ export default function CustomerDelete({
   };
 
   return (
-    <>
-      {/* Backdrop */}
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: 999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <div
-        onClick={onClose}
+        onClick={(e) => e.stopPropagation()}
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          width: "90%",
+          maxWidth: "480px",
+          boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+          overflow: "hidden",
         }}
       >
-        {/* Modal */}
+        {/* Header */}
         <div
-          onClick={(e) => e.stopPropagation()}
           style={{
-            backgroundColor: "white",
-            borderRadius: "12px",
-            width: "90%",
-            maxWidth: "480px",
-            padding: "32px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-            position: "relative",
+            padding: "20px 24px",
+            borderBottom: "1px solid #f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
           }}
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              top: "16px",
-              right: "16px",
-              backgroundColor: "transparent",
-              border: "none",
-              cursor: "pointer",
-              padding: "8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#6c757d",
-              transition: "color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "#212529";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#6c757d";
-            }}
-          >
-            <X size={20} />
-          </button>
-
-          {/* Icon */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "16px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div
               style={{
-                backgroundColor: "#fff3cd",
-                borderRadius: "50%",
-                padding: "12px",
+                backgroundColor: "#ffebee",
+                padding: "10px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <AlertTriangle size={32} style={{ color: "#ff9800" }} />
+              <AlertTriangle size={24} color="#f44336" />
             </div>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "20px",
+                fontWeight: "600",
+                color: "#212529",
+              }}
+            >
+              Delete Customer
+            </h2>
           </div>
-
-          {/* Title */}
-          <h2
+          <button
+            onClick={onClose}
             style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              color: "#212529",
-              margin: 0,
-              marginBottom: "8px",
-              textAlign: "center",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              color: "#6c757d",
             }}
           >
-            Delete Customer
-          </h2>
+            <X size={20} />
+          </button>
+        </div>
 
-          {/* Description */}
+        {/* Body */}
+        <div style={{ padding: "24px" }}>
           <p
             style={{
-              fontSize: "14px",
-              color: "#6c757d",
               margin: 0,
               marginBottom: "16px",
-              textAlign: "center",
+              fontSize: "15px",
+              color: "#495057",
+              lineHeight: "1.6",
             }}
           >
-            Are you sure you want to delete <strong>{customerName}</strong> (ID:{" "}
-            {customerId})? This action cannot be undone.
+            Are you sure you want to delete this customer? This action cannot be undone.
           </p>
-
-          {/* Actions */}
           <div
             style={{
-              display: "flex",
-              gap: "12px",
-              marginTop: "24px",
+              backgroundColor: "#f8f9fa",
+              padding: "16px",
+              borderRadius: "8px",
+              border: "1px solid #e9ecef",
             }}
           >
-            <button
-              onClick={onClose}
-              style={{
-                flex: 1,
-                padding: "10px 16px",
-                backgroundColor: "white",
-                border: "1px solid #dee2e6",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "#495057",
-                cursor: "pointer",
-                transition: "all 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f8f9fa";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={isDeleting}
-              style={{
-                flex: 1,
-                padding: "10px 16px",
-                backgroundColor: isDeleting ? "#ffc1c8" : "#dc3545",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "600",
-                color: "white",
-                cursor: isDeleting ? "not-allowed" : "pointer",
-                transition: "all 0.2s",
-                opacity: isDeleting ? 0.7 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!isDeleting) {
-                  e.currentTarget.style.backgroundColor = "#c82333";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isDeleting) {
-                  e.currentTarget.style.backgroundColor = "#dc3545";
-                }
-              }}
-            >
-              {isDeleting ? "Deleting..." : "Delete Customer"}
-            </button>
+            <div style={{ marginBottom: "8px" }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#6c757d",
+                  textTransform: "uppercase",
+                  fontWeight: "600",
+                }}
+              >
+                Customer ID
+              </span>
+              <p
+                style={{
+                  margin: "4px 0 0 0",
+                  fontSize: "14px",
+                  color: "#212529",
+                  fontWeight: "500",
+                }}
+              >
+                #{customerId}
+              </p>
+            </div>
+            <div>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#6c757d",
+                  textTransform: "uppercase",
+                  fontWeight: "600",
+                }}
+              >
+                Customer Name
+              </span>
+              <p
+                style={{
+                  margin: "4px 0 0 0",
+                  fontSize: "14px",
+                  color: "#212529",
+                  fontWeight: "500",
+                }}
+              >
+                {customerName}
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid #f0f0f0",
+            display: "flex",
+            gap: "12px",
+            justifyContent: "flex-end",
+          }}
+        >
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            style={{
+              padding: "10px 20px",
+              border: "1px solid #e0e0e0",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: isDeleting ? "not-allowed" : "pointer",
+              backgroundColor: "white",
+              color: "#374151",
+              opacity: isDeleting ? 0.5 : 1,
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={isDeleting}
+            style={{
+              padding: "10px 20px",
+              border: "none",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: isDeleting ? "not-allowed" : "pointer",
+              backgroundColor: isDeleting ? "#fca5a5" : "#f44336",
+              color: "white",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            {isDeleting ? "Deleting..." : "Delete Customer"}
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

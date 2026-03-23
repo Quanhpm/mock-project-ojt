@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Edit2, Trash2, RotateCcw, Plus, FolderPlus } from "lucide-react";
+import { Edit2, Trash2, RotateCcw, Eye, FolderPlus, AlertTriangle, X } from "lucide-react";
 import { useCategorySearch } from "../hooks/useCategorySearch.hook";
 import { useDeleteCategory } from "./hooks/useDeleteCategory";
 import { useRestoreCategory } from "./hooks/useRestoreCategory";
 import { useToggleStatus } from "./hooks/useToggleStatus";
 import { ROUTER_URL } from "@/routes/router.const";
 import CategoryEditDrawer from "./CategoryEditDrawer";
-import CategoryCreateDrawer from "./CategoryCreateDrawer";
 import MasterCategoryCreateDrawer from "./MasterCategoryCreateDrawer";
 import type { CategoryFranchise } from "../api/category-franchise.types";
 import {
@@ -57,10 +56,6 @@ interface EditModal {
   categoryId: string;
 }
 
-interface CreateModal {
-  isOpen: boolean;
-}
-
 interface CreateMasterModal {
   isOpen: boolean;
 }
@@ -102,14 +97,10 @@ const styles = {
   },
   filterContainer: {
     backgroundColor: "white",
-    padding: "20px 24px",
+    padding: "16px 20px",
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
     marginBottom: "20px",
-    display: "flex" as const,
-    alignItems: "flex-end" as const,
-    gap: "16px",
-    flexWrap: "wrap" as const,
     border: "1px solid #e5e7eb",
   },
   tableContainer: {
@@ -246,6 +237,7 @@ export default function CategoryTable() {
     totalItems,
     pageSize,
     refetch,
+    executeSearch,
   } = useCategorySearch({ tableScope });
 
   // Refs for search functionality
@@ -270,10 +262,6 @@ export default function CategoryTable() {
   const [editModal, setEditModal] = useState<EditModal>({
     isOpen: false,
     categoryId: "",
-  });
-
-  const [createModal, setCreateModal] = useState<CreateModal>({
-    isOpen: false,
   });
 
   const [createMasterModal, setCreateMasterModal] = useState<CreateMasterModal>({
@@ -336,10 +324,10 @@ export default function CategoryTable() {
   // ========================================================================
 
   const handleStatusFilterChange = (value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      is_active: value === "" ? "" : value === "true",
-    }));
+    const is_active = value === "" ? "" : value === "true";
+    setFilters((prev) => ({ ...prev, is_active }));
+    setCurrentPage(1);
+    void executeSearch({ is_active, page: 1 } as never);
   };
 
   const handleViewProducts = (category: CategoryFranchise) => {
@@ -423,15 +411,13 @@ export default function CategoryTable() {
   };
 
   const handleCreateNew = () => {
-    setCreateModal({ isOpen: true });
-  };
-
-  const handleCloseCreateModal = () => {
-    setCreateModal({ isOpen: false });
-  };
-
-  const handleCreateSuccess = () => {
-    setCurrentPage(1); // Reset to first page (will auto-trigger refetch via hook)
+    navigate(
+      `/admin/${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/assign${
+        isGlobalScope && filters.franchise_id
+          ? `?franchise_id=${filters.franchise_id}`
+          : ""
+      }`
+    );
   };
 
   const handleCreateMaster = () => {
@@ -561,22 +547,165 @@ export default function CategoryTable() {
         <div style={styles.contentArea}>
           {/* Filters */}
           <div style={styles.filterContainer}>
-            {/* Search Bar */}
-            <div style={{ flex: 1, minWidth: "400px", position: "relative" }}>
-              {/* Search Icon */}
-              <div
+            {/* Row 1: Search input + Search button */}
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                marginBottom: "12px",
+              }}
+            >
+              {/* Search Bar */}
+              <div style={{ flex: 1, position: "relative" }}>
+                {/* Search Icon */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "12px",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                    color: "#9ca3af",
+                  }}
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </div>
+
+                {/* Search Input */}
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search by title or location..."
+                  value={filters.keyword}
+                  onChange={(e) => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      keyword: e.target.value,
+                    }));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      setCurrentPage(1);
+                      void executeSearch({ page: 1 });
+                    }
+                  }}
+                  onFocusCapture={(e) => {
+                    e.currentTarget.style.borderColor = "#8B5A2B";
+                    e.currentTarget.style.backgroundColor = "#ffffff";
+                  }}
+                  onBlurCapture={(e) => {
+                    e.currentTarget.style.borderColor = "#e5e7eb";
+                    e.currentTarget.style.backgroundColor = "#f9fafb";
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    paddingLeft: "40px",
+                    paddingRight: filters.keyword ? "40px" : "14px",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "8px",
+                    fontSize: "15px",
+                    fontFamily: "inherit",
+                    backgroundColor: "#f9fafb",
+                    transition: "border-color 0.2s",
+                    boxSizing: "border-box",
+                    outline: "none",
+                  }}
+                />
+
+                {/* Clear Button */}
+                {filters.keyword && (
+                  <button
+                    onClick={() => {
+                      setFilters((prev) => ({ ...prev, keyword: "" }));
+                      searchInputRef.current?.focus();
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#bdbdbd";
+                      e.currentTarget.style.color = "#212529";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#e0e0e0";
+                      e.currentTarget.style.color = "#6c757d";
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      right: "12px",
+                      transform: "translateY(-50%)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "20px",
+                      height: "20px",
+                      border: "none",
+                      borderRadius: "50%",
+                      backgroundColor: "#e0e0e0",
+                      color: "#6c757d",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Search Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(1);
+                  void executeSearch({ page: 1 });
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#6d4423";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#8B5A2B";
+                }}
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "12px",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                  color: "#9ca3af",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  backgroundColor: "#8B5A2B",
+                  color: "white",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: "600",
+                  fontSize: "15px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                  height: "42px",
                 }}
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="16"
+                  height="16"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -585,104 +714,59 @@ export default function CategoryTable() {
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.35-4.35" />
                 </svg>
-              </div>
-
-              {/* Search Input */}
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search by title or location..."
-                value={filters.keyword}
-                onChange={(e) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    keyword: e.target.value,
-                  }));
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    setCurrentPage(1);
-                    setTimeout(() => refetch(), 0);
-                  }
-                }}
-                style={{
-                  width: "100%",
-                  padding: "10px 14px 10px 44px",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontFamily: "inherit",
-                  backgroundColor: "#f8fafc",
-                  transition: "all 0.2s",
-                  color: "#1e293b",
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = "#ffffff";
-                  e.currentTarget.style.borderColor = "#8B5A2B";
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = "#f8fafc";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                }}
-              />
+                Search
+              </button>
             </div>
 
-            {/* Status Filter */}
-            <div style={{ minWidth: "140px" }}>
+            {/* Row 2: Filter dropdowns + Clear button */}
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Status Filter */}
               <select
                 value={String(filters.is_active ?? "")}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
                 style={{
-                  width: "100%",
-                  padding: "10px 14px",
+                  padding: "9px 16px",
                   border: "1px solid #e5e7eb",
                   borderRadius: "8px",
                   fontSize: "14px",
                   fontFamily: "inherit",
-                  backgroundColor: "#f8fafc",
+                  backgroundColor: "#f9fafb",
                   cursor: "pointer",
-                  appearance: "none",
-                  backgroundImage:
-                    "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 10px center",
-                  backgroundSize: "16px",
-                  paddingRight: "36px",
+                  outline: "none",
+                  minWidth: "160px",
                 }}
               >
                 <option value="">All Status</option>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
-            </div>
 
-            {isGlobalScope && (
-              <div style={{ minWidth: "200px" }}>
+              {isGlobalScope && (
                 <select
                   value={filters.franchise_id || ""}
                   onChange={(e) => {
-                    setFilters((prev) => ({
-                      ...prev,
-                      franchise_id: e.target.value,
-                    }));
+                    const franchise_id = e.target.value;
+                    setFilters((prev) => ({ ...prev, franchise_id }));
+                    setCurrentPage(1);
+                    void executeSearch({ franchise_id, page: 1 } as never);
                   }}
                   style={{
-                    width: "100%",
-                    padding: "10px 14px",
+                    padding: "9px 16px",
                     border: "1px solid #e5e7eb",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontFamily: "inherit",
-                    backgroundColor: "#f8fafc",
+                    backgroundColor: "#f9fafb",
                     cursor: "pointer",
-                    appearance: "none",
-                    backgroundImage:
-                      "url(\"data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e\")",
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "16px",
-                    paddingRight: "36px",
+                    outline: "none",
+                    minWidth: "200px",
                   }}
                 >
                   <option value="">All Franchise</option>
@@ -692,82 +776,93 @@ export default function CategoryTable() {
                     </option>
                   ))}
                 </select>
-              </div>
-            )}
+              )}
 
-            {/* Clear Filters */}
-            <button
-              onClick={() => {
-                setFilters((prev) => ({
-                  ...prev,
-                  keyword: "",
-                  franchise_id: "",
-                  is_active: "",
-                }));
-                searchInputRef.current?.focus();
-              }}
-              style={{
-                padding: "10px 16px",
-                fontSize: "14px",
-                fontWeight: "500",
-                color: "#8B5A2B",
-                backgroundColor: "transparent",
-                border: "none",
-                cursor: "pointer",
-                transition: "color 0.2s",
-                whiteSpace: "nowrap",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "#6d4423";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#8B5A2B";
-              }}
-            >
-              Clear Filters
-            </button>
-
-            {/* Search Button */}
-            <button
-              onClick={() => {
-                setCurrentPage(1);
-                setTimeout(() => refetch(), 0);
-              }}
-              style={{
-                padding: "10px 16px",
-                borderRadius: "8px",
-                border: "none",
-                backgroundColor: "#8b5a2b",
-                color: "white",
-                fontWeight: "600",
-                fontSize: "14px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#6d4522";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#8b5a2b";
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+              {/* Current / Deleted Toggle */}
+              <button
+                onClick={() => {
+                  const newIsDeleted = !filters.is_deleted;
+                  setFilters((prev) => ({ ...prev, is_deleted: newIsDeleted }));
+                  setCurrentPage(1);
+                  void executeSearch({ is_deleted: newIsDeleted, page: 1 } as never);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = filters.is_deleted ? "#f57c00" : "#bdbdbd";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#e0e0e0";
+                }}
+                style={{
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e0e0e0",
+                  backgroundColor: filters.is_deleted ? "#fff3e0" : "white",
+                  color: filters.is_deleted ? "#f57c00" : "#6c757d",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
               >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              Tìm kiếm
-            </button>
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+                {filters.is_deleted ? "Deleted" : "Current"}
+              </button>
+
+              {/* Clear Filters */}
+              <button
+                onClick={() => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    keyword: "",
+                    franchise_id: "",
+                    is_active: "",
+                    is_deleted: false,
+                  }));
+                  setCurrentPage(1);
+                  void executeSearch({ keyword: "", franchise_id: "", is_active: "", is_deleted: false, page: 1 } as never);
+                  searchInputRef.current?.focus();
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.06)";
+                  e.currentTarget.style.color = "#111827";
+                  e.currentTarget.style.borderColor = "#374151";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#94a3b8";
+                  e.currentTarget.style.borderColor = "#d1d5db";
+                }}
+                style={{
+                  padding: "9px 16px",
+                  backgroundColor: "transparent",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Clear filters
+              </button>
+            </div>
           </div>
 
           {/* Table */}
@@ -1050,20 +1145,21 @@ export default function CategoryTable() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#64748b",
+                              color: "#94a3b8",
                             }}
                             title="View Products"
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#dbeafe";
-                              e.currentTarget.style.color = "#3b82f6";
+                              e.currentTarget.style.backgroundColor = "rgba(51,102,204,0.07)";
+                              e.currentTarget.style.color = "#3366cc";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = "transparent";
-                              e.currentTarget.style.color = "#64748b";
+                              e.currentTarget.style.color = "#94a3b8";
                             }}
                           >
-                            <Plus size={18} />
+                            <Eye size={18} />
                           </button>
+                          {!category.is_deleted && (
                           <button
                             onClick={() => handleEdit(category.id)}
                             style={{
@@ -1076,20 +1172,21 @@ export default function CategoryTable() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#64748b",
+                              color: "#94a3b8",
                             }}
                             title="Edit"
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#dbeafe";
-                              e.currentTarget.style.color = "#3b82f6";
+                              e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)";
+                              e.currentTarget.style.color = "#8B4513";
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = "transparent";
-                              e.currentTarget.style.color = "#64748b";
+                              e.currentTarget.style.color = "#94a3b8";
                             }}
                           >
                             <Edit2 size={18} />
                           </button>
+                          )}
                           <button
                             onClick={() =>
                               category.is_deleted
@@ -1106,15 +1203,22 @@ export default function CategoryTable() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
-                              color: "#ef4444",
+                              color: "#94a3b8",
                             }}
                             disabled={isDeleting || isRestoring}
                             title={category.is_deleted ? "Restore" : "Delete"}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = "#fee2e2";
+                              if (category.is_deleted) {
+                                e.currentTarget.style.backgroundColor = "rgba(76,175,80,0.07)";
+                                e.currentTarget.style.color = "#4caf50";
+                              } else {
+                                e.currentTarget.style.backgroundColor = "#fee";
+                                e.currentTarget.style.color = "#ef4444";
+                              }
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor = "transparent";
+                              e.currentTarget.style.color = "#94a3b8";
                             }}
                           >
                             {category.is_deleted ? (
@@ -1330,14 +1434,6 @@ export default function CategoryTable() {
         onSuccess={handleEditSuccess}
       />
 
-      {/* Create Drawer */}
-      <CategoryCreateDrawer
-        isOpen={createModal.isOpen}
-        onClose={handleCloseCreateModal}
-        onSuccess={handleCreateSuccess}
-          franchiseId={isGlobalScope ? filters.franchise_id || null : undefined}
-      />
-
       {/* Create Master Category Drawer */}
       <MasterCategoryCreateDrawer
         isOpen={createMasterModal.isOpen}
@@ -1348,87 +1444,154 @@ export default function CategoryTable() {
       {/* Delete Modal */}
       {deleteModal.isOpen && (
         <div
+          onClick={handleCloseDeleteModal}
           style={{
             position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 9999,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(2px)",
           }}
-          onClick={handleCloseDeleteModal}
         >
           <div
+            onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: "white",
-              borderRadius: "16px",
-              padding: "40px",
-              maxWidth: "500px",
+              borderRadius: "12px",
               width: "90%",
-              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-              animation: "modalSlideIn 0.2s ease-out",
+              maxWidth: "480px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              overflow: "hidden",
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div
               style={{
+                padding: "20px 24px",
+                borderBottom: "1px solid #f0f0f0",
                 display: "flex",
                 alignItems: "center",
-                gap: "16px",
-                marginBottom: "20px",
+                justifyContent: "space-between",
               }}
             >
-              <div
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    backgroundColor: "#ffebee",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <AlertTriangle size={24} color="#f44336" />
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "20px",
+                    fontWeight: "600",
+                    color: "#212529",
+                  }}
+                >
+                  Delete Category
+                </h2>
+              </div>
+              <button
+                onClick={handleCloseDeleteModal}
                 style={{
-                  width: "48px",
-                  height: "48px",
-                  backgroundColor: "#fee2e2",
-                  borderRadius: "12px",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
+                  color: "#6c757d",
                 }}
               >
-                <Trash2 size={24} color="#dc2626" />
-              </div>
-              <h3
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "700",
-                  color: "#1f2937",
-                  margin: 0,
-                }}
-              >
-                Delete Category
-              </h3>
+                <X size={20} />
+              </button>
             </div>
 
-            {/* Content */}
-            <p
-              style={{
-                fontSize: "15px",
-                lineHeight: "1.6",
-                color: "#6b7280",
-                marginBottom: "28px",
-              }}
-            >
-              Are you sure you want to delete the category{" "}
-              <strong style={{ color: "#1f2937" }}>
-                "{deleteModal.categoryName}"
-              </strong>
-              ? This action can be undone.
-            </p>
+            {/* Body */}
+            <div style={{ padding: "24px" }}>
+              <p
+                style={{
+                  margin: 0,
+                  marginBottom: "16px",
+                  fontSize: "15px",
+                  color: "#495057",
+                  lineHeight: "1.6",
+                }}
+              >
+                Are you sure you want to delete this category? This action can be undone.
+              </p>
+              <div
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e9ecef",
+                }}
+              >
+                <div style={{ marginBottom: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Category ID
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    #{deleteModal.categoryId}
+                  </p>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Category Name
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {deleteModal.categoryName}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            {/* Actions */}
+            {/* Footer */}
             <div
               style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #f0f0f0",
                 display: "flex",
                 gap: "12px",
                 justifyContent: "flex-end",
@@ -1438,24 +1601,15 @@ export default function CategoryTable() {
                 onClick={handleCloseDeleteModal}
                 disabled={isDeleting}
                 style={{
-                  padding: "12px 24px",
-                  border: "1px solid #e5e7eb",
+                  padding: "10px 20px",
+                  border: "1px solid #e0e0e0",
                   borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
                   backgroundColor: "white",
                   color: "#374151",
-                  fontSize: "15px",
-                  fontWeight: "600",
-                  cursor: isDeleting ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
                   opacity: isDeleting ? 0.5 : 1,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "white";
                 }}
               >
                 Cancel
@@ -1464,28 +1618,17 @@ export default function CategoryTable() {
                 onClick={handleDeleteConfirm}
                 disabled={isDeleting}
                 style={{
-                  padding: "12px 24px",
+                  padding: "10px 20px",
                   border: "none",
                   borderRadius: "8px",
-                  backgroundColor: isDeleting ? "#fca5a5" : "#ef4444",
-                  color: "white",
-                  fontSize: "15px",
+                  fontSize: "14px",
                   fontWeight: "600",
                   cursor: isDeleting ? "not-allowed" : "pointer",
-                  transition: "all 0.2s",
+                  backgroundColor: isDeleting ? "#fca5a5" : "#f44336",
+                  color: "white",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#dc2626";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDeleting) {
-                    e.currentTarget.style.backgroundColor = "#ef4444";
-                  }
                 }}
               >
                 {isDeleting ? (

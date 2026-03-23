@@ -13,6 +13,8 @@ import { ENV } from "@/config/env.config";
 
 interface CustomerFormProps {
   customer?: Customer;
+  onSuccess?: () => void;
+  onCancel?: () => void;
 }
 
 // ============================================================================
@@ -20,25 +22,61 @@ interface CustomerFormProps {
 // ============================================================================
 const createValidationSchema = (isEditMode: boolean) =>
   yup.object().shape({
+
     email: yup
       .string()
-      .required("Email là bắt buộc")
-      .email("Email không đúng định dạng"),
-    phone: yup.string().required("Số điện thoại là bắt buộc"),
-    name: yup.string().default(""),
+      .trim()
+      .required("Email is required")
+      .matches(/^[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/, "Invalid email format")
+      .max(50, "Email must not exceed 50 characters")
+      .min(8, "Email must be at least 8 characters"),
+
+    phone: yup
+      .string()
+      .required("Phone number is required")
+      .matches(
+        /^(\+84|0)(3[2-9]|5[2689]|7[06-9]|8\d|9\d)\d{7}$/,
+        "Invalid phone number",
+      ),
+
+    name: yup
+      .string()
+      .trim()
+      .required("Name is required")
+      .min(5, "Name must be at least 5 characters")
+      .matches(/^[a-zA-Z0-9.]+$/, "Name can only contain letters, numbers, and dots")
+      .test(
+        "no-consecutive-dots",
+        "Cannot contain consecutive dots",
+        (value) => !value || !value.includes("..")
+      )
+      .test(
+        "no-multiple-spaces",
+        "Cannot contain multiple consecutive spaces",
+        (value) => !value || !/ {2,}/.test(value)
+      )
+      .test(
+        "no-edge-dot",
+        "Cannot start or end with a dot",
+        (value) => !value || (!value.startsWith(".") && !value.endsWith("."))
+      )
+      .default(""),
+
     avatarUrl: yup.string().default(""),
+
     password: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Mật khẩu là bắt buộc")
-          .min(8, "Mật khẩu phải có ít nhất 8 ký tự"),
+        .string()
+        .required("Password is required")
+        .min(8, "Password must be at least 8 characters"),
+
     confirmPassword: isEditMode
       ? yup.string().default("")
       : yup
-          .string()
-          .required("Xác nhận mật khẩu là bắt buộc")
-          .oneOf([yup.ref("password")], "Mật khẩu xác nhận không khớp"),
+        .string()
+        .required("Confirm password is required")
+        .oneOf([yup.ref("password")], "Passwords do not match"),
     isActive: yup.boolean().default(true),
   });
 
@@ -52,7 +90,7 @@ interface FormValues {
   isActive: boolean;
 }
 
-export default function CustomerForm({ customer }: CustomerFormProps) {
+export default function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProps) {
   const navigate = useNavigate();
   const { success, error } = useToast();
   const isEditMode = !!customer;
@@ -76,6 +114,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     watch,
   } = useForm<FormValues>({
     resolver: yupResolver(createValidationSchema(isEditMode)),
+    mode: 'onChange',
     defaultValues: {
       email: "",
       phone: "",
@@ -128,7 +167,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);
-      formData.append("folder", "customers/avatars"); // Tổ chức file theo folder
+      formData.append("folder", "customers/avatars");
 
       const response = await axios.post(
         `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -143,14 +182,14 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
       const { secure_url } = response.data;
       setValue("avatarUrl", secure_url);
       setPreviewUrl(secure_url);
-      success("Upload thành công", "Ảnh đại diện đã được tải lên.");
+      success("Upload successful", "Avatar has been uploaded.");
     } catch (err) {
       console.error("Upload error:", err);
       error(
-        "Upload thất bại",
+        "Upload failed",
         err instanceof Error
           ? err.message
-          : "Không thể tải ảnh lên. Vui lòng thử lại.",
+          : "Unable to upload image. Please try again.",
       );
     } finally {
       setIsUploading(false);
@@ -165,13 +204,13 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        error("File không hợp lệ", "Vui lòng chọn file ảnh.");
+        error("Invalid file", "Please select an image file.");
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        error("File quá lớn", "Kích thước file không được vượt quá 5MB.");
+        error("File too large", "Maximum file size is 5MB.");
         return;
       }
 
@@ -204,7 +243,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   const onSubmit = async (data: FormValues) => {
     try {
       if (isEditMode) {
-        // UPDATE MODE: Không gửi password và is_active (API CUSTOMER-05 không yêu cầu)
+        // UPDATE MODE: skip password and is_active (not required by API)
         const updatePayload = {
           email: data.email,
           phone: data.phone,
@@ -214,13 +253,17 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
 
         await updateCustomer(customer.id, updatePayload, () => {
           success(
-            "Cập nhật thành công",
-            `Khách hàng "${data.name || data.email}" đã được cập nhật.`,
+            "Customer updated",
+            `Customer "${data.name || data.email}" has been updated.`,
           );
-          navigate("/admin/customers");
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            navigate("/admin/customers");
+          }
         });
       } else {
-        // CREATE MODE: Gửi cả password
+        // CREATE MODE: send password too
         const createPayload = {
           email: data.email,
           phone: data.phone,
@@ -232,8 +275,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
 
         await createCustomer(createPayload, () => {
           success(
-            "Tạo mới thành công",
-            `Khách hàng "${data.name || data.email}" đã được tạo.`,
+            "Customer created",
+            `Customer "${data.name || data.email}" has been created.`,
           );
           navigate("/admin/customers");
         });
@@ -241,8 +284,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
     } catch (err) {
       console.error("Submit error:", err);
       error(
-        "Có lỗi xảy ra",
-        err instanceof Error ? err.message : "Vui lòng thử lại sau.",
+        "An error occurred",
+        err instanceof Error ? err.message : "Please try again later.",
       );
     }
   };
@@ -250,96 +293,30 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
   return (
     <div
       style={{
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "#f9f7f4",
         minHeight: "100vh",
         padding: "24px",
       }}
     >
-      {/* Breadcrumb */}
-      <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        Customers ›{" "}
-        <span style={{ color: "#212529" }}>
-          {isEditMode ? `Edit Customer - ${customer.name}` : "Create Customer"}
-        </span>
-      </div>
-
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: "24px",
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize: "32px",
-              fontWeight: "bold",
-              margin: 0,
-              marginBottom: "8px",
-            }}
-          >
-            {isEditMode ? "Edit Customer" : "Create New Customer"}
-          </h1>
-          <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            {isEditMode
-              ? "Update customer information."
-              : "Add a new customer with contact information."}
-          </p>
-        </div>
-        <div style={{ display: "flex", gap: "12px" }}>
-          <button
-            type="button"
-            onClick={() => navigate("/admin/customers")}
-            style={{
-              padding: "10px 20px",
-              border: "1px solid #e0e0e0",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              backgroundColor: "white",
-              color: "#374151",
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="customer-form"
-            disabled={isLoading}
-            style={{
-              padding: "10px 20px",
-              border: "none",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              backgroundColor: isLoading ? "#9ca3af" : "#8B4513",
-              color: "white",
-              transition: "background-color 0.2s",
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onMouseEnter={(e) => {
-              if (!isLoading) e.currentTarget.style.backgroundColor = "#6d3610";
-            }}
-            onMouseLeave={(e) => {
-              if (!isLoading) e.currentTarget.style.backgroundColor = "#8B4513";
-            }}
-          >
-            {isLoading
-              ? "Đang lưu..."
-              : isEditMode
-                ? "Update Customer"
-                : "Create Customer"}
-          </button>
-        </div>
+      <div style={{ textAlign: "center", marginBottom: isEditMode ? "24px" : "40px" }}>
+        <h1
+          style={{
+            fontSize: isEditMode ? "32px" : "28px",
+            fontWeight: "700",
+            color: "#7F5539",
+            margin: 0,
+          }}
+        >
+          {isEditMode ? "Edit Customer" : "Create New Customer"}
+        </h1>
+        <p style={{ fontSize: "14px", color: "#9C6644", marginTop: "8px" }}>
+          {isEditMode ? "Update customer information." : "Add a new customer with contact information."}
+        </p>
       </div>
 
       {/* Form Container */}
-      <div style={{ maxWidth: "1200px" }}>
+      <div style={{ maxWidth: "760px", margin: "0 auto" }}>
         <form id="customer-form" onSubmit={hookFormHandleSubmit(onSubmit)}>
           {/* Basic Information */}
           <div
@@ -348,7 +325,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
               padding: "24px",
               borderRadius: "12px",
               marginBottom: "24px",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+              boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)",
+              border: "1px solid #E6CCB2",
             }}
           >
             <div
@@ -432,10 +410,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    border: `1px solid ${errors.name ? "#dc3545" : "#dee2e6"}`,
+                    border: `1px solid ${errors.name ? "#dc3545" : "#d1d5db"}`,
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontFamily: "inherit",
+                    backgroundColor: "white",
                   }}
                 />
                 {errors.name && (
@@ -472,10 +451,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    border: `1px solid ${errors.email ? "#dc3545" : "#dee2e6"}`,
+                    border: `1px solid ${errors.email ? "#dc3545" : "#d1d5db"}`,
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontFamily: "inherit",
+                    backgroundColor: "white",
                   }}
                 />
                 {errors.email && (
@@ -512,10 +492,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   style={{
                     width: "100%",
                     padding: "10px 12px",
-                    border: `1px solid ${errors.phone ? "#dc3545" : "#dee2e6"}`,
+                    border: `1px solid ${errors.phone ? "#dc3545" : "#d1d5db"}`,
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontFamily: "inherit",
+                    backgroundColor: "white",
                   }}
                 />
                 {errors.phone && (
@@ -553,10 +534,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     style={{
                       width: "100%",
                       padding: "10px 12px",
-                      border: `1px solid ${errors.password ? "#dc3545" : "#dee2e6"}`,
+                      border: `1px solid ${errors.password ? "#dc3545" : "#d1d5db"}`,
                       borderRadius: "8px",
                       fontSize: "14px",
                       fontFamily: "inherit",
+                      backgroundColor: "white",
                     }}
                   />
                   {errors.password && (
@@ -595,10 +577,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     style={{
                       width: "100%",
                       padding: "10px 12px",
-                      border: `1px solid ${errors.confirmPassword ? "#dc3545" : "#dee2e6"}`,
+                      border: `1px solid ${errors.confirmPassword ? "#dc3545" : "#d1d5db"}`,
                       borderRadius: "8px",
                       fontSize: "14px",
                       fontFamily: "inherit",
+                      backgroundColor: "white",
                     }}
                   />
                   {errors.confirmPassword && (
@@ -647,10 +630,10 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                 <div
                   style={{
                     position: "relative",
-                    border: "2px solid #dee2e6",
+                    border: "2px solid #E6CCB2",
                     borderRadius: "8px",
                     padding: "16px",
-                    backgroundColor: "#f8f9fa",
+                    backgroundColor: "#faf8f6",
                     display: "flex",
                     alignItems: "center",
                     gap: "16px",
@@ -664,7 +647,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       height: "120px",
                       objectFit: "cover",
                       borderRadius: "8px",
-                      border: "2px solid #dee2e6",
+                      border: "2px solid #E6CCB2",
                     }}
                   />
                   <div style={{ flex: 1 }}>
@@ -676,7 +659,7 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                         color: "#212529",
                       }}
                     >
-                      Avatar đã được tải lên
+                      Avatar uploaded
                     </p>
                     <p
                       style={{
@@ -725,11 +708,11 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                 <div
                   onClick={() => !isUploading && fileInputRef.current?.click()}
                   style={{
-                    border: "2px dashed #dee2e6",
+                    border: "2px dashed #DDB892",
                     borderRadius: "8px",
                     padding: "32px 24px",
                     textAlign: "center",
-                    backgroundColor: "#f8f9fa",
+                    backgroundColor: "#faf8f6",
                     cursor: isUploading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                     opacity: isUploading ? 0.6 : 1,
@@ -742,8 +725,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   }}
                   onMouseLeave={(e) => {
                     if (!isUploading) {
-                      e.currentTarget.style.borderColor = "#dee2e6";
-                      e.currentTarget.style.backgroundColor = "#f8f9fa";
+                      e.currentTarget.style.borderColor = "#DDB892";
+                      e.currentTarget.style.backgroundColor = "#faf8f6";
                     }
                   }}
                 >
@@ -763,8 +746,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     }}
                   >
                     {isUploading
-                      ? "Đang tải lên..."
-                      : "Click để chọn ảnh đại diện"}
+                      ? "Uploading..."
+                      : "Click to select an avatar"}
                   </p>
                   <p
                     style={{
@@ -774,45 +757,32 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                     }}
                   >
                     {isUploading
-                      ? "Vui lòng đợi..."
-                      : "Hỗ trợ: JPG, PNG, GIF (tối đa 5MB)"}
+                      ? "Please wait..."
+                      : "Supported: JPG, PNG, GIF (max 5MB)"}
                   </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Status - CHỈ HIỂN THỊ KHI TẠO MỚI */}
-          {!isEditMode && (
-            <div
-              style={{
-                backgroundColor: "white",
-                padding: "24px",
-                borderRadius: "12px",
-                marginBottom: "24px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-              }}
-            >
+            {/* Active Status - Create mode only, inline inside Basic Information card */}
+            {!isEditMode && (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
+                  marginTop: "20px",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  backgroundColor: "#faf8f6",
+                  border: "1px solid #E6CCB2",
                 }}
               >
                 <div>
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "#212529",
-                      marginBottom: "4px",
-                    }}
-                  >
+                  <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#212529" }}>
                     Active Status
-                  </h3>
-                  <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>
+                  </p>
+                  <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>
                     Mark this customer as active or inactive
                   </p>
                 </div>
@@ -831,8 +801,8 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       opacity: 0,
                       width: 0,
                       height: 0,
+                      position: "absolute",
                     }}
-                    onChange={(e) => setValue("isActive", e.target.checked)}
                   />
                   <span
                     style={{
@@ -846,7 +816,6 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                       transition: ".3s",
                       borderRadius: "24px",
                     }}
-                    onClick={() => setValue("isActive", !isActive)}
                   />
                   <span
                     style={{
@@ -863,8 +832,134 @@ export default function CustomerForm({ customer }: CustomerFormProps) {
                   />
                 </label>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Action Buttons - Edit mode only */}
+            {isEditMode && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "32px",
+                  paddingTop: "24px",
+                  borderTop: "1px solid #E6CCB2",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onCancel ? onCancel() : navigate("/admin/customers")}
+                  style={{
+                    padding: "11px 24px",
+                    border: "1px solid #DDB892",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    backgroundColor: "white",
+                    color: "#7F5539",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                    e.currentTarget.style.borderColor = "#B08968";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "white";
+                    e.currentTarget.style.borderColor = "#DDB892";
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    padding: "11px 28px",
+                    backgroundColor: isLoading ? "#B08968" : "#7F5539",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = "#9C6644";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = "#7F5539";
+                  }}
+                >
+                  {isLoading ? "Saving..." : "Update Customer"}
+                </button>
+              </div>
+            )}
+
+            {/* Action Buttons - Create mode only */}
+            {!isEditMode && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "32px",
+                  paddingTop: "24px",
+                  borderTop: "1px solid #E6CCB2",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onCancel ? onCancel() : navigate("/admin/customers")}
+                  style={{
+                    padding: "11px 24px",
+                    border: "1px solid #DDB892",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    backgroundColor: "white",
+                    color: "#7F5539",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#faf8f6";
+                    e.currentTarget.style.borderColor = "#B08968";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "white";
+                    e.currentTarget.style.borderColor = "#DDB892";
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    padding: "11px 28px",
+                    backgroundColor: isLoading ? "#B08968" : "#7F5539",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = "#9C6644";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isLoading) e.currentTarget.style.backgroundColor = "#7F5539";
+                  }}
+                >
+                  {isLoading ? "Creating..." : "Create Customer"}
+                </button>
+              </div>
+            )}
+          </div>
         </form>
       </div>
     </div>

@@ -1,199 +1,190 @@
-import { X, MapPin, Clock, Calendar, Store } from "lucide-react";
-import type { Franchise } from "../../../../types/common.type";
+﻿import { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft, Edit2 } from "lucide-react";
+import CustomerDetail from "../components/CustomerDetail";
+import { useGetCustomer } from "../components/hooks/useGetCustomer";
 
-interface FranchiseDetailModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  franchise: Franchise | null;
-  isLoading?: boolean;
-  error?: string | null;
-}
+export default function CustomerDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { customer, isLoading, error, fetchCustomer } = useGetCustomer();
 
-export default function FranchiseDetailModal({
-  isOpen,
-  onClose,
-  franchise,
-  isLoading = false,
-  error = null,
-}: FranchiseDetailModalProps) {
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (id) {
+      fetchCustomer(id);
+    }
+  }, [id, fetchCustomer]);
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden animate-[fadeIn_.25s_ease]">
-
-        {/* HEADER */}
-        <div className="relative bg-gradient-to-r from-amber-600 via-amber-700 to-amber-800 p-8 text-white">
-
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/20 transition"
-          >
-            <X size={20} />
-          </button>
-
-          <div className="flex items-center gap-6">
-
-            <img
-              src={
-                franchise?.logo_url ||
-                `https://ui-avatars.com/api/?name=${franchise?.name}&background=f59e0b&color=fff`
-              }
-              alt={franchise?.name}
-              className="w-20 h-20 rounded-2xl border-4 border-white/30 object-cover shadow-md"
-            />
-
-            <div>
-              <h2 className="text-2xl font-bold">{franchise?.name}</h2>
-              <p className="text-sm opacity-90 mt-1">
-                Franchise Code: {franchise?.code}
-              </p>
-
-              {franchise && (
-                <span
-                  className={`inline-block mt-3 px-4 py-1.5 text-sm font-semibold rounded-full ${
-                    franchise.is_active
-                      ? "bg-green-400/20 text-green-100"
-                      : "bg-red-400/20 text-red-100"
-                  }`}
-                >
-                  {franchise.is_active
-                    ? "Đang hoạt động"
-                    : "Ngừng hoạt động"}
-                </span>
-              )}
-            </div>
-
-          </div>
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#f9f7f4",
+          minHeight: "100vh",
+          padding: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "#8B5A2B" }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              border: "4px solid #E6CCB2",
+              borderTopColor: "#7F5539",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+              margin: "0 auto 16px",
+            }}
+          />
+          <p style={{ fontSize: "15px", fontWeight: "600" }}>Loading customer data...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
+      </div>
+    );
+  }
 
-        {/* BODY */}
-        <div className="p-8">
-
-          {isLoading && (
-            <div className="flex flex-col items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">
-                Đang tải dữ liệu...
-              </p>
-            </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          {franchise && !isLoading && !error && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-              {/* Address */}
-              <InfoCard
-                icon={<MapPin size={20} />}
-                title="Địa chỉ"
-                value={franchise.address || "Chưa cập nhật"}
-              />
-
-              {/* Open Time */}
-              <InfoCard
-                icon={<Clock size={20} />}
-                title="Giờ mở cửa"
-                value={new Date(franchise.opened_at).toLocaleTimeString(
-                  "vi-VN",
-                  { hour: "2-digit", minute: "2-digit" }
-                )}
-              />
-
-              {/* Close Time */}
-              <InfoCard
-                icon={<Clock size={20} />}
-                title="Giờ đóng cửa"
-                value={
-                  franchise.closed_at
-                    ? new Date(franchise.closed_at).toLocaleTimeString(
-                        "vi-VN",
-                        { hour: "2-digit", minute: "2-digit" }
-                      )
-                    : "Chưa cập nhật"
-                }
-              />
-
-              {/* Created */}
-              <InfoCard
-                icon={<Calendar size={20} />}
-                title="Ngày tạo"
-                value={new Date(
-                  franchise.created_at
-                ).toLocaleDateString("vi-VN")}
-              />
-
-              {/* Updated */}
-              <InfoCard
-                icon={<Calendar size={20} />}
-                title="Cập nhật"
-                value={new Date(
-                  franchise.updated_at
-                ).toLocaleDateString("vi-VN")}
-              />
-
-              {/* Code */}
-              <InfoCard
-                icon={<Store size={20} />}
-                title="Mã Franchise"
-                value={franchise.code}
-              />
-
-            </div>
-          )}
-        </div>
-
-        {/* FOOTER */}
-        <div className="border-t px-8 py-5 flex justify-end bg-gray-50">
+  if (error) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#f9f7f4",
+          minHeight: "100vh",
+          padding: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: "18px", fontWeight: "600", color: "#dc2626", marginBottom: "8px" }}>
+            Failed to load customer
+          </p>
+          <p style={{ fontSize: "14px", color: "#6c757d", marginBottom: "16px" }}>{error}</p>
           <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition font-medium"
+            onClick={() => navigate("/admin/customers")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "1px solid #E6CCB2",
+              backgroundColor: "white",
+              color: "#7F5539",
+              cursor: "pointer",
+            }}
           >
-            Đóng
+            Back to customers
           </button>
         </div>
-
       </div>
+    );
+  }
 
-      <style>
-        {`
-        @keyframes fadeIn {
-          from { opacity:0; transform:translateY(8px); }
-          to { opacity:1; transform:translateY(0); }
-        }
-        `}
-      </style>
-    </div>
-  );
-}
+  if (!customer) {
+    return (
+      <div
+        style={{
+          backgroundColor: "#f9f7f4",
+          minHeight: "100vh",
+          padding: "24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p style={{ fontSize: "18px", fontWeight: "600", marginBottom: "16px" }}>
+            Customer not found
+          </p>
+          <button
+            onClick={() => navigate("/admin/customers")}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "1px solid #E6CCB2",
+              backgroundColor: "white",
+              color: "#7F5539",
+              cursor: "pointer",
+            }}
+          >
+            Back to customers
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-/* INFO CARD COMPONENT */
-
-function InfoCard({
-  icon,
-  title,
-  value,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string;
-}) {
   return (
-    <div className="flex items-start gap-3 p-5 bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md transition">
+    <div style={{ backgroundColor: "#f9f7f4", minHeight: "100vh", padding: "24px" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "24px",
+          }}
+        >
+          <button
+            onClick={() => navigate("/admin/customers")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 12px",
+              border: "1px solid #E6CCB2",
+              borderRadius: "8px",
+              backgroundColor: "white",
+              color: "#7F5539",
+              fontSize: "14px",
+              fontWeight: "500",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#faf8f6";
+              e.currentTarget.style.borderColor = "#B08968";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "white";
+              e.currentTarget.style.borderColor = "#E6CCB2";
+            }}
+          >
+            <ArrowLeft size={16} />
+            Customers
+          </button>
 
-      <div className="text-amber-600 mt-0.5">{icon}</div>
+          <button
+            onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "9px 18px",
+              border: "none",
+              borderRadius: "8px",
+              backgroundColor: "#7F5539",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#9C6644";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#7F5539";
+            }}
+          >
+            <Edit2 size={15} />
+            Edit Customer
+          </button>
+        </div>
 
-      <div>
-        <p className="text-xs text-gray-500 mb-1">{title}</p>
-        <p className="font-semibold text-gray-800">{value}</p>
+        <CustomerDetail customer={customer} />
       </div>
-
     </div>
   );
 }
