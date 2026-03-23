@@ -9,6 +9,13 @@ import {
 
 type SelectedToppingMap = Record<string, number>;
 
+interface PosProductConfiguratorInitialState {
+  selectedSizeId?: string;
+  quantity?: number;
+  note?: string;
+  selectedToppings?: SelectedToppingMap;
+}
+
 export const usePosProductConfigurator = (toppingProducts: PosToppingProduct[]) => {
   const [activeProduct, setActiveProduct] = useState<PosProduct | null>(null);
   const [selectedSizeId, setSelectedSizeId] = useState("");
@@ -24,15 +31,37 @@ export const usePosProductConfigurator = (toppingProducts: PosToppingProduct[]) 
     setSelectedToppings({});
   }, []);
 
-  const openConfigurator = useCallback((product: PosProduct) => {
-    const defaultSize = getDefaultProductSize(product);
+  const initializeConfigurator = useCallback(
+    (product: PosProduct, initialState?: PosProductConfiguratorInitialState) => {
+      const defaultSize = getDefaultProductSize(product);
+      const nextSelectedSizeId =
+        initialState?.selectedSizeId &&
+        product.sizes.some((size) => size.product_franchise_id === initialState.selectedSizeId)
+          ? initialState.selectedSizeId
+          : defaultSize?.product_franchise_id ?? "";
 
-    setActiveProduct(product);
-    setSelectedSizeId(defaultSize?.product_franchise_id ?? "");
-    setQuantity(1);
-    setNote("");
-    setSelectedToppings({});
-  }, []);
+      setActiveProduct(product);
+      setSelectedSizeId(nextSelectedSizeId);
+      setQuantity(Math.max(1, initialState?.quantity ?? 1));
+      setNote(initialState?.note ?? "");
+      setSelectedToppings(initialState?.selectedToppings ?? {});
+    },
+    [],
+  );
+
+  const openConfigurator = useCallback(
+    (product: PosProduct) => {
+      initializeConfigurator(product);
+    },
+    [initializeConfigurator],
+  );
+
+  const openConfiguratorForEdit = useCallback(
+    (product: PosProduct, initialState: PosProductConfiguratorInitialState) => {
+      initializeConfigurator(product, initialState);
+    },
+    [initializeConfigurator],
+  );
 
   const closeConfigurator = useCallback(() => {
     resetConfigurator();
@@ -167,6 +196,7 @@ export const usePosProductConfigurator = (toppingProducts: PosToppingProduct[]) 
     selectedToppings,
     totalPrice,
     openConfigurator,
+    openConfiguratorForEdit,
     closeConfigurator,
     resetConfigurator,
     setSelectedSize,

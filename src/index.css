@@ -143,3 +143,52 @@ label[for],
 .ck-content-preview table td,
 .ck-content-preview table th { border: 1px solid #dee2e6; padding: 8px 12px; }
 .ck-content-preview table th { background: #f8f9fa; font-weight: 700; }
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  .order-invoice-screen-only,
+  .order-detail-sidebar {
+    display: none !important;
+  }
+
+  .order-invoice-print-root {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .order-invoice-print-root,
+  .order-invoice-print-root * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .order-invoice-header,
+  .order-invoice-section-grid,
+  .order-invoice-item,
+  .order-invoice-summary {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .order-invoice-item {
+    align-items: flex-start !important;
+  }
+
+  .order-invoice-summary {
+    margin-top: 2rem !important;
+  }
+}

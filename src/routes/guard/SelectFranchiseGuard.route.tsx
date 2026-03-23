@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { ROUTER_URL } from "../router.const";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 
@@ -8,8 +8,17 @@ import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.
  * - GLOBAL scope không cần chọn franchise → pass through
  */
 const SelectFranchiseGuard = () => {
+  const location = useLocation();
   const activeContext = useAdminAuthStore((s) => s.activeContext);
   const roles = useAdminAuthStore((s) => s.roles);
+  const orderRootPath = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`;
+  const isOrderManagementRoute =
+    location.pathname === orderRootPath || location.pathname.startsWith(`${orderRootPath}/`);
+
+  // Order module tự xử lý franchise context để hỗ trợ POS gate và gate riêng của order list/detail.
+  if (isOrderManagementRoute) {
+    return <Outlet />;
+  }
 
   // Đã chọn context rồi (GLOBAL hoặc FRANCHISE) → pass through
   if (activeContext) {

@@ -21,7 +21,7 @@ export const PosProductGrid = memo(({
         {Array.from({ length: 8 }).map((_, index) => (
           <div
             key={index}
-            className="h-72 animate-pulse rounded-xl border border-gray-200 bg-white"
+            className="h-72 animate-pulse rounded-[24px] bg-white ring-1 ring-black/5"
           />
         ))}
       </div>
@@ -30,8 +30,9 @@ export const PosProductGrid = memo(({
 
   if (products.length === 0) {
     return (
-      <div className="flex h-72 items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-gray-400">
-        Không có sản phẩm phù hợp
+      <div className="flex h-72 flex-col items-center justify-center rounded-[24px] bg-white px-6 text-center shadow-sm ring-1 ring-black/5">
+        <p className="font-bold text-gray-900">Không tìm thấy món nào</p>
+        <p className="mt-1 text-sm text-gray-400">Thử tìm kiếm với từ khóa khác bạn nhé</p>
       </div>
     );
   }

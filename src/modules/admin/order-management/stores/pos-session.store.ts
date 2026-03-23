@@ -32,9 +32,26 @@ const isSameDraftConfig = (left: CartItem, right: CartItem) => {
   );
 };
 
+const mergeDraftItemIntoList = (items: CartItem[], draftItem: CartItem) => {
+  const existingItem = items.find((item) => isSameDraftConfig(item, draftItem));
+
+  if (!existingItem) {
+    return [...items, draftItem];
+  }
+
+  return items.map((item) =>
+    isSameDraftConfig(item, draftItem)
+      ? recalculateDraftItemTotals(item, item.quantity + draftItem.quantity)
+      : item,
+  );
+};
+
 interface PosSessionState {
   selectedCustomer: CustomerOption | null;
   activeCartId: string | null;
+  reviewContactCustomerId: string | null;
+  selectedAdminFranchiseId: string | null;
+  selectedAdminFranchiseName: string | null;
   selectedCategory: string;
   searchQuery: string;
   customerKeyword: string;
@@ -42,8 +59,12 @@ interface PosSessionState {
   draftAddress: string;
   draftPhone: string;
   draftMessage: string;
+  voucherCode: string;
   setSelectedCustomer: (customer: CustomerOption | null) => void;
   setActiveCartId: (cartId: string | null) => void;
+  setReviewContactCustomerId: (customerId: string | null) => void;
+  setSelectedAdminFranchiseId: (franchiseId: string | null) => void;
+  setSelectedAdminFranchiseName: (franchiseName: string | null) => void;
   setSelectedCategory: (categoryId: string) => void;
   setSearchQuery: (query: string) => void;
   setCustomerKeyword: (keyword: string) => void;
@@ -51,7 +72,9 @@ interface PosSessionState {
   setDraftAddress: (address: string) => void;
   setDraftPhone: (phone: string) => void;
   setDraftMessage: (message: string) => void;
+  setVoucherCode: (voucherCode: string) => void;
   addDraftItem: (item: CartItem) => void;
+  replaceDraftItem: (cartItemId: string, item: CartItem) => void;
   incrementDraftItem: (cartItemId: string) => void;
   decrementDraftItem: (cartItemId: string) => void;
   removeDraftItem: (cartItemId: string) => void;
@@ -61,6 +84,9 @@ interface PosSessionState {
 export const usePosSessionStore = create<PosSessionState>((set) => ({
   selectedCustomer: null,
   activeCartId: null,
+  reviewContactCustomerId: null,
+  selectedAdminFranchiseId: null,
+  selectedAdminFranchiseName: null,
   selectedCategory: "all",
   searchQuery: "",
   customerKeyword: "",
@@ -68,8 +94,19 @@ export const usePosSessionStore = create<PosSessionState>((set) => ({
   draftAddress: "",
   draftPhone: "",
   draftMessage: DEFAULT_COUNTER_MESSAGE,
-  setSelectedCustomer: (selectedCustomer) => set({ selectedCustomer }),
+  voucherCode: "",
+  setSelectedCustomer: (selectedCustomer) =>
+    set((state) => ({
+      selectedCustomer,
+      reviewContactCustomerId:
+        state.selectedCustomer?.id === selectedCustomer?.id
+          ? state.reviewContactCustomerId
+          : null,
+    })),
   setActiveCartId: (activeCartId) => set({ activeCartId }),
+  setReviewContactCustomerId: (reviewContactCustomerId) => set({ reviewContactCustomerId }),
+  setSelectedAdminFranchiseId: (selectedAdminFranchiseId) => set({ selectedAdminFranchiseId }),
+  setSelectedAdminFranchiseName: (selectedAdminFranchiseName) => set({ selectedAdminFranchiseName }),
   setSelectedCategory: (selectedCategory) => set({ selectedCategory }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setCustomerKeyword: (customerKeyword) => set({ customerKeyword }),
@@ -77,24 +114,20 @@ export const usePosSessionStore = create<PosSessionState>((set) => ({
   setDraftAddress: (draftAddress) => set({ draftAddress }),
   setDraftPhone: (draftPhone) => set({ draftPhone }),
   setDraftMessage: (draftMessage) => set({ draftMessage }),
+  setVoucherCode: (voucherCode) => set({ voucherCode }),
   addDraftItem: (draftItem) =>
     set((state) => {
-      const existingItem = state.draftItems.find((item) => isSameDraftConfig(item, draftItem));
-
-      if (!existingItem) {
-        return {
-          draftItems: [...state.draftItems, draftItem],
-        };
-      }
-
       return {
-        draftItems: state.draftItems.map((item) =>
-          isSameDraftConfig(item, draftItem)
-            ? recalculateDraftItemTotals(item, item.quantity + draftItem.quantity)
-            : item,
-        ),
+        draftItems: mergeDraftItemIntoList(state.draftItems, draftItem),
       };
     }),
+  replaceDraftItem: (cartItemId, draftItem) =>
+    set((state) => ({
+      draftItems: mergeDraftItemIntoList(
+        state.draftItems.filter((item) => item.cart_item_id !== cartItemId),
+        draftItem,
+      ),
+    })),
   incrementDraftItem: (cartItemId) =>
     set((state) => ({
       draftItems: state.draftItems.map((item) =>
@@ -133,6 +166,7 @@ export const usePosSessionStore = create<PosSessionState>((set) => ({
     set({
       selectedCustomer: null,
       activeCartId: null,
+      reviewContactCustomerId: null,
       selectedCategory: "all",
       searchQuery: "",
       customerKeyword: "",
@@ -140,5 +174,6 @@ export const usePosSessionStore = create<PosSessionState>((set) => ({
       draftAddress: payload?.defaultAddress ?? "",
       draftPhone: "",
       draftMessage: payload?.defaultMessage ?? DEFAULT_COUNTER_MESSAGE,
+      voucherCode: "",
     }),
 }));

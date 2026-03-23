@@ -36,9 +36,37 @@ export interface UpdateCartPayload {
   message?: string;
 }
 
+export interface ApplyVoucherPayload {
+  voucher_code: string;
+}
+
+export interface ConfirmPaymentPayload {
+  method: string;
+  providerTxnId: string;
+}
+
+export interface ReadyForPickupPayload {
+  staff_id: string;
+}
+
+export interface RefundPaymentPayload {
+  refund_reason: string;
+}
+
 export interface ReplaceCartItemOptionsPayload {
   cart_item_id: string;
   options: CartItemOptionInput[];
+}
+
+export interface UpdateCartItemOptionPayload {
+  cart_item_id: string;
+  option_product_franchise_id: string;
+  quantity: number;
+}
+
+export interface RemoveCartItemOptionPayload {
+  cart_item_id: string;
+  option_product_franchise_id: string;
 }
 
 export interface UpdateCartItemPayload {

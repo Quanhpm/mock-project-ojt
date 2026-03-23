@@ -22,13 +22,14 @@ export const PosHeader = memo(({
   onSwitchFranchise,
 }: PosHeaderProps) => {
   return (
-    <div className="shrink-0 bg-white px-6 pb-2 pt-6">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex flex-1 items-center gap-4">
-          <div className="relative min-w-[280px]">
+    <div className="shrink-0 min-w-0 bg-transparent px-6 pb-2 pt-6">
+      <div className="flex min-w-0 flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex min-w-0 w-full flex-1 flex-col gap-4 sm:flex-row sm:items-center">
+          {/* Franchise Select */}
+          <div className="relative w-full shrink-0 sm:max-w-xs">
             <MapPin
               size={18}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-amber-800"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-amber-700"
             />
             <select
               value={franchiseId ?? ""}
@@ -38,34 +39,35 @@ export const PosHeader = memo(({
                   onSwitchFranchise(event.target.value);
                 }
               }}
-              className="w-full appearance-none rounded-lg border border-amber-700 bg-white py-2 pl-10 pr-11 text-sm font-semibold text-amber-800 outline-none transition focus:ring-2 focus:ring-amber-700 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-400"
+              className="w-full appearance-none rounded-2xl bg-white py-3 pl-12 pr-11 text-sm font-bold text-gray-800 shadow-sm ring-1 ring-black/5 outline-none transition-all focus:ring-4 focus:ring-amber-700/10 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
             >
-              <option value="">{franchiseName || "Chọn chi nhánh"}</option>
+              <option value="">{franchiseName || "Chọn cửa hàng..."}</option>
               {franchiseOptions.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.name}
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-amber-800">
+            <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
               {isSwitchingFranchise ? (
-                <Loader2 size={16} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin text-amber-700" />
               ) : (
                 <ChevronDown size={16} />
               )}
             </div>
           </div>
 
-          <div className="relative max-w-sm flex-1">
+          {/* Search Box */}
+          <div className="relative min-w-0 w-full flex-1 sm:max-w-md">
             <Search
               size={18}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
-              className="block w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-3 text-sm text-gray-900 shadow-sm transition-all focus:border-transparent focus:ring-2 focus:ring-amber-700"
-              placeholder="Search menu items..."
+              className="block w-full rounded-2xl bg-white py-3 pl-12 pr-4 text-sm text-gray-900 shadow-sm ring-1 ring-black/5 outline-none transition-all placeholder:text-gray-400 focus:ring-4 focus:ring-amber-700/10"
+              placeholder="Tìm kiếm món ăn..."
               type="text"
             />
           </div>

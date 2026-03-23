@@ -7,10 +7,6 @@ export const checkoutCartUsecase = async (
   cartId: string,
   payload?: UpdateCartPayload,
 ): Promise<OrderDetail | null> => {
-  if (payload) {
-    await cartService.updateCart(cartId, payload);
-  }
-
-  await cartService.checkoutCart(cartId);
+  await cartService.checkoutCart(cartId, payload);
   return orderService.getOrderByCartId(cartId);
 };
