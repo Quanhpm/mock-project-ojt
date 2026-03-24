@@ -90,7 +90,7 @@ const ClientHeader = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm md:sticky md:top-0 z-50">
+    <header className="bg-white shadow-sm sticky md:top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="relative flex items-center justify-between h-16">
           {/* Left: Mobile hamburger + Logo */}

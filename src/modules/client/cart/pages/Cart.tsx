@@ -1,61 +1,88 @@
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
 import { CartSummaryCard } from '../components';
 import { useCartList } from '../hooks/use-cart-list.hook';
 
-interface CartGridConfig {
-  containerClassName: string;
-  getItemClassName: (index: number) => string;
-}
+// interface CartGridConfig {
+//   containerClassName: string;
+//   getItemClassName: (index: number) => string;
+// }
 
-const getCartGridConfig = (cartCount: number): CartGridConfig => {
-  if (cartCount <= 1) {
-    return {
-      containerClassName: 'grid-cols-1',
-      getItemClassName: () => 'col-span-full',
-    };
-  }
+// const getCartGridConfig = (cartCount: number): CartGridConfig => {
+//   if (cartCount <= 1) {
+//     return {
+//       containerClassName: 'grid-cols-1',
+//       getItemClassName: () => 'col-span-full',
+//     };
+//   }
 
-  if (cartCount === 2) {
-    return {
-      containerClassName: 'grid-cols-2',
-      getItemClassName: () => 'col-span-1',
-    };
-  }
+//   if (cartCount === 2) {
+//     return {
+//       containerClassName: 'grid-cols-2',
+//       getItemClassName: () => 'col-span-1',
+//     };
+//   }
 
-  return {
-    // Use a 6-column base grid to keep the visual 3-column layout,
-    // while still allowing the last row to split evenly for remainder cases.
-    containerClassName: 'grid-cols-6',
-    getItemClassName: (index: number) => {
-      const remainingItems = cartCount - index;
-      const remainder = cartCount % 3;
+//   return {
+//     // Use a 6-column base grid to keep the visual 3-column layout,
+//     // while still allowing the last row to split evenly for remainder cases.
+//     containerClassName: 'grid-cols-6',
+//     getItemClassName: (index: number) => {
+//       const remainingItems = cartCount - index;
+//       const remainder = cartCount % 3;
 
-      if (remainder === 1 && remainingItems === 1) {
-        return 'col-span-full';
-      }
+//       if (remainder === 1 && remainingItems === 1) {
+//         return 'col-span-full';
+//       }
 
-      if (remainder === 2 && remainingItems <= 2) {
-        return 'col-span-3';
-      }
+//       if (remainder === 2 && remainingItems <= 2) {
+//         return 'col-span-3';
+//       }
 
-      return 'col-span-2';
-    },
-  };
-};
+//       return 'col-span-2';
+//     },
+//   };
+// };
 
 function Cart() {
   const navigate = useNavigate();
   const user = useClientAuthStore((state) => state.user);
   const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
   const { carts, totalItems, totalAmount, formatUpdatedAt } = useCartList(user?.id, isLoggedIn);
-  const cartGridConfig = getCartGridConfig(carts.length);
+  // const cartGridConfig = getCartGridConfig(carts.length);
 
   const openCartDetail = (cartId: string) => {
     navigate(`${ROUTER_URL.HOME_ROUTER.CART}/${cartId}`);
   };
+
+  // Thêm
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  const getItemsPerView = () => {
+    if (typeof window === 'undefined') return 3;
+    if (window.innerWidth < 768) return 1;
+    if (window.innerWidth < 1024) return 2;
+    return 3;
+  };
+
+  const [itemsPerView, setItemsPerView] = React.useState(getItemsPerView);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      const newItemsPerView = getItemsPerView();
+      setItemsPerView(newItemsPerView);
+      setCurrentIndex(0);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const maxIndex = Math.max(0, carts.length - itemsPerView);
+  const canGoPrev = currentIndex > 0;
+  const canGoNext = currentIndex < maxIndex;
 
   if (carts.length === 0) {
     return (
@@ -117,16 +144,70 @@ function Cart() {
           </button>
         </section>
 
-        <div className={`grid gap-8 ${cartGridConfig.containerClassName}`}>
-          {carts.map((cart, index) => (
-            <div className={cartGridConfig.getItemClassName(index)} key={cart.id}>
-              <CartSummaryCard
-                cart={cart}
-                formatUpdatedAt={formatUpdatedAt}
-                onOpenDetail={openCartDetail}
-              />
+        {/* Phần div cần sửa */}
+        <div className="relative">
+          {/* Nút Previous */}
+          {canGoPrev && (
+            <button
+              onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+              className="absolute -left-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-[var(--cf-primary)]/20 shadow-lg flex items-center justify-center text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all duration-200 cursor-pointer"
+              type="button"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+
+          {/* Nút Next */}
+          {canGoNext && (
+            <button
+              onClick={() => setCurrentIndex((prev) => Math.min(maxIndex, prev + 1))}
+              className="absolute -right-5 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full bg-white border border-[var(--cf-primary)]/20 shadow-lg flex items-center justify-center text-[var(--cf-primary)] hover:bg-[var(--cf-primary)] hover:text-white transition-all duration-200 cursor-pointer"
+              type="button"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
+          
+          <div className="overflow-hidden">
+            <div
+              className="flex transition-transform duration-400 ease-in-out"
+              style={{
+                gap: '32px',
+                transform: `translateX(calc(-${currentIndex} * (100% / ${itemsPerView} + ${32 / itemsPerView}px)))`,
+              }}
+            >
+              {carts.map((cart) => (
+                <div
+                  key={cart.id}
+                  className="flex-shrink-0"
+                  style={{ width: `calc((100% - ${32 * (itemsPerView - 1)}px) / ${itemsPerView})` }}
+                >
+                  <CartSummaryCard
+                    cart={cart}
+                    formatUpdatedAt={formatUpdatedAt}
+                    onOpenDetail={openCartDetail}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Dot indicators */}
+          {carts.length > itemsPerView && (
+            <div className="flex justify-center gap-2 mt-6">
+              {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${i === currentIndex
+                    ? 'w-6 bg-[var(--cf-primary)]'
+                    : 'w-2 bg-[var(--cf-primary)]/25 hover:bg-[var(--cf-primary)]/50'
+                    }`}
+                  type="button"
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-10 bg-white rounded-2xl border border-[var(--cf-primary)]/10 p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 shadow-[0px_12px_32px_rgba(28,27,27,0.04)]">
