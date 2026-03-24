@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Eye, Edit2, Trash2, RotateCcw, X } from "lucide-react";
 import CustomerDelete from "./CustomerDelete";
 import CustomerDetail from "./CustomerDetail";
+import CustomerEditModal from "./CustomerEditModal";
 import { useCustomerSearch } from "../hooks";
 import { useCustomerStatus } from "./hooks/useCustomerStatus";
 import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
@@ -46,7 +47,6 @@ const styles = {
     gap: "28px",
     flexShrink: 0,
     zIndex: 10,
-    backgroundColor: "#ffffff",
   },
   contentArea: {
     flex: 1,
@@ -65,10 +65,12 @@ const styles = {
   },
   tableContainer: {
     flex: 1,
+    display: "flex" as const,
+    flexDirection: "column" as const,
     backgroundColor: "white",
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    overflow: "auto" as const,
+    overflow: "hidden" as const,
     position: "relative" as const,
     border: "1px solid #e5e7eb",
   },
@@ -85,16 +87,13 @@ const styles = {
     zIndex: 10,
   },
   paginationContainer: {
-    marginTop: "20px",
     display: "flex" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
-    fontSize: "15px",
-    padding: "20px 24px",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    border: "1px solid #e5e7eb",
+    padding: "12px 24px",
+    backgroundColor: "#f8f9fa",
+    borderTop: "1px solid #e9ecef",
+    flexShrink: 0,
   },
 };
 
@@ -227,6 +226,10 @@ export default function CustomerTable() {
   const [viewModal, setViewModal] = useState<{ isOpen: boolean; customer: (typeof customers)[0] | null }>({
     isOpen: false,
     customer: null,
+  });
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; customerId: string }>({
+    isOpen: false,
+    customerId: "",
   });
   const [pageInput, setPageInput] = useState("");
 
@@ -532,7 +535,7 @@ export default function CustomerTable() {
             {/* Edit Button */}
             {!customer.is_deleted && (
             <button
-              onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+              onClick={() => setEditModal({ isOpen: true, customerId: customer.id })}
               style={
                 {
                   ...getButtonStyles.actionButton,
@@ -943,7 +946,7 @@ export default function CustomerTable() {
                   minWidth: "160px",
                 }}
               >
-                <option value="">All statuses</option>
+                <option value="">All Status</option>
                 <option value="true">Active</option>
                 <option value="false">Inactive</option>
               </select>
@@ -1030,6 +1033,7 @@ export default function CustomerTable() {
 
           {/* Table */}
           <div style={styles.tableContainer}>
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
             <table style={styles.table}>
               <thead style={styles.tableHead}>
                 <tr>
@@ -1124,7 +1128,6 @@ export default function CustomerTable() {
                           color: "#8B5A2B",
                         }}
                       >
-                        Đang tải dữ liệu khách hàng...
                       </div>
                     </td>
                   </tr>
@@ -1207,16 +1210,16 @@ export default function CustomerTable() {
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
 
           {/* Pagination */}
           {!isLoading && customers.length > 0 && totalPages > 1 && (
             <div style={styles.paginationContainer}>
-              <span style={{ color: "#6b7280", fontWeight: "600" }}>
+              <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
                 Showing {(currentPage - 1) * 10 + 1} to{" "}
                 {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
                 customers
-              </span>
+              </p>
               <div
                 style={{ display: "flex", gap: "8px", alignItems: "center" }}
               >
@@ -1348,7 +1351,7 @@ export default function CustomerTable() {
 
                 {/* Go to page */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
                   <input
                     type="number"
                     min={1}
@@ -1384,8 +1387,20 @@ export default function CustomerTable() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
+
+      {/* Edit Modal */}
+      <CustomerEditModal
+        isOpen={editModal.isOpen}
+        customerId={editModal.customerId}
+        onClose={() => setEditModal({ isOpen: false, customerId: "" })}
+        onSuccess={() => {
+          setEditModal({ isOpen: false, customerId: "" });
+          executeSearch();
+        }}
+      />
 
       {/* Delete Modal */}
       <CustomerDelete
@@ -1478,6 +1493,7 @@ export default function CustomerTable() {
               <button
                 onClick={() => setViewModal({ isOpen: false, customer: null })}
                 style={{
+                  marginRight: "auto",
                   padding: "9px 20px",
                   borderRadius: "10px",
                   border: "1px solid #e2e8f0",

@@ -192,9 +192,10 @@ export default function CustomerDelete({
               backgroundColor: "white",
               color: "#374151",
               opacity: isDeleting ? 0.5 : 1,
+              marginRight: "auto",
             }}
           >
-            Cancel
+            Close
           </button>
           <button
             onClick={handleConfirm}

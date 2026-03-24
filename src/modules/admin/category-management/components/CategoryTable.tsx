@@ -105,10 +105,12 @@ const styles = {
   },
   tableContainer: {
     flex: 1,
+    display: "flex" as const,
+    flexDirection: "column" as const,
     backgroundColor: "white",
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    overflow: "auto" as const,
+    overflow: "hidden" as const,
     position: "relative" as const,
     border: "1px solid #e5e7eb",
   },
@@ -867,6 +869,7 @@ export default function CategoryTable() {
 
           {/* Table */}
           <div style={styles.tableContainer}>
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
             {!isLoading && categories.length === 0 ? (
               <div
                 style={{
@@ -1234,7 +1237,7 @@ export default function CategoryTable() {
                 </tbody>
               </table>
             )}
-          </div>
+            </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -1246,6 +1249,7 @@ export default function CategoryTable() {
                 borderTop: "1px solid #e2e8f0",
                 backgroundColor: "#f8fafc",
                 padding: "12px 24px",
+                flexShrink: 0,
               }}
             >
               <div style={{ fontSize: "14px", color: "#64748b" }}>
@@ -1404,7 +1408,7 @@ export default function CategoryTable() {
                 </button>
               </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
                   <input
                     type="number" min={1} max={totalPages}
                     value={pageInput}
@@ -1423,6 +1427,7 @@ export default function CategoryTable() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
 
@@ -1601,6 +1606,7 @@ export default function CategoryTable() {
                 onClick={handleCloseDeleteModal}
                 disabled={isDeleting}
                 style={{
+                  marginRight: "auto",
                   padding: "10px 20px",
                   border: "1px solid #e0e0e0",
                   borderRadius: "8px",
@@ -1612,7 +1618,7 @@ export default function CategoryTable() {
                   opacity: isDeleting ? 0.5 : 1,
                 }}
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={handleDeleteConfirm}

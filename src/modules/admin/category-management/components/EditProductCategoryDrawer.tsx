@@ -204,7 +204,7 @@ export default function EditProductCategoryDrawer({
             ) : (
               <>
                 <CheckCircle2 size={18} />
-                Save Changes
+                Save
               </>
             )}
           </button>
