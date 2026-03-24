@@ -7,7 +7,7 @@ interface UseGetInventoryLogsReturn {
   logs: InventoryLog[];
   isLoading: boolean;
   error: string | null;
-  fetchLogs: (inventoryId: string) => Promise<void>;
+  fetchLogs: (inventoryId: string) => Promise<boolean>;
 }
 
 export const useGetInventoryLogs = (): UseGetInventoryLogsReturn => {
@@ -22,11 +22,13 @@ export const useGetInventoryLogs = (): UseGetInventoryLogsReturn => {
     try {
       const response = await inventoryApi.getInventoryLogs(inventoryId);
       setLogs(response ?? []);
+      return true;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load inventory history.";
       setError(errorMessage);
       showError("Error", errorMessage);
+      return false;
     } finally {
       setIsLoading(false);
     }

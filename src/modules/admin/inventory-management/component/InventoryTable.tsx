@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useFieldArray, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, type Resolver } from "react-hook-form";
 import { useGetInventories } from "./hooks/useGetInventories";
 import { useDeleteInventory } from "./hooks/useDeleteInventory";
 import { useRestoreInventory } from "./hooks/useRestoreInventory";
@@ -16,6 +16,12 @@ import { getProductsByFranchiseWithCategory, type ProductWithCategoriesApiItem }
 import { searchProductFranchises } from "@/apis/endpoints/product-franchise.api";
 import { productApi } from "@/apis/endpoints/product.api";
 import { inventoryApi } from "@/apis/endpoints/inventory.api";
+import {
+  inventoryCreateDefaultValues,
+  inventoryCreateFormSchema,
+  type InventoryCreateFormInput,
+  type InventoryCreateFormValues,
+} from "./inventory-create.validation";
 import {
   getInventoryImportFieldPath,
   getInventoryTableFieldPath,
@@ -37,15 +43,30 @@ interface CreateProductOption {
   label: string;
 }
 
+type ToolbarLoadingAction =
+  | "search"
+  | "status"
+  | "franchise"
+  | "visibility"
+  | "clear"
+  | null;
+
 export default function InventoryTable() {
   const { error: toastError, success: toastSuccess } = useToast();
   const SEARCH_DEBOUNCE_DELAY = 400;
+  const inventoryTableResolver = zodResolver(
+    inventoryTableFormSchema,
+  ) as Resolver<
+    { items: InventoryTableRow[] },
+    undefined,
+    { items: InventoryTableRow[] }
+  >;
 
   // === Existing state ===
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [isStatusSorting, setIsStatusSorting] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [toolbarLoadingAction, setToolbarLoadingAction] = useState<ToolbarLoadingAction>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; inventoryId: string; productName: string }>({ isOpen: false, inventoryId: "", productName: "" });
   const [adjustPopover, setAdjustPopover] = useState<{ open: boolean; item: InventoryItem | null }>({ open: false, item: null });
@@ -58,13 +79,9 @@ export default function InventoryTable() {
   const [franchiseFilter, setFranchiseFilter] = useState("");
   const [franchiseOptions, setFranchiseOptions] = useState<FranchiseOptionItem[]>([]);
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [createFranchiseId, setCreateFranchiseId] = useState("");
-  const [createProductFranchiseId, setCreateProductFranchiseId] = useState("");
-  const [createQuantity, setCreateQuantity] = useState(1);
-  const [createAlertThreshold, setCreateAlertThreshold] = useState(10);
   const [createProductOptions, setCreateProductOptions] = useState<CreateProductOption[]>([]);
   const [isCreateLoadingProducts, setIsCreateLoadingProducts] = useState(false);
-  const [isCreateSubmitting, setIsCreateSubmitting] = useState(false);
+  const [createSubmitError, setCreateSubmitError] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [activeTooltipKey, setActiveTooltipKey] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -73,21 +90,45 @@ export default function InventoryTable() {
 
   // === Data hooks ===
   // skipInitialFetch = true: tắt auto-fetch trong hook, để useEffect bên dưới quản lý duy nhất 1 lần gọi
-  const { inventories, isLoading, totalItems, totalPages, refetch } = useGetInventories(true);
+  const { inventories, isLoading, hasLoadedOnce, totalItems, totalPages, refetch } = useGetInventories(true);
   const { deleteInventory, isDeleting } = useDeleteInventory();
   const { restoreInventory, isRestoring } = useRestoreInventory();
   const { adjustInventory, isAdjusting } = useAdjustInventory();
-  const { logs, isLoading: isLogsLoading, fetchLogs } = useGetInventoryLogs();
+  const { logs, isLoading: isLogsLoading } = useGetInventoryLogs();
   const { bulkAdjust, isAdjusting: isBulkAdjusting } = useBulkAdjustInventory();
 
   // === React Hook Form + useFieldArray ===
   const methods = useForm<{ items: InventoryTableRow[] }>({
     defaultValues: { items: [] },
-    resolver: zodResolver(inventoryTableFormSchema),
+    resolver: inventoryTableResolver,
     mode: "onSubmit",
   });
   const { control, register, getValues, trigger, setError, clearErrors, formState: { errors } } = methods;
   const { fields, replace, update } = useFieldArray({ control, name: "items" });
+  const createForm = useForm<
+    InventoryCreateFormInput,
+    undefined,
+    InventoryCreateFormValues
+  >({
+    defaultValues: inventoryCreateDefaultValues,
+    resolver: zodResolver(inventoryCreateFormSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  });
+  const {
+    control: createControl,
+    register: registerCreate,
+    handleSubmit: handleCreateFormSubmit,
+    reset: resetCreateFormFields,
+    clearErrors: clearCreateErrors,
+    setValue: setCreateValue,
+    setFocus: setCreateFocus,
+    formState: {
+      errors: createErrors,
+      isSubmitting: isCreateSubmitting,
+    },
+  } = createForm;
+  const createFranchiseId = useWatch({ control: createControl, name: "franchiseId" });
   type InventoryEditableFieldPath = ReturnType<typeof getInventoryTableFieldPath>;
   const [mappedImportErrorPaths, setMappedImportErrorPaths] = useState<InventoryEditableFieldPath[]>([]);
 
@@ -186,6 +227,99 @@ export default function InventoryTable() {
     void loadFranchiseOptions();
   }, []);
 
+  useEffect(() => {
+    if (!isLoading) {
+      setToolbarLoadingAction(null);
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    const requestId = createProductFetchRequestRef.current + 1;
+    createProductFetchRequestRef.current = requestId;
+
+    setCreateValue("productFranchiseId", "");
+    clearCreateErrors("productFranchiseId");
+    setCreateProductOptions([]);
+
+    if (!createFranchiseId) {
+      setIsCreateLoadingProducts(false);
+      return;
+    }
+
+    setIsCreateLoadingProducts(true);
+
+    const loadCreateProductOptions = async () => {
+      try {
+        const categoryBoundProducts = await getProductsByFranchiseWithCategory(createFranchiseId);
+        if (createProductFetchRequestRef.current !== requestId) {
+          return;
+        }
+
+        const productFranchiseList = (categoryBoundProducts ?? []).filter(
+          (item) => item.is_deleted !== true && item.is_active !== false,
+        );
+
+        if (productFranchiseList.length > 0) {
+          setCreateProductOptions(
+            productFranchiseList.map((item: ProductWithCategoriesApiItem) => ({
+              value: item.product_franchise_id,
+              label: item.product_name || "Product",
+            })),
+          );
+          return;
+        }
+
+        const [fallbackResponse, masterProducts] = await Promise.all([
+          searchProductFranchises({
+            searchCondition: {
+              franchise_id: createFranchiseId,
+              is_deleted: false,
+              is_active: true,
+            },
+            pageInfo: {
+              pageNum: 1,
+              pageSize: 500,
+            },
+          }),
+          productApi.searchProducts({
+            searchCondition: {
+              is_deleted: false,
+            },
+            pageInfo: {
+              pageNum: 1,
+              pageSize: 1000,
+            },
+          }),
+        ]);
+
+        if (createProductFetchRequestRef.current !== requestId) {
+          return;
+        }
+
+        const productNameById = new Map(
+          (masterProducts.data ?? []).map((product) => [product.id, product.name] as const),
+        );
+
+        const fallbackOptions = (fallbackResponse.data ?? []).map((item) => ({
+          value: item.id,
+          label: productNameById.get(item.product_id) || "Product",
+        }));
+
+        setCreateProductOptions(fallbackOptions);
+      } catch {
+        if (createProductFetchRequestRef.current === requestId) {
+          toastError("Error", "Failed to load franchise products.");
+        }
+      } finally {
+        if (createProductFetchRequestRef.current === requestId) {
+          setIsCreateLoadingProducts(false);
+        }
+      }
+    };
+
+    void loadCreateProductOptions();
+  }, [clearCreateErrors, createFranchiseId, setCreateValue, toastError]);
+
   const buildPayload = useCallback((page: number): InventorySearchPayload => ({
     searchCondition: {
       is_deleted: showDeleted,
@@ -201,6 +335,7 @@ export default function InventoryTable() {
     if (nextKeyword === debouncedSearchTerm) return;
 
     const debounceTimer = window.setTimeout(() => {
+      setToolbarLoadingAction("search");
       setDebouncedSearchTerm(nextKeyword);
       setCurrentPage(1);
     }, SEARCH_DEBOUNCE_DELAY);
@@ -253,6 +388,7 @@ export default function InventoryTable() {
 
   // === Handlers ===
   const handleClearFilters = useCallback(() => {
+    setToolbarLoadingAction("clear");
     setSearchInput("");
     setDebouncedSearchTerm("");
     setStatusFilter("all");
@@ -262,17 +398,18 @@ export default function InventoryTable() {
   }, []);
 
   const handleSearch = useCallback(() => {
+    setToolbarLoadingAction("search");
     setDebouncedSearchTerm(searchInput.trim());
     setCurrentPage(1);
   }, [searchInput]);
 
   const handleStatusChange = useCallback(async (nextStatus: string) => {
+    setToolbarLoadingAction("status");
     setStatusFilter(nextStatus);
-    setIsStatusSorting(true);
     try {
       await refetch(buildPayload(currentPage));
     } finally {
-      setIsStatusSorting(false);
+      // Cleared by the loading effect after the request settles.
     }
   }, [buildPayload, currentPage, refetch]);
 
@@ -343,14 +480,12 @@ export default function InventoryTable() {
     });
   }, [buildPayload, bulkAdjust, currentPage, getValues, methods, refetch, toastError, trigger]);
 
-  // === Legacy handlers (adjust, logs, delete, restore) ===
-  const handleOpenAdjust = (_e: React.MouseEvent<HTMLButtonElement>, item: InventoryItem) => {
-    setAdjustPopover({ open: true, item }); setPopoverIncrease(""); setPopoverDecrease(""); setPopoverReason("");
-  };
+  // === Legacy handlers (logs, delete, restore) ===
   const handleAdjustSubmit = () => {
     if (!adjustPopover.item) return;
     const change = (Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0);
     if (change === 0) return;
+
     adjustInventory({
       product_franchise_id: adjustPopover.item.product_franchise_id,
       inventory_id: adjustPopover.item.id,
@@ -358,10 +493,11 @@ export default function InventoryTable() {
       change,
       reason: popoverReason.trim() || "Quantity adjustment",
     }, () => {
-      setAdjustPopover({ open: false, item: null }); refetch(buildPayload(currentPage), { force: true });
+      setAdjustPopover({ open: false, item: null });
+      refetch(buildPayload(currentPage), { force: true });
     });
   };
-  const handleViewLogs = (inventoryId: string, productName: string) => { setLogsModal({ open: true, inventoryId, productName }); fetchLogs(inventoryId); };
+
   const handleDelete = (inventoryId: string, productName: string) => { setDeleteModal({ isOpen: true, inventoryId, productName }); };
   const handleDeleteConfirm = () => {
     const nextPage = currentPage > 1 && inventories.length === 1 ? 1 : currentPage;
@@ -379,18 +515,19 @@ export default function InventoryTable() {
 
   const resetCreateForm = useCallback(() => {
     createProductFetchRequestRef.current += 1;
-    setCreateFranchiseId("");
-    setCreateProductFranchiseId("");
-    setCreateQuantity(1);
-    setCreateAlertThreshold(10);
+    resetCreateFormFields(inventoryCreateDefaultValues);
     setCreateProductOptions([]);
     setIsCreateLoadingProducts(false);
-  }, []);
+    setCreateSubmitError("");
+  }, [resetCreateFormFields]);
 
   const handleOpenCreateModal = useCallback(() => {
     resetCreateForm();
     setCreateModalOpen(true);
-  }, [resetCreateForm]);
+    window.setTimeout(() => {
+      setCreateFocus("franchiseId");
+    }, 0);
+  }, [resetCreateForm, setCreateFocus]);
 
   const handleCloseCreateModal = useCallback(() => {
     if (isCreateSubmitting) return;
@@ -398,110 +535,14 @@ export default function InventoryTable() {
     resetCreateForm();
   }, [isCreateSubmitting, resetCreateForm]);
 
-  const handleCreateFranchiseChange = useCallback(async (franchiseId: string) => {
-    // Reset dependent state first to prevent stale options from previous franchise.
-    const requestId = createProductFetchRequestRef.current + 1;
-    createProductFetchRequestRef.current = requestId;
+  const handleCreateSubmit = useCallback(async (values: InventoryCreateFormValues) => {
+    setCreateSubmitError("");
 
-    setCreateFranchiseId(franchiseId);
-    setCreateProductFranchiseId("");
-    setCreateProductOptions([]);
-
-    if (!franchiseId) {
-      setIsCreateLoadingProducts(false);
-      return;
-    }
-
-    setIsCreateLoadingProducts(true);
-    try {
-      const categoryBoundProducts = await getProductsByFranchiseWithCategory(franchiseId);
-      if (createProductFetchRequestRef.current !== requestId) {
-        return;
-      }
-
-      const productFranchiseList = (categoryBoundProducts ?? []).filter(
-        (item) => item.is_deleted !== true && item.is_active !== false,
-      );
-
-      if (productFranchiseList.length > 0) {
-        setCreateProductOptions(
-          productFranchiseList.map((item: ProductWithCategoriesApiItem) => ({
-            value: item.product_franchise_id,
-            label: item.product_name || "Product",
-          })),
-        );
-        return;
-      }
-
-      // Fallback for franchises not yet mapped in category-product endpoint.
-      const [fallbackResponse, masterProducts] = await Promise.all([
-        searchProductFranchises({
-        searchCondition: {
-          franchise_id: franchiseId,
-          is_deleted: false,
-          is_active: true,
-        },
-        pageInfo: {
-          pageNum: 1,
-          pageSize: 500,
-        },
-      }),
-        productApi.searchProducts({
-          searchCondition: {
-            is_deleted: false,
-          },
-          pageInfo: {
-            pageNum: 1,
-            pageSize: 1000,
-          },
-        }),
-      ]);
-
-      if (createProductFetchRequestRef.current !== requestId) {
-        return;
-      }
-
-      const productNameById = new Map(
-        (masterProducts.data ?? []).map((product) => [product.id, product.name] as const),
-      );
-
-      const fallbackOptions = (fallbackResponse.data ?? []).map((item) => ({
-        value: item.id,
-        label: productNameById.get(item.product_id) || "Product",
-      }));
-
-      setCreateProductOptions(fallbackOptions);
-    } catch {
-      if (createProductFetchRequestRef.current === requestId) {
-        toastError("Error", "Failed to load franchise products.");
-      }
-    } finally {
-      if (createProductFetchRequestRef.current === requestId) {
-        setIsCreateLoadingProducts(false);
-      }
-    }
-  }, [toastError]);
-
-  const handleCreateSubmit = useCallback(async () => {
-    if (!createFranchiseId) {
-      toastError("Missing Data", "Please select a franchise.");
-      return;
-    }
-    if (!createProductFranchiseId) {
-      toastError("Missing Data", "Please select a product.");
-      return;
-    }
-    if (createQuantity <= 0) {
-      toastError("Invalid Data", "Quantity must be greater than 0.");
-      return;
-    }
-
-    setIsCreateSubmitting(true);
     try {
       await inventoryApi.createInventory({
-        product_franchise_id: createProductFranchiseId,
-        quantity: createQuantity,
-        alert_threshold: createAlertThreshold,
+        product_franchise_id: values.productFranchiseId,
+        quantity: values.quantity,
+        alert_threshold: values.alertThreshold,
       });
       toastSuccess("Created", "New inventory item has been added.");
       setCreateModalOpen(false);
@@ -509,22 +550,19 @@ export default function InventoryTable() {
       await refetch(buildPayload(currentPage));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create inventory.";
-      toastError("Create Failed", message);
-    } finally {
-      setIsCreateSubmitting(false);
+      setCreateSubmitError(message);
     }
   }, [
     buildPayload,
-    createAlertThreshold,
-    createFranchiseId,
-    createProductFranchiseId,
-    createQuantity,
     currentPage,
     refetch,
     resetCreateForm,
-    toastError,
     toastSuccess,
   ]);
+
+  const handleCreateInvalidSubmit = useCallback(() => {
+    setCreateSubmitError("");
+  }, []);
 
   // === Styles ===
   const btnOutline: React.CSSProperties = { display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", borderRadius: "8px", border: "1px solid #8B4513", backgroundColor: "white", color: "#8B4513", fontWeight: "600", fontSize: "13px", cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s" };
@@ -535,6 +573,79 @@ export default function InventoryTable() {
     backgroundColor: "#fef2f2",
     color: "#991b1b",
     boxShadow: "0 0 0 1px rgba(220,38,38,0.12)",
+  };
+  const createFieldStyle = (hasError: boolean): React.CSSProperties => ({
+    height: "38px",
+    border: `1px solid ${hasError ? "#dc2626" : "#e0e0e0"}`,
+    borderRadius: "8px",
+    padding: "0 10px",
+    fontSize: "14px",
+    outline: "none",
+    boxSizing: "border-box",
+    backgroundColor: hasError ? "#fef2f2" : "white",
+  });
+  const toolbarSearchInputStyle: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    height: "48px",
+    borderRadius: "12px",
+    border: "1px solid #d9dee7",
+    padding: "0 16px 0 42px",
+    color: "#475569",
+    backgroundColor: "#f8fafc",
+    outline: "none",
+    fontSize: "15px",
+    boxSizing: "border-box",
+  };
+  const toolbarSelectStyle: React.CSSProperties = {
+    display: "block",
+    width: "100%",
+    minWidth: "160px",
+    height: "44px",
+    appearance: "none",
+    borderRadius: "10px",
+    border: "1px solid #d9dee7",
+    padding: "0 38px 0 14px",
+    color: "#111827",
+    backgroundColor: "#fcfcfd",
+    outline: "none",
+    fontSize: "14px",
+    cursor: "pointer",
+    boxSizing: "border-box",
+  };
+  const toolbarFilterButtonStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "44px",
+    minWidth: "122px",
+    padding: "0 14px",
+    borderRadius: "10px",
+    border: "1px solid #d9dee7",
+    backgroundColor: "#fcfcfd",
+    color: "#334155",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    transition: "all 0.2s",
+  };
+  const toolbarSearchButtonStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    height: "48px",
+    padding: "0 16px",
+    borderRadius: "12px",
+    border: "none",
+    backgroundColor: "#8B4513",
+    color: "white",
+    fontWeight: "600",
+    fontSize: "14px",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.08)",
   };
   const tooltipStyle: React.CSSProperties = {
     position: "absolute",
@@ -603,6 +714,9 @@ export default function InventoryTable() {
     }
   }, []);
 
+  const shouldShowBlockingTableLoading = isLoading && !hasLoadedOnce;
+  const isToolbarLoading = isLoading && hasLoadedOnce;
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", position: "relative" }}>
@@ -655,59 +769,121 @@ export default function InventoryTable() {
         {/* Content Area */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 32px 32px", gap: "16px", minHeight: 0 }}>
           {/* Filters */}
-          <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "8px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", flexShrink: 0, zIndex: 20 }}>
-            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <div style={{ flex: 1, position: "relative" }}>
-                <div style={{ position: "absolute", top: "50%", left: "12px", transform: "translateY(-50%)", pointerEvents: "none", color: "#6c757d" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          <div style={{ backgroundColor: "white", padding: "14px", borderRadius: "16px", boxShadow: "0 1px 3px rgba(15,23,42,0.05)", border: "1px solid #e5e7eb", flexShrink: 0, zIndex: 20 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>
+                <div style={{ flex: "1 1 520px", position: "relative", minWidth: "260px" }}>
+                  <div style={{ position: "absolute", top: "50%", left: "14px", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                  </div>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearch();
+                      }
+                    }}
+                    placeholder="Search by product name... (Ctrl+k)"
+                    style={toolbarSearchInputStyle}
+                  />
                 </div>
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearch();
-                    }
+                <button onClick={handleSearch} style={toolbarSearchButtonStyle}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6d3610"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8B4513"}>
+                  {isToolbarLoading && toolbarLoadingAction === "search" ? (
+                    <>
+                      <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid rgba(255,255,255,0.45)", borderTopColor: "white", animation: "inventorySpin 0.8s linear infinite" }} />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+                      Search
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", justifyContent: "flex-start" }}>
+                <div style={{ position: "relative", minWidth: "160px" }}>
+                  <select value={statusFilter} onChange={e => void handleStatusChange(e.target.value)} style={toolbarSelectStyle}>
+                    <option value="all">All Status</option><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option>
+                  </select>
+                  <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "14px", transform: "translateY(-50%)", color: "#9ca3af" }}>
+                    {isToolbarLoading && toolbarLoadingAction === "status" ? (
+                      <span style={{ display: "block", width: "14px", height: "14px", borderRadius: "50%", border: "2px solid #d1d5db", borderTopColor: "#8B4513", animation: "inventorySpin 0.8s linear infinite" }} />
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ position: "relative", minWidth: "160px" }}>
+                  <select value={franchiseFilter} onChange={e => { setToolbarLoadingAction("franchise"); setFranchiseFilter(e.target.value); setCurrentPage(1); }} style={toolbarSelectStyle}>
+                    <option value="">Sort by Franchise</option>
+                    {franchiseOptions.map((franchise) => (
+                      <option key={franchise.value} value={franchise.value}>
+                        {franchise.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "14px", transform: "translateY(-50%)", color: "#9ca3af" }}>
+                    {isToolbarLoading && toolbarLoadingAction === "franchise" ? (
+                      <span style={{ display: "block", width: "14px", height: "14px", borderRadius: "50%", border: "2px solid #d1d5db", borderTopColor: "#8B4513", animation: "inventorySpin 0.8s linear infinite" }} />
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => { setToolbarLoadingAction("visibility"); setShowDeleted(d => !d); setCurrentPage(1); }}
+                  style={{
+                    ...toolbarFilterButtonStyle,
+                    gap: "8px",
+                    border: showDeleted ? "1px solid #fb923c" : "1px solid #d1d5db",
+                    backgroundColor: showDeleted ? "#fff7ed" : "white",
+                    color: showDeleted ? "#f97316" : "#6b7280",
+                    boxShadow: showDeleted ? "0 0 0 1px rgba(249,115,22,0.08)" : "none",
                   }}
-                  placeholder="Search by product name... (Ctrl+k)"
-                  style={{ display: "block", width: "100%", borderRadius: "8px", border: "0", padding: "10px 16px 10px 40px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", boxSizing: "border-box" }}
-                />
+                >
+                  {isToolbarLoading && toolbarLoadingAction === "visibility" ? (
+                    <span style={{ width: "15px", height: "15px", borderRadius: "50%", border: "2px solid currentColor", borderTopColor: "transparent", animation: "inventorySpin 0.8s linear infinite" }} />
+                  ) : (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4h8v2" />
+                      <path d="M19 6l-1 14H6L5 6" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
+                  )}
+                  {showDeleted ? "Deleted" : "Current"}
+                </button>
+
+                <button
+                  onClick={handleClearFilters}
+                  style={{
+                    ...toolbarFilterButtonStyle,
+                    gap: "8px",
+                    backgroundColor: "#f4f6f8",
+                    color: "#334155",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = "#eceff3"}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = "#f4f6f8"}
+                >
+                  {isToolbarLoading && toolbarLoadingAction === "clear" ? (
+                    <>
+                      <span style={{ width: "14px", height: "14px", borderRadius: "50%", border: "2px solid #cbd5e1", borderTopColor: "#334155", animation: "inventorySpin 0.8s linear infinite" }} />
+                      Clearing...
+                    </>
+                  ) : (
+                    "Clear Filters"
+                  )}
+                </button>
               </div>
-              <button onClick={handleSearch} style={{ display: "flex", alignItems: "center", gap: "6px", backgroundColor: "#8B4513", color: "white", padding: "10px 18px", borderRadius: "8px", border: "none", fontWeight: "600", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap" }}
-                onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6d3610"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8B4513"}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>Search
-              </button>
-              <div style={{ position: "relative", minWidth: "165px" }}>
-                <select value={statusFilter} onChange={e => void handleStatusChange(e.target.value)} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
-                  <option value="all">All Status</option><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option>
-                </select>
-                <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", color: "#6c757d" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                </div>
-              </div>
-              <div style={{ position: "relative", minWidth: "175px" }}>
-                <select value={franchiseFilter} onChange={e => { setFranchiseFilter(e.target.value); setCurrentPage(1); }} style={{ display: "block", width: "100%", appearance: "none", borderRadius: "8px", border: "0", padding: "10px 40px 10px 12px", color: "#212529", backgroundColor: "#f8f9fa", outline: "none", fontSize: "14px", cursor: "pointer", boxSizing: "border-box" }}>
-                  <option value="">Sort by Franchise</option>
-                  {franchiseOptions.map((franchise) => (
-                    <option key={franchise.value} value={franchise.value}>
-                      {franchise.name}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ pointerEvents: "none", position: "absolute", top: "50%", right: "12px", transform: "translateY(-50%)", color: "#6c757d" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                </div>
-              </div>
-              <button onClick={() => { setShowDeleted(d => !d); setCurrentPage(1); }}
-                style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 16px", borderRadius: "8px", border: showDeleted ? "1px solid #dc3545" : "1px solid #e0e0e0", fontWeight: "500", fontSize: "14px", cursor: "pointer", whiteSpace: "nowrap", backgroundColor: showDeleted ? "#fff5f5" : "white", color: showDeleted ? "#dc3545" : "#374151", transition: "all 0.2s" }}>
-                <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>delete</span>{showDeleted ? "Deleted" : "Active"}
-              </button>
-              <button onClick={handleClearFilters} style={{ fontSize: "14px", fontWeight: "500", color: "#8B4513", padding: "10px 8px", whiteSpace: "nowrap", cursor: "pointer", border: "none", backgroundColor: "transparent" }}
-                onMouseEnter={e => e.currentTarget.style.color = "#6d3610"} onMouseLeave={e => e.currentTarget.style.color = "#8B4513"}>
-                Clear Filters
-              </button>
             </div>
           </div>
 
@@ -727,18 +903,12 @@ export default function InventoryTable() {
           )}
 
           {/* Table */}
-          {isLoading ? (
+          {shouldShowBlockingTableLoading ? (
             <div style={{ backgroundColor: "white", padding: "60px 20px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", textAlign: "center", flexShrink: 0 }}>
               <p style={{ color: "#6c757d", fontSize: "16px" }}>Loading...</p>
             </div>
           ) : filteredFields.length > 0 ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden", minHeight: 0, position: "relative" }}>
-              {isStatusSorting && (
-                <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(255,255,255,0.6)", zIndex: 5, display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", fontSize: "14px", color: "#374151", fontWeight: 600 }}>
-                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: "2px solid #d1d5db", borderTopColor: "#8B4513", animation: "inventorySpin 0.8s linear infinite" }} />
-                  Sorting status...
-                </div>
-              )}
               <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                   <thead>
@@ -758,12 +928,9 @@ export default function InventoryTable() {
                       <th style={{ width: "12%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Quantity</th>
                       <th style={{ width: "13%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>Alert Threshold</th>
                       <th style={{ width: "10%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                          Status
-                          {isStatusSorting && <span style={{ width: "12px", height: "12px", borderRadius: "50%", border: "2px solid #d1d5db", borderTopColor: "#8B4513", animation: "inventorySpin 0.8s linear infinite" }} />}
-                        </div>
+                        Status
                       </th>
-                      <th style={{ width: "8%", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center" }}>Actions</th>
+                      <th style={{ width: "116px", padding: "12px 16px", fontSize: "11px", fontWeight: "600", color: "#6c757d", textTransform: "uppercase", letterSpacing: "0.5px", textAlign: "center" }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody style={{ borderTop: "1px solid #e9ecef" }}>
@@ -847,22 +1014,14 @@ export default function InventoryTable() {
                           <td style={{ padding: "16px" }}>
                             <span style={{ fontSize: "12px", fontWeight: "600", padding: "3px 10px", borderRadius: "12px", backgroundColor: stockStatus.label === "In Stock" ? "#d4edda" : stockStatus.label === "Low Stock" ? "#fff3cd" : "#f8d7da", color: stockStatus.color }}>{stockStatus.label}</span>
                           </td>
-                          <td style={{ padding: "16px" }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                          <td style={{ padding: "16px", width: "76px" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
                               {showDeleted ? (
                                 <button title="Restore" onClick={() => handleRestore(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }}
                                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#e8f5e9"; e.currentTarget.style.color = "#28a745"; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
                                   <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>restore</span>
                                 </button>
                               ) : (<>
-                                <button title="Single Adjustment" onClick={e => handleOpenAdjust(e, item)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }}
-                                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)"; e.currentTarget.style.color = "#8B4513"; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                                  <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
-                                </button>
-                                <button title="View Logs" onClick={() => handleViewLogs(item.id, item.product_name ?? item.product_id)} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: "pointer", transition: "all 0.2s" }}
-                                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = "rgba(25,127,230,0.07)"; e.currentTarget.style.color = "#197fe6"; }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
-                                  <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>history</span>
-                                </button>
                                 <button title="Delete" onClick={() => handleDelete(item.id, item.product_name ?? item.product_id)} disabled={isDeleting} style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "32px", height: "32px", border: "none", borderRadius: "6px", backgroundColor: "transparent", color: "#94a3b8", cursor: isDeleting ? "not-allowed" : "pointer", transition: "all 0.2s" }}
                                   onMouseEnter={e => { if (!isDeleting) { e.currentTarget.style.backgroundColor = "#fee"; e.currentTarget.style.color = "#ef4444"; } }} onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}>
                                   <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>delete</span>
@@ -1165,90 +1324,142 @@ export default function InventoryTable() {
               </button>
             </div>
 
-            <div style={{ padding: "20px", display: "grid", gap: "14px" }}>
-              <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
-                Franchise
-                <select
-                  value={createFranchiseId}
-                  onChange={(e) => void handleCreateFranchiseChange(e.target.value)}
-                  style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
-                  disabled={isCreateSubmitting}
-                >
-                  <option value="">-- Select franchise --</option>
-                  {franchiseOptions.map((franchise) => (
-                    <option key={franchise.value} value={franchise.value}>{franchise.name}</option>
-                  ))}
-                </select>
-              </label>
+            <form
+              noValidate
+              onSubmit={handleCreateFormSubmit(handleCreateSubmit, handleCreateInvalidSubmit)}
+            >
+              <div style={{ padding: "20px", display: "grid", gap: "14px" }}>
+                <div style={{ display: "grid", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                    Franchise
+                  </label>
+                  <select
+                    {...registerCreate("franchiseId")}
+                    style={createFieldStyle(!!createErrors.franchiseId)}
+                    disabled={isCreateSubmitting}
+                  >
+                    <option value="">-- Select franchise --</option>
+                    {franchiseOptions.map((franchise) => (
+                      <option key={franchise.value} value={franchise.value}>{franchise.name}</option>
+                    ))}
+                  </select>
+                  {createErrors.franchiseId && (
+                    <p className="text-sm text-red-600" style={{ margin: 0 }}>
+                      {createErrors.franchiseId.message}
+                    </p>
+                  )}
+                </div>
 
-              <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
-                Product
-                <select
-                  value={createProductFranchiseId}
-                  onChange={(e) => setCreateProductFranchiseId(e.target.value)}
-                  style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
-                  disabled={!createFranchiseId || isCreateLoadingProducts || isCreateSubmitting}
-                >
-                  <option value="">
-                    {!createFranchiseId
-                      ? "-- Select franchise first --"
-                      : isCreateLoadingProducts
-                        ? "Loading products..."
-                        : "-- Select product --"}
-                  </option>
-                  {createProductOptions.map((product) => (
-                    <option key={product.value} value={product.value}>
-                      {product.label}
+                <div style={{ display: "grid", gap: "6px" }}>
+                  <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                    Product
+                  </label>
+                  <select
+                    {...registerCreate("productFranchiseId")}
+                    style={createFieldStyle(!!createErrors.productFranchiseId)}
+                    disabled={!createFranchiseId || isCreateLoadingProducts || isCreateSubmitting}
+                  >
+                    <option value="">
+                      {!createFranchiseId
+                        ? "-- Select franchise first --"
+                        : isCreateLoadingProducts
+                          ? "Loading products..."
+                          : createProductOptions.length === 0
+                            ? "No products available"
+                            : "-- Select product --"}
                     </option>
-                  ))}
-                </select>
-              </label>
+                    {createProductOptions.map((product) => (
+                      <option key={product.value} value={product.value}>
+                        {product.label}
+                      </option>
+                    ))}
+                  </select>
+                  {createErrors.productFranchiseId && (
+                    <p className="text-sm text-red-600" style={{ margin: 0 }}>
+                      {createErrors.productFranchiseId.message}
+                    </p>
+                  )}
+                </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
-                  Quantity
-                  <input
-                    type="number"
-                    min={1}
-                    value={createQuantity}
-                    onChange={(e) => setCreateQuantity(Math.max(1, Number(e.target.value) || 1))}
-                    style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
-                    disabled={isCreateSubmitting}
-                  />
-                </label>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div style={{ display: "grid", gap: "6px" }}>
+                    <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      {...registerCreate("quantity")}
+                      style={createFieldStyle(!!createErrors.quantity)}
+                      disabled={isCreateSubmitting}
+                    />
+                    <p
+                      className={createErrors.quantity ? "text-sm text-red-600" : "text-sm text-transparent"}
+                      style={{ margin: 0, minHeight: "20px" }}
+                    >
+                      {createErrors.quantity?.message ?? " "}
+                    </p>
+                  </div>
 
-                <label style={{ display: "grid", gap: "6px", fontSize: "13px", color: "#374151", fontWeight: 600 }}>
-                  Alert Threshold
-                  <input
-                    type="number"
-                    min={0}
-                    value={createAlertThreshold}
-                    onChange={(e) => setCreateAlertThreshold(Math.max(0, Number(e.target.value) || 0))}
-                    style={{ height: "38px", border: "1px solid #e0e0e0", borderRadius: "8px", padding: "0 10px", fontSize: "14px", outline: "none" }}
-                    disabled={isCreateSubmitting}
-                  />
-                </label>
+                  <div style={{ display: "grid", gap: "6px" }}>
+                    <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
+                      Alert Threshold
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      {...registerCreate("alertThreshold")}
+                      style={createFieldStyle(!!createErrors.alertThreshold)}
+                      disabled={isCreateSubmitting}
+                    />
+                    <p
+                      className={createErrors.alertThreshold ? "text-sm text-red-600" : "text-sm text-transparent"}
+                      style={{ margin: 0, minHeight: "20px" }}
+                    >
+                      {createErrors.alertThreshold?.message ?? " "}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div style={{ padding: "14px 20px", borderTop: "1px solid #e9ecef", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={handleCloseCreateModal}
-                disabled={isCreateSubmitting}
-                style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #dee2e6", backgroundColor: "white", color: "#374151", fontSize: "14px", cursor: isCreateSubmitting ? "not-allowed" : "pointer" }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleCreateSubmit()}
-                disabled={isCreateSubmitting || isCreateLoadingProducts}
-                style={{ padding: "8px 14px", borderRadius: "8px", border: "none", backgroundColor: "#8B4513", color: "white", fontSize: "14px", fontWeight: 600, cursor: isCreateSubmitting || isCreateLoadingProducts ? "not-allowed" : "pointer", opacity: isCreateSubmitting || isCreateLoadingProducts ? 0.6 : 1 }}
-              >
-                {isCreateSubmitting ? "Creating..." : "Create"}
-              </button>
-            </div>
+              {createSubmitError && (
+                <div
+                  style={{
+                    margin: "0 20px 16px",
+                    padding: "12px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #fecaca",
+                    backgroundColor: "#fef2f2",
+                    color: "#b91c1c",
+                    fontSize: "13px",
+                  }}
+                >
+                  {createSubmitError}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+                <button
+                  type="button"
+                  onClick={handleCloseCreateModal}
+                  disabled={isCreateSubmitting}
+                  style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid #dee2e6", backgroundColor: "white", color: "#374151", fontSize: "14px", cursor: isCreateSubmitting ? "not-allowed" : "pointer" }}
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreateSubmitting || isCreateLoadingProducts}
+                  style={{ padding: "8px 14px", borderRadius: "8px", border: "none", backgroundColor: "#8B4513", color: "white", fontSize: "14px", fontWeight: 600, cursor: isCreateSubmitting || isCreateLoadingProducts ? "not-allowed" : "pointer", opacity: isCreateSubmitting || isCreateLoadingProducts ? 0.6 : 1 }}
+                >
+                  {isCreateSubmitting ? "Adding..." : "Add"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
