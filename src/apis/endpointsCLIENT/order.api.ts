@@ -10,6 +10,7 @@ export type ClientOrderStatusCode =
 export interface ClientOrder {
   id: string | number;
   code: string;
+  cartId?: string;
   store: {
     id: string | number;
     name: string;
