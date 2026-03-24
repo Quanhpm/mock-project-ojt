@@ -19,19 +19,21 @@ export const useGetInventoryById = (): UseGetInventoryByIdReturn => {
   const fetchInventory = async (id: string) => {
     setIsLoading(true);
     setError(null);
+
     try {
       const response = await inventoryApi.getInventoryById(id);
       if (response) {
         setInventory(response);
       } else {
-        setError("Inventory item not found");
-        showError("Không tìm thấy", "Inventory item không tồn tại");
+        const message = "Inventory item not found.";
+        setError(message);
+        showError("Not Found", message);
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải thông tin inventory";
-      setError(errorMessage);
-      showError("Lỗi", errorMessage);
+      const message =
+        err instanceof Error ? err.message : "Unable to load inventory details.";
+      setError(message);
+      showError("Load Failed", message);
     } finally {
       setIsLoading(false);
     }

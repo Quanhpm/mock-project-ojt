@@ -13,7 +13,8 @@ export default function CategoryEditPage() {
   const { updateDisplayOrder, isUpdating } = useUpdateCategory();
   const { toggleStatus, isToggling } = useToggleStatus();
 
-  const [displayOrder, setDisplayOrder] = useState<number>(1);
+  const [displayOrder, setDisplayOrder] = useState<number | "">("");
+  const [displayOrderError, setDisplayOrderError] = useState("");
   const [isActive, setIsActive] = useState<boolean>(true);
 
   useEffect(() => {
@@ -27,8 +28,24 @@ export default function CategoryEditPage() {
     navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.CATEGORY}`);
   };
 
+  const handleDisplayOrderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (raw === "") {
+      setDisplayOrder("");
+      setDisplayOrderError("Display order is required");
+      return;
+    }
+    const val = Math.max(1, Math.floor(Number(raw)));
+    setDisplayOrder(val);
+    setDisplayOrderError(val < 1 ? "Display order must be at least 1" : "");
+  };
+
   const handleSave = async () => {
     if (!category) return;
+    if (displayOrder === "" || displayOrder < 1 || !Number.isInteger(displayOrder)) {
+      setDisplayOrderError("Display order must be a positive whole number");
+      return;
+    }
 
     try {
       // Update display order
@@ -158,13 +175,26 @@ export default function CategoryEditPage() {
                 <input
                   type="number"
                   value={displayOrder}
-                  onChange={(e) => setDisplayOrder(Number(e.target.value))}
+                  onChange={handleDisplayOrderChange}
+                  onKeyDown={(e) => {
+                    if (["-", "+", ".", "e", "E"].includes(e.key)) e.preventDefault();
+                  }}
                   min="1"
-                  className="w-full h-11 px-4 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B] transition-colors"
+                  step="1"
+                  className={`w-full h-11 px-4 rounded-lg border ${
+                    displayOrderError
+                      ? "border-red-300 focus:ring-red-200 focus:border-red-500"
+                      : "border-slate-300 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B]"
+                  } bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 transition-colors`}
                 />
-                <span className="text-xs text-slate-500 mt-1 block">
-                  Lower numbers appear first.
-                </span>
+                {displayOrderError && (
+                  <span className="text-xs text-red-500 mt-1 block">{displayOrderError}</span>
+                )}
+                {!displayOrderError && (
+                  <span className="text-xs text-slate-500 mt-1 block">
+                    Lower numbers appear first.
+                  </span>
+                )}
               </label>
               <div className="block">
                 <span className="block text-sm font-medium text-slate-700 mb-1.5">

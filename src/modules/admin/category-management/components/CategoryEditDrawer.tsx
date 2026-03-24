@@ -21,7 +21,8 @@ export default function CategoryEditDrawer({
   const { updateDisplayOrder, isUpdating } = useUpdateCategory();
   const { toggleStatus, isToggling } = useToggleStatus();
 
-  const [displayOrder, setDisplayOrder] = useState<number>(1);
+  const [displayOrder, setDisplayOrder] = useState<number | "">("");
+  const [displayOrderError, setDisplayOrderError] = useState("");
   const [isActive, setIsActive] = useState<boolean>(true);
 
   useEffect(() => {
@@ -31,8 +32,24 @@ export default function CategoryEditDrawer({
     }
   }, [category]);
 
+  const handleDisplayOrderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    if (raw === "") {
+      setDisplayOrder("");
+      setDisplayOrderError("Display order is required");
+      return;
+    }
+    const val = Math.max(1, Math.floor(Number(raw)));
+    setDisplayOrder(val);
+    setDisplayOrderError(val < 1 ? "Display order must be at least 1" : "");
+  };
+
   const handleSave = async () => {
     if (!category) return;
+    if (displayOrder === "" || displayOrder < 1 || !Number.isInteger(displayOrder)) {
+      setDisplayOrderError("Display order must be a positive whole number");
+      return;
+    }
 
     try {
       // Update display order
@@ -55,113 +72,202 @@ export default function CategoryEditDrawer({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop overlay */}
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        zIndex: 999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <div
-        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 border-l border-slate-200">
-        {/* Drawer Header */}
-        <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
-          <div>
-            <h2 className="text-xl font-semibold text-slate-900">Edit Category</h2>
-            <p className="text-sm text-slate-500 mt-1">
-              Update category display order and status.
-            </p>
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          width: "90%",
+          maxWidth: "580px",
+          maxHeight: "90vh",
+          overflowY: "auto",
+          boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding: "20px 24px",
+            borderBottom: "1px solid #f0f0f0",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            position: "sticky",
+            top: 0,
+            backgroundColor: "white",
+            zIndex: 1,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                backgroundColor: "#fdf3eb",
+                padding: "10px",
+                borderRadius: "8px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Settings size={22} color="#8B4513" />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#212529" }}>
+                Edit Category
+              </h2>
+              {category && (
+                <p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>
+                  {category.category_name} — {category.franchise_name}
+                </p>
+              )}
+            </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: "4px",
+              display: "flex",
+              alignItems: "center",
+              color: "#6c757d",
+            }}
           >
             <X size={20} />
           </button>
-        </header>
+        </div>
 
-        {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        {/* Body */}
+        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-slate-600">Loading...</p>
+            <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
+              Loading...
             </div>
           ) : !category ? (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-red-500">Category not found</p>
+            <div style={{ textAlign: "center", padding: "48px 0", color: "#ef4444" }}>
+              Category not found
             </div>
           ) : (
             <>
-              {/* Basic Information */}
-              <section className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <Info className="text-[#8B5A2B] text-xl" size={20} />
-                  <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
+              {/* Category Details */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    paddingBottom: "8px",
+                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <Info size={16} color="#8B4513" />
+                  <span style={{ fontSize: "12px", fontWeight: "600", color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Category Details
-                  </h3>
+                  </span>
                 </div>
-                <div className="space-y-4">
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                       Category Name
                     </label>
                     <input
                       type="text"
                       value={category.category_name}
                       disabled
-                      className="w-full h-11 px-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                      style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", backgroundColor: "#f8f9fa", color: "#6c757d", boxSizing: "border-box", cursor: "not-allowed" }}
                     />
-                    <span className="text-xs text-slate-500 mt-1 block">
+                    <span style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
                       Category cannot be changed after creation.
                     </span>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                       Franchise
                     </label>
                     <input
                       type="text"
                       value={category.franchise_name}
                       disabled
-                      className="w-full h-11 px-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-600 text-sm cursor-not-allowed"
+                      style={{ width: "100%", padding: "9px 12px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", backgroundColor: "#f8f9fa", color: "#6c757d", boxSizing: "border-box", cursor: "not-allowed" }}
                     />
-                    <span className="text-xs text-slate-500 mt-1 block">
+                    <span style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px", display: "block" }}>
                       Franchise assignment is fixed.
                     </span>
                   </div>
                 </div>
-              </section>
+              </div>
 
-              {/* Settings */}
-              <section className="space-y-5">
-                <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <Settings className="text-[#8B5A2B] text-xl" size={20} />
-                  <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
+              {/* Settings & Display */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    paddingBottom: "8px",
+                    borderBottom: "1px solid #f1f5f9",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <Settings size={16} color="#8B4513" />
+                  <span style={{ fontSize: "12px", fontWeight: "600", color: "#334155", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                     Settings & Display
-                  </h3>
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <label className="block">
-                    <span className="block text-sm font-medium text-slate-700 mb-1.5">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                       Display Order
-                    </span>
+                    </label>
                     <input
                       type="number"
                       value={displayOrder}
-                      onChange={(e) => setDisplayOrder(Number(e.target.value))}
+                      onChange={handleDisplayOrderChange}
+                      onKeyDown={(e) => {
+                        if (["-", "+", ".", "e", "E"].includes(e.key)) e.preventDefault();
+                      }}
                       min="1"
-                      className="w-full h-11 px-4 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/20 focus:border-[#8B5A2B] transition-colors"
+                      step="1"
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        border: `1px solid ${displayOrderError ? "#ef4444" : "#d1d5db"}`,
+                        borderRadius: "6px",
+                        fontSize: "14px",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        backgroundColor: "white",
+                      }}
                     />
-                    <span className="text-xs text-slate-500 mt-1 block">
-                      Lower numbers appear first.
-                    </span>
-                  </label>
-                  <div className="block">
-                    <span className="block text-sm font-medium text-slate-700 mb-1.5">
+                    {displayOrderError ? (
+                      <span style={{ fontSize: "12px", color: "#ef4444", marginTop: "4px", display: "block" }}>{displayOrderError}</span>
+                    ) : (
+                      <span style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px", display: "block" }}>Lower numbers appear first.</span>
+                    )}
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                       Status
-                    </span>
-                    <div className="h-11 flex items-center">
+                    </label>
+                    <div style={{ height: "38px", display: "flex", alignItems: "center" }}>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -177,44 +283,86 @@ export default function CategoryEditDrawer({
                     </div>
                   </div>
                 </div>
-              </section>
+              </div>
 
               {/* Info Box */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <Info className="text-blue-600 flex-shrink-0 mt-0.5" size={18} />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Category Assignment</p>
-                    <p className="text-blue-700">
-                      This category is assigned to <strong>{category.franchise_name}</strong>.
-                      You can adjust the display order and status, but cannot change the category or franchise.
-                    </p>
-                  </div>
+              <div
+                style={{
+                  backgroundColor: "#eff6ff",
+                  border: "1px solid #bfdbfe",
+                  borderRadius: "8px",
+                  padding: "12px 16px",
+                  display: "flex",
+                  gap: "12px",
+                  fontSize: "13px",
+                  color: "#1e40af",
+                }}
+              >
+                <Info size={16} color="#3b82f6" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <div>
+                  <p style={{ margin: "0 0 4px 0", fontWeight: "600" }}>Category Assignment</p>
+                  <p style={{ margin: 0, color: "#1d4ed8" }}>
+                    This category is assigned to <strong>{category.franchise_name}</strong>.
+                    You can adjust the display order and status, but cannot change the category or franchise.
+                  </p>
                 </div>
               </div>
             </>
           )}
-        </div>
 
-        {/* Drawer Footer */}
-        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-end gap-3 mt-auto">
-          <button
-            onClick={onClose}
-            disabled={isUpdating || isToggling}
-            className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          {/* Footer */}
+          <div
+            style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "flex-end",
+              paddingTop: "20px",
+              borderTop: "1px solid #f0f0f0",
+            }}
           >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isUpdating || isToggling || !category}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#8B5A2B] border border-transparent rounded-lg hover:bg-[#8B5A2B]/90 focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/50 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save size={18} />
-            {isUpdating || isToggling ? "Saving..." : "Save Changes"}
-          </button>
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isUpdating || isToggling}
+              style={{
+                padding: "10px 20px",
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: isUpdating || isToggling ? "not-allowed" : "pointer",
+                backgroundColor: "white",
+                color: "#374151",
+                marginRight: "auto",
+                opacity: isUpdating || isToggling ? 0.5 : 1,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isUpdating || isToggling || !category}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 24px",
+                backgroundColor: isUpdating || isToggling ? "#c4956a" : "#8B4513",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isUpdating || isToggling || !category ? "not-allowed" : "pointer",
+              }}
+            >
+              <Save size={16} />
+              {isUpdating || isToggling ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

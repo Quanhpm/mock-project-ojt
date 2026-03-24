@@ -79,7 +79,7 @@ export interface CustomerUpdatePayload {
   phone: string;
   name?: string;
   address?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
 }
 
 // Payload thay đổi trạng thái (CUSTOMER-08)
