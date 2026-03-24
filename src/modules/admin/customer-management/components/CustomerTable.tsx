@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2 } from "lucide-react";
+import { Eye, Edit2, Trash2, RotateCcw, X } from "lucide-react";
 import CustomerDelete from "./CustomerDelete";
+import CustomerDetail from "./CustomerDetail";
+import CustomerEditModal from "./CustomerEditModal";
 import { useCustomerSearch } from "../hooks";
 import { useCustomerStatus } from "./hooks/useCustomerStatus";
 import { useDeleteCustomer } from "./hooks/useDeleteCustomer";
+import { useRestoreCustomer } from "./hooks/useRestoreCustomer";
 import type { Customer } from "../../../../types/customer.types";
 
 // ============================================================================
@@ -44,7 +47,6 @@ const styles = {
     gap: "28px",
     flexShrink: 0,
     zIndex: 10,
-    backgroundColor: "#ffffff",
   },
   contentArea: {
     flex: 1,
@@ -59,18 +61,16 @@ const styles = {
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
     marginBottom: "20px",
-    display: "flex" as const,
-    alignItems: "flex-end" as const,
-    gap: "16px",
-    flexWrap: "wrap" as const,
     border: "1px solid #e5e7eb",
   },
   tableContainer: {
     flex: 1,
+    display: "flex" as const,
+    flexDirection: "column" as const,
     backgroundColor: "white",
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    overflow: "auto" as const,
+    overflow: "hidden" as const,
     position: "relative" as const,
     border: "1px solid #e5e7eb",
   },
@@ -87,16 +87,13 @@ const styles = {
     zIndex: 10,
   },
   paginationContainer: {
-    marginTop: "20px",
     display: "flex" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
-    fontSize: "15px",
-    padding: "20px 24px",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    border: "1px solid #e5e7eb",
+    padding: "12px 24px",
+    backgroundColor: "#f8f9fa",
+    borderTop: "1px solid #e9ecef",
+    flexShrink: 0,
   },
 };
 
@@ -213,6 +210,7 @@ export default function CustomerTable() {
   // ========================================================================
   const { toggleStatus, updatingId } = useCustomerStatus();
   const { deleteCustomer, isDeleting } = useDeleteCustomer();
+  const { restoreCustomer, isRestoring } = useRestoreCustomer();
 
   // ========================================================================
   // LOCAL STATE
@@ -224,6 +222,14 @@ export default function CustomerTable() {
     isOpen: false,
     customerId: "",
     customerName: "",
+  });
+  const [viewModal, setViewModal] = useState<{ isOpen: boolean; customer: (typeof customers)[0] | null }>({
+    isOpen: false,
+    customer: null,
+  });
+  const [editModal, setEditModal] = useState<{ isOpen: boolean; customerId: string }>({
+    isOpen: false,
+    customerId: "",
   });
   const [pageInput, setPageInput] = useState("");
 
@@ -334,10 +340,8 @@ export default function CustomerTable() {
 
   const handleStatusFilterChange = (value: string) => {
     setFilters((prev) => ({ ...prev, is_active: value }));
-  };
-
-  const handleDeletedFilterChange = (value: boolean) => {
-    setFilters((prev) => ({ ...prev, is_deleted: value }));
+    setCurrentPage(1);
+    void executeSearch({ is_active: value, page: 1 });
   };
 
   const handleToggleCustomerStatus = (customerId: string) => {
@@ -375,6 +379,12 @@ export default function CustomerTable() {
         }));
       },
     );
+  };
+
+  const handleRestore = (id: string) => {
+    restoreCustomer(id, () => {
+      executeSearch();
+    });
   };
 
   const handleDeleteClick = (customerId: string, customerName: string) => {
@@ -502,20 +512,20 @@ export default function CustomerTable() {
           >
             {/* View Button */}
             <button
-              onClick={() => navigate(`/admin/customers/${customer.id}`)}
+              onClick={() => setViewModal({ isOpen: true, customer })}
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: "#4b5563",
+                  color: "#94a3b8",
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e0f2fe";
-                e.currentTarget.style.color = "#0066cc";
+                e.currentTarget.style.backgroundColor = "rgba(51,102,204,0.07)";
+                e.currentTarget.style.color = "#3366cc";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
+                e.currentTarget.style.color = "#94a3b8";
               }}
               title="View"
             >
@@ -523,49 +533,59 @@ export default function CustomerTable() {
             </button>
 
             {/* Edit Button */}
+            {!customer.is_deleted && (
             <button
-              onClick={() => navigate(`/admin/customers/edit/${customer.id}`)}
+              onClick={() => setEditModal({ isOpen: true, customerId: customer.id })}
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: "#4b5563",
+                  color: "#94a3b8",
                 } as React.CSSProperties
               }
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fef3c7";
-                e.currentTarget.style.color = "#92400e";
+                e.currentTarget.style.backgroundColor = "rgba(139,69,19,0.07)";
+                e.currentTarget.style.color = "#8B4513";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
+                e.currentTarget.style.color = "#94a3b8";
               }}
               title="Edit"
             >
               <Edit2 size={20} />
             </button>
+            )}
 
-            {/* Delete Button */}
+            {/* Delete / Restore Button */}
             <button
               onClick={() =>
-                handleDeleteClick(customer.id.toString(), customer.name)
+                customer.is_deleted
+                  ? handleRestore(customer.id.toString())
+                  : handleDeleteClick(customer.id.toString(), customer.name)
               }
               style={
                 {
                   ...getButtonStyles.actionButton,
-                  color: "#4b5563",
+                  color: "#94a3b8",
                 } as React.CSSProperties
               }
+              disabled={isDeleting || isRestoring}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fee2e2";
-                e.currentTarget.style.color = "#dc2626";
+                if (customer.is_deleted) {
+                  e.currentTarget.style.backgroundColor = "rgba(76,175,80,0.07)";
+                  e.currentTarget.style.color = "#4caf50";
+                } else {
+                  e.currentTarget.style.backgroundColor = "#fee";
+                  e.currentTarget.style.color = "#ef4444";
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
+                e.currentTarget.style.color = "#94a3b8";
               }}
-              title="Delete"
+              title={customer.is_deleted ? "Restore" : "Delete"}
             >
-              <Trash2 size={20} />
+              {customer.is_deleted ? <RotateCcw size={20} /> : <Trash2 size={20} />}
             </button>
           </div>
         </td>
@@ -660,6 +680,8 @@ export default function CustomerTable() {
         <div style={styles.contentArea}>
           {/* Filters */}
           <div style={styles.filterContainer}>
+            {/* Row 1: Search Bar + Search Button */}
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
             {/* Search Bar with History */}
             <div
               style={{ flex: 1, minWidth: "300px", position: "relative" }}
@@ -694,7 +716,7 @@ export default function CustomerTable() {
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Tìm kiếm theo tên, email, số điện thoại... (Ctrl+K)"
+                  placeholder="Search by name, email, phone... (Ctrl+K)"
                   value={filters.keyword}
                   onChange={(e) => {
                     setFilters((prev) => ({
@@ -810,7 +832,7 @@ export default function CustomerTable() {
                           textTransform: "uppercase",
                         }}
                       >
-                        Tìm kiếm gần đây
+                        Recent searches
                       </span>
                       <button
                         onClick={(e) => {
@@ -836,7 +858,7 @@ export default function CustomerTable() {
                             "transparent")
                         }
                       >
-                        Xóa
+                        Clear
                       </button>
                     </div>
                     {searchHistory.map((item, index) => (
@@ -902,55 +924,116 @@ export default function CustomerTable() {
               aria-label="Search customers"
             >
               <span className="material-symbols-outlined">search</span>
-              <span>Tìm kiếm</span>
+              <span>Search</span>
             </button>
-            
+            </div>{/* end Row 1 */}
+
+            {/* Row 2: Filter dropdowns + Current/Deleted toggle + Clear */}
+            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
             {/* Status Filter */}
-            <div style={{ minWidth: "140px" }}>
               <select
-                value={filters.is_active}
+                value={String(filters.is_active ?? "")}
                 onChange={(e) => handleStatusFilterChange(e.target.value)}
-                style={getButtonStyles.filterInput as React.CSSProperties}
+                style={{
+                  padding: "9px 16px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                  backgroundColor: "#f9fafb",
+                  cursor: "pointer",
+                  outline: "none",
+                  minWidth: "160px",
+                }}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="true">Đang hoạt động</option>
-                <option value="false">Ngừng hoạt động</option>
+                <option value="">All Status</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
               </select>
-            </div>
 
-            {/* Deleted Filter */}
-            <div style={{ minWidth: "140px" }}>
-              <select
-                value={filters.is_deleted ? "true" : "false"}
-                onChange={(e) =>
-                  handleDeletedFilterChange(e.target.value === "true")
-                }
-                style={getButtonStyles.filterInput as React.CSSProperties}
+              {/* Current / Deleted Toggle */}
+              <button
+                onClick={() => {
+                  const newIsDeleted = !filters.is_deleted;
+                  setFilters((prev) => ({ ...prev, is_deleted: newIsDeleted }));
+                  setCurrentPage(1);
+                  void executeSearch({ is_deleted: newIsDeleted, page: 1 } as never);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = filters.is_deleted ? "#f57c00" : "#bdbdbd";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#e0e0e0";
+                }}
+                style={{
+                  padding: "9px 16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e0e0e0",
+                  backgroundColor: filters.is_deleted ? "#fff3e0" : "white",
+                  color: filters.is_deleted ? "#f57c00" : "#6c757d",
+                  fontWeight: "500",
+                  fontSize: "14px",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
               >
-                <option value="false">Chưa xóa</option>
-                <option value="true">Đã xóa</option>
-              </select>
-            </div>
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+                {filters.is_deleted ? "Deleted" : "Current"}
+              </button>
 
-          
-
-            {/* Clear Filters Button */}
-            <button
-              onClick={clearFilters}
-              style={getButtonStyles.clearFilter as React.CSSProperties}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#e5e7eb";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-              }}
-            >
-              Xóa bộ lọc
-            </button>
+              {/* Clear Filters Button */}
+              <button
+                onClick={() => {
+                  clearFilters();
+                  void executeSearch({ keyword: "", is_active: "", is_deleted: false, page: 1 } as never);
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.06)";
+                  e.currentTarget.style.color = "#111827";
+                  e.currentTarget.style.borderColor = "#374151";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#94a3b8";
+                  e.currentTarget.style.borderColor = "#d1d5db";
+                }}
+                style={{
+                  padding: "9px 16px",
+                  backgroundColor: "transparent",
+                  border: "1px solid #d1d5db",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Clear filters
+              </button>
+            </div>{/* end Row 2 */}
           </div>
 
           {/* Table */}
           <div style={styles.tableContainer}>
+            <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
             <table style={styles.table}>
               <thead style={styles.tableHead}>
                 <tr>
@@ -1045,7 +1128,6 @@ export default function CustomerTable() {
                           color: "#8B5A2B",
                         }}
                       >
-                        Đang tải dữ liệu khách hàng...
                       </div>
                     </td>
                   </tr>
@@ -1128,16 +1210,16 @@ export default function CustomerTable() {
                 )}
               </tbody>
             </table>
-          </div>
+            </div>
 
           {/* Pagination */}
           {!isLoading && customers.length > 0 && totalPages > 1 && (
             <div style={styles.paginationContainer}>
-              <span style={{ color: "#6b7280", fontWeight: "600" }}>
+              <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>
                 Showing {(currentPage - 1) * 10 + 1} to{" "}
                 {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}
                 customers
-              </span>
+              </p>
               <div
                 style={{ display: "flex", gap: "8px", alignItems: "center" }}
               >
@@ -1269,7 +1351,7 @@ export default function CustomerTable() {
 
                 {/* Go to page */}
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Đến trang</span>
+                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
                   <input
                     type="number"
                     min={1}
@@ -1305,8 +1387,20 @@ export default function CustomerTable() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </main>
+
+      {/* Edit Modal */}
+      <CustomerEditModal
+        isOpen={editModal.isOpen}
+        customerId={editModal.customerId}
+        onClose={() => setEditModal({ isOpen: false, customerId: "" })}
+        onSuccess={() => {
+          setEditModal({ isOpen: false, customerId: "" });
+          executeSearch();
+        }}
+      />
 
       {/* Delete Modal */}
       <CustomerDelete
@@ -1317,6 +1411,105 @@ export default function CustomerTable() {
         customerId={deleteModal.customerId}
         isDeleting={isDeleting}
       />
+
+      {/* View Modal */}
+      {viewModal.isOpen && viewModal.customer && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: "rgba(15,23,42,0.5)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setViewModal({ isOpen: false, customer: null })}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "680px",
+              maxHeight: "90vh",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "20px 24px",
+                borderBottom: "1px solid #f1f5f9",
+                flexShrink: 0,
+              }}
+            >
+              <h2 style={{ fontSize: "18px", fontWeight: 700, color: "#0f172a", margin: 0 }}>
+                Customer Details
+              </h2>
+              <button
+                onClick={() => setViewModal({ isOpen: false, customer: null })}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "#64748b",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ overflowY: "auto", flex: 1 }}>
+              <CustomerDetail customer={viewModal.customer} />
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-start",
+                padding: "16px 24px",
+                borderTop: "1px solid #f1f5f9",
+                flexShrink: 0,
+              }}
+            >
+              <button
+                onClick={() => setViewModal({ isOpen: false, customer: null })}
+                style={{
+                  marginRight: "auto",
+                  padding: "9px 20px",
+                  borderRadius: "10px",
+                  border: "1px solid #e2e8f0",
+                  background: "white",
+                  color: "#475569",
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  cursor: "pointer",
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

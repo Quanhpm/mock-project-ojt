@@ -109,15 +109,14 @@ export default function MasterCategoryCreateDrawer({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={handleClose}
+    >
       <div
-        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
-        onClick={handleClose}
-      />
-
-      {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-2xl bg-white shadow-2xl z-50 flex flex-col animate-slide-in-right">
+        className="bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-[#8B5A2B]/5 to-transparent">
           <div className="flex items-center gap-3">
@@ -292,40 +291,35 @@ export default function MasterCategoryCreateDrawer({
         {/* Footer */}
         <div className="border-t border-slate-200 px-6 py-4 bg-slate-50">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-500">
-              * Required fields must be filled out
-            </p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isCreating}
-                className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isCreating}
-                className="px-6 py-2.5 rounded-lg bg-[#8B5A2B] text-white text-sm font-semibold hover:bg-[#724a23] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
-              >
-                {isCreating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Create Category
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isCreating}
+              className="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isCreating}
+              className="px-6 py-2.5 rounded-lg bg-[#8B5A2B] text-white text-sm font-semibold hover:bg-[#724a23] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+            >
+              {isCreating ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Create Category
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

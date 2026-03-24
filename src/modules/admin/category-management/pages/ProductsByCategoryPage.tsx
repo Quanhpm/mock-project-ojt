@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw } from "lucide-react";
+import { ArrowLeft, Search, Package, Edit, Trash2, RotateCcw, AlertTriangle, X } from "lucide-react";
 import { searchProductCategoryFranchises, type ProductCategoryFranchise } from "../api/product-category-franchise.api";
 import { getCategoryFranchiseById } from "../api/category-franchise.api";
 import { useProductCategoryActions } from "../hooks/useProductCategoryActions.hook";
@@ -40,7 +40,9 @@ export default function ProductsByCategoryPage() {
   const [products, setProducts] = useState<ProductCategoryFranchise[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [keyword, setKeyword] = useState("");
+  const [activeKeyword, setActiveKeyword] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"" | "true" | "false">("");
   const [deleteModal, setDeleteModal] = useState<DeleteModal>({ isOpen: false, productId: "", productName: "" });
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductCategoryFranchise | null>(null);
@@ -84,13 +86,16 @@ export default function ProductsByCategoryPage() {
     void loadCategoryContext();
   }, [params.categoryId, state?.categoryFranchiseId, state?.categoryId, state?.categoryName]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (overrides?: { isDeleted?: boolean; keyword?: string; isActive?: "" | "true" | "false" }) => {
     const effectiveFranchiseId = categoryContext.franchiseId || franchiseId;
 
     if (!categoryContext.categoryId || !effectiveFranchiseId) {
       setIsLoading(false);
       return;
     }
+
+    const effectiveStatus = overrides?.isActive !== undefined ? overrides.isActive : statusFilter;
+    const isActiveParam = effectiveStatus === "" ? undefined : effectiveStatus === "true";
 
     try {
       setIsLoading(true);
@@ -99,7 +104,8 @@ export default function ProductsByCategoryPage() {
         searchCondition: {
           franchise_id: effectiveFranchiseId,
           category_id: categoryContext.categoryId,
-          is_deleted: showDeleted,
+          is_deleted: overrides?.isDeleted ?? showDeleted,
+          ...(isActiveParam !== undefined && { is_active: isActiveParam }),
         },
         pageInfo: {
           pageNum: 1,
@@ -117,7 +123,32 @@ export default function ProductsByCategoryPage() {
 
   useEffect(() => {
     void fetchProducts();
-  }, [categoryContext.categoryFranchiseId, categoryContext.categoryId, categoryContext.franchiseId, franchiseId, showDeleted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryContext.categoryFranchiseId, categoryContext.categoryId, categoryContext.franchiseId, franchiseId]);
+
+  const handleSearch = () => {
+    setActiveKeyword(keyword);
+    void fetchProducts();
+  };
+
+  const handleToggleDeleted = () => {
+    const next = !showDeleted;
+    setShowDeleted(next);
+    void fetchProducts({ isDeleted: next });
+  };
+
+  const handleStatusFilterChange = (value: "" | "true" | "false") => {
+    setStatusFilter(value);
+    void fetchProducts({ isActive: value });
+  };
+
+  const handleClearFilters = () => {
+    setKeyword("");
+    setActiveKeyword("");
+    setShowDeleted(false);
+    setStatusFilter("");
+    void fetchProducts({ isDeleted: false, isActive: "" });
+  };
 
   const handleBack = () => {
     navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.CATEGORY}`);
@@ -146,7 +177,7 @@ export default function ProductsByCategoryPage() {
   };
 
   const filteredProducts = products.filter((item) =>
-    item.product_name?.toLowerCase().includes(keyword.toLowerCase())
+    item.product_name?.toLowerCase().includes(activeKeyword.toLowerCase())
   );
 
   if (!isLoading && !isLoadingCategoryContext && !categoryContext.categoryFranchiseId) {
@@ -205,35 +236,90 @@ export default function ProductsByCategoryPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-10">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {/* Search */}
-                <div className="flex-1 min-w-[300px]">
-                  <label className="flex w-full items-center rounded-lg bg-slate-50 border border-slate-100 px-3">
-                    <Search className="text-slate-400" size={20} />
-                    <input
-                      className="w-full bg-transparent border-none text-slate-900 focus:ring-0 placeholder:text-slate-400 px-2 py-2.5 text-sm outline-none"
-                      placeholder={`Search products in ${categoryContext.categoryName}...`}
-                      value={keyword}
-                      onChange={(e) => setKeyword(e.target.value)}
-                    />
-                  </label>
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-10 flex flex-col gap-3">
+              {/* Row 1: Search + Search Button */}
+              <div className="flex gap-3 items-center">
+                <div className="flex flex-1 items-center rounded-lg bg-white border border-[#e5e7eb] px-3 min-w-[260px]">
+                  <Search className="text-[#9ca3af] shrink-0" size={18} />
+                  <input
+                    className="w-full bg-transparent border-none text-slate-900 focus:ring-0 placeholder-[#9ca3af] px-2 py-2.5 text-sm outline-none"
+                    placeholder={`Search products in ${categoryContext.categoryName}... (Enter)`}
+                    value={keyword}
+                    onChange={(e) => setKeyword(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
+                      if (e.key === "Escape") { setKeyword(""); setActiveKeyword(""); }
+                    }}
+                  />
+                  {keyword && (
+                    <button
+                      type="button"
+                      onClick={() => { setKeyword(""); setActiveKeyword(""); }}
+                      className="flex items-center justify-center w-5 h-5 rounded-full bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0] transition-colors shrink-0"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </div>
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 bg-[#8B5A2B] text-white px-5 h-[42px] rounded-lg font-bold text-sm hover:bg-[#6d4523] disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm whitespace-nowrap"
+                >
+                  <Search size={16} />
+                  <span>{isLoading ? "Searching..." : "Search"}</span>
+                </button>
+              </div>
 
-                {/* Filter Buttons */}
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setShowDeleted(!showDeleted)}
-                    className={`flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors ${
-                      showDeleted
-                        ? "border-red-500 bg-red-50 text-red-700"
-                        : "border-slate-200 text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Trash2 size={16} />
-                    <span>{showDeleted ? "Hide Deleted" : "Show Deleted"}</span>
-                  </button>
-                </div>
+              {/* Row 2: Status filter + Current / Deleted toggle + Clear filters */}
+              <div className="flex items-center gap-3">
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => handleStatusFilterChange(e.target.value as "" | "true" | "false")}
+                  disabled={isLoading}
+                  style={{
+                    padding: "9px 16px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontFamily: "inherit",
+                    backgroundColor: statusFilter !== "" ? "#fff3e0" : "#ffffff",
+                    color: statusFilter !== "" ? "#f57c00" : "#6c757d",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    outline: "none",
+                    minWidth: "140px",
+                    opacity: isLoading ? 0.6 : 1,
+                  }}
+                >
+                  <option value="">All Status</option>
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={handleToggleDeleted}
+                  disabled={isLoading}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed ${
+                    showDeleted
+                      ? "bg-[#fff3e0] text-[#f57c00] border-[#e0e0e0] hover:bg-[#ffe0b2]"
+                      : "bg-white text-[#6c757d] border-[#e0e0e0] hover:bg-slate-50"
+                  }`}
+                >
+                  <Trash2 size={15} />
+                  <span>{showDeleted ? "Deleted" : "Current"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClearFilters}
+                  disabled={isLoading}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-[#e0e0e0] bg-white text-[#6c757d] text-sm font-medium transition-all hover:bg-slate-50 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  Clear filters
+                </button>
               </div>
             </div>
 
@@ -285,13 +371,6 @@ export default function ProductsByCategoryPage() {
                         >
                           <Package className="w-24 h-24 text-slate-300" />
                         </div>
-                        {/* Deleted Badge */}
-                        {item.is_deleted && (
-                          <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 bg-red-100 text-red-700">
-                            <Trash2 size={14} />
-                            Deleted
-                          </div>
-                        )}
                         {/* Status Toggle */}
                         {!item.is_deleted && (
                           <label className="absolute top-4 right-4 inline-flex items-center cursor-pointer">
@@ -346,7 +425,7 @@ export default function ProductsByCategoryPage() {
                                 className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl text-green-700 text-sm font-bold transition-colors disabled:opacity-50"
                               >
                                 <RotateCcw size={18} />
-                                Restore
+                                
                               </button>
                             ) : (
                               <>
@@ -380,40 +459,211 @@ export default function ProductsByCategoryPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteModal.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 className="text-red-600" size={24} />
+        <div
+          onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            zIndex: 9999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              width: "90%",
+              maxWidth: "480px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: "20px 24px",
+                borderBottom: "1px solid #f0f0f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div
+                  style={{
+                    backgroundColor: "#ffebee",
+                    padding: "10px",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <AlertTriangle size={24} color="#f44336" />
+                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "20px",
+                    fontWeight: "600",
+                    color: "#212529",
+                  }}
+                >
+                  Delete Product
+                </h2>
               </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900">Remove Product</h3>
-                <p className="text-sm text-slate-500">This action can be undone later</p>
+              <button
+                onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  color: "#6c757d",
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "24px" }}>
+              <p
+                style={{
+                  margin: 0,
+                  marginBottom: "16px",
+                  fontSize: "15px",
+                  color: "#495057",
+                  lineHeight: "1.6",
+                }}
+              >
+                Are you sure you want to remove this product from the category? This action can be undone later.
+              </p>
+              <div
+                style={{
+                  backgroundColor: "#f8f9fa",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  border: "1px solid #e9ecef",
+                }}
+              >
+                <div style={{ marginBottom: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Product ID
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    #{deleteModal.productId}
+                  </p>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#6c757d",
+                      textTransform: "uppercase" as const,
+                      fontWeight: "600",
+                    }}
+                  >
+                    Product Name
+                  </span>
+                  <p
+                    style={{
+                      margin: "4px 0 0 0",
+                      fontSize: "14px",
+                      color: "#212529",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {deleteModal.productName}
+                  </p>
+                </div>
               </div>
             </div>
-            <p className="text-slate-600 mb-6">
-              Are you sure you want to remove <span className="font-semibold">{deleteModal.productName}</span> from this category?
-            </p>
-            <div className="flex gap-3">
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: "16px 24px",
+                borderTop: "1px solid #f0f0f0",
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 onClick={() => setDeleteModal({ isOpen: false, productId: "", productName: "" })}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50 transition-colors disabled:opacity-50"
+                style={{
+                  marginRight: "auto",
+                  padding: "10px 20px",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  opacity: isDeleting ? 0.5 : 1,
+                }}
               >
-                Cancel
+                Close
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{
+                  padding: "10px 20px",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  cursor: isDeleting ? "not-allowed" : "pointer",
+                  backgroundColor: isDeleting ? "#fca5a5" : "#f44336",
+                  color: "white",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
               >
                 {isDeleting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div
+                      style={{
+                        width: "14px",
+                        height: "14px",
+                        border: "2px solid white",
+                        borderTop: "2px solid transparent",
+                        borderRadius: "50%",
+                        animation: "spin 0.6s linear infinite",
+                      }}
+                    />
                     Removing...
                   </>
                 ) : (
-                  "Remove Product"
+                  "Delete Product"
                 )}
               </button>
             </div>
@@ -427,10 +677,13 @@ export default function ProductsByCategoryPage() {
           setIsEditDrawerOpen(false);
           setSelectedProduct(null);
         }}
-        onSuccess={() => {
+        onSuccess={(itemId, newDisplayOrder) => {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === itemId ? { ...p, display_order: newDisplayOrder } : p))
+          );
           setIsEditDrawerOpen(false);
           setSelectedProduct(null);
-          fetchProducts();
+          void fetchProducts();
         }}
         productCategory={selectedProduct}
       />

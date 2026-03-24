@@ -125,6 +125,14 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     hideFromSidebar: true,
   },
   {
+    label: "Assign Category",
+    path: `${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/assign`,
+    icon: <Folder size={18} />,
+    component: React.lazy(() => import("@/modules/admin/category-management/pages/CategoryAssignPage")),
+    module: "categories",
+    hideFromSidebar: true,
+  },
+  {
     label: "Products by Category",
     path: `${ROUTER_URL.ADMIN_ROUTER.CATEGORY}/:categoryId/products`,
     icon: <Folder size={18} />,

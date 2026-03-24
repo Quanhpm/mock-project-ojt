@@ -133,11 +133,11 @@ export default function CategoryCreateDrawer({
   };
 
   const handleSave = async () => {
-    if (!effectiveFranchiseId) {
+    if (!validateForm()) {
       return;
     }
 
-    if (!validateForm()) {
+    if (!effectiveFranchiseId) {
       return;
     }
 
