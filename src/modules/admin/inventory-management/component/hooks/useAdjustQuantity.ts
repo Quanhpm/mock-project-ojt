@@ -11,22 +11,23 @@ export const useAdjustQuantity = () => {
   const adjustQuantity = async (
     payload: InventoryAdjustPayload,
     onSuccess?: () => void,
-    onError?: () => void
+    onError?: () => void,
   ) => {
     setIsAdjusting(true);
     setError(null);
+
     try {
       await inventoryApi.adjustInventory(payload);
       success(
-        "Điều chỉnh thành công",
-        `Số lượng đã được ${payload.change > 0 ? "tăng" : "giảm"} ${Math.abs(payload.change)}.`
+        "Adjusted",
+        `Quantity has been ${payload.change > 0 ? "increased" : "decreased"} by ${Math.abs(payload.change)}.`,
       );
       if (onSuccess) onSuccess();
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Không thể điều chỉnh số lượng";
-      setError(msg);
-      showError("Điều chỉnh thất bại", msg);
+      const message =
+        err instanceof Error ? err.message : "Unable to adjust the quantity.";
+      setError(message);
+      showError("Adjustment Failed", message);
       if (onError) onError();
     } finally {
       setIsAdjusting(false);

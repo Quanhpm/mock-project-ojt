@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ImportValidationError } from "./inventory.types";
+import type { ImportValidationError, InventoryTableRow } from "./inventory.types";
 
 type EditableField = "_editQuantity" | "_editAlertThreshold";
 type ImportField = "quantity" | "alert_threshold";
@@ -14,18 +14,18 @@ const createEditableNumberSchema = (label: string) =>
         value !== "" &&
         typeof value !== "boolean" &&
         !Number.isNaN(Number(value)),
-      `${label} phải là số`,
+      `${label} must be a valid number.`,
     )
     .transform((value) => Number(value))
-    .refine((value) => Number.isInteger(value), `${label} phải là số nguyên`)
-    .refine((value) => value >= 0, `${label} phải >= 0`);
+    .refine((value) => Number.isInteger(value), `${label} must be a whole number.`)
+    .refine((value) => value >= 0, `${label} must be at least 0.`);
 
 export const inventoryEditableRowSchema = z
   .object({
     _editQuantity: createEditableNumberSchema("Quantity"),
     _editAlertThreshold: createEditableNumberSchema("Alert Threshold"),
   })
-  .passthrough();
+  .passthrough() as unknown as z.ZodType<InventoryTableRow>;
 
 export const inventoryTableFormSchema = z.object({
   items: z.array(inventoryEditableRowSchema),

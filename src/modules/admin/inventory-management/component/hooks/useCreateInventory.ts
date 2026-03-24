@@ -11,19 +11,20 @@ export const useCreateInventory = () => {
   const createInventory = async (
     payload: InventoryCreatePayload,
     onSuccess?: (item: InventoryItem) => void,
-    onError?: () => void
+    onError?: () => void,
   ) => {
     setIsCreating(true);
     setError(null);
+
     try {
       const result = await inventoryApi.createInventory(payload);
-      success("Tạo thành công", "Inventory item đã được tạo.");
+      success("Created", "The inventory item has been created.");
       if (onSuccess && result.data) onSuccess(result.data);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Không thể tạo inventory item";
-      setError(msg);
-      showError("Tạo thất bại", msg);
+      const message =
+        err instanceof Error ? err.message : "Unable to create the inventory item.";
+      setError(message);
+      showError("Create Failed", message);
       if (onError) onError();
     } finally {
       setIsCreating(false);
