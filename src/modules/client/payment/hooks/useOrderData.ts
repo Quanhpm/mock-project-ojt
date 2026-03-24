@@ -1,40 +1,56 @@
-import { useState, useEffect } from "react";
-import { getPaymentByOrderId, getOrderbyCartId } from "@/apis/endpointsCLIENT/payment.api";
+import { useEffect, useState } from "react";
+import { getOrderById, getOrderbyCartId, getPaymentByOrderId } from "@/apis/endpointsCLIENT/payment.api";
 import type { OrderResponse } from "@/apis/endpointsCLIENT/payment.api";
 
-export function useOrderData(cartId: string) {
+interface UseOrderDataParams {
+  cartId?: string;
+  orderId?: string;
+}
+
+export function useOrderData({
+  cartId = "",
+  orderId = "",
+}: UseOrderDataParams) {
   const [orderData, setOrderData] = useState<OrderResponse | null>(null);
   const [paymentId, setPaymentId] = useState<string | undefined>();
 
-  // 1. Fetch order
   useEffect(() => {
     const fetchOrderData = async () => {
       try {
-        const response = await getOrderbyCartId(cartId);
+        const response = cartId
+          ? await getOrderbyCartId(cartId)
+          : orderId
+            ? await getOrderById(orderId)
+            : null;
+
         if (response) setOrderData(response);
       } catch (error) {
         console.error("Failed to fetch order data:", error);
       }
     };
 
-    if (cartId) fetchOrderData();
-  }, [cartId]);
+    if (cartId || orderId) {
+      void fetchOrderData();
+    }
+  }, [cartId, orderId]);
 
-  // 2. Fetch payment (khi đã có orderData)
   useEffect(() => {
     const fetchPaymentData = async () => {
-      if (!orderData?._id) return;
+      const targetOrderId = orderId || orderData?._id;
+      if (!targetOrderId) return;
 
       try {
-        const response = await getPaymentByOrderId(orderData._id);
-        if (response) setPaymentId(response._id);
+        const response = await getPaymentByOrderId(targetOrderId);
+        if (response?._id) {
+          setPaymentId(response._id);
+        }
       } catch (error) {
         console.error("Failed to fetch payment data:", error);
       }
     };
 
-    fetchPaymentData();
-  }, [orderData]);
+    void fetchPaymentData();
+  }, [orderData, orderId]);
 
   return { orderData, paymentId };
 }
