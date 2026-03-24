@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { Package, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import {
@@ -9,450 +11,477 @@ import {
 } from "@/apis/endpoints/product-franchise.api";
 import { inventoryApi } from "@/apis/endpoints/inventory.api";
 import { productApi } from "@/apis/endpoints/product.api";
+import {
+  inventoryCreateDefaultValues,
+  inventoryCreateFormSchema,
+  type InventoryCreateFormInput,
+  type InventoryCreateFormValues,
+} from "./inventory-create.validation";
+
+const fieldStyle = (hasError: boolean): React.CSSProperties => ({
+  width: "100%",
+  padding: "10px 12px",
+  border: `1px solid ${hasError ? "#dc2626" : "#e0e0e0"}`,
+  borderRadius: "8px",
+  fontSize: "14px",
+  outline: "none",
+  boxSizing: "border-box",
+  backgroundColor: hasError ? "#fef2f2" : "white",
+});
 
 export default function InventoryForm() {
   const navigate = useNavigate();
   const { success: showSuccess, error: showError } = useToast();
-
-  // Step visibility
-  const [formVisible, setFormVisible] = useState(false);
-
-  // Franchise list & selection
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
-  const [selectedFranchiseId, setSelectedFranchiseId] = useState("");
-
-  // Product franchise list & selection
   const [productFranchises, setProductFranchises] = useState<ProductFranchiseItem[]>([]);
   const [productNamesById, setProductNamesById] = useState<Record<string, string>>({});
-  const [selectedProductFranchiseId, setSelectedProductFranchiseId] = useState("");
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const productFetchRequestRef = useRef(0);
 
-  // Form fields
-  const [quantity, setQuantity] = useState<number>(0);
-  const [alertThreshold, setAlertThreshold] = useState<number>(10);
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    setFocus,
+    setValue,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<InventoryCreateFormInput, undefined, InventoryCreateFormValues>({
+    defaultValues: inventoryCreateDefaultValues,
+    resolver: zodResolver(inventoryCreateFormSchema),
+    mode: "onSubmit",
+    reValidateMode: "onChange",
+  });
 
-  // Loading states
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const selectedFranchiseId = useWatch({ control, name: "franchiseId" });
+  const selectedProductFranchiseId = useWatch({
+    control,
+    name: "productFranchiseId",
+  });
 
-  // Step 1: Click "Create" → fetch franchises → reveal form
-  const handleClickCreate = async () => {
-    try {
-      const res = await franchiseApi.searchFranchises({
-        searchCondition: { is_deleted: false, is_active: true },
-        pageInfo: { pageNum: 1, pageSize: 100 },
-      });
-      setFranchises(res?.data ?? []);
-      setFormVisible(true);
-    } catch {
-      alert("Không thể tải danh sách Franchise. Vui lòng thử lại.");
-    }
-  };
+  const selectedProductFranchise = useMemo(
+    () =>
+      productFranchises.find((product) => product.id === selectedProductFranchiseId) ??
+      null,
+    [productFranchises, selectedProductFranchiseId],
+  );
 
-  // Step 2: Franchise onChange → fetch product_franchises for that franchise
-  const handleFranchiseChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const franchiseId = e.target.value;
-    setSelectedFranchiseId(franchiseId);
-    setSelectedProductFranchiseId("");
+  useEffect(() => {
+    const loadFranchises = async () => {
+      try {
+        const response = await franchiseApi.searchFranchises({
+          searchCondition: { is_deleted: false, is_active: true },
+          pageInfo: { pageNum: 1, pageSize: 100 },
+        });
+        setFranchises(response?.data ?? []);
+      } catch {
+        showError("Load Failed", "Unable to load franchises. Please try again.");
+      }
+    };
+
+    void loadFranchises();
+    window.setTimeout(() => {
+      setFocus("franchiseId");
+    }, 0);
+  }, [setFocus, showError]);
+
+  useEffect(() => {
+    const requestId = productFetchRequestRef.current + 1;
+    productFetchRequestRef.current = requestId;
+
+    setValue("productFranchiseId", "");
+    clearErrors("productFranchiseId");
     setProductFranchises([]);
     setProductNamesById({});
 
-    if (!franchiseId) return;
+    if (!selectedFranchiseId) {
+      setIsLoadingProducts(false);
+      return;
+    }
 
-    setIsLoading(true);
-    try {
-      const res = await searchProductFranchises({
-        searchCondition: { franchise_id: franchiseId, is_deleted: false },
-        pageInfo: { pageNum: 1, pageSize: 100 },
-      });
-      const productFranchiseItems = res?.data ?? [];
-      setProductFranchises(productFranchiseItems);
+    setIsLoadingProducts(true);
 
-      const uniqueProductIds = Array.from(
-        new Set(productFranchiseItems.map((item) => item.product_id).filter(Boolean)),
-      );
+    const loadProducts = async () => {
+      try {
+        const response = await searchProductFranchises({
+          searchCondition: {
+            franchise_id: selectedFranchiseId,
+            is_deleted: false,
+          },
+          pageInfo: { pageNum: 1, pageSize: 100 },
+        });
 
-      if (uniqueProductIds.length > 0) {
+        const items = response?.data ?? [];
+        if (productFetchRequestRef.current !== requestId) {
+          return;
+        }
+
+        setProductFranchises(items);
+
+        const uniqueProductIds = Array.from(
+          new Set(items.map((item) => item.product_id).filter(Boolean)),
+        );
+
+        if (uniqueProductIds.length === 0) {
+          setProductNamesById({});
+          return;
+        }
+
         const productResponses = await Promise.all(
           uniqueProductIds.map(async (productId) => {
             try {
               const product = await productApi.getProductById(productId);
-              return [productId, product?.name ?? "Sản phẩm không xác định"] as const;
+              return [productId, product?.name ?? "Unknown product"] as const;
             } catch {
-              return [productId, "Sản phẩm không xác định"] as const;
+              return [productId, "Unknown product"] as const;
             }
           }),
         );
 
+        if (productFetchRequestRef.current !== requestId) {
+          return;
+        }
+
         setProductNamesById(Object.fromEntries(productResponses));
+      } catch {
+        if (productFetchRequestRef.current === requestId) {
+          showError("Load Failed", "Unable to load products. Please try again.");
+        }
+      } finally {
+        if (productFetchRequestRef.current === requestId) {
+          setIsLoadingProducts(false);
+        }
       }
-    } catch {
-      alert("Không thể tải danh sách sản phẩm. Vui lòng thử lại.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  // Step 3: Submit → createInventory API
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    void loadProducts();
+  }, [clearErrors, selectedFranchiseId, setValue, showError]);
 
-    if (!selectedProductFranchiseId) {
-      alert("Vui lòng chọn sản phẩm.");
-      return;
-    }
-    if (quantity <= 0) {
-      alert("Số lượng phải lớn hơn 0.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      await inventoryApi.createInventory({
-        product_franchise_id: selectedProductFranchiseId,
-        quantity,
-        alert_threshold: alertThreshold,
-      });
-      showSuccess("Tạo Inventory thành công!", "Inventory item đã được tạo mới.");
-      handleReset();
-      navigate("/admin/inventory");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Vui lòng thử lại.";
-      console.error("[createInventory] FAILED:", err);
-      showError("Tạo Inventory thất bại", msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleReset = () => {
-    setSelectedFranchiseId("");
-    setSelectedProductFranchiseId("");
+  const handleClose = () => {
+    if (isSubmitting) return;
+    setSubmitError("");
+    reset(inventoryCreateDefaultValues);
     setProductFranchises([]);
-    setQuantity(0);
-    setAlertThreshold(10);
-    setFormVisible(false);
+    setProductNamesById({});
     navigate("/admin/inventory");
   };
 
-  const selectedPF = productFranchises.find(pf => pf.id === selectedProductFranchiseId);
+  const handleValidSubmit = async (values: InventoryCreateFormValues) => {
+    setSubmitError("");
 
-  // Auto-fetch franchises on mount — no confirmation step needed
-  useEffect(() => {
-    handleClickCreate();
-  }, []);
+    try {
+      await inventoryApi.createInventory({
+        product_franchise_id: values.productFranchiseId,
+        quantity: values.quantity,
+        alert_threshold: values.alertThreshold,
+      });
+
+      showSuccess("Created", "The inventory item has been created successfully.");
+      reset(inventoryCreateDefaultValues);
+      setProductFranchises([]);
+      setProductNamesById({});
+      navigate("/admin/inventory");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to create inventory right now.";
+      setSubmitError(message);
+    }
+  };
+
+  const handleInvalidSubmit = () => {
+    setSubmitError("");
+  };
 
   return (
     <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
-      {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
-        Inventory › <span style={{ color: "#212529" }}>Create Inventory</span>
+        Inventory &rsaquo; <span style={{ color: "#212529" }}>Create Inventory</span>
       </div>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "24px",
+          gap: "16px",
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
-            Create New Inventory Item
+          <button
+            type="button"
+            onClick={() => navigate("/admin/inventory")}
+            style={{
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              marginBottom: "12px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              color: "#6c757d",
+              fontSize: "14px",
+            }}
+          >
+            <ArrowLeft size={18} />
+            Back to Inventory
+          </button>
+          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: "0 0 8px" }}>
+            Create Inventory
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
-            Chọn Franchise và sản phẩm để tạo mới Inventory.
+            Select a franchise, choose a product, and enter the starting stock values.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate("/admin/inventory")}
-          style={{
-            padding: "10px 20px",
-            border: "1px solid #e0e0e0",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontWeight: "500",
-            cursor: "pointer",
-            backgroundColor: "white",
-            color: "#374151",
-          }}
-        >
-          ← Quay lại
-        </button>
       </div>
 
-      {/* ── FORM ── */}
-      {formVisible && (
-        <>
-          <form onSubmit={handleSubmit}>
-            <div style={{ maxWidth: "640px", display: "flex", flexDirection: "column", gap: "24px" }}>
+      <form
+        noValidate
+        onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+      >
+        <div style={{ maxWidth: "760px", display: "grid", gap: "24px" }}>
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "28px",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+              <Package size={18} color="#8B4513" />
+              <h2 style={{ fontSize: "17px", fontWeight: "600", margin: 0 }}>
+                Franchise and Product
+              </h2>
+            </div>
 
-              {/* Card: Franchise & Product Selection */}
-              <div style={{
-                backgroundColor: "white",
-                borderRadius: "12px",
-                padding: "28px",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
-                  <Package size={18} color="#8B4513" />
-                  <h2 style={{ fontSize: "17px", fontWeight: "600", margin: 0 }}>
-                    Chọn Franchise &amp; Sản phẩm
-                  </h2>
-                </div>
-
-                {/* Franchise dropdown */}
-                <div style={{ marginBottom: "20px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Franchise <span style={{ color: "#dc3545" }}>*</span>
-                  </label>
-                  <select
-                    value={selectedFranchiseId}
-                    onChange={handleFranchiseChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <option value="">-- Chọn Franchise --</option>
-                    {franchises.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        {f.name} ({f.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Product (product_franchise) dropdown */}
-                <div>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Sản phẩm <span style={{ color: "#dc3545" }}>*</span>
-                  </label>
-                  <select
-                    value={selectedProductFranchiseId}
-                    onChange={(e) => setSelectedProductFranchiseId(e.target.value)}
-                    required
-                    disabled={!selectedFranchiseId || isLoading}
-                    style={{
-                      width: "100%",
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "14px",
-                      outline: "none",
-                      boxSizing: "border-box",
-                      backgroundColor: selectedFranchiseId ? "white" : "#f8f9fa",
-                      cursor: selectedFranchiseId && !isLoading ? "pointer" : "not-allowed",
-                      color: selectedFranchiseId ? "#212529" : "#adb5bd",
-                    }}
-                  >
-                    <option value="">
-                      {!selectedFranchiseId
-                        ? "-- Hãy chọn Franchise trước --"
-                        : isLoading
-                        ? "Đang tải danh sách sản phẩm..."
-                        : productFranchises.length === 0
-                        ? "Không có sản phẩm nào"
-                        : "-- Chọn sản phẩm --"}
+            <div style={{ display: "grid", gap: "20px" }}>
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                  Franchise <span style={{ color: "#dc3545" }}>*</span>
+                </label>
+                <select
+                  {...register("franchiseId")}
+                  style={fieldStyle(!!errors.franchiseId)}
+                  disabled={isSubmitting}
+                >
+                  <option value="">-- Select franchise --</option>
+                  {franchises.map((franchise) => (
+                    <option key={franchise.id} value={franchise.id}>
+                      {franchise.name} ({franchise.code})
                     </option>
-                    {productFranchises.map((pf) => (
-                      <option key={pf.id} value={pf.id}>
-                        {productNamesById[pf.product_id] ?? "Đang tải tên sản phẩm..."}
-                      </option>
-                    ))}
-                  </select>
-                  {!selectedFranchiseId && (
-                    <p style={{ fontSize: "12px", color: "#6c757d", margin: "6px 0 0 0" }}>
-                      Vui lòng chọn Franchise để hiển thị danh sách sản phẩm.
-                    </p>
-                  )}
-                </div>
-
-                {/* Selected product summary */}
-                {selectedPF && (
-                  <div style={{
-                    marginTop: "16px",
-                    padding: "14px 16px",
-                    backgroundColor: "#fff8f2",
-                    border: "1px solid #f5cba7",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    color: "#6d3610",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                  }}>
-                    <p style={{ margin: 0, fontWeight: "600" }}>Sản phẩm đã chọn</p>
-                    <p style={{ margin: 0 }}>
-                      Tên sản phẩm: <strong>{productNamesById[selectedPF.product_id] ?? "Sản phẩm không xác định"}</strong>
-                    </p>
-                    <p style={{ margin: 0 }}>Product ID: <strong>{selectedPF.product_id}</strong></p>
-                    <p style={{ margin: 0 }}>Size: <strong>{selectedPF.size}</strong></p>
-                    <p style={{ margin: 0 }}>Giá cơ bản: <strong>{selectedPF.price_base.toLocaleString("vi-VN")}₫</strong></p>
-                  </div>
+                  ))}
+                </select>
+                {errors.franchiseId && (
+                  <p className="text-sm text-red-600" style={{ margin: 0 }}>
+                    {errors.franchiseId.message}
+                  </p>
                 )}
               </div>
 
-              {/* Card: Quantity */}
-              <div style={{
-                backgroundColor: "white",
-                borderRadius: "12px",
-                padding: "28px",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                  <Package size={18} color="#8B4513" />
-                  <h2 style={{ fontSize: "17px", fontWeight: "600", margin: 0 }}>Số lượng nhập kho</h2>
-                </div>
-
-                <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                  Quantity <span style={{ color: "#dc3545" }}>*</span>
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                  Product <span style={{ color: "#dc3545" }}>*</span>
                 </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(q => Math.max(0, q - 10))}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "20px",
-                      fontWeight: "500",
-                      flexShrink: 0,
-                    }}
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(0, Number(e.target.value)))}
-                    min="1"
-                    required
-                    style={{
-                      flex: 1,
-                      padding: "10px 12px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "8px",
-                      fontSize: "15px",
-                      textAlign: "center",
-                      outline: "none",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(q => q + 10)}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      border: "1px solid #e0e0e0",
-                      borderRadius: "6px",
-                      backgroundColor: "white",
-                      cursor: "pointer",
-                      fontSize: "20px",
-                      fontWeight: "500",
-                      flexShrink: 0,
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-                <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#6c757d" }}>
-                  Nhập số lượng sản phẩm cần nhập vào kho (tối thiểu 1).
-                </p>
-
-                {/* Alert Threshold */}
-                <div style={{ marginTop: "20px" }}>
-                  <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
-                    Alert Threshold <span style={{ color: "#dc3545" }}>*</span>
-                  </label>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setAlertThreshold(t => Math.max(0, t - 1))}
-                      style={{ width: "40px", height: "40px", border: "1px solid #e0e0e0", borderRadius: "6px", backgroundColor: "white", cursor: "pointer", fontSize: "20px", fontWeight: "500", flexShrink: 0 }}
-                    >
-                      −
-                    </button>
-                    <input
-                      type="number"
-                      value={alertThreshold}
-                      onChange={(e) => setAlertThreshold(Math.max(0, Number(e.target.value)))}
-                      min="0"
-                      required
-                      style={{ flex: 1, padding: "10px 12px", border: "1px solid #e0e0e0", borderRadius: "8px", fontSize: "15px", textAlign: "center", outline: "none" }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setAlertThreshold(t => t + 1)}
-                      style={{ width: "40px", height: "40px", border: "1px solid #e0e0e0", borderRadius: "6px", backgroundColor: "white", cursor: "pointer", fontSize: "20px", fontWeight: "500", flexShrink: 0 }}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <p style={{ margin: "8px 0 0 0", fontSize: "12px", color: "#6c757d" }}>
-                    Ngưỡng cảnh báo tồn kho thấp (khi số lượng ≤ ngưỡng này sẽ hiện "Low Stock").
+                <select
+                  {...register("productFranchiseId")}
+                  style={fieldStyle(!!errors.productFranchiseId)}
+                  disabled={!selectedFranchiseId || isLoadingProducts || isSubmitting}
+                >
+                  <option value="">
+                    {!selectedFranchiseId
+                      ? "-- Select franchise first --"
+                      : isLoadingProducts
+                        ? "Loading products..."
+                        : productFranchises.length === 0
+                          ? "No products available"
+                          : "-- Select product --"}
+                  </option>
+                  {productFranchises.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {productNamesById[product.product_id] ?? "Loading product name..."}
+                    </option>
+                  ))}
+                </select>
+                {!selectedFranchiseId && (
+                  <p style={{ margin: 0, fontSize: "12px", color: "#6c757d" }}>
+                    Select a franchise to load the available products.
                   </p>
-                </div>
-              </div>
-
-              {/* Action buttons */}
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={isSubmitting}
-                  style={{
-                    padding: "11px 24px",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    cursor: isSubmitting ? "not-allowed" : "pointer",
-                    backgroundColor: "white",
-                    color: "#374151",
-                    opacity: isSubmitting ? 0.6 : 1,
-                  }}
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || isLoading}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "11px 28px",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    cursor: isSubmitting || isLoading ? "not-allowed" : "pointer",
-                    backgroundColor: "#8B4513",
-                    color: "white",
-                    opacity: isSubmitting || isLoading ? 0.7 : 1,
-                    transition: "opacity 0.2s",
-                  }}
-                >
-                  {isSubmitting ? (
-                    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
-                  ) : null}
-                  {isSubmitting ? "Đang lưu..." : "Lưu Inventory"}
-                </button>
+                )}
+                {errors.productFranchiseId && (
+                  <p className="text-sm text-red-600" style={{ margin: 0 }}>
+                    {errors.productFranchiseId.message}
+                  </p>
+                )}
               </div>
             </div>
-          </form>
-        </>
-      )}
 
-      {/* Spinner keyframe (injected once) */}
+            {selectedProductFranchise && (
+              <div
+                style={{
+                  marginTop: "20px",
+                  padding: "14px 16px",
+                  backgroundColor: "#fff8f2",
+                  border: "1px solid #f5cba7",
+                  borderRadius: "8px",
+                  fontSize: "13px",
+                  color: "#6d3610",
+                  display: "grid",
+                  gap: "4px",
+                }}
+              >
+                <p style={{ margin: 0, fontWeight: "600" }}>Selected product</p>
+                <p style={{ margin: 0 }}>
+                  Product name:{" "}
+                  <strong>
+                    {productNamesById[selectedProductFranchise.product_id] ?? "Unknown product"}
+                  </strong>
+                </p>
+                <p style={{ margin: 0 }}>
+                  Product ID: <strong>{selectedProductFranchise.product_id}</strong>
+                </p>
+                <p style={{ margin: 0 }}>
+                  Size: <strong>{selectedProductFranchise.size}</strong>
+                </p>
+                <p style={{ margin: 0 }}>
+                  Base price:{" "}
+                  <strong>
+                    {selectedProductFranchise.price_base.toLocaleString("en-US", {
+                      style: "currency",
+                      currency: "VND",
+                      maximumFractionDigits: 0,
+                    })}
+                  </strong>
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "28px",
+              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+              <Package size={18} color="#8B4513" />
+              <h2 style={{ fontSize: "17px", fontWeight: "600", margin: 0 }}>
+                Stock Settings
+              </h2>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                  Quantity <span style={{ color: "#dc3545" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  {...register("quantity")}
+                  style={fieldStyle(!!errors.quantity)}
+                  disabled={isSubmitting}
+                />
+                <p
+                  className={errors.quantity ? "text-sm text-red-600" : ""}
+                  style={{ margin: 0, fontSize: "12px", color: errors.quantity ? "#dc2626" : "#6c757d", minHeight: "18px" }}
+                >
+                  {errors.quantity?.message ?? "Enter the opening quantity for this inventory item."}
+                </p>
+              </div>
+
+              <div style={{ display: "grid", gap: "8px" }}>
+                <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
+                  Alert Threshold <span style={{ color: "#dc3545" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  {...register("alertThreshold")}
+                  style={fieldStyle(!!errors.alertThreshold)}
+                  disabled={isSubmitting}
+                />
+                <p
+                  className={errors.alertThreshold ? "text-sm text-red-600" : ""}
+                  style={{ margin: 0, fontSize: "12px", color: errors.alertThreshold ? "#dc2626" : "#6c757d", minHeight: "18px" }}
+                >
+                  {errors.alertThreshold?.message ?? "Show the low-stock state when quantity is at or below this number."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {submitError && (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "8px",
+                border: "1px solid #fecaca",
+                backgroundColor: "#fef2f2",
+                color: "#b91c1c",
+                fontSize: "13px",
+              }}
+            >
+              {submitError}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              style={{
+                padding: "11px 24px",
+                border: "1px solid #e0e0e0",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                backgroundColor: "white",
+                color: "#374151",
+                opacity: isSubmitting ? 0.6 : 1,
+              }}
+            >
+              Close
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || isLoadingProducts}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "11px 28px",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isSubmitting || isLoadingProducts ? "not-allowed" : "pointer",
+                backgroundColor: "#8B4513",
+                color: "white",
+                opacity: isSubmitting || isLoadingProducts ? 0.7 : 1,
+              }}
+            >
+              {isSubmitting ? (
+                <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+              ) : null}
+              {isSubmitting ? "Saving..." : "Save Inventory"}
+            </button>
+          </div>
+        </div>
+      </form>
+
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );

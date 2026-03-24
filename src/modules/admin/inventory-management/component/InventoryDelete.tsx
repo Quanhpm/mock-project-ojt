@@ -154,13 +154,7 @@ export default function InventoryDelete({
           </div>
 
           {/* Footer */}
-          <div style={{
-            padding: "16px 24px",
-            borderTop: "1px solid #f0f0f0",
-            display: "flex",
-            gap: "12px",
-            justifyContent: "flex-end"
-          }}>
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
             <button
               onClick={onClose}
               style={{
@@ -174,7 +168,7 @@ export default function InventoryDelete({
                 color: "#374151"
               }}
             >
-              Cancel
+              Close
             </button>
             <button
               onClick={handleConfirm}

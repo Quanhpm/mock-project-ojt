@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast.hook";
 interface UseGetInventoriesReturn {
   inventories: InventoryItem[];
   isLoading: boolean;
+  hasLoadedOnce: boolean;
   error: string | null;
   totalPages: number;
   totalItems: number;
@@ -40,6 +41,7 @@ const searchInventoriesDeduped = async (payload: InventorySearchPayload) => {
 export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesReturn => {
   const [inventories, setInventories] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -85,6 +87,7 @@ export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesRe
     } finally {
       if (requestId === requestSequenceRef.current) {
         setIsLoading(false);
+        setHasLoadedOnce(true);
       }
     }
   }, []);
@@ -104,5 +107,5 @@ export const useGetInventories = (skipInitialFetch = false): UseGetInventoriesRe
     );
   }, []);
 
-  return { inventories, isLoading, error, totalPages, totalItems, refetch, updateItem };
+  return { inventories, isLoading, hasLoadedOnce, error, totalPages, totalItems, refetch, updateItem };
 };

@@ -12,14 +12,15 @@ export const useGetLowStock = () => {
   const fetchLowStock = async (franchiseId: string) => {
     setIsLoading(true);
     setError(null);
+
     try {
       const data = await inventoryApi.getLowStockByFranchise(franchiseId);
       setLowStockItems(data ?? []);
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Không thể tải danh sách sắp hết hàng";
-      setError(msg);
-      showError("Lỗi", msg);
+      const message =
+        err instanceof Error ? err.message : "Unable to load low-stock items.";
+      setError(message);
+      showError("Load Failed", message);
     } finally {
       setIsLoading(false);
     }
