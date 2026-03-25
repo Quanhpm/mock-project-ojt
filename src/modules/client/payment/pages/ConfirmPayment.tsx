@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTER_URL } from "@/routes/router.const";
 import { formatDateTime } from "@/utils";
@@ -21,6 +21,11 @@ export default function PaymentSuccess() {
   const [showModal, setShowModal] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
+
+    useLayoutEffect(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, []);
+
   const state = location.state as
     | { total?: number | string; paymentId?: string }
     | null;
@@ -37,8 +42,8 @@ export default function PaymentSuccess() {
 
     const timer = setTimeout(() => {
       setShowSuccessPopup(false);
-      navigate(ROUTER_URL.MENU);
-    }, 5000);
+      navigate(ROUTER_URL.HOME_ROUTER.ORDER_HISTORY);
+    }, 7000);
 
     return () => clearTimeout(timer);
   }, [showSuccessPopup, navigate]);
@@ -81,13 +86,14 @@ export default function PaymentSuccess() {
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onConfirm={async (message) => {
-          try {
-            await handleRefund({ paymentId, message });
-            setShowModal(false);
-            setShowSuccessPopup(true);
-          } catch (error) {
-            console.error("Refund failed:", error);
+          const isRefunded = await handleRefund({ paymentId, message });
+
+          if (!isRefunded) {
+            return;
           }
+
+          setShowModal(false);
+          setShowSuccessPopup(true);
         }}
       />
 

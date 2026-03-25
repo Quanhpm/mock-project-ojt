@@ -5,7 +5,6 @@ import {
   useAdminAuthStore,
 } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import type { OrderFranchiseOption } from "../models/franchise.models";
-import { usePosSessionStore } from "../stores/pos-session.store";
 import { franchiseService } from "../services/franchise.service";
 import { switchOrderFranchiseContextUsecase } from "../usecases/switch-order-franchise-context.usecase";
 
@@ -23,19 +22,10 @@ export const useOrderFranchiseContext = (
   const roleCode = getRoleCode(adminStore);
   const [isSwitchingFranchise, setIsSwitchingFranchise] = useState(false);
   const [adminFranchiseOptions, setAdminFranchiseOptions] = useState<OrderFranchiseOption[]>([]);
-  const selectedAdminFranchiseId = usePosSessionStore((state) => state.selectedAdminFranchiseId);
-  const selectedAdminFranchiseName = usePosSessionStore(
-    (state) => state.selectedAdminFranchiseName,
-  );
-  const setSelectedAdminFranchiseId = usePosSessionStore(
-    (state) => state.setSelectedAdminFranchiseId,
-  );
-  const setSelectedAdminFranchiseName = usePosSessionStore(
-    (state) => state.setSelectedAdminFranchiseName,
-  );
 
   const contextFranchiseId = activeContext?.franchise_id ?? null;
-  const isAdminWithoutFranchiseContext = enabled && roleCode === "ADMIN" && !contextFranchiseId;
+  const isAdminUser = enabled && roleCode === "ADMIN";
+  const isAdminWithoutFranchiseContext = isAdminUser && !contextFranchiseId;
 
   const roleBasedFranchiseOptions = useMemo<OrderFranchiseOption[]>(() => {
     return roles
@@ -55,10 +45,8 @@ export const useOrderFranchiseContext = (
       return;
     }
 
-    if (!isAdminWithoutFranchiseContext) {
+    if (!isAdminUser) {
       setAdminFranchiseOptions([]);
-      setSelectedAdminFranchiseId(null);
-      setSelectedAdminFranchiseName(null);
       return;
     }
 
@@ -74,20 +62,11 @@ export const useOrderFranchiseContext = (
         }
 
         setAdminFranchiseOptions(options);
-        const currentSelectedFranchiseId = usePosSessionStore.getState().selectedAdminFranchiseId;
-        const currentSelectedFranchise = currentSelectedFranchiseId
-          ? options.find((option) => option.id === currentSelectedFranchiseId)
-          : null;
-
-        setSelectedAdminFranchiseId(currentSelectedFranchise?.id ?? null);
-        setSelectedAdminFranchiseName(currentSelectedFranchise?.name ?? null);
       } catch (error) {
         console.error("[OrderManagement] Failed to load franchise select options", error);
 
         if (isMounted) {
           setAdminFranchiseOptions([]);
-          setSelectedAdminFranchiseId(null);
-          setSelectedAdminFranchiseName(null);
           showError("Không tải được danh sách chi nhánh");
         }
       } finally {
@@ -104,21 +83,19 @@ export const useOrderFranchiseContext = (
     };
   }, [
     enabled,
-    isAdminWithoutFranchiseContext,
-    setSelectedAdminFranchiseId,
-    setSelectedAdminFranchiseName,
+    isAdminUser,
     showError,
   ]);
 
   const franchiseOptions = useMemo<OrderFranchiseOption[]>(() => {
-    if (isAdminWithoutFranchiseContext) {
+    if (isAdminUser) {
       return adminFranchiseOptions;
     }
 
     return roleBasedFranchiseOptions;
-  }, [adminFranchiseOptions, isAdminWithoutFranchiseContext, roleBasedFranchiseOptions]);
+  }, [adminFranchiseOptions, isAdminUser, roleBasedFranchiseOptions]);
 
-  const franchiseId = isAdminWithoutFranchiseContext ? selectedAdminFranchiseId : contextFranchiseId;
+  const franchiseId = contextFranchiseId;
   const requiresFranchiseSelection = isAdminWithoutFranchiseContext && !franchiseId;
   const hasInvalidFranchiseContext = enabled && !requiresFranchiseSelection && !franchiseId;
 
@@ -127,25 +104,13 @@ export const useOrderFranchiseContext = (
       return "";
     }
 
-    if (isAdminWithoutFranchiseContext && selectedAdminFranchiseName) {
-      return selectedAdminFranchiseName;
-    }
-
     const currentRole = franchiseOptions.find((option) => option.id === franchiseId);
     return currentRole?.name ?? `Chi nhánh ${franchiseId}`;
-  }, [franchiseId, franchiseOptions, isAdminWithoutFranchiseContext, selectedAdminFranchiseName]);
+  }, [franchiseId, franchiseOptions]);
 
   const switchFranchise = useCallback(
     async (nextFranchiseId: string) => {
       if (!nextFranchiseId || nextFranchiseId === franchiseId) {
-        return;
-      }
-
-      if (isAdminWithoutFranchiseContext) {
-        const nextFranchise = franchiseOptions.find((option) => option.id === nextFranchiseId);
-        setSelectedAdminFranchiseId(nextFranchiseId);
-        setSelectedAdminFranchiseName(nextFranchise?.name ?? `Chi nhánh ${nextFranchiseId}`);
-        showSuccess("Đã chọn chi nhánh làm việc");
         return;
       }
 
@@ -163,11 +128,7 @@ export const useOrderFranchiseContext = (
     },
     [
       franchiseId,
-      franchiseOptions,
-      isAdminWithoutFranchiseContext,
       setProfile,
-      setSelectedAdminFranchiseId,
-      setSelectedAdminFranchiseName,
       showError,
       showSuccess,
     ],

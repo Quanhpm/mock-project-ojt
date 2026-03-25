@@ -1,24 +1,32 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  Award,
-  ChevronRight,
+  CreditCard,
   MapPin,
   MessageSquare,
   Phone,
-  ShieldCheck,
-  Truck,
+  Tag,
+  Ticket,
   Wallet,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import type { ComponentType } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import type { CheckoutPayload } from '../hooks/use-checkout-handler.hook';
 import { checkoutInfoSchema, type CheckoutInfoFormValues } from '../schemas/checkout.schema';
 
+interface SummaryRowProps {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  tone?: 'default' | 'discount';
+}
+
 interface CartDetailSummaryAsideProps {
   subtotalAmount: number;
   voucherDiscount: number;
+  promotionDiscount: number;
   finalAmount: number;
   totalDiscount: number;
   voucherCode: string;
@@ -32,9 +40,37 @@ interface CartDetailSummaryAsideProps {
   formatCurrency: (amount: number) => string;
 }
 
+function SummaryRow({ icon: Icon, label, value, tone = 'default' }: SummaryRowProps) {
+  const isDiscount = tone === 'discount';
+
+  return (
+    <div className="flex items-center justify-between gap-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+            isDiscount ? 'bg-emerald-100 text-emerald-700' : 'bg-[var(--cf-primary)]/10 text-[var(--cf-primary)]'
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+      </div>
+
+      <span className={`shrink-0 text-sm font-bold ${isDiscount ? 'text-emerald-700' : 'text-slate-900'}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function SummaryDivider() {
+  return <div className="border-t border-dashed border-slate-200/90" />;
+}
+
 function CartDetailSummaryAside({
   subtotalAmount,
   voucherDiscount,
+  promotionDiscount,
   finalAmount,
   totalDiscount,
   voucherCode,
@@ -66,18 +102,38 @@ function CartDetailSummaryAside({
     },
   });
 
+  useEffect(() => {
+    if (!isCheckoutModalOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !isSubmittingCheckout) {
+        setIsCheckoutModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCheckoutModalOpen, isSubmittingCheckout]);
+
   const openCheckoutModal = async () => {
+    if (isSubmittingCheckout || isPrefillingCheckout) return;
+
     setIsCheckoutModalOpen(true);
     setIsPrefillingCheckout(true);
 
-    const checkoutPrefill = await getCheckoutPrefill();
-    reset({
-      address: checkoutPrefill.address,
-      phone: checkoutPrefill.phone,
-      message: checkoutPrefill.message ?? '',
-    });
-
-    setIsPrefillingCheckout(false);
+    try {
+      const checkoutPrefill = await getCheckoutPrefill();
+      reset({
+        address: checkoutPrefill.address,
+        phone: checkoutPrefill.phone,
+        message: checkoutPrefill.message ?? '',
+      });
+    } finally {
+      setIsPrefillingCheckout(false);
+    }
   };
 
   const closeCheckoutModal = () => {
@@ -88,10 +144,14 @@ function CartDetailSummaryAside({
   const submitCheckout = handleSubmit(
     async (formValues) => {
       setIsSubmittingCheckout(true);
-      const didCheckout = await onCheckout(formValues);
-      setIsSubmittingCheckout(false);
-      if (didCheckout) {
-        setIsCheckoutModalOpen(false);
+
+      try {
+        const didCheckout = await onCheckout(formValues);
+        if (didCheckout) {
+          setIsCheckoutModalOpen(false);
+        }
+      } finally {
+        setIsSubmittingCheckout(false);
       }
     },
     () => {
@@ -264,17 +324,12 @@ function CartDetailSummaryAside({
               </div>
 
               <button
-                type="button"
-                onClick={closeCheckoutModal}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
                 disabled={isSubmittingCheckout}
                 className="rounded-full p-2 text-[var(--cf-primary)]/70 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <X size={20} />
+                <X className="h-4.5 w-4.5" />
               </button>
-            </header>
-
-            <div className="px-6 md:px-10">
-              <div className="h-px w-full bg-slate-200" />
             </div>
 
             <form
@@ -293,17 +348,19 @@ function CartDetailSummaryAside({
                     <MapPin size={18} />
                   </div>
                   <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
+                    disabled={isSubmittingCheckout || isPrefillingCheckout}
                     id="checkout-address"
                     type="text"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Nhập địa chỉ giao hàng"
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    type="text"
                     {...register('address')}
                   />
                 </div>
-                {errors.address?.message && (
+                {errors.address?.message ? (
                   <p className="text-xs text-red-600">{errors.address.message}</p>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-3">
@@ -315,17 +372,19 @@ function CartDetailSummaryAside({
                     <Phone size={18} />
                   </div>
                   <input
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
+                    disabled={isSubmittingCheckout || isPrefillingCheckout}
                     id="checkout-phone"
                     type="text"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Nhập số điện thoại"
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    type="text"
                     {...register('phone')}
                   />
                 </div>
-                {errors.phone?.message && (
+                {errors.phone?.message ? (
                   <p className="text-xs text-red-600">{errors.phone.message}</p>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-3">
@@ -337,17 +396,19 @@ function CartDetailSummaryAside({
                     <MessageSquare size={18} />
                   </div>
                   <textarea
+                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
+                    disabled={isSubmittingCheckout || isPrefillingCheckout}
                     id="checkout-message"
                     rows={4}
                     className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Ví dụ: giao trong giờ hành chính..."
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    rows={3}
                     {...register('message')}
                   />
                 </div>
-                {errors.message?.message && (
+                {errors.message?.message ? (
                   <p className="text-xs text-red-600">{errors.message.message}</p>
-                )}
+                ) : null}
               </div>
 
               <div className="mt-2 flex items-start gap-4 rounded-2xl border border-slate-200/80 bg-slate-50 p-5">
@@ -364,27 +425,24 @@ function CartDetailSummaryAside({
 
               <footer className="flex items-center justify-end gap-3 border-t border-slate-200/80 pt-2 md:gap-4">
                 <button
-                  type="button"
-                  onClick={closeCheckoutModal}
+                  className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--cf-primary)] transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSubmittingCheckout}
                   className="rounded-xl border border-[var(--cf-primary)]/20 bg-[var(--cf-bg)] px-6 py-3 text-sm font-bold uppercase tracking-wider text-[var(--cf-primary)] transition-all hover:bg-[var(--cf-primary)]/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Hủy
                 </button>
-
                 <button
-                  type="submit"
+                  className="flex-1 rounded-full bg-[linear-gradient(135deg,#7F5539,#A26A45)] px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_16px_30px_rgba(127,85,57,0.24)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                   disabled={isSubmittingCheckout || isPrefillingCheckout}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--cf-primary)] px-7 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-[0px_18px_34px_rgba(139,29,29,0.3)] transition-all hover:bg-[var(--cf-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isPrefillingCheckout ? 'Đang tải...' : isSubmittingCheckout ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
-                  {!isPrefillingCheckout && !isSubmittingCheckout && <ChevronRight size={16} />}
+                  {isPrefillingCheckout ? 'Đang tải...' : isSubmittingCheckout ? 'Đang xử lý...' : 'Xác nhận'}
                 </button>
-              </footer>
+              </div>
             </form>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   );
 }

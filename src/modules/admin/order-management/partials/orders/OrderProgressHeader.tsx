@@ -118,7 +118,7 @@ export const OrderProgressHeader = ({
         <div className="mt-3 rounded-2xl bg-rose-50 px-4 py-3 text-center">
           <p className="text-sm font-black text-rose-700">Đơn hàng đã bị hủy</p>
           <p className="mt-1 text-xs font-medium text-rose-500">
-            Trạng thái hiện tại: Đã hủy
+            {order.failed_reason || "Không có lý do hủy từ hệ thống"}
           </p>
         </div>
       </div>

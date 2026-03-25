@@ -38,6 +38,10 @@ interface RawOrderApi {
   _id?: string;
   id?: string | number;
   code?: string;
+  cart_id?: string;
+  cartId?: string;
+  failed_reason?: string;
+  failedReason?: string;
   franchise_id?: string;
   franchise_name?: string;
   status?: string | { code?: string; label?: string; color?: string };
@@ -159,6 +163,18 @@ const mapRawOrderToUiOrder = (rawOrder: RawOrderApi): OrderData => {
   return {
     id: rawOrder._id ?? rawOrder.id ?? rawOrder.code ?? 'UNKNOWN_ORDER',
     code: rawOrder.code ?? 'UNKNOWN',
+    cartId:
+      typeof rawOrder.cart_id === 'string'
+        ? rawOrder.cart_id
+        : typeof rawOrder.cartId === 'string'
+          ? rawOrder.cartId
+          : undefined,
+    failedReason:
+      typeof rawOrder.failed_reason === 'string'
+        ? rawOrder.failed_reason
+        : typeof rawOrder.failedReason === 'string'
+          ? rawOrder.failedReason
+          : undefined,
     store: {
       id: rawOrder.franchise_id ?? 'UNKNOWN_FRANCHISE',
       name: rawOrder.franchise_name ?? 'Không rõ cửa hàng',

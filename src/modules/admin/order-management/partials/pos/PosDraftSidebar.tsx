@@ -8,12 +8,12 @@ const currency = new Intl.NumberFormat("vi-VN");
 interface PosDraftSidebarProps {
   items: CartItem[];
   subtotalAmount: number;
+  cartId: string | null;
   selectedCustomer: CustomerOption | null;
   customerKeyword: string;
   customerResults: CustomerOption[];
   isSearchingCustomers: boolean;
   isMutatingCart: boolean;
-  hasPersistedCart: boolean;
   onCustomerKeywordChange: (value: string) => void;
   onSearchCustomers: () => void;
   onSelectCustomer: (customer: CustomerOption) => void;
@@ -29,12 +29,12 @@ interface PosDraftSidebarProps {
 export const PosDraftSidebar = memo(({
   items,
   subtotalAmount,
+  cartId,
   selectedCustomer,
   customerKeyword,
   customerResults,
   isSearchingCustomers,
   isMutatingCart,
-  hasPersistedCart,
   onCustomerKeywordChange,
   onSearchCustomers,
   onSelectCustomer,
@@ -46,17 +46,18 @@ export const PosDraftSidebar = memo(({
   canContinue,
   onContinue,
 }: PosDraftSidebarProps) => {
-  const draftNumber = items.length > 0 ? "DRAFT" : "NEW";
+  const orderLabel = cartId ? cartId.slice(-6).toUpperCase() : "NEW";
+  const cartStatusLabel = cartId ? "Cart active" : "Chưa có cart";
 
   return (
     <aside className="z-10 flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-gray-100 bg-white">
       <div className="shrink-0 border-b border-gray-50 bg-white p-6 pb-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-2xl font-black tracking-tight text-gray-900">
-            Order #{hasPersistedCart ? "ACTIVE" : draftNumber}
+            Order #{orderLabel}
           </h2>
           <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700">
-            {hasPersistedCart ? "Cart active" : "Nháp POS"}
+            {cartStatusLabel}
           </span>
         </div>
 
@@ -148,7 +149,11 @@ export const PosDraftSidebar = memo(({
               <div className="rounded-full bg-gray-100 p-4">
                 <Loader2 size={24} className="opacity-0" />
               </div>
-              <p className="text-sm font-medium">Chưa có món nào được chọn</p>
+              <p className="text-sm font-medium">
+                {selectedCustomer
+                  ? "Giỏ hàng của khách hiện chưa có món nào"
+                  : "Chọn khách hàng trước khi thêm món"}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">

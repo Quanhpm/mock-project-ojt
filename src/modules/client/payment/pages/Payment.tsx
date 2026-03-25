@@ -1,15 +1,22 @@
-import { ArrowLeft, ReceiptText, ShieldCheck } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTER_URL } from "@/routes/router.const";
 import { formatCurrency } from "@/utils";
-import { QRPaymentModal } from "../component/QRPaymentModal";
-import { useOrderData } from "../hooks/useOrderData";
-import { usePaymentHandler } from "../hooks/usePaymentHandler";
+import { ArrowLeft, ReceiptText, ShieldCheck } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DeliveryInfo } from "../component/DeliveryInfo";
 import { OrderSummary } from "../component/OrderSummary";
-import { PriceSummary } from "../component/PriceSummary";
-import { SelectPaymentMethod } from "../component/SelectPaymentMethod";
 import { paymentMethods } from "../component/payment-methods";
+import { PriceSummary } from "../component/PriceSummary";
+import { QRPaymentModal } from "../component/QRPaymentModal";
+import { SelectPaymentMethod } from "../component/SelectPaymentMethod";
+import { useOrderData } from "../hooks/useOrderData";
+import { usePaymentHandler } from "../hooks/usePaymentHandler";
+import { useLayoutEffect } from "react";
+
+
+interface PaymentLocationState {
+  cartId?: string;
+  orderId?: string;
+}
 
 function EmptyCheckoutState() {
   const navigate = useNavigate();
@@ -28,16 +35,16 @@ function EmptyCheckoutState() {
           Không tìm thấy đơn để thanh toán
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--cf-dark)]">
-          Hãy quay lại giỏ hàng và chọn đơn cần thanh toán trước khi tiếp tục.
+          Hãy quay lại giỏ hàng hoặc lịch sử đơn hàng và chọn đơn cần thanh toán trước khi tiếp tục.
         </p>
 
         <button
           className="mt-7 inline-flex items-center gap-2 rounded-full bg-[var(--cf-primary)] px-5 py-3 text-sm font-bold text-white shadow-[0_16px_28px_rgba(127,85,57,0.18)] transition-all hover:-translate-y-0.5"
-          onClick={() => navigate(ROUTER_URL.HOME_ROUTER.CART)}
+          onClick={() => navigate(ROUTER_URL.HOME_ROUTER.ORDER_HISTORY)}
           type="button"
         >
           <ArrowLeft className="h-4 w-4" />
-          Quay lại giỏ hàng
+          Quay lại đơn hàng
         </button>
       </div>
     </div>
@@ -47,9 +54,14 @@ function EmptyCheckoutState() {
 export default function Payment() {
   const location = useLocation();
   const navigate = useNavigate();
-  const cartId: string = (location.state as { cartId?: string } | null)?.cartId ?? "";
+  const state = (location.state as PaymentLocationState | null) ?? null;
+  const cartId = state?.cartId ?? "";
+  const orderId = state?.orderId ?? "";
 
-  const { orderData, paymentId } = useOrderData(cartId);
+  const { orderData, paymentId } = useOrderData({
+    cartId,
+    orderId,
+  });
   const {
     paying,
     selectedPayment,
@@ -65,7 +77,13 @@ export default function Payment() {
     paymentMethods.find((method) => method.id === selectedPayment)?.label ??
     "Chưa chọn";
 
-  if (!cartId) {
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [location.key]);
+
+  if (!cartId && !orderId) {
     return <EmptyCheckoutState />;
   }
 

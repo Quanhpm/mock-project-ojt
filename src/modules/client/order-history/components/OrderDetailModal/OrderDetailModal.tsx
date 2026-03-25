@@ -1,3 +1,8 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getPaymentByOrderId } from '@/apis/endpointsCLIENT/payment.api';
+import useToast from '@/hooks/use-toast.hook';
+import { ROUTER_URL } from '@/routes/router.const';
 import type { OrderData } from '../../order.types';
 import { Coffee, X } from 'lucide-react';
 import OrderFailedReason from './OrderFailedReason';
@@ -14,11 +19,63 @@ interface OrderDetailModalProps {
 }
 
 function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetailModalProps) {
+  const navigate = useNavigate();
+  const { error: showError } = useToast();
+  const [isOpeningPayment, setIsOpeningPayment] = useState(false);
+
   if (!open || !order) return null;
+
+  const isConfirmedOrder = order.status.code === 'CONFIRMED';
+  const isDraftOrder = order.status.code === 'DRAFT';
+
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
+  };
+
+  const handleReviewPayment = async () => {
+    if (isOpeningPayment) return;
+
+    setIsOpeningPayment(true);
+
+    try {
+      const payment = await getPaymentByOrderId(String(order.id));
+
+      if (!payment?._id) {
+        showError('Không tìm thấy thông tin thanh toán cho đơn này');
+        return;
+      }
+
+      onClose();
+      navigate(ROUTER_URL.HOME_ROUTER.PAYMENT, {
+        state: {
+          paymentId: payment._id,
+          total: order.pricing.finalAmount ?? order.pricing.total,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to fetch payment by order id:', error);
+      showError('Không thể tải lại thông tin thanh toán');
+    } finally {
+      setIsOpeningPayment(false);
+    }
+  };
+
+  const handleContinueCheckout = () => {
+    if (isOpeningPayment) return;
+
+    if (!order.id) {
+      showError('Không tìm thấy thông tin đơn hàng để tiếp tục thanh toán');
+      return;
+    }
+
+    onClose();
+    navigate(ROUTER_URL.HOME_ROUTER.CHECKOUT, {
+      state: {
+        orderId: String(order.id),
+      },
+    });
   };
 
   return (
@@ -80,7 +137,27 @@ function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetail
         </div>
 
         {/* Footer Actions */}
-        <footer className="px-6 py-5 border-t border-slate-100 bg-[#fdfcfb] flex justify-end">
+        <footer className="px-6 py-5 border-t border-slate-100 bg-[#fdfcfb] flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          {isDraftOrder ? (
+            <button
+              onClick={handleContinueCheckout}
+              disabled={isOpeningPayment}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg border border-primary/20 bg-white font-bold text-sm text-primary hover:bg-primary/5 transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-[18px]">payments</span>
+              Tiếp tục thanh toán
+            </button>
+          ) : null}
+          {isConfirmedOrder ? (
+            <button
+              onClick={handleReviewPayment}
+              disabled={isOpeningPayment}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg border border-primary/20 bg-white font-bold text-sm text-primary hover:bg-primary/5 transition-all active:scale-95 cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              {isOpeningPayment ? 'Đang tải thanh toán...' : 'Xem lại thanh toán'}
+            </button>
+          ) : null}
           <button
             onClick={onClose}
             className="px-8 py-2.5 rounded-lg bg-primary font-bold text-sm text-white hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all active:scale-95 cursor-pointer"
