@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react';
 import type { MenuCategory } from '../services/menu-page.service';
 import { useMobileScrollSpy } from '../hooks/use-mobile-scroll-spy.hook';
 

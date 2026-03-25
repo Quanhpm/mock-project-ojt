@@ -43,7 +43,7 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
             </div>
 
             {/* Price and Action */}
-            <div className="flex flex-col md:flex-row md:items-center items-center md:items-end gap-3 md:gap-3 shrink-0">
+            <div className="flex flex-col md:flex-col md:items-center items-center md:items-end gap-3 md:gap-3 shrink-0">
                 <div className="text-center md:text-right">
                     <span className="text-xl font-bold text-[var(--cf-dark)]">
                         {product.sizes[0].price.toLocaleString('vi-VN')} ₫
@@ -55,10 +55,13 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
                     )} */}
                 </div>
                 <button
-                    className="bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2"
+                    className="hidden md:flex items-center justify-center gap-2 bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95"
                 >
-                    <span className="material-icons-outlined text-[18px]">add</span>
-                    Thêm
+                    <span className="material-icons-outlined text-[18px] leading-none">
+                        add
+                    </span>
+
+                    <span className="leading-none">Thêm</span>
                 </button>
             </div>
         </div>
