@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, Key, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
 import { useChangePassword } from "../hooks/use-change-password.hook";
+import { useAdminLogout } from "@/modules/admin/auth-admin/hooks/use-admin-logout.hook";
+import { ROUTER_URL } from "@/routes/router.const";
 import {
   changePasswordSchema,
   type ChangePasswordFormValues,
@@ -14,6 +16,7 @@ const SecurityPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error: showError } = useToast();
   const { changePassword, isLoading: isChangingPassword } = useChangePassword();
+  const { logout } = useAdminLogout();
 
   const {
     register,
@@ -45,6 +48,8 @@ const SecurityPage: React.FC = () => {
       setShowCurrentPassword(false);
       setShowNewPassword(false);
       setShowConfirmPassword(false);
+      await logout();
+      navigate(ROUTER_URL.ADMIN_ROUTER.LOGIN, { replace: true });
       return;
     }
 

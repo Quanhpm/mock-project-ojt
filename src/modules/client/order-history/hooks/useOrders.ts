@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { LucideIcon } from 'lucide-react';
+import { CheckCircle2, CircleEllipsis, ClipboardList } from 'lucide-react';
 import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
 import { useClientAuthStore } from '@/modules/client/auth-client';
 import { PAGE_SIZE } from '../order.config';
@@ -9,7 +11,7 @@ export interface OrderStatItem {
   key: string;
   label: string;
   value: string;
-  icon: string;
+  icon: LucideIcon;
   iconClass: string;
 }
 
@@ -65,21 +67,21 @@ export const useOrders = () => {
         key: 'total',
         label: 'Tổng đơn hàng',
         value: summary.total_orders.toString(),
-        icon: 'receipt_long',
+        icon: ClipboardList,
         iconClass: 'bg-primary/10 text-primary',
       },
       {
         key: 'completed',
         label: 'Hoàn thành',
         value: summary.completed_orders.toString(),
-        icon: 'check_circle',
+        icon: CheckCircle2,
         iconClass: 'bg-emerald-500/10 text-emerald-500',
       },
       {
         key: 'pending',
         label: 'Đang xử lý',
         value: summary.preparing_orders.toString(),
-        icon: 'pending',
+        icon: CircleEllipsis,
         iconClass: 'bg-amber-500/10 text-amber-500',
       },
     ],

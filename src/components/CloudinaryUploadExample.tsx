@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useCloudinaryUpload } from '@/hooks';
-import { Button } from '@/components/ui/button';
+import { CLOUDINARY_IMAGE_REQUIREMENT_TEXT } from '@/utils';
 
 /**
  * Example component for Cloudinary image upload
  */
 export function CloudinaryUploadExample() {
-  const { upload, uploadImage, loading, error } = useCloudinaryUpload();
+  const { uploadImage, loading, error } = useCloudinaryUpload();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,6 +35,9 @@ export function CloudinaryUploadExample() {
           disabled={loading}
           className="block w-full text-sm border rounded-md"
         />
+        <p className="text-xs text-gray-500">
+          {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+        </p>
       </div>
 
       {error && <div className="text-red-500 text-sm">{error.message}</div>}

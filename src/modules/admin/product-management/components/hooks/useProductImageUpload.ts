@@ -1,10 +1,8 @@
 import { useCallback, useState } from "react";
 import type { UseFormGetValues, UseFormSetValue } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast.hook";
-import { uploadImage } from "@/utils";
+import { uploadImage, validateCloudinaryImageFile } from "@/utils";
 import type { ProductFormInput } from "../productForm.schema";
-
-const MAX_IMAGE_SIZE_IN_BYTES = 5 * 1024 * 1024;
 
 interface UseProductImageUploadOptions {
   setValue: UseFormSetValue<ProductFormInput>;
@@ -12,13 +10,7 @@ interface UseProductImageUploadOptions {
 }
 
 const validateImageFile = (file: File) => {
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Please select a valid image file.");
-  }
-
-  if (file.size > MAX_IMAGE_SIZE_IN_BYTES) {
-    throw new Error("Maximum file size is 5MB.");
-  }
+  validateCloudinaryImageFile(file);
 };
 
 export const useProductImageUpload = ({

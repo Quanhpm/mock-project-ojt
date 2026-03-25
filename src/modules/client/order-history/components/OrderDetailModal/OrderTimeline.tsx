@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { formatDate } from '@/utils';
+import { Check, Clock3, LoaderCircle, XCircle } from 'lucide-react';
 import type { OrderStatusCode } from './order-detail.constants';
 
 type TimelineCode = 'DRAFT' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'OUT_FOR_DELIVERY' | 'COMPLETED';
@@ -36,15 +37,13 @@ function TimelineStep({ step, isPassed, isCurrent }: TimelineStepProps) {
         }`}
       >
         {isPassed ? (
-          <span className="material-symbols-outlined text-white text-sm">check</span>
+          <Check className="size-4 text-white" />
         ) : isCurrent ? (
-          <span
-            className={`material-symbols-outlined text-primary text-sm ${
-              isPreparingCurrent ? 'animate-[spin_2.5s_linear_infinite]' : ''
-            }`}
-          >
-            {isPreparingCurrent ? 'skillet' : 'pending_actions'}
-          </span>
+          isPreparingCurrent ? (
+            <LoaderCircle className="size-4 text-primary animate-[spin_2.5s_linear_infinite]" />
+          ) : (
+            <Clock3 className="size-4 text-primary" />
+          )
         ) : null}
       </div>
 
@@ -96,7 +95,7 @@ function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
       </h3>
       {status === 'CANCELLED' ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
-          <span className="material-symbols-outlined text-rose-500">close</span>
+          <XCircle className="size-5 text-rose-500 shrink-0" />
           <div>
             <p className="text-sm font-bold text-rose-700">Đơn hàng đã bị hủy</p>
             <p className="text-xs text-rose-700">Đơn hàng không thể tiếp tục xử lý.</p>
@@ -104,7 +103,7 @@ function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
         </div>
       ) : (
         <div className="relative space-y-6">
-          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-slate-200" />
+          <div className="absolute left-2.75 top-2 bottom-2 w-0.5 bg-slate-200" />
           {timelineSteps.map((step, index) => {
             const isCurrent = index === currentStepIndex;
             const isPassed = currentStepIndex > index;

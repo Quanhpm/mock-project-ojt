@@ -11,12 +11,18 @@ const SelectFranchiseGuard = () => {
   const location = useLocation();
   const activeContext = useAdminAuthStore((s) => s.activeContext);
   const roles = useAdminAuthStore((s) => s.roles);
-  const orderRootPath = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`;
-  const isOrderManagementRoute =
-    location.pathname === orderRootPath || location.pathname.startsWith(`${orderRootPath}/`);
+  const selfManagedFranchiseRoutes = [
+    `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`,
+    `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.PAYMENT}`,
+    `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DELIVERY}`,
+  ];
+  const isSelfManagedFranchiseRoute = selfManagedFranchiseRoutes.some(
+    (rootPath) =>
+      location.pathname === rootPath || location.pathname.startsWith(`${rootPath}/`),
+  );
 
-  // Order module tự xử lý franchise context để hỗ trợ POS gate và gate riêng của order list/detail.
-  if (isOrderManagementRoute) {
+  // Order, payment va delivery module tu xu ly franchise context de ho tro gate rieng trong page.
+  if (isSelfManagedFranchiseRoute) {
     return <Outlet />;
   }
 

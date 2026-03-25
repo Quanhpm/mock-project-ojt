@@ -118,7 +118,7 @@ function ShiftManagement() {
     shiftGroupsByDate,
     visibleShiftGroupsByDate,
     selectedFranchiseName,
-    shiftImportReferenceData,
+    shiftAssignmentLookupData,
     isLoading,
     error,
     reloadCalendarData,
@@ -148,7 +148,7 @@ function ShiftManagement() {
   }, [dailyAssignment.shiftId, dailyAssignment.workDate, shiftGroupsByDate])
 
   const quickAssignShiftOptions = useMemo(() => {
-    return [...shiftImportReferenceData.shifts]
+    return [...shiftAssignmentLookupData.shifts]
       .sort((left, right) => {
         const timeCompare = left.startTime.localeCompare(right.startTime)
         if (timeCompare !== 0) return timeCompare
@@ -158,7 +158,7 @@ function ShiftManagement() {
         id: shift.shiftId,
         label: `${shift.shiftName} · ${shift.startTime} - ${shift.endTime}`,
       }))
-  }, [shiftImportReferenceData.shifts])
+  }, [shiftAssignmentLookupData.shifts])
 
   const headerSummary = useMemo(() => {
     if (viewMode === 'shift') {
@@ -180,13 +180,13 @@ function ShiftManagement() {
   }, [filteredAssignments.length, viewMode, visibleShiftGroupsByDate])
 
   const quickAssignUserOptions = useMemo(() => {
-    return [...shiftImportReferenceData.users]
+    return [...shiftAssignmentLookupData.users]
       .sort((left, right) => left.userName.localeCompare(right.userName))
       .map((user) => ({
         id: user.userId,
         label: user.userEmail ? `${user.userName} · ${user.userEmail}` : user.userName,
       }))
-  }, [shiftImportReferenceData.users])
+  }, [shiftAssignmentLookupData.users])
 
   const quickAssignAssignedUserIdsByShiftId = useMemo<Record<string, string[]>>(() => {
     if (!selectedDateKey) return {}
@@ -413,9 +413,12 @@ function ShiftManagement() {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const type = event.active.data.current?.type
+    const activeData = event.active.data.current
+    if (!activeData) return
+
+    const type = activeData?.type
     if (type === 'user' || type === 'assignment') {
-      setActiveDragUser(event.active.data.current.user as ActiveDragUser)
+      setActiveDragUser(activeData.user as ActiveDragUser)
     }
   }
 
@@ -716,8 +719,8 @@ function ShiftManagement() {
         <ShiftImportModal
           isOpen={isImportModalOpen}
           franchiseName={selectedFranchiseName}
-          referenceData={shiftImportReferenceData}
-          isReferenceLoading={isLoading}
+          lookupData={shiftAssignmentLookupData}
+          isLookupLoading={isLoading}
           isSubmitting={isImportingShifts}
           onClose={() => setIsImportModalOpen(false)}
           onSubmit={handleBulkImport}

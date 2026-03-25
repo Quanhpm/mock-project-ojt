@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTER_URL } from "@/routes/router.const";
 import { useToast } from "@/hooks/use-toast.hook";
@@ -6,10 +6,7 @@ import type { CartDetail } from "../models/cart.models";
 import type { CustomerOption } from "../models/customer.models";
 import { cartService } from "../services/cart.service";
 import { getActiveCartUsecase } from "../usecases/get-active-cart.usecase";
-import { persistDraftCartUsecase } from "../usecases/persist-draft-cart.usecase";
 import { usePosSession } from "./use-pos-session";
-
-const DEFAULT_COUNTER_MESSAGE = "Mua tại quầy";
 
 interface OrderPosBuilderLocationState {
   preservePosSession?: boolean;
@@ -17,32 +14,24 @@ interface OrderPosBuilderLocationState {
 
 interface UsePosBuilderCartLifecycleOptions {
   franchiseId: string | null;
-  franchiseName: string;
   clearCustomerResults: () => void;
   closeProductConfigurator: () => void;
 }
 
 export const usePosBuilderCartLifecycle = ({
   franchiseId,
-  franchiseName,
   clearCustomerResults,
   closeProductConfigurator,
 }: UsePosBuilderCartLifecycleOptions) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { success: showSuccess, error: showError, info: showInfo } = useToast();
+  const { error: showError, info: showInfo } = useToast();
   const {
     selectedCustomer,
     activeCartId,
-    draftItems,
     setSelectedCustomer,
     setActiveCartId,
     setCustomerKeyword,
-    setDraftItems,
-    setDraftAddress,
-    setDraftPhone,
-    setDraftMessage,
-    setVoucherCode,
     resetSession,
   } = usePosSession();
 
@@ -50,44 +39,23 @@ export const usePosBuilderCartLifecycle = ({
     (location.state as OrderPosBuilderLocationState | null)?.preservePosSession,
   );
   const skipInitialResetRef = useRef(shouldPreserveSessionOnMount);
+  const latestLoadRequestRef = useRef(0);
+  const selectedCustomerIdRef = useRef<string | null>(selectedCustomer?.id ?? null);
 
   const [isMutatingCart, setIsMutatingCart] = useState(false);
   const [isCheckingActiveCart, setIsCheckingActiveCart] = useState(false);
   const [cart, setCart] = useState<CartDetail | null>(null);
-  const [existingActiveCart, setExistingActiveCart] = useState<CartDetail | null>(null);
-  const [isExistingCartModalOpen, setIsExistingCartModalOpen] = useState(false);
 
-  const hasPersistedCart = Boolean(activeCartId);
-  const defaultCounterAddress = useMemo(() => {
-    return franchiseName ? `MUA_TAI_QUAY - ${franchiseName}` : "MUA_TAI_QUAY";
-  }, [franchiseName]);
-
-  const syncDraftFieldsFromCart = useCallback(
-    (nextCart: CartDetail | null, customer?: CustomerOption | null) => {
-      if (nextCart) {
-        setDraftAddress(nextCart.address || defaultCounterAddress);
-        setDraftPhone(nextCart.phone || customer?.phone || "");
-        setDraftMessage(nextCart.message || DEFAULT_COUNTER_MESSAGE);
-        setVoucherCode(nextCart.voucher_code || "");
-        return;
-      }
-
-      setDraftAddress(customer?.address || defaultCounterAddress);
-      setDraftPhone(customer?.phone || "");
-      setDraftMessage(DEFAULT_COUNTER_MESSAGE);
-      setVoucherCode("");
-    },
-    [defaultCounterAddress, setDraftAddress, setDraftMessage, setDraftPhone, setVoucherCode],
-  );
+  useEffect(() => {
+    selectedCustomerIdRef.current = selectedCustomer?.id ?? null;
+  }, [selectedCustomer?.id]);
 
   const syncPersistedCartState = useCallback(
-    (nextCart: CartDetail | null, customer?: CustomerOption | null) => {
+    (nextCart: CartDetail | null) => {
       setCart(nextCart);
-      setExistingActiveCart(nextCart);
       setActiveCartId(nextCart?._id ?? null);
-      syncDraftFieldsFromCart(nextCart, customer);
     },
-    [setActiveCartId, syncDraftFieldsFromCart],
+    [setActiveCartId],
   );
 
   const goToReviewPage = useCallback(
@@ -116,298 +84,180 @@ export const usePosBuilderCartLifecycle = ({
       return;
     }
 
-    resetSession({
-      defaultAddress: defaultCounterAddress,
-      defaultMessage: DEFAULT_COUNTER_MESSAGE,
-    });
+    resetSession();
     setCart(null);
-    setExistingActiveCart(null);
-    setIsExistingCartModalOpen(false);
     clearCustomerResults();
     closeProductConfigurator();
-  }, [
-    clearCustomerResults,
-    closeProductConfigurator,
-    defaultCounterAddress,
-    franchiseId,
-    resetSession,
-  ]);
+  }, [clearCustomerResults, closeProductConfigurator, franchiseId, resetSession]);
 
   const loadPersistedCart = useCallback(
-    async (cartId: string, customer?: CustomerOption | null) => {
+    async (cartId: string, expectedCustomerId?: string | null) => {
+      const requestId = ++latestLoadRequestRef.current;
+
       try {
         const nextCart = await cartService.getCartDetail(cartId);
-        syncPersistedCartState(nextCart, customer);
+
+        if (
+          requestId !== latestLoadRequestRef.current ||
+          (expectedCustomerId && selectedCustomerIdRef.current !== expectedCustomerId)
+        ) {
+          return null;
+        }
+
+        syncPersistedCartState(nextCart);
         return nextCart;
       } catch (error) {
+        if (requestId !== latestLoadRequestRef.current) {
+          return null;
+        }
+
         console.error("[OrderPOS] Failed to load persisted cart", error);
         showError("Không tải được cart đang hoạt động");
-        setCart(null);
-        setExistingActiveCart(null);
-        setActiveCartId(null);
+        syncPersistedCartState(null);
         return null;
       }
     },
-    [setActiveCartId, showError, syncPersistedCartState],
+    [showError, syncPersistedCartState],
   );
 
-  const loadCustomerExistingCart = useCallback(
+  const loadCustomerActiveCart = useCallback(
     async (customer: CustomerOption) => {
       if (!franchiseId) {
-        setExistingActiveCart(null);
+        setIsCheckingActiveCart(false);
+        syncPersistedCartState(null);
         return null;
       }
+
+      const requestId = ++latestLoadRequestRef.current;
 
       try {
         setIsCheckingActiveCart(true);
         const activeCart = await getActiveCartUsecase(customer.id, franchiseId);
-        setExistingActiveCart(activeCart);
+
+        if (
+          requestId !== latestLoadRequestRef.current ||
+          selectedCustomerIdRef.current !== customer.id
+        ) {
+          return null;
+        }
+
+        syncPersistedCartState(activeCart);
         return activeCart;
       } catch (error) {
+        if (requestId !== latestLoadRequestRef.current) {
+          return null;
+        }
+
         console.error("[OrderPOS] Failed to load active cart for customer", error);
         showError("Không kiểm tra được cart hiện tại của khách hàng");
-        setExistingActiveCart(null);
+        syncPersistedCartState(null);
         return null;
       } finally {
-        setIsCheckingActiveCart(false);
+        if (requestId === latestLoadRequestRef.current) {
+          setIsCheckingActiveCart(false);
+        }
       }
     },
-    [franchiseId, showError],
+    [franchiseId, showError, syncPersistedCartState],
   );
 
   useEffect(() => {
     if (!selectedCustomer) {
-      setCart(null);
-      setExistingActiveCart(null);
-      setActiveCartId(null);
-      syncDraftFieldsFromCart(null, null);
+      latestLoadRequestRef.current += 1;
+      setIsCheckingActiveCart(false);
+      syncPersistedCartState(null);
       return;
     }
 
     if (activeCartId) {
-      void loadPersistedCart(activeCartId, selectedCustomer);
+      void loadPersistedCart(activeCartId, selectedCustomer.id);
       return;
     }
 
-    setCart(null);
-    syncDraftFieldsFromCart(null, selectedCustomer);
-    void loadCustomerExistingCart(selectedCustomer);
+    void loadCustomerActiveCart(selectedCustomer);
   }, [
     activeCartId,
-    loadCustomerExistingCart,
+    loadCustomerActiveCart,
     loadPersistedCart,
     selectedCustomer,
-    setActiveCartId,
-    syncDraftFieldsFromCart,
+    syncPersistedCartState,
   ]);
 
   const handleSelectCustomer = useCallback(
     (customer: CustomerOption) => {
+      latestLoadRequestRef.current += 1;
       setSelectedCustomer(customer);
       setCustomerKeyword(customer.name);
-      setActiveCartId(null);
-      setCart(null);
-      setExistingActiveCart(null);
-      setIsExistingCartModalOpen(false);
+      syncPersistedCartState(null);
       clearCustomerResults();
       closeProductConfigurator();
-      syncDraftFieldsFromCart(null, customer);
       showInfo(`Đã chọn khách hàng ${customer.name}`);
     },
     [
       clearCustomerResults,
       closeProductConfigurator,
-      setActiveCartId,
       setCustomerKeyword,
       setSelectedCustomer,
       showInfo,
-      syncDraftFieldsFromCart,
-    ],
-  );
-
-  const clearSelectedCustomer = useCallback(() => {
-    setSelectedCustomer(null);
-    setCustomerKeyword("");
-    clearCustomerResults();
-    setCart(null);
-    setExistingActiveCart(null);
-    setActiveCartId(null);
-    setIsExistingCartModalOpen(false);
-    closeProductConfigurator();
-    syncDraftFieldsFromCart(null, null);
-  }, [
-    clearCustomerResults,
-    closeProductConfigurator,
-    setActiveCartId,
-    setCustomerKeyword,
-    setSelectedCustomer,
-    syncDraftFieldsFromCart,
-  ]);
-
-  const persistDraftToServerCart = useCallback(
-    async (customer: CustomerOption) => {
-      if (!franchiseId || draftItems.length === 0) {
-        return existingActiveCart;
-      }
-
-      const nextCart = await persistDraftCartUsecase(customer.id, franchiseId, draftItems);
-
-      setDraftItems([]);
-      syncPersistedCartState(nextCart, customer);
-      return nextCart;
-    },
-    [
-      draftItems,
-      existingActiveCart,
-      franchiseId,
-      setDraftItems,
       syncPersistedCartState,
     ],
   );
 
-  const continueWithExistingServerCart = useCallback(() => {
-    if (!existingActiveCart?._id || !selectedCustomer) {
-      return;
-    }
-
-    setDraftItems([]);
-    syncPersistedCartState(existingActiveCart, selectedCustomer);
-    setIsExistingCartModalOpen(false);
-    goToReviewPage(existingActiveCart._id, selectedCustomer.id);
+  const clearSelectedCustomer = useCallback(() => {
+    latestLoadRequestRef.current += 1;
+    setSelectedCustomer(null);
+    setCustomerKeyword("");
+    setIsCheckingActiveCart(false);
+    syncPersistedCartState(null);
+    clearCustomerResults();
+    closeProductConfigurator();
   }, [
-    existingActiveCart,
-    goToReviewPage,
-    selectedCustomer,
-    setDraftItems,
+    clearCustomerResults,
+    closeProductConfigurator,
+    setCustomerKeyword,
+    setSelectedCustomer,
     syncPersistedCartState,
   ]);
 
-  const mergeDraftIntoExistingCart = useCallback(async () => {
-    if (!selectedCustomer || !existingActiveCart?._id) {
-      showError("Không tìm thấy cart để gộp món");
+  const continueToReview = useCallback(() => {
+    const targetCartId = cart?._id ?? activeCartId;
+    const targetCustomerId = selectedCustomer?.id ?? cart?.customer_id;
+    const hasCartItems = (cart?.cart_items?.length ?? 0) > 0;
+
+    if (!targetCustomerId) {
+      showError("Hãy chọn khách hàng trước khi chọn món");
       return;
     }
 
-    try {
-      setIsMutatingCart(true);
-      const nextCart = await persistDraftToServerCart(selectedCustomer);
-
-      if (!nextCart?._id) {
-        showError("Không gộp được món vào cart hiện tại");
-        return;
-      }
-
-      setIsExistingCartModalOpen(false);
-      showSuccess("Đã thêm món vào cart hiện tại");
-      goToReviewPage(nextCart._id, selectedCustomer.id);
-    } catch (error) {
-      console.error("[OrderPOS] Failed to merge draft into existing cart", error);
-      showError("Không gộp được món vào cart hiện tại");
-    } finally {
-      setIsMutatingCart(false);
-    }
-  }, [
-    existingActiveCart?._id,
-    goToReviewPage,
-    persistDraftToServerCart,
-    selectedCustomer,
-    showError,
-    showSuccess,
-  ]);
-
-  const continueToReview = useCallback(async () => {
-    const customerId = selectedCustomer?.id ?? cart?.customer_id;
-
-    if (!customerId) {
-      showError("Hãy chọn khách hàng trước khi kiểm tra đơn");
+    if (!targetCartId || !hasCartItems) {
+      showError("Chưa có món nào trong giỏ hàng của khách");
       return;
     }
 
-    if (hasPersistedCart && (cart?._id || activeCartId)) {
-      goToReviewPage(cart?._id ?? activeCartId ?? "", customerId);
-      return;
-    }
-
-    if (existingActiveCart?._id) {
-      if (draftItems.length > 0) {
-        setIsExistingCartModalOpen(true);
-        return;
-      }
-
-      continueWithExistingServerCart();
-      return;
-    }
-
-    if (!franchiseId) {
-      showError("Bạn cần chọn chi nhánh trước khi tạo đơn");
-      return;
-    }
-
-    if (draftItems.length === 0) {
-      showError("Chưa có món nào để kiểm tra đơn");
-      return;
-    }
-
-    if (!selectedCustomer) {
-      showError("Hãy chọn khách hàng trước khi kiểm tra đơn");
-      return;
-    }
-
-    try {
-      setIsMutatingCart(true);
-      const nextCart = await persistDraftToServerCart(selectedCustomer);
-
-      if (!nextCart?._id) {
-        showError("Không tạo được cart để sang bước kiểm tra đơn");
-        return;
-      }
-
-      showSuccess("Đã tạo cart để kiểm tra đơn");
-      goToReviewPage(nextCart._id, selectedCustomer.id);
-    } catch (error) {
-      console.error("[OrderPOS] Failed to prepare review cart", error);
-      showError("Không tạo được cart để kiểm tra đơn");
-    } finally {
-      setIsMutatingCart(false);
-    }
+    goToReviewPage(targetCartId, targetCustomerId);
   }, [
     activeCartId,
     cart?._id,
+    cart?.cart_items?.length,
     cart?.customer_id,
-    draftItems.length,
-    existingActiveCart,
-    franchiseId,
     goToReviewPage,
-    hasPersistedCart,
-    persistDraftToServerCart,
-    selectedCustomer,
+    selectedCustomer?.id,
     showError,
-    showSuccess,
-    continueWithExistingServerCart,
   ]);
 
   return {
     selectedCustomer,
     activeCartId,
-    draftItems,
     cart,
-    existingActiveCart,
     isMutatingCart,
     isCheckingActiveCart,
-    isExistingCartModalOpen,
-    hasPersistedCart,
     setIsMutatingCart,
     setCart,
-    setExistingActiveCart,
     loadPersistedCart,
-    syncDraftFieldsFromCart,
     syncPersistedCartState,
     goToReviewPage,
     selectCustomer: handleSelectCustomer,
     clearSelectedCustomer,
     continueToReview,
-    mergeDraftIntoExistingCart,
-    closeExistingCartModal: () => setIsExistingCartModalOpen(false),
-    useExistingServerCart: continueWithExistingServerCart,
   };
 };

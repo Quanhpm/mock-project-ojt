@@ -1,4 +1,6 @@
 import type { OrderData } from '../../order.types';
+import type { LucideIcon } from 'lucide-react';
+import { CheckCircle2, Clock3, LoaderCircle, Package, Receipt, XCircle } from 'lucide-react';
 
 export type OrderStatusCode = OrderData['status']['code'];
 
@@ -47,19 +49,11 @@ export const STATUS_COLORS: Record<
   },
 };
 
-export function getStatusIcon(status: OrderStatusCode): string {
-  switch (status) {
-    case 'COMPLETED':
-      return 'check_circle';
-    case 'PREPARING':
-      return 'skillet';
-    case 'CONFIRMED':
-      return 'pending';
-    case 'READY_FOR_PICKUP':
-      return 'inventory';
-    case 'CANCELLED':
-      return 'cancel';
-    default:
-      return 'receipt';
-  }
-}
+export const STATUS_ICONS: Record<OrderStatusCode, LucideIcon> = {
+  COMPLETED: CheckCircle2,
+  CANCELLED: XCircle,
+  READY_FOR_PICKUP: Package,
+  CONFIRMED: Clock3,
+  PREPARING: LoaderCircle,
+  DRAFT: Receipt,
+};

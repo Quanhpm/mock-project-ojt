@@ -4,6 +4,8 @@ import { getPaymentByOrderId } from '@/apis/endpointsCLIENT/payment.api';
 import useToast from '@/hooks/use-toast.hook';
 import { ROUTER_URL } from '@/routes/router.const';
 import type { OrderData } from '../../order.types';
+import { Coffee, X } from 'lucide-react';
+import OrderFailedReason from './OrderFailedReason';
 import OrderItemsList from './OrderItemsList';
 import OrderPaymentInfo from './OrderPaymentInfo';
 import OrderStatusHeader from './OrderStatusHeader';
@@ -99,7 +101,7 @@ function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetail
         <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-[#fdfcfb]">
           <div className="flex items-center gap-3">
             <div className="text-primary">
-              <span className="material-symbols-outlined text-3xl">coffee</span>
+              <Coffee className="size-8" />
             </div>
             <div>
               <h2 className="text-xl font-bold tracking-tight text-[#1a130c]">
@@ -114,7 +116,7 @@ function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetail
             onClick={onClose}
             className="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 transition-colors text-slate-500 cursor-pointer"
           >
-            <span className="material-symbols-outlined">close</span>
+            <X className="size-5" />
           </button>
         </header>
 
@@ -123,6 +125,7 @@ function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetail
           <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 space-y-6">
               <OrderStatusHeader order={order} />
+              <OrderFailedReason status={order.status.code} reason={order.cancelReason} />
               <OrderItemsList items={order.orderItems} />
             </div>
 

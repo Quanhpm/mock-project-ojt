@@ -29,27 +29,22 @@ export const usePosReviewLoader = () => {
   const {
     selectedCustomer,
     activeCartId,
-    reviewContactCustomerId,
-    selectedAdminFranchiseId,
-    draftAddress,
-    draftPhone,
-    draftMessage,
-    voucherCode,
     setSelectedCustomer,
     setActiveCartId,
-    setReviewContactCustomerId,
-    setDraftAddress,
-    setDraftPhone,
-    setDraftMessage,
-    setVoucherCode,
   } = usePosSession();
 
   const [isLoadingCart, setIsLoadingCart] = useState(true);
   const [isMutatingCart, setIsMutatingCart] = useState(false);
   const [cart, setCart] = useState<CartDetail | null>(null);
+  const [draftAddressState, setDraftAddressState] = useState("");
+  const [draftPhoneState, setDraftPhoneState] = useState("");
+  const [draftMessageState, setDraftMessageState] = useState(DEFAULT_COUNTER_MESSAGE);
+  const [voucherCode, setVoucherCode] = useState("");
+
   const selectedCustomerIdRef = useRef<string | null>(selectedCustomer?.id ?? null);
-  const reviewContactCustomerIdRef = useRef<string | null>(reviewContactCustomerId);
-  const draftMessageRef = useRef(draftMessage);
+  const isDraftAddressDirtyRef = useRef(false);
+  const isDraftPhoneDirtyRef = useRef(false);
+  const isDraftMessageDirtyRef = useRef(false);
 
   const cartIdFromQuery = searchParams.get("cartId");
   const customerIdFromQuery = searchParams.get("customerId");
@@ -58,24 +53,9 @@ export const usePosReviewLoader = () => {
     cart?.franchise_id ?? null,
   );
 
-  const syncVoucherFromCart = useCallback(
-    (nextCart: CartDetail) => {
-      setVoucherCode(nextCart.voucher_code || "");
-    },
-    [setVoucherCode],
-  );
-
   useEffect(() => {
     selectedCustomerIdRef.current = selectedCustomer?.id ?? null;
   }, [selectedCustomer?.id]);
-
-  useEffect(() => {
-    reviewContactCustomerIdRef.current = reviewContactCustomerId;
-  }, [reviewContactCustomerId]);
-
-  useEffect(() => {
-    draftMessageRef.current = draftMessage;
-  }, [draftMessage]);
 
   const ensureCartDetail = useCallback((nextCart: CartDetail | null, action: string) => {
     if (!nextCart?._id) {
@@ -85,11 +65,29 @@ export const usePosReviewLoader = () => {
     return nextCart;
   }, []);
 
+  const syncVoucherFromCart = useCallback((nextCart: CartDetail) => {
+    setVoucherCode(nextCart.voucher_code || "");
+  }, []);
+
+  const setDraftAddress = useCallback((value: string) => {
+    isDraftAddressDirtyRef.current = true;
+    setDraftAddressState(value);
+  }, []);
+
+  const setDraftPhone = useCallback((value: string) => {
+    isDraftPhoneDirtyRef.current = true;
+    setDraftPhoneState(value);
+  }, []);
+
+  const setDraftMessage = useCallback((value: string) => {
+    isDraftMessageDirtyRef.current = true;
+    setDraftMessageState(value);
+  }, []);
+
   const hydrateReviewCart = useCallback(
     (nextCart: CartDetail, customer?: CustomerOption | null) => {
       setCart(nextCart);
       setActiveCartId(nextCart._id);
-      syncVoucherFromCart(nextCart);
 
       if (customer) {
         selectedCustomerIdRef.current = customer.id;
@@ -104,7 +102,7 @@ export const usePosReviewLoader = () => {
       selectedCustomerIdRef.current = nextCart.customer_id;
       setSelectedCustomer(buildCustomerOptionFromCart(nextCart));
     },
-    [setActiveCartId, setSelectedCustomer, syncVoucherFromCart],
+    [setActiveCartId, setSelectedCustomer],
   );
 
   const loadCustomerDetail = useCallback(async (customerId: string | null | undefined) => {
@@ -120,25 +118,35 @@ export const usePosReviewLoader = () => {
     }
   }, []);
 
-  const hydrateCheckoutDrafts = useCallback(
-    (nextCart: CartDetail, customer: CustomerOption | null) => {
-      const nextCustomerId = customer?.id ?? nextCart.customer_id ?? null;
+  const syncCheckoutDraftsFromCart = useCallback(
+    (
+      nextCart: CartDetail,
+      customer: CustomerOption | null,
+      options: { force?: boolean } = {},
+    ) => {
+      const { force = false } = options;
+      const nextAddress = customer?.address || nextCart.address || "";
+      const nextPhone = customer?.phone || nextCart.phone || "";
+      const nextMessage = nextCart.message || DEFAULT_COUNTER_MESSAGE;
 
-      if (reviewContactCustomerIdRef.current === nextCustomerId) {
-        return;
+      if (force || !isDraftAddressDirtyRef.current) {
+        setDraftAddressState(nextAddress);
+        isDraftAddressDirtyRef.current = false;
       }
 
-      setDraftAddress(customer?.address || nextCart.address || "");
-      setDraftPhone(customer?.phone || nextCart.phone || "");
-      setDraftMessage(
-        reviewContactCustomerIdRef.current
-          ? draftMessageRef.current
-          : nextCart.message || DEFAULT_COUNTER_MESSAGE,
-      );
-      reviewContactCustomerIdRef.current = nextCustomerId;
-      setReviewContactCustomerId(nextCustomerId);
+      if (force || !isDraftPhoneDirtyRef.current) {
+        setDraftPhoneState(nextPhone);
+        isDraftPhoneDirtyRef.current = false;
+      }
+
+      if (force || !isDraftMessageDirtyRef.current) {
+        setDraftMessageState(nextMessage);
+        isDraftMessageDirtyRef.current = false;
+      }
+
+      setVoucherCode(nextCart.voucher_code || "");
     },
-    [setDraftAddress, setDraftMessage, setDraftPhone, setReviewContactCustomerId],
+    [],
   );
 
   const refreshCartDetail = useCallback(
@@ -147,11 +155,14 @@ export const usePosReviewLoader = () => {
         await cartService.getCartDetail(targetCartId),
         "refreshCartDetail",
       );
+      const nextCustomer =
+        selectedCustomer?.id === nextCart.customer_id ? selectedCustomer : null;
 
       hydrateReviewCart(nextCart);
+      syncCheckoutDraftsFromCart(nextCart, nextCustomer);
       return nextCart;
     },
-    [ensureCartDetail, hydrateReviewCart],
+    [ensureCartDetail, hydrateReviewCart, selectedCustomer, syncCheckoutDraftsFromCart],
   );
 
   const loadReviewCart = useCallback(async () => {
@@ -163,25 +174,28 @@ export const usePosReviewLoader = () => {
         activeCartId,
         customerId: customerIdFromQuery,
         franchiseId: franchiseIdFromQuery,
-        selectedAdminFranchiseId,
       });
 
       if (!nextCart?._id) {
+        isDraftAddressDirtyRef.current = false;
+        isDraftPhoneDirtyRef.current = false;
+        isDraftMessageDirtyRef.current = false;
         setCart(null);
+        setActiveCartId(null);
         return;
       }
 
       const targetCustomerId = nextCart.customer_id || customerIdFromQuery;
       const shouldRefreshCustomerDetail =
-        Boolean(targetCustomerId) &&
-        (selectedCustomerIdRef.current !== targetCustomerId ||
-          reviewContactCustomerIdRef.current !== targetCustomerId);
+        Boolean(targetCustomerId) && selectedCustomerIdRef.current !== targetCustomerId;
       const nextCustomer = shouldRefreshCustomerDetail
         ? await loadCustomerDetail(targetCustomerId)
-        : null;
+        : selectedCustomer?.id === targetCustomerId
+          ? selectedCustomer
+          : null;
 
       hydrateReviewCart(nextCart, nextCustomer);
-      hydrateCheckoutDrafts(nextCart, nextCustomer);
+      syncCheckoutDraftsFromCart(nextCart, nextCustomer);
     } catch (error) {
       console.error("[OrderPOSReview] Failed to load review cart", error);
       showError("Không tải được cart kiểm tra đơn");
@@ -194,11 +208,12 @@ export const usePosReviewLoader = () => {
     cartIdFromQuery,
     customerIdFromQuery,
     franchiseIdFromQuery,
-    hydrateCheckoutDrafts,
     hydrateReviewCart,
     loadCustomerDetail,
-    selectedAdminFranchiseId,
+    selectedCustomer,
+    setActiveCartId,
     showError,
+    syncCheckoutDraftsFromCart,
   ]);
 
   useEffect(() => {
@@ -239,9 +254,9 @@ export const usePosReviewLoader = () => {
     setCart,
     resolvedCustomer,
     displayItems,
-    draftAddress,
-    draftPhone,
-    draftMessage,
+    draftAddress: draftAddressState,
+    draftPhone: draftPhoneState,
+    draftMessage: draftMessageState,
     voucherCode,
     isLoadingCart,
     isMutatingCart,
@@ -257,6 +272,7 @@ export const usePosReviewLoader = () => {
     ensureCartDetail,
     hydrateReviewCart,
     syncVoucherFromCart,
+    syncCheckoutDraftsFromCart,
     refreshCartDetail,
     loadReviewCart,
   };

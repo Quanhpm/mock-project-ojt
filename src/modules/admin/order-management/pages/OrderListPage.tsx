@@ -46,7 +46,7 @@ export const OrderListPage = () => {
         {/* Cột phải: Chi tiết đơn hàng (Detail) */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-sm ring-1 ring-black/5">
           {selectedOrderId ? (
-            <div className="h-full overflow-y-auto p-6 md:p-8 scrollbar-hide">
+            <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-6 md:p-8 scrollbar-hide">
               <OrderDetailPage
                 providedOrderId={selectedOrderId}
                 isEmbedded

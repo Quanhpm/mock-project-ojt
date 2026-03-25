@@ -186,30 +186,30 @@ const HomeHeader: React.FC = () => {
   }
 
   return (
-    <header className="bg-white shadow-sm md:sticky md:top-0 z-50">
+    <header className="sticky top-0 bg-white shadow-sm z-50">
       <div className="container mx-auto px-4">
         <div className="relative flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
-              className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[var(--cf-primary)]/20 text-[var(--cf-primary)] hover:bg-[var(--cf-secondary)]/10 transition-colors"
+              className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[var(--cf-primary)]/20 text-[var(--cf-primary)] hover:bg-[var(--cf-secondary)]/10 transition-colors"
               aria-label={isMobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
               aria-expanded={isMobileMenuOpen}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
 
-            <Link to="/" className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 flex items-center gap-2" onClick={closeMobileMenu}>
+            <Link to="/" className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 flex items-center gap-2" onClick={closeMobileMenu}>
               <img
                 src={logo2}
                 alt="Boutique Brews Logo"
-                className="h-12 md:h-16 w-auto"
+                className="h-12 lg:h-16 w-auto"
               />
             </Link>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-8">
             <Link
               to="/"
               className="text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
@@ -238,7 +238,7 @@ const HomeHeader: React.FC = () => {
 
           {franchises.length > 0 && (
             <div className="hidden lg:flex items-center gap-2 min-w-[230px]">
-              <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+              <Store size={16} className="text-[var(--cf-primary)]" />
               <select
                 value={selectedFranchiseId}
                 onChange={(event) => setFranchiseId(event.target.value)}
@@ -269,7 +269,7 @@ const HomeHeader: React.FC = () => {
 
             <Link
               to="/order-history"
-              className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="relative hidden lg:flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ClipboardClock />
               {processingOrdersCount > 0 && (
@@ -281,7 +281,7 @@ const HomeHeader: React.FC = () => {
 
             <Link
               to="/profile"
-              className="md:hidden inline-flex items-center justify-center p-1 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
+              className="lg:hidden inline-flex items-center justify-center p-1 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
               onClick={(event) => {
                 event.preventDefault();
                 navigateWithLoading('/profile', { closeMenu: true });
@@ -294,7 +294,7 @@ const HomeHeader: React.FC = () => {
               />
             </Link>
 
-            <div className="relative hidden md:block" ref={dropdownRef}>
+            <div className="relative hidden lg:block" ref={dropdownRef}>
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="!cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
@@ -305,14 +305,7 @@ const HomeHeader: React.FC = () => {
                   className="w-8 h-8 rounded-full object-cover"
                 />
                 <span className="font-medium text-[var(--cf-primary)]">{profile?.name}</span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isDropdownOpen && (
@@ -353,7 +346,7 @@ const HomeHeader: React.FC = () => {
       </div>
 
       <div
-        className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         aria-hidden={!isMobileMenuOpen}
       >
         <div className="absolute inset-0 bg-black/25" onClick={closeMobileMenu} />
@@ -409,7 +402,7 @@ const HomeHeader: React.FC = () => {
             {franchises.length > 0 && (
               <div className="mt-4 rounded-xl border border-[var(--cf-secondary)]/20 bg-white/70 px-3 py-3">
                 <label className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--cf-secondary)]">
-                  <span className="material-icons-outlined text-base text-[var(--cf-primary)]">storefront</span>
+                  <Store size={40} className="text-[var(--cf-primary)]" />
                   Chọn chi nhánh
                 </label>
                 <select

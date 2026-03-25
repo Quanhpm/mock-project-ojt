@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Clock3, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { OrderData } from '../order.types';
 import {
@@ -56,7 +57,7 @@ function OrderHistoryPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 px-4 md:px-20 py-10 max-w-[1280px] mx-auto w-full space-y-8 animate-pulse">
+      <main className="flex-1 px-4 sm:px-6 md:px-8 lg:px-20 py-8 md:py-10 max-w-7xl mx-auto w-full space-y-8 animate-pulse">
         <div className="h-40 rounded-2xl bg-zinc-200/70" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -76,9 +77,9 @@ function OrderHistoryPage() {
 
   if (errorMessage) {
     return (
-      <main className="flex-1 px-4 md:px-20 py-10 max-w-[1280px] mx-auto w-full">
+      <main className="flex-1 px-4 sm:px-6 md:px-8 lg:px-20 py-8 md:py-10 max-w-7xl mx-auto w-full">
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-10 text-center space-y-4">
-          <span className="material-symbols-outlined text-5xl text-rose-500">error</span>
+          <TriangleAlert className="size-12 text-rose-500 mx-auto" />
           <h2 className="text-2xl font-bold text-rose-700">Đã xảy ra lỗi</h2>
           <p className="text-rose-600">{errorMessage}</p>
           <button
@@ -93,13 +94,13 @@ function OrderHistoryPage() {
   }
 
   return (
-    <main className="flex-1 px-4 md:px-20 py-10 max-w-[1280px] mx-auto w-full space-y-12">
+    <main className="flex-1 px-4 sm:px-6 md:px-8 lg:px-20 py-8 md:py-10 max-w-7xl mx-auto w-full space-y-10 md:space-y-12">
       <OrderHero onContinueShopping={() => navigate('/menu')} />
     
       <OrderStatsCards stats={stats} />
 
       <section className="space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           <div className="w-full md:w-auto overflow-x-auto scrollbar-hide">
             <div className="inline-flex h-12 min-w-max items-center gap-1 rounded-xl bg-[#f5f1ed] p-1.5 shadow-inner">
               {filterOptions.map((option) => (
@@ -117,7 +118,7 @@ function OrderHistoryPage() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4 self-end">
+          <div className="flex items-center gap-4 self-start md:self-end">
             <p className="text-sm text-zinc-500">
               Hiển thị <span className="font-bold text-zinc-900">{filteredOrders.length}</span> trên{' '}
               <span className="font-bold text-zinc-900">{orders.length}</span> đơn hàng
@@ -128,7 +129,7 @@ function OrderHistoryPage() {
         {filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-primary/20">
             <div className="size-24 rounded-full bg-background-light flex items-center justify-center mb-4 text-primary">
-              <span className="material-symbols-outlined text-5xl">history</span>
+              <Clock3 className="size-12" />
             </div>
             <h3 className="text-xl font-bold text-[#161413] mb-2">Không có đơn hàng</h3>
             <p className="text-[#7f736c] mb-6 text-center max-w-xs">

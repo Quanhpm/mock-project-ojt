@@ -17,6 +17,7 @@ import {
   type ProductFormValues,
 } from "./productForm.schema";
 import { useProductImageUpload } from "./hooks/useProductImageUpload";
+import { CLOUDINARY_IMAGE_REQUIREMENT_TEXT } from "@/utils";
 
 const step2Schema = z.object({
   franchise_id: z.string().min(1, "Franchise is required"),
@@ -287,6 +288,9 @@ export default function ProductForm() {
                     </button>
                   </div>
                 )}
+                <p className="mt-2 text-xs text-slate-500">
+                  {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                </p>
                 {errors.image_url && <p className="text-xs text-red-600 mt-1">{errors.image_url.message}</p>}
               </div>
 
@@ -304,6 +308,9 @@ export default function ProductForm() {
                   )}
                   {isUploadingGalleryImages ? "Uploading..." : "Upload Additional Images"}
                 </button>
+                <p className="mt-2 text-xs text-slate-500">
+                  {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                </p>
                 {(additionalImages ?? []).length > 0 && (
                   <div className="mt-3 grid grid-cols-4 gap-2">
                     {(additionalImages ?? []).map((url, idx) => (

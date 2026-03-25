@@ -5,6 +5,10 @@ import { useUpdateCustomer } from "./hooks/useUpdateCustomer";
 import { useToast } from "@/hooks/use-toast.hook";
 import axios from "axios";
 import { ENV } from "@/config/env.config";
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from "@/utils";
 
 interface CustomerEditModalProps {
   customerId: string;
@@ -127,12 +131,11 @@ export default function CustomerEditModal({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      showError("Invalid file", "Please select an image file.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showError("File too large", "Maximum file size is 5MB.");
+
+    try {
+      validateCloudinaryImageFile(file);
+    } catch {
+      showError("Upload failed", CLOUDINARY_IMAGE_REQUIREMENT_TEXT);
       return;
     }
     const reader = new FileReader();
@@ -470,11 +473,18 @@ export default function CustomerEditModal({
                         <p style={{ margin: "0 0 2px 0", fontSize: "13px", fontWeight: "600", color: "#212529" }}>
                           Click to upload avatar
                         </p>
-                        <p style={{ margin: 0, fontSize: "11px", color: "#6c757d" }}>
-                          JPG, PNG, GIF — max 5MB
-                        </p>
                       </div>
                     )}
+                    <p
+                      style={{
+                        margin: "10px 0 0 0",
+                        fontSize: "11px",
+                        color: "#6c757d",
+                        textAlign: "center",
+                      }}
+                    >
+                      {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                    </p>
                   </div>
                 </div>
               </div>
