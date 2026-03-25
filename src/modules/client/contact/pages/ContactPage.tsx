@@ -27,7 +27,7 @@ function ContactPage() {
             <p className="text-[var(--cf-primary)]/70 text-sm md:text-base max-w-xl mx-auto leading-relaxed">Bạn có câu hỏi, ý tưởng mới hoặc đang tìm kiếm một đối tác đáng tin cậy? Đội ngũ của chúng tôi luôn sẵn sàng lắng nghe.</p>
           </div>
 
-          <div className={`flex md:grid md:grid-cols-3 gap-4 md:gap-6 mb-12 md:mb-20 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-2 px-1 -mx-1 transition-all duration-1000 delay-150 ${contactSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="hidden">
             {[
               { icon: <MapPin className="text-[var(--cf-primary)] w-6 h-6" />, title: 'Văn phòng làm việc', lines: ['123 Business Plaza, Tầng 5', 'New York, NY 10001'] },
               { icon: <Mail className="text-[var(--cf-primary)] w-6 h-6" />, title: 'Email liên hệ', lines: ['hello@boutiquebrews.com', 'support@boutiquebrews.com'] },

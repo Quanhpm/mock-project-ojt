@@ -17,13 +17,13 @@ function OrderPagination({
   const endItem = Math.min(currentPage * PAGE_SIZE, filteredCount);
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white rounded-2xl border border-zinc-200 shadow-xl">
-      <div className="text-sm text-[#5e544e]">
+    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between px-4 py-3 bg-white rounded-2xl border border-zinc-200 shadow-xl">
+      <div className="text-sm text-[#5e544e] text-center md:text-left">
         Hiển thị <span className="font-semibold text-[#161413]">{startItem}</span> đến{' '}
         <span className="font-semibold text-[#161413]">{endItem}</span> trong tổng số{' '}
         <span className="font-semibold text-[#161413]">{filteredCount}</span> đơn hàng
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center md:justify-end gap-2">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}

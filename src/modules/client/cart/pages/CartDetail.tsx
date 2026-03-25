@@ -22,7 +22,7 @@ function CartDetail() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[var(--cf-bg)] text-[var(--cf-dark)] bg-gradient-to-b from-[var(--cf-bg)] via-[var(--cf-bg)] to-white">
-      <main className="container mx-auto px-4 md:px-6 pb-20 pt-8 md:pt-10">
+      <main className="container mx-auto px-4 pb-32 pt-5 md:px-6 md:pb-20 md:pt-10">
         <CartDetailHeader
           itemCount={vm.cart.items.length}
           isCancellingCart={vm.isCancellingCart}
@@ -30,7 +30,7 @@ function CartDetail() {
           onOpenCancelCartConfirm={vm.openCancelCartConfirm}
         />
 
-        <div className="flex flex-col lg:flex-row gap-10 items-start">
+        <div className="flex flex-col items-start gap-6 lg:flex-row lg:gap-10">
           <CartDetailItemsSection
             items={vm.cart.items}
             isDeleting={vm.isDeleting}
