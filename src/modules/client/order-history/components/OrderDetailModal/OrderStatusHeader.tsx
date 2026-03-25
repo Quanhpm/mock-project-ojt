@@ -2,7 +2,7 @@ import { formatDate } from '@/utils';
 import { Info, ShoppingBasket } from 'lucide-react';
 import { statusConfig } from '../../order.config';
 import type { OrderData } from '../../order.types';
-import { getStatusIcon, STATUS_COLORS } from './order-detail.constants';
+import { STATUS_COLORS, STATUS_ICONS } from './order-detail.constants';
 
 interface InfoCardProps {
   title: string;
@@ -33,7 +33,7 @@ function OrderStatusHeader({ order }: OrderStatusHeaderProps) {
   const config = statusConfig[statusCode];
   const statusColors = STATUS_COLORS[statusCode];
   const customerMessage = order.message?.trim();
-  const StatusIcon = getStatusIcon(statusCode);
+  const StatusIcon = STATUS_ICONS[statusCode];
 
   return (
     <>
@@ -77,18 +77,6 @@ function OrderStatusHeader({ order }: OrderStatusHeaderProps) {
           </div>
         </div>
       </div>
-
-      {shouldShowFailedReason ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4">
-          <div className="flex items-start gap-3">
-            <span className="material-symbols-outlined text-xl text-rose-600">report</span>
-            <div className="flex-1">
-              <p className="mb-1 text-sm font-semibold text-rose-700">Lý do hủy đơn</p>
-              <p className="text-sm leading-relaxed text-rose-900">{failedReason}</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
