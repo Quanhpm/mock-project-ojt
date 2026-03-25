@@ -3,43 +3,22 @@ import { statusConfig } from '../order.config';
 import type { OrderData } from '../order.types';
 
 const getStatusBadgeClass = (statusCode: OrderData['status']['code']) => {
-  if (statusCode === 'COMPLETED') {
-    return 'bg-emerald-500/10 text-emerald-500';
-  }
+  const config = statusConfig[statusCode];
+  return `${config.bgLight} ${config.textColor}`;
+};
 
-  if (statusCode === 'CANCELLED') {
-    return 'bg-rose-500/10 text-rose-500';
-  }
-
-  if (statusCode === 'READY_FOR_PICKUP') {
-    return 'bg-blue-600/10 text-blue-600';
-  }
-
-  if (statusCode === 'CONFIRMED') {
-    return 'bg-cyan-500/10 text-cyan-500';
-  }
-
-  return 'bg-amber-500/10 text-amber-500';
+const STATUS_DOT_CLASS_MAP: Record<OrderData['status']['code'], string> = {
+  CANCELLED: 'bg-red-600',
+  DRAFT: 'bg-orange-500',
+  CONFIRMED: 'bg-sky-500',
+  PREPARING: 'bg-blue-600',
+  READY_FOR_PICKUP: 'bg-teal-500',
+  OUT_FOR_DELIVERY: 'bg-amber-600',
+  COMPLETED: 'bg-emerald-600',
 };
 
 const getStatusDotClass = (statusCode: OrderData['status']['code']) => {
-  if (statusCode === 'COMPLETED') {
-    return 'bg-emerald-500';
-  }
-
-  if (statusCode === 'CANCELLED') {
-    return 'bg-rose-500';
-  }
-
-  if (statusCode === 'READY_FOR_PICKUP') {
-    return 'bg-blue-600';
-  }
-
-  if (statusCode === 'CONFIRMED') {
-    return 'bg-cyan-500';
-  }
-
-  return 'bg-amber-500 animate-pulse';
+  return `${STATUS_DOT_CLASS_MAP[statusCode]} ${statusCode === 'PREPARING' ? 'animate-pulse' : ''}`.trim();
 };
 
 interface OrderListContainerProps {

@@ -36,7 +36,6 @@ interface CartDetailSummaryAsideProps {
   onApplyVoucher: () => void;
   onRemoveVouchers: () => void;
   onCheckout: (payload: CheckoutPayload) => Promise<boolean>;
-  getCheckoutPrefill: () => Promise<CheckoutPayload>;
   formatCurrency: (amount: number) => string;
 }
 
@@ -80,12 +79,10 @@ function CartDetailSummaryAside({
   onApplyVoucher,
   onRemoveVouchers,
   onCheckout,
-  getCheckoutPrefill,
   formatCurrency,
 }: CartDetailSummaryAsideProps) {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isSubmittingCheckout, setIsSubmittingCheckout] = useState(false);
-  const [isPrefillingCheckout, setIsPrefillingCheckout] = useState(false);
 
   const {
     register,
@@ -118,22 +115,15 @@ function CartDetailSummaryAside({
     };
   }, [isCheckoutModalOpen, isSubmittingCheckout]);
 
-  const openCheckoutModal = async () => {
-    if (isSubmittingCheckout || isPrefillingCheckout) return;
+  const openCheckoutModal = () => {
+    if (isSubmittingCheckout) return;
 
+    reset({
+      address: '',
+      phone: '',
+      message: '',
+    });
     setIsCheckoutModalOpen(true);
-    setIsPrefillingCheckout(true);
-
-    try {
-      const checkoutPrefill = await getCheckoutPrefill();
-      reset({
-        address: checkoutPrefill.address,
-        phone: checkoutPrefill.phone,
-        message: checkoutPrefill.message ?? '',
-      });
-    } finally {
-      setIsPrefillingCheckout(false);
-    }
   };
 
   const closeCheckoutModal = () => {
@@ -275,17 +265,13 @@ function CartDetailSummaryAside({
 
           <button
             className="mt-4 flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#7F5539,#A26A45)] px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_16px_30px_rgba(127,85,57,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(127,85,57,0.3)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isPrefillingCheckout || isSubmittingCheckout}
+            disabled={isSubmittingCheckout}
             onClick={() => {
-              void openCheckoutModal();
+              openCheckoutModal();
             }}
             type="button"
           >
-            {isPrefillingCheckout
-              ? 'Đang chuẩn bị...'
-              : isSubmittingCheckout
-                ? 'Đang xử lý...'
-                : 'Tiến hành thanh toán'}
+            {isSubmittingCheckout ? 'Đang xử lý...' : 'Tiến hành thanh toán'}
           </button>
         </div>
       </aside>
@@ -340,7 +326,7 @@ function CartDetailSummaryAside({
                   </div>
                   <input
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    disabled={isSubmittingCheckout}
                     id="checkout-address"
                     placeholder="Nhập địa chỉ giao hàng"
                     type="text"
@@ -365,7 +351,7 @@ function CartDetailSummaryAside({
                   </div>
                   <input
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    disabled={isSubmittingCheckout}
                     id="checkout-phone"
                     placeholder="Nhập số điện thoại"
                     type="text"
@@ -390,7 +376,7 @@ function CartDetailSummaryAside({
                   </div>
                   <textarea
                     className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
-                    disabled={isSubmittingCheckout || isPrefillingCheckout}
+                    disabled={isSubmittingCheckout}
                     id="checkout-message"
                     placeholder="Ví dụ: giao trong giờ hành chính..."
                     rows={3}
@@ -413,10 +399,10 @@ function CartDetailSummaryAside({
                 </button>
                 <button
                   className="flex-1 rounded-full bg-[linear-gradient(135deg,#7F5539,#A26A45)] px-4 py-3 text-sm font-black uppercase tracking-[0.14em] text-white shadow-[0_16px_30px_rgba(127,85,57,0.24)] transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmittingCheckout || isPrefillingCheckout}
+                  disabled={isSubmittingCheckout}
                   type="submit"
                 >
-                  {isPrefillingCheckout ? 'Đang tải...' : isSubmittingCheckout ? 'Đang xử lý...' : 'Xác nhận'}
+                  {isSubmittingCheckout ? 'Đang xử lý...' : 'Xác nhận'}
                 </button>
               </div>
             </form>

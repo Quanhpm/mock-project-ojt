@@ -97,7 +97,8 @@ export const useOrders = () => {
           order.status.code === 'DRAFT' ||
           order.status.code === 'PREPARING' ||
           order.status.code === 'CONFIRMED' ||
-          order.status.code === 'READY_FOR_PICKUP',
+          order.status.code === 'READY_FOR_PICKUP' ||
+          order.status.code === 'OUT_FOR_DELIVERY',
       );
     } else if (selectedFilter === 'cancelled') {
       filtered = filtered.filter((order) => order.status.code === 'CANCELLED');

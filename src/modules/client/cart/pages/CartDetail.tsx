@@ -60,7 +60,6 @@ function CartDetail() {
             onApplyVoucher={vm.applyVoucherForCart}
             onRemoveVouchers={vm.removeAllVoucherFromCart}
             onCheckout={vm.handleCheckout}
-            getCheckoutPrefill={vm.getCheckoutPrefill}
             formatCurrency={vm.formatCurrency}
           />
         </div>

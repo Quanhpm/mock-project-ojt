@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { formatDate } from '@/utils';
 import type { OrderStatusCode } from './order-detail.constants';
 
-type TimelineCode = 'DRAFT' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'COMPLETED';
+type TimelineCode = 'DRAFT' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'OUT_FOR_DELIVERY' | 'COMPLETED';
 
 interface TimelineStepData {
   code: TimelineCode;
@@ -81,6 +81,7 @@ function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
       { code: 'CONFIRMED', label: 'Đã xác nhận', description: 'Cửa hàng đã xác nhận đơn hàng' },
       { code: 'PREPARING', label: 'Đang chuẩn bị', description: 'Đang pha chế thức uống' },
       { code: 'READY_FOR_PICKUP', label: 'Sẵn sàng nhận món', description: 'Đơn hàng đã sẵn sàng tại cửa hàng' },
+      { code: 'OUT_FOR_DELIVERY', label: 'Đang giao hàng', description: 'Đơn hàng đang được giao đến khách hàng' },
       { code: 'COMPLETED', label: 'Hoàn thành', description: 'Đã giao hàng thành công' },
     ],
     [createdAt],
