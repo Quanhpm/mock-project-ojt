@@ -42,6 +42,8 @@ export interface OrderData {
     items_count: number;
     created_at: string;
   };
+  cancelReason?: string | null;
+  message?: string | null;
   orderItems: OrderItemData[];
 }
 

@@ -21,8 +21,8 @@ function Item() {
   }
 
   return (
-    <div className="h-full bg-[var(--cf-bg)] px-8 py-4 flex items-center justify-center">
-      <main className="w-full grid grid-cols-1 md:grid-cols-10 gap-8 items-start">
+    <div className="min-h-full bg-[var(--cf-bg)] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex items-start justify-center">
+      <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-10 gap-5 sm:gap-6 lg:gap-8 items-start">
         {/* Product image gallery */}
         <ItemImageGallery
           productName={vm.product.name}
