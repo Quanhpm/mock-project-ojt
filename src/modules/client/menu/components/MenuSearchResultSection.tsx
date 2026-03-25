@@ -32,7 +32,7 @@ function MenuSearchResultSection({
           Không tìm thấy sản phẩm phù hợp
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-4">
           {filteredProducts.map((product) => (
             <ProductCard
               key={product.product_id}

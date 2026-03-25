@@ -13,12 +13,6 @@ function MenuPage() {
 
   return (
     <div className="bg-[var(--cf-bg)]">
-      <MenuMobileCategoryTabs
-        categories={vm.categories}
-        activeCategory={vm.activeCategory}
-        onSelectCategory={vm.scrollToSection}
-      />
-
       <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-6 md:px-8 lg:gap-10 lg:px-10">
         <MenuDesktopCategorySidebar
           categories={vm.categories}
@@ -33,6 +27,12 @@ function MenuPage() {
             search={vm.search}
             onSearchChange={vm.handleSearchChange}
             onSearchKeyDown={vm.handleKeyDown}
+          />
+
+          <MenuMobileCategoryTabs
+            categories={vm.categories}
+            activeCategory={vm.activeCategory}
+            onSelectCategory={vm.scrollToSection}
           />
 
           {vm.showSearchResults ? (
