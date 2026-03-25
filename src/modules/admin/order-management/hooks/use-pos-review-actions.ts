@@ -30,6 +30,11 @@ interface UsePosReviewActionsOptions {
   ensureCartDetail: (nextCart: CartDetail | null, action: string) => CartDetail;
   hydrateReviewCart: (nextCart: CartDetail, customer?: CustomerOption | null) => void;
   syncVoucherFromCart: (nextCart: CartDetail) => void;
+  syncCheckoutDraftsFromCart: (
+    nextCart: CartDetail,
+    customer: CustomerOption | null,
+    options?: { force?: boolean },
+  ) => void;
   refreshCartDetail: (targetCartId: string) => Promise<CartDetail>;
   loadReviewCart: () => Promise<void>;
   products: PosProduct[];
@@ -59,6 +64,7 @@ export const usePosReviewActions = ({
   ensureCartDetail,
   hydrateReviewCart,
   syncVoucherFromCart,
+  syncCheckoutDraftsFromCart,
   refreshCartDetail,
   loadReviewCart,
   products,
@@ -84,6 +90,57 @@ export const usePosReviewActions = ({
     setEditingItem(null);
     closeConfigurator();
   }, [closeConfigurator]);
+
+  const saveCartInfo = useCallback(
+    async ({ silent = true }: { silent?: boolean } = {}) => {
+      if (!cart?._id) {
+        return null;
+      }
+
+      try {
+        setIsMutatingCart(true);
+        const nextCart = ensureCartDetail(
+          await cartService.updateCart(cart._id, {
+            address: draftAddress.trim(),
+            phone: draftPhone.trim(),
+            message: draftMessage,
+          }),
+          "updateCart",
+        );
+
+        hydrateReviewCart(nextCart);
+        syncCheckoutDraftsFromCart(nextCart, null, { force: true });
+
+        if (!silent) {
+          showSuccess("Đã lưu thông tin cart");
+        }
+
+        return nextCart;
+      } catch (error) {
+        console.error("[OrderPOSReview] Failed to save cart info", error);
+
+        if (!silent) {
+          showError("Không lưu được thông tin cart");
+        }
+
+        return null;
+      } finally {
+        setIsMutatingCart(false);
+      }
+    },
+    [
+      cart?._id,
+      draftAddress,
+      draftMessage,
+      draftPhone,
+      ensureCartDetail,
+      hydrateReviewCart,
+      setIsMutatingCart,
+      showError,
+      showSuccess,
+      syncCheckoutDraftsFromCart,
+    ],
+  );
 
   const resolveProductForCartItem = useCallback(
     (item: CartItem) => {
@@ -146,6 +203,7 @@ export const usePosReviewActions = ({
 
       setCart(nextCart);
       syncVoucherFromCart(nextCart);
+      syncCheckoutDraftsFromCart(nextCart, null);
       showSuccess("Áp dụng voucher thành công");
     } catch (error) {
       console.error("[OrderPOSReview] Failed to apply voucher", error);
@@ -153,7 +211,17 @@ export const usePosReviewActions = ({
     } finally {
       setIsMutatingCart(false);
     }
-  }, [cart?._id, ensureCartDetail, setCart, setIsMutatingCart, showError, showSuccess, syncVoucherFromCart, voucherCode]);
+  }, [
+    cart?._id,
+    ensureCartDetail,
+    setCart,
+    setIsMutatingCart,
+    showError,
+    showSuccess,
+    syncCheckoutDraftsFromCart,
+    syncVoucherFromCart,
+    voucherCode,
+  ]);
 
   const removeVoucher = useCallback(async () => {
     if (!cart?._id) {
@@ -167,6 +235,7 @@ export const usePosReviewActions = ({
 
       setCart(nextCart);
       syncVoucherFromCart(nextCart);
+      syncCheckoutDraftsFromCart(nextCart, null);
       showSuccess("Đã bỏ voucher khỏi cart");
     } catch (error) {
       console.error("[OrderPOSReview] Failed to remove voucher", error);
@@ -174,7 +243,16 @@ export const usePosReviewActions = ({
     } finally {
       setIsMutatingCart(false);
     }
-  }, [cart?._id, ensureCartDetail, setCart, setIsMutatingCart, showError, showSuccess, syncVoucherFromCart]);
+  }, [
+    cart?._id,
+    ensureCartDetail,
+    setCart,
+    setIsMutatingCart,
+    showError,
+    showSuccess,
+    syncCheckoutDraftsFromCart,
+    syncVoucherFromCart,
+  ]);
 
   const addOneMoreOfCartItem = useCallback(
     async (item: CartItem) => {
@@ -196,6 +274,7 @@ export const usePosReviewActions = ({
 
         setCart(nextCart);
         syncVoucherFromCart(nextCart);
+        syncCheckoutDraftsFromCart(nextCart, null);
       } catch (error) {
         console.error("[OrderPOSReview] Failed to increase cart item quantity", error);
         showError("Không tăng được số lượng món");
@@ -203,7 +282,15 @@ export const usePosReviewActions = ({
         setIsMutatingCart(false);
       }
     },
-    [cart, ensureCartDetail, setCart, setIsMutatingCart, showError, syncVoucherFromCart],
+    [
+      cart,
+      ensureCartDetail,
+      setCart,
+      setIsMutatingCart,
+      showError,
+      syncCheckoutDraftsFromCart,
+      syncVoucherFromCart,
+    ],
   );
 
   const decreaseCartItemQuantity = useCallback(
@@ -299,6 +386,7 @@ export const usePosReviewActions = ({
         );
 
         hydrateReviewCart(nextCart);
+        syncCheckoutDraftsFromCart(nextCart, null);
       } else {
         const currentOptionsMap = new Map(
           (currentCartItemInput.options ?? []).map((option) => [
@@ -401,6 +489,7 @@ export const usePosReviewActions = ({
     setIsMutatingCart,
     showError,
     showSuccess,
+    syncCheckoutDraftsFromCart,
   ]);
 
   const checkoutCart = useCallback(async () => {
@@ -519,6 +608,7 @@ export const usePosReviewActions = ({
     canApplyVoucher,
     editCartItem,
     closeProductConfigurator,
+    saveCartInfo,
     openCancelCurrentOrderModal,
     closeCancelCurrentOrderModal,
     applyVoucher,

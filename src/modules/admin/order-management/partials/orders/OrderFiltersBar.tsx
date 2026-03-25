@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { ChevronDown, ListFilter, Search } from "lucide-react";
 import { ORDER_STATUS_OPTIONS } from "../../config/order-status.config";
 import type { OrderStatus } from "../../models/order.models";
 
@@ -20,8 +20,7 @@ export const OrderFiltersBar = ({
   return (
     <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-col gap-4">
-        {/* Top row: Search and Refresh */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search
               size={18}
@@ -38,31 +37,36 @@ export const OrderFiltersBar = ({
 
           <button
             onClick={onRefresh}
-            className="flex h-[46px] items-center justify-center rounded-2xl bg-amber-700 px-6 text-sm font-bold text-white shadow-lg shadow-amber-700/20 transition hover:bg-amber-800 active:scale-95"
+            className="flex h-[46px] shrink-0 items-center justify-center rounded-2xl bg-amber-700 px-6 text-sm font-bold text-white shadow-lg shadow-amber-700/20 transition hover:bg-amber-800 active:scale-95"
           >
             Làm mới
           </button>
         </div>
 
-        {/* Bottom row: Status Tabs */}
-        <div className="hide-scroll flex w-full items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {ORDER_STATUS_OPTIONS.map((option) => {
-            const isActive = status === option.value;
-            const label = option.value === "" ? "Tất cả" : option.label;
-            return (
-              <button
-                key={option.label}
-                onClick={() => onStatusChange(option.value as OrderStatus | "")}
-                className={`flex shrink-0 items-center whitespace-nowrap rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-widest transition-all active:scale-95 ${
-                  isActive
-                    ? "bg-amber-700 text-white shadow-md shadow-amber-700/25 ring-1 ring-amber-700"
-                    : "bg-gray-50 text-gray-500 hover:bg-amber-50 hover:text-amber-700"
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
+        <div className="rounded-2xl bg-gray-50/80 p-3 ring-1 ring-black/5">
+          <div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">
+            <ListFilter size={14} />
+            <span>Lọc theo trạng thái</span>
+          </div>
+
+          <div className="relative">
+            <select
+              value={status}
+              onChange={(event) => onStatusChange(event.target.value as OrderStatus | "")}
+              className="w-full appearance-none rounded-2xl border-none bg-white py-3.5 pl-4 pr-11 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-200 outline-none transition focus:ring-4 focus:ring-amber-700/10"
+            >
+              {ORDER_STATUS_OPTIONS.map((option) => (
+                <option key={option.label} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <ChevronDown
+              size={18}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+          </div>
         </div>
       </div>
     </div>

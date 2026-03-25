@@ -84,6 +84,7 @@ export interface OrderDetail {
   voucher_type?: string;
   voucher_value?: number;
   loyalty_points_used?: number;
+  failed_reason?: string;
   franchise_name?: string;
   customer_name?: string;
   staff_name?: string;
@@ -103,6 +104,22 @@ export interface FranchiseOrderListItem {
   final_amount: number;
   created_at: string;
 }
+
+export interface StaffQueueOrder {
+  _id: string;
+  code: string;
+  status: OrderStatus;
+  customer_name?: string;
+  phone?: string;
+  franchise_id: string;
+  franchise_name?: string;
+  created_at: string;
+  order_items: OrderItem[];
+  detailLoadState?: "idle" | "loading" | "loaded" | "failed";
+  detailLoadFailed?: boolean;
+}
+
+export type StaffQueueSortMode = "ALL" | "CONFIRMED" | "READY_TO_PICKUP";
 
 export type PaymentStatus = "PENDING" | "PAID" | "REFUNDED";
 

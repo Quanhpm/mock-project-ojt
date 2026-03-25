@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Plus } from "lucide-react";
+import { cn } from "@/utils/cn";
 import type { PosProduct } from "../../models/menu.models";
 
 const currency = new Intl.NumberFormat("vi-VN");
@@ -16,20 +17,40 @@ export const PosProductCard = memo(({
   onAdd,
 }: PosProductCardProps) => {
   const defaultPrice = product.sizes.find((size) => size.is_available)?.price ?? product.sizes[0]?.price ?? 0;
+  const isSoldOut =
+    product.sizes.length > 0 && product.sizes.every((size) => size.is_available === false);
+  const isInteractionDisabled = disabled || isSoldOut;
 
   return (
     <div
+      aria-disabled={isInteractionDisabled}
       onClick={() => {
-        if (!disabled) onAdd(product);
+        if (!isInteractionDisabled) {
+          onAdd(product);
+        }
       }}
-      className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[24px] bg-white p-3 shadow-sm ring-1 ring-black/5 transition-all hover:shadow-xl hover:ring-amber-500/50"
+      className={cn(
+        "group flex h-full flex-col overflow-hidden rounded-[24px] bg-white p-3 shadow-sm ring-1 ring-black/5 transition-all",
+        isInteractionDisabled
+          ? "cursor-not-allowed opacity-50 grayscale"
+          : "cursor-pointer hover:shadow-xl hover:ring-amber-500/50",
+      )}
     >
       <div className="relative mb-4 aspect-[4/3] w-full shrink-0 overflow-hidden rounded-[16px] bg-gray-50">
+        {isSoldOut ? (
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-gray-900/80 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white">
+            Hết hàng
+          </span>
+        ) : null}
+
         {product.image_url ? (
           <img 
             src={product.image_url} 
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            className={cn(
+              "h-full w-full object-cover transition-transform duration-500",
+              isInteractionDisabled ? "" : "group-hover:scale-110",
+            )}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-gray-300">
@@ -56,10 +77,12 @@ export const PosProductCard = memo(({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onAdd(product);
+              if (!isInteractionDisabled) {
+                onAdd(product);
+              }
             }}
-            disabled={disabled}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-700 transition hover:bg-amber-600 hover:text-white disabled:opacity-50"
+            disabled={isInteractionDisabled}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-700 transition hover:bg-amber-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={20} strokeWidth={2.5} />
           </button>

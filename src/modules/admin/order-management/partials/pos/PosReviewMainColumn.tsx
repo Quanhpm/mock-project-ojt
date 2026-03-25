@@ -21,6 +21,7 @@ interface PosReviewMainColumnProps {
   onBack: () => void;
   onDraftAddressChange: (value: string) => void;
   onDraftMessageChange: (value: string) => void;
+  onSaveCartInfo: () => void | Promise<void>;
   onEditItem: (item: CartItem) => void;
   onIncreaseItem: (item: CartItem) => void | Promise<void>;
   onDecreaseItem: (item: CartItem) => void | Promise<void>;
@@ -37,6 +38,7 @@ export const PosReviewMainColumn = ({
   onBack,
   onDraftAddressChange,
   onDraftMessageChange,
+  onSaveCartInfo,
   onEditItem,
   onIncreaseItem,
   onDecreaseItem,
@@ -198,6 +200,9 @@ export const PosReviewMainColumn = ({
           <textarea
             value={draftMessage}
             onChange={(event) => onDraftMessageChange(event.target.value)}
+            onBlur={() => {
+              void onSaveCartInfo();
+            }}
             disabled={isMutatingCart}
             className="min-h-[100px] w-full resize-none border-0 border-b-2 border-gray-200 bg-transparent px-0 py-4 text-gray-900 transition-all placeholder:text-gray-400 focus:border-amber-800 focus:ring-0 disabled:opacity-50"
             placeholder="Thêm ghi chú tổng cho cửa hàng (Ví dụ: Mang về, nhiều đá...)"
@@ -220,6 +225,9 @@ export const PosReviewMainColumn = ({
                 type="text"
                 value={draftAddress}
                 onChange={(event) => onDraftAddressChange(event.target.value)}
+                onBlur={() => {
+                  void onSaveCartInfo();
+                }}
                 disabled={isMutatingCart}
                 placeholder="Nhập địa chỉ..."
                 className="mt-1 w-full border-none bg-transparent p-0 text-sm text-gray-600 focus:ring-0 disabled:opacity-50"

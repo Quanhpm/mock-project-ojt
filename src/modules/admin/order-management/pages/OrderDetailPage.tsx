@@ -9,10 +9,10 @@ import {
   Share2,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { cn } from "@/utils/cn";
 import {
   PAYMENT_STATUS_BADGES,
   PAYMENT_STATUS_LABELS,
-  canTransitionOrderStatus,
 } from "../config/order-status.config";
 import { useOrderDetailPage } from "../hooks/use-order-detail-page";
 import { useOrderFranchiseContext } from "../hooks/use-order-franchise-context";
@@ -161,16 +161,16 @@ export const OrderDetailPage = ({
 
   const totalPromotionDiscount = order.promotion_discount ?? 0;
   const totalVoucherDiscount = order.voucher_discount ?? 0;
-  const canConfirmDraftOrder = canTransitionOrderStatus({
-    currentStatus: order.status,
-    nextStatus: "CONFIRMED",
-    paymentStatus: payment?.status,
-  });
   const paymentMethod = manualPaymentMethod ?? resolvePaymentMethodSelection(payment?.method);
   const isPaymentActionDisabled = !payment?._id || payment.status !== "PENDING" || isConfirmingPayment;
 
   return (
-    <div className={`mx-auto w-full max-w-7xl bg-white ${isEmbedded ? "" : "pb-12"}`}>
+    <div
+      className={cn(
+        "w-full min-w-0",
+        isEmbedded ? "bg-transparent" : "mx-auto max-w-7xl bg-white pb-12",
+      )}
+    >
       <div className="space-y-8">
         <OrderProgressHeader
           order={order}
@@ -190,8 +190,15 @@ export const OrderDetailPage = ({
           }}
         />
 
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] xl:gap-14">
-          <div className="space-y-8">
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-8",
+            isEmbedded
+              ? "xl:grid-cols-[minmax(0,1fr)_320px]"
+              : "lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-14",
+          )}
+        >
+          <div className="min-w-0 space-y-8">
             <OrderInvoiceSheet
               ref={printRef}
               order={order}
@@ -239,7 +246,14 @@ export const OrderDetailPage = ({
             </div>
           </div>
 
-          <div className="order-detail-sidebar space-y-10 border-l border-gray-100 pl-10">
+          <div
+            className={cn(
+              "order-detail-sidebar min-w-0 space-y-10 border-gray-100",
+              isEmbedded
+                ? "border-t pt-8 xl:border-l xl:border-t-0 xl:pl-8 xl:pt-0"
+                : "border-t pt-8 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0 xl:pl-10",
+            )}
+          >
             <div className="space-y-6">
               <h2 className="text-2xl font-black tracking-tight text-gray-800">GIÁ TIỀN</h2>
 
@@ -422,18 +436,7 @@ export const OrderDetailPage = ({
                 </div>
               )}
 
-              {order.status === "DRAFT" && (
-                <div
-                  className={`rounded-2xl border px-4 py-3 text-sm font-medium ${canConfirmDraftOrder
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-amber-200 bg-amber-50 text-amber-800"
-                    }`}
-                >
-                  {canConfirmDraftOrder
-                    ? "Đơn chưa thanh toán đã đủ điều kiện chuyển sang Đã xác nhận."
-                    : "Muốn chuyển đơn từ Chưa thanh toán sang Đã xác nhận thì payment phải ở trạng thái Đã thanh toán."}
-                </div>
-              )}
+              
             </div>
           </div>
         </div>
