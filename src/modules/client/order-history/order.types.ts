@@ -28,8 +28,7 @@ export interface OrderData {
   };
   channel: string;
   status: {
-    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' |
-     'DRAFT' | 'OUT_FOR_DELIVERY';
+    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'DRAFT';
     label: string;
     color: string;
   };

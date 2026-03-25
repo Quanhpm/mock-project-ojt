@@ -2,14 +2,8 @@ import { useState } from 'react';
 import { Clock3, TriangleAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { OrderData } from '../order.types';
-import {
-  FILTER_ACTIVE_BASE_CLASS,
-  FILTER_INACTIVE_CLASS,
-  filterActiveHoverClassMap,
-  filterActiveTextClassMap,
-  filterInactiveHoverClassMap,
-  filterOptions,
-} from '../order.config';
+import type { FilterOption } from '../order.types';
+import { filterOptions, statusConfig } from '../order.config';
 import { useOrders } from '../hooks/useOrders';
 import {
   OrderDetailModal,
@@ -18,6 +12,32 @@ import {
   OrderListContainer,
   OrderPagination,
 } from '../components';
+
+const FILTER_ACTIVE_BASE_CLASS = 'bg-white border border-zinc-200 shadow-md';
+
+const FILTER_ACTIVE_TEXT_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'text-primary',
+  completed: statusConfig.COMPLETED.textColor,
+  pending: statusConfig.PREPARING.textColor,
+  cancelled: statusConfig.CANCELLED.textColor,
+};
+
+const FILTER_ACTIVE_HOVER_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'hover:text-primary hover:bg-primary/10',
+  completed: 'hover:text-emerald-700 hover:bg-emerald-50',
+  pending: 'hover:text-blue-700 hover:bg-blue-50',
+  cancelled: 'hover:text-rose-700 hover:bg-rose-50',
+};
+
+const FILTER_INACTIVE_CLASS =
+  'text-zinc-600 border border-transparent';
+
+const FILTER_INACTIVE_HOVER_CLASS_MAP: Record<FilterOption, string> = {
+  all: 'hover:text-primary hover:bg-primary/10',
+  completed: 'hover:text-emerald-600 hover:bg-emerald-50',
+  pending: 'hover:text-blue-600 hover:bg-blue-50',
+  cancelled: 'hover:text-rose-600 hover:bg-rose-50',
+};
 
 function OrderHistoryPage() {
   const navigate = useNavigate();
@@ -109,8 +129,8 @@ function OrderHistoryPage() {
                   onClick={() => actions.handleFilterChange(option.value)}
                   className={`h-full w-fit whitespace-nowrap rounded-lg px-4 text-sm font-semibold transition-all cursor-pointer active:scale-95 ${
                     selectedFilter === option.value
-                      ? `${FILTER_ACTIVE_BASE_CLASS} ${filterActiveTextClassMap[option.value]} ${filterActiveHoverClassMap[option.value]}`
-                      : `${FILTER_INACTIVE_CLASS} ${filterInactiveHoverClassMap[option.value]}`
+                      ? `${FILTER_ACTIVE_BASE_CLASS} ${FILTER_ACTIVE_TEXT_CLASS_MAP[option.value]} ${FILTER_ACTIVE_HOVER_CLASS_MAP[option.value]}`
+                      : `${FILTER_INACTIVE_CLASS} ${FILTER_INACTIVE_HOVER_CLASS_MAP[option.value]}`
                   }`}
                 >
                   {option.label}

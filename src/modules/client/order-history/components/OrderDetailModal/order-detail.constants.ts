@@ -42,11 +42,6 @@ export const STATUS_COLORS: Record<
     text: 'text-zinc-700',
     badge: 'bg-zinc-500/10 text-zinc-700',
   },
-  OUT_FOR_DELIVERY: {
-    card: 'bg-amber-500/10 border-amber-500/20',
-    text: 'text-amber-700',
-    badge: 'bg-amber-500/10 text-amber-700',
-  },
 };
 
 export const STATUS_ICONS: Record<OrderStatusCode, LucideIcon> = {
