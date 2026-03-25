@@ -141,10 +141,6 @@ const mapBackendStatusToUi = (status?: RawOrderApi['status']): OrderData['status
     return 'READY_FOR_PICKUP';
   }
 
-  if (normalized === 'OUT_FOR_DELIVERY') {
-    return 'OUT_FOR_DELIVERY';
-  }
-
   if (
     normalized === 'CONFIRMED' ||
     normalized === 'PENDING'
@@ -271,8 +267,7 @@ export const buildSummaryFromOrders = (
         order.status.code === 'DRAFT' ||
         order.status.code === 'PREPARING' ||
         order.status.code === 'CONFIRMED' ||
-        order.status.code === 'READY_FOR_PICKUP' ||
-        order.status.code === 'OUT_FOR_DELIVERY',
+        order.status.code === 'READY_FOR_PICKUP',
     ).length,
     total_revenue: {
       value: orders.reduce((total, order) => total + order.pricing.total, 0),
