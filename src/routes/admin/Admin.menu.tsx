@@ -11,6 +11,8 @@ import {
   Folder,
   Ticket,
   Award,
+  CreditCard,
+  Truck,
 } from "lucide-react";
 import React from "react";
 import type { RoleCode } from "@/config/permissions.config";
@@ -99,7 +101,15 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE,
     icon: <Package size={18} />,
     component: React.lazy(() => import("@/modules/admin/product-franchise/pages/ProductFranchisePage")),
-    module: "franchise",
+    module: "products",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Product Franchise Legacy",
+    path: ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE_LEGACY,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-franchise/pages/ProductFranchisePage")),
+    module: "products",
     hideFromSidebar: true,
   },
   {
@@ -254,7 +264,20 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     icon: <ShoppingCart size={18} />,
     component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderManagement")),
     module: "orders",
-    activeExcludes: [ROUTER_URL.ADMIN_ROUTER.ORDER_POS],
+    activeExcludes: [
+      ROUTER_URL.ADMIN_ROUTER.ORDER_POS,
+      ROUTER_URL.ADMIN_ROUTER.ORDER_STAFF_QUEUE,
+    ],
+    allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
+  },
+  {
+    label: "Order Queue",
+    path: ROUTER_URL.ADMIN_ROUTER.ORDER_STAFF_QUEUE,
+    icon: <ShoppingCart size={18} />,
+    component: React.lazy(
+      () => import("@/modules/admin/order-management/pages/StaffOrderQueuePage"),
+    ),
+    module: "orders",
     allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
   },
   {
@@ -282,6 +305,26 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     module: "orders",
     hideFromSidebar: true,
     allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
+  },
+  {
+    label: "Payments",
+    path: ROUTER_URL.ADMIN_ROUTER.PAYMENT,
+    icon: <CreditCard size={18} />,
+    component: React.lazy(
+      () => import("@/modules/admin/payment-management/pages/PaymentHistoryPage"),
+    ),
+    module: "payments",
+    allowedRoles: ["ADMIN", "MANAGER"],
+  },
+  {
+    label: "Deliveries",
+    path: ROUTER_URL.ADMIN_ROUTER.DELIVERY,
+    icon: <Truck size={18} />,
+    component: React.lazy(
+      () => import("@/modules/admin/delivery-management/pages/DeliveryManagementPage"),
+    ),
+    module: "deliveries",
+    allowedRoles: ["ADMIN", "STAFF"],
   },
   {
     label: "Shifts",

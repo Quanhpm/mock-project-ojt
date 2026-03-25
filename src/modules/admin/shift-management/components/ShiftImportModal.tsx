@@ -7,7 +7,7 @@ import {
   parseShiftImportFile,
   prepareShiftImportRows,
   type ShiftImportPreviewRow,
-  type ShiftImportReferenceData,
+  type ShiftAssignmentLookupData,
   type ShiftImportValidationIssue,
 } from '../utils/shift-import.excel'
 
@@ -18,8 +18,8 @@ interface ShiftImportFormValues {
 interface ShiftImportModalProps {
   isOpen: boolean
   franchiseName: string
-  referenceData: ShiftImportReferenceData
-  isReferenceLoading: boolean
+  lookupData: ShiftAssignmentLookupData
+  isLookupLoading: boolean
   isSubmitting: boolean
   onClose: () => void
   onSubmit: (payload: BulkAssignShiftRequest) => Promise<boolean>
@@ -28,8 +28,8 @@ interface ShiftImportModalProps {
 export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
   isOpen,
   franchiseName,
-  referenceData,
-  isReferenceLoading,
+  lookupData,
+  isLookupLoading,
   isSubmitting,
   onClose,
   onSubmit,
@@ -93,15 +93,20 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
   }
 
   const handleDownloadTemplate = () => {
-    if (referenceData.shifts.length === 0 || referenceData.users.length === 0) {
+    const hasReferenceUsers = lookupData.users.some((user) => user.userEmail.trim() !== '')
+
+    if (lookupData.shifts.length === 0 || !hasReferenceUsers) {
       warning(
-        'Reference data is limited',
-        'The template will be downloaded, but the References sheet may be incomplete.',
+        'Lookup data is limited',
+        'The template will still be downloaded, but the References sheet may not list every shift or user email.',
       )
     }
 
-    downloadShiftImportTemplate(referenceData)
-    success('Template downloaded', 'One Excel file with Import and References sheets is ready.')
+    downloadShiftImportTemplate(lookupData)
+    success(
+      'Template downloaded',
+      'The Excel template is ready with friendly import columns and a References sheet.',
+    )
   }
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,7 +135,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
         return
       }
 
-      const preparedResult = prepareShiftImportRows(parseResult.rows, referenceData)
+      const preparedResult = prepareShiftImportRows(parseResult.rows, lookupData)
       setPreparedItems(preparedResult.items)
       setPreviewRows(preparedResult.previewRows)
       setValidationIssues(preparedResult.issues)
@@ -219,6 +224,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                     <h4 className="text-base font-semibold text-slate-900">Template</h4>
                     <p className="mt-1 text-sm leading-6 text-slate-500">
                       Download one Excel file with two sheets: <span className="font-medium text-slate-700">Import</span> and <span className="font-medium text-slate-700">References</span>.
+                      The import sheet uses <span className="font-medium text-slate-700">work_date</span>, <span className="font-medium text-slate-700">shift_name</span>, and <span className="font-medium text-slate-700">user_email</span>.
                     </p>
                   </div>
                 </div>
@@ -226,7 +232,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                 <button
                   type="button"
                   onClick={handleDownloadTemplate}
-                  disabled={isReferenceLoading}
+                  disabled={isLookupLoading}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="material-symbols-outlined text-[18px]">download</span>
@@ -251,7 +257,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                 <button
                   type="button"
                   onClick={handlePickFile}
-                  disabled={isParsingFile || isSubmitting || isReferenceLoading}
+                  disabled={isParsingFile || isSubmitting || isLookupLoading}
                   className="flex w-full items-center gap-4 rounded-[24px] border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all hover:border-primary hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm">
@@ -262,11 +268,11 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                       {selectedFileName || 'Choose a file to import'}
                     </div>
                     <div className="mt-1 text-sm leading-6 text-slate-500">
-                      {isReferenceLoading
-                        ? 'Loading franchise reference data...'
+                      {isLookupLoading
+                        ? 'Loading franchise lookup data...'
                         : isParsingFile
                           ? 'Parsing and validating file...'
-                          : 'Use shift_id and user_id from the References sheet.'}
+                          : 'Use work_date, shift_name, and user_email from the template.'}
                     </div>
                   </div>
                 </button>
@@ -311,7 +317,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                   disabled={
                     isSubmitting ||
                     isParsingFile ||
-                    isReferenceLoading ||
+                    isLookupLoading ||
                     preparedItems.length === 0 ||
                     validationIssues.length > 0
                   }
@@ -361,7 +367,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                   </div>
                   <h5 className="mt-4 text-lg font-semibold text-slate-900">Preview will appear here</h5>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Choose a template file to see parsed assignments, resolved shift names, and staff information.
+                    Choose a template file to see resolved shift details and matched user information before import.
                   </p>
                 </div>
               ) : (
@@ -409,11 +415,8 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                           <div className="mt-2 text-base font-semibold text-slate-900">
                             {row.shiftName || 'Unresolved shift'}
                           </div>
-                          <div
-                            title={row.shiftId}
-                            className="mt-2 truncate font-mono text-xs text-slate-500"
-                          >
-                            {row.shiftId || '-'}
+                          <div className="mt-2 text-sm text-slate-500">
+                            {row.shiftTime || 'No matched shift time'}
                           </div>
                         </div>
 
@@ -425,12 +428,6 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                             {row.userName || 'Unresolved user'}
                           </div>
                           <div className="mt-1 text-sm text-slate-500">{row.userEmail || '-'}</div>
-                          <div
-                            title={row.userId}
-                            className="mt-2 truncate font-mono text-xs text-slate-500"
-                          >
-                            {row.userId || '-'}
-                          </div>
                         </div>
                       </div>
 

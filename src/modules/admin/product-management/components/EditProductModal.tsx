@@ -17,6 +17,7 @@ import {
   type ProductFormValues,
 } from "./productForm.schema";
 import { useProductImageUpload } from "./hooks/useProductImageUpload";
+import { CLOUDINARY_IMAGE_REQUIREMENT_TEXT } from "@/utils";
 
 interface EditProductModalProps {
   isOpen: boolean;
@@ -442,6 +443,9 @@ export default function EditProductModal({
                           </button>
                         </div>
                       )}
+                      <p className="mt-2 text-xs text-slate-500">
+                        {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                      </p>
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
@@ -475,6 +479,9 @@ export default function EditProductModal({
                         )}
                         {isUploadingGalleryImages ? "Uploading..." : "Upload"}
                       </button>
+                      <p className="mt-2 text-xs text-slate-500">
+                        {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                      </p>
 
                       <Controller
                         control={control}

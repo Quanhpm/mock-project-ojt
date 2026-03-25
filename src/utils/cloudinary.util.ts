@@ -1,5 +1,18 @@
 import { CLOUDINARY_CONFIG } from '@/config';
 
+export const CLOUDINARY_MAX_IMAGE_SIZE_IN_BYTES = 5 * 1024 * 1024;
+export const CLOUDINARY_IMAGE_REQUIREMENT_TEXT = 'yêu cầu file ảnh dưới 5mb';
+
+export const validateCloudinaryImageFile = (file: File) => {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please select an image file.');
+  }
+
+  if (file.size > CLOUDINARY_MAX_IMAGE_SIZE_IN_BYTES) {
+    throw new Error('Image must be smaller than 5MB.');
+  }
+};
+
 /**
  * Upload a file to Cloudinary
  * @param file - File to upload
@@ -21,6 +34,10 @@ export async function uploadToCloudinary(
 
   if (folder) {
     formData.append('folder', folder);
+  }
+
+  if (file instanceof File && file.type.startsWith('image/')) {
+    validateCloudinaryImageFile(file);
   }
 
   try {
@@ -59,6 +76,7 @@ export async function uploadImage(
   file: File,
   folder: string = 'images'
 ): Promise<string> {
+  validateCloudinaryImageFile(file);
   const result = await uploadToCloudinary(file, folder);
   return result.secure_url;
 }
@@ -79,9 +97,8 @@ export async function uploadVideo(
 
 /**
  * Delete a resource from Cloudinary
- * @param publicId - Public ID of the resource
  */
-export async function deleteFromCloudinary(publicId: string): Promise<void> {
+export async function deleteFromCloudinary(): Promise<void> {
   // Note: Deletion requires admin API key and should be done from backend
   // This is kept here for reference
   console.warn(

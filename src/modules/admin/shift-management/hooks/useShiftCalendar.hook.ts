@@ -14,7 +14,7 @@ import type {
   UserItem,
 } from '@/apis/endpoints'
 import type { ShiftFilters } from './useShiftFilters.hook'
-import type { ShiftImportReferenceData } from '../utils/shift-import.excel'
+import type { ShiftAssignmentLookupData } from '../utils/shift-import.excel'
 import type { ShiftCalendarViewMode } from '../stores/shift-management.store'
 import { getRoleCode, useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
 
@@ -617,7 +617,7 @@ export const useShiftCalendar = (
     return franchisesMap.get(franchiseId)?.name || franchiseNameById.get(franchiseId) || ''
   }, [franchiseId, franchiseNameById, franchisesMap])
 
-  const shiftImportReferenceData = useMemo<ShiftImportReferenceData>(() => {
+  const shiftAssignmentLookupData = useMemo<ShiftAssignmentLookupData>(() => {
     const shifts = Array.from(shiftsMap.values())
       .filter((shift) => {
         const shiftId = shift.id ?? shift._id
@@ -631,7 +631,7 @@ export const useShiftCalendar = (
       }))
 
     const seenUserIds = new Set<string>()
-    const users = userFranchiseRoles.reduce<ShiftImportReferenceData['users']>((acc, role) => {
+    const users = userFranchiseRoles.reduce<ShiftAssignmentLookupData['users']>((acc, role) => {
       const userId = role.user_id?.trim()
       const userEmail = role.user_email?.trim() || ''
 
@@ -682,7 +682,7 @@ export const useShiftCalendar = (
     shiftGroupsByDate,
     visibleShiftGroupsByDate,
     selectedFranchiseName,
-    shiftImportReferenceData,
+    shiftAssignmentLookupData,
     isLoading,
     error,
     reloadCalendarData,

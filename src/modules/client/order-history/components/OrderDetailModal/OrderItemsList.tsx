@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/utils';
+import { Circle } from 'lucide-react';
 import fallbackProductImage from '@/assets/img/logo2.png';
 import type { OrderItemData } from '../../order.types';
 
@@ -52,7 +53,7 @@ function OrderItemsList({ items }: OrderItemsListProps) {
                       key={option.id}
                       className="flex items-center gap-1 text-xs text-slate-700"
                     >
-                      <span className="material-symbols-outlined text-[12px] leading-none">fiber_manual_record</span>
+                      <Circle className="size-2 fill-current text-slate-500" />
                       <span className="truncate">
                         {option.name} x{option.quantity} ({formatCurrency(option.finalLineTotal)})
                       </span>

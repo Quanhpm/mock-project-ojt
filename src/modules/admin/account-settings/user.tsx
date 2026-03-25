@@ -10,9 +10,12 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
-import { useChangePassword } from "./hooks/use-change-password.hook";
 import { useUpdateProfile } from "./hooks/use-update-profile.hook";
 import { ROUTER_URL } from "@/routes/router.const";
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from "@/utils";
 
 // ==================== INTERFACES ====================
 interface UserProfile {
@@ -166,15 +169,10 @@ const AccountSettingsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      showError("Vui lòng chọn file ảnh (jpg, png, webp...)");
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      showError("Ảnh không được vượt quá 5MB");
+    try {
+      validateCloudinaryImageFile(file);
+    } catch {
+      showError("Upload thất bại", CLOUDINARY_IMAGE_REQUIREMENT_TEXT);
       return;
     }
 
@@ -338,6 +336,11 @@ const AccountSettingsPage: React.FC = () => {
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {userProfile.name}
                 </h3>
+                {isEditing && (
+                  <p className="mt-3 text-xs text-stone-500">
+                    {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                  </p>
+                )}
                 <span className="inline-block px-4 py-1.5 bg-amber-100 text-amber-800 text-sm font-medium rounded-full">
                   {userProfile.role}
                 </span>

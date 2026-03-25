@@ -1,6 +1,10 @@
 import { useRef, useState } from 'react';
 import { useCloudinaryUpload } from '@/hooks';
 import { useToast } from '@/hooks/use-toast.hook';
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from '@/utils';
 
 interface AvatarUploadProps {
   value: string;
@@ -16,12 +20,10 @@ function AvatarUpload({ value, onChange, isEditMode, name = '' }: AvatarUploadPr
   const { error: showError } = useToast();
 
   const handleFile = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      showError('Vui lòng chọn file ảnh hợp lệ.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showError('Ảnh phải nhỏ hơn 5MB.');
+    try {
+      validateCloudinaryImageFile(file);
+    } catch {
+      showError(CLOUDINARY_IMAGE_REQUIREMENT_TEXT);
       return;
     }
     try {
@@ -88,8 +90,14 @@ function AvatarUpload({ value, onChange, isEditMode, name = '' }: AvatarUploadPr
           <p className="text-xs text-gray-500 text-center">
             Kéo thả hoặc <span className="text-primary font-semibold">chọn file</span>
           </p>
-          <p className="text-[10px] text-gray-400">PNG, JPG, WEBP • Tối đa 5MB</p>
+          <p className="text-[10px] text-gray-400">PNG, JPG, WEBP</p>
         </div>
+      )}
+
+      {isEditMode && (
+        <p className="text-[10px] text-gray-400 text-center">
+          {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+        </p>
       )}
 
       {/* Hidden file input */}

@@ -5,10 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useCreateUser } from '../hooks/useCreateUser.hook'
 import type { RoleSelectItem } from '@/apis'
-import { Upload, X } from 'lucide-react'
+import { Eye, EyeOff, Upload, X } from 'lucide-react'
 import axios from 'axios'
 import { ENV } from '@/config/env.config'
 import { useToast } from '@/hooks/use-toast.hook'
+import { CLOUDINARY_IMAGE_REQUIREMENT_TEXT, validateCloudinaryImageFile } from '@/utils'
 
 // ──────── Zod Schema ────────
 const userCreateSchema = z
@@ -42,6 +43,9 @@ const STEP1_FIELDS: (keyof UserCreateFormValues)[] = [
 const inputClass =
   'mt-2 w-full h-11 px-3 rounded-md border border-[#d1d5db] bg-white focus:bg-white focus:border-[#B08968] focus:outline-none text-sm transition-colors'
 
+const inputClassWithoutMargin =
+  'w-full h-11 px-3 rounded-md border border-[#d1d5db] bg-white focus:bg-white focus:border-[#B08968] focus:outline-none text-sm transition-colors'
+
 const errorClass = 'mt-1 text-xs text-[#ef4444]'
 
 const labelClass = 'text-sm font-semibold text-[#374151]'
@@ -67,6 +71,8 @@ export const UserCreateForm: React.FC = () => {
 
   // Cloudinary upload state
   const [isUploading, setIsUploading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -123,9 +129,12 @@ export const UserCreateForm: React.FC = () => {
 
       setValue('avatar_url', response.data.secure_url)
       showSuccess('Avatar uploaded successfully', 'Profile picture has been uploaded.')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Avatar Upload Error:', err)
-      showError('Upload failed', err.message || 'Unable to upload image.')
+      showError(
+        'Upload failed',
+        err instanceof Error ? err.message : 'Unable to upload image.',
+      )
     } finally {
       setIsUploading(false)
     }
@@ -134,12 +143,10 @@ export const UserCreateForm: React.FC = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        showError('Invalid file', 'Please select an image file.')
-        return
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        showError('File too large', 'Maximum size is 5MB.')
+      try {
+        validateCloudinaryImageFile(file)
+      } catch {
+        showError('Upload failed', CLOUDINARY_IMAGE_REQUIREMENT_TEXT)
         return
       }
       handleImageUpload(file)
@@ -239,39 +246,44 @@ export const UserCreateForm: React.FC = () => {
 
             {/* AVATAR */}
             <div className="flex justify-center mb-8">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={handleFileChange}
-              />
-              {avatarUrl ? (
-                <div className="relative">
-                  <img
-                    src={avatarUrl}
-                    className="w-24 h-24 rounded-full object-cover border"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute -top-2 -right-2 bg-white border rounded-full p-1 shadow"
+              <div className="text-center">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleFileChange}
+                />
+                {avatarUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={avatarUrl}
+                      className="w-24 h-24 rounded-full object-cover border"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 bg-white border rounded-full p-1 shadow"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-24 h-24 rounded-full border-2 border-dashed border-[#DDB892] flex items-center justify-center cursor-pointer hover:border-[#B08968] transition"
                   >
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-24 h-24 rounded-full border-2 border-dashed border-[#DDB892] flex items-center justify-center cursor-pointer hover:border-[#B08968] transition"
-                >
-                  {isUploading ? (
-                    <span className="text-xs text-[#B08968]">Uploading...</span>
-                  ) : (
-                    <Upload size={20} className="text-[#B08968]" />
-                  )}
-                </div>
-              )}
+                    {isUploading ? (
+                      <span className="text-xs text-[#B08968]">Uploading...</span>
+                    ) : (
+                      <Upload size={20} className="text-[#B08968]" />
+                    )}
+                  </div>
+                )}
+                <p className="mt-3 text-xs text-slate-500">
+                  {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                </p>
+              </div>
             </div>
 
             {/* NAME */}
@@ -307,11 +319,21 @@ export const UserCreateForm: React.FC = () => {
                 <label className={labelClass}>
                   Password <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  {...register('password')}
-                  className={inputClass}
-                />
+                <div className="relative mt-2">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    {...register('password')}
+                    className={`${inputClassWithoutMargin} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-[#7F5539] transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className={errorClass}>{errors.password.message}</p>
                 )}
@@ -320,11 +342,21 @@ export const UserCreateForm: React.FC = () => {
                 <label className={labelClass}>
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  {...register('confirmPassword')}
-                  className={inputClass}
-                />
+                <div className="relative mt-2">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    {...register('confirmPassword')}
+                    className={`${inputClassWithoutMargin} pr-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-3 flex items-center text-slate-400 hover:text-[#7F5539] transition-colors"
+                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className={errorClass}>{errors.confirmPassword.message}</p>
                 )}
