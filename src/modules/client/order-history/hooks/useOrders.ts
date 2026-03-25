@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { CheckCircle2, CircleEllipsis, Receipt } from 'lucide-react';
+import { CheckCircle2, CircleEllipsis, ClipboardList } from 'lucide-react';
 import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
 import { useClientAuthStore } from '@/modules/client/auth-client';
 import { PAGE_SIZE } from '../order.config';
@@ -67,7 +67,7 @@ export const useOrders = () => {
         key: 'total',
         label: 'Tổng đơn hàng',
         value: summary.total_orders.toString(),
-        icon: Receipt,
+        icon: ClipboardList,
         iconClass: 'bg-primary/10 text-primary',
       },
       {
