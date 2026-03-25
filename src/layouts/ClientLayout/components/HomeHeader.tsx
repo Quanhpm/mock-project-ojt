@@ -10,7 +10,8 @@ import { normalizeOrdersPayload } from '@/modules/client/order-history/order.uti
 import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
 import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import { useLoadingStore } from '@/stores/loading.store';
-import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2, Sparkles, Gem, Store, ChevronDown } from 'lucide-react';
+import { ShoppingCart, ClipboardClock, User, LogOut, Menu, X, House, CupSoda, MapPin, Building2, Globe, Share2, Sparkles, Gem } from 'lucide-react';
+const DEFAULT_AVATAR_URL = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1774416364/656316159_2765483763813101_1192292787245113307_n_kr1os8.png?fbclid=IwZXh0bgNhZW0CMTAAYnJpZBExMEU4VTBtbWMxR1BqV3JJQnNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR7mDjwZ2GYTsnzs9LxPUaahnkXp2BCJjlLXBWw4D10khK11nfzUFnqKzf7phw_aem_c0TH6FN1XaCmQQSHionzKw';
 
 const HomeHeader: React.FC = () => {
   const { logout } = useAuth();
@@ -287,7 +288,7 @@ const HomeHeader: React.FC = () => {
               }}
             >
               <img
-                src={profile?.avatar_url || 'https://i.pravatar.cc/150'}
+                src={profile?.avatar_url || DEFAULT_AVATAR_URL}
                 alt={profile?.name}
                 className="w-8 h-8 rounded-full object-cover"
               />
@@ -299,7 +300,7 @@ const HomeHeader: React.FC = () => {
                 className="!cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--cf-surface)] hover:bg-[var(--cf-accent-light)] transition-colors"
               >
                 <img
-                  src={profile?.avatar_url || 'https://i.pravatar.cc/150'}
+                  src={profile?.avatar_url || DEFAULT_AVATAR_URL}
                   alt={profile?.name}
                   className="w-8 h-8 rounded-full object-cover"
                 />
@@ -425,7 +426,7 @@ const HomeHeader: React.FC = () => {
           <div className="mx-4 mt-5 p-3 rounded-xl bg-transparent">
             <div className="flex items-center gap-3">
               <img
-                src={profile?.avatar_url || 'https://i.pravatar.cc/150'}
+                src={profile?.avatar_url || DEFAULT_AVATAR_URL}
                 alt={profile?.name}
                 className="w-11 h-11 rounded-full object-cover"
               />
