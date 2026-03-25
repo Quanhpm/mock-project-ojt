@@ -12,7 +12,7 @@ function MenuPage() {
   const vm = useMenuPage();
 
   return (
-    <div className="min-h-screen bg-[var(--cf-bg)]">
+    <div className="bg-[var(--cf-bg)]">
       <div className="mx-auto flex w-full max-w-[1600px] gap-6 px-4 pb-10 pt-6 md:px-8 lg:gap-10 lg:px-10">
         <MenuDesktopCategorySidebar
           categories={vm.categories}
@@ -23,16 +23,16 @@ function MenuPage() {
         <section className="flex min-w-0 flex-1 flex-col gap-8">
           <MenuHero />
 
-          <MenuMobileCategoryTabs
-            categories={vm.categories}
-            activeCategory={vm.activeCategory}
-            onSelectCategory={vm.scrollToSection}
-          />
-
           <MenuControlBar
             search={vm.search}
             onSearchChange={vm.handleSearchChange}
             onSearchKeyDown={vm.handleKeyDown}
+          />
+
+          <MenuMobileCategoryTabs
+            categories={vm.categories}
+            activeCategory={vm.activeCategory}
+            onSelectCategory={vm.scrollToSection}
           />
 
           {vm.showSearchResults ? (

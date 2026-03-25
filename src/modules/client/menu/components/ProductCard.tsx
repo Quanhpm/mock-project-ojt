@@ -9,12 +9,12 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
         <div
             key={product.product_id}
             onClick={() => navigate(`/product/${slugify(product.name)}`, { state: { franchiseId, productId: product.product_id } })}
-            className="group flex items-center justify-between gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
+            className="group flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 p-4 rounded-xl bg-[var(--cf-surface)] border border-[var(--cf-secondary)]/20 cursor-pointer hover:shadow-xl hover:shadow-[var(--cf-primary)]/5 transition-all"
         >
             {/* Product Info */}
-            <div className="flex items-center gap-6 flex-1">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-6 flex-1 min-w-0">
                 {/* Image */}
-                <div className="relative overflow-hidden rounded-lg size-24 shrink-0 bg-[var(--cf-bg)]">
+                <div className="relative overflow-hidden rounded-lg size-20 md:size-24 shrink-0 bg-[var(--cf-bg)] self-center md:self-auto">
                     {product.image_url ? (
                         <img
                             src={product.image_url}
@@ -33,18 +33,18 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
                 </div>
 
                 {/* Details */}
-                <div className="flex flex-col">
-                    <h3 className="text-lg font-bold text-[var(--cf-primary)]">{product.name}</h3>
+                <div className="flex flex-col min-w-0 text-center md:text-left">
+                    <h3 className="text-lg font-bold text-[var(--cf-primary)] truncate">{product.name}</h3>
                     {/* <span className="text-xs font-mono text-[var(--cf-secondary)] mb-1">#{product.SKU}</span> */}
-                    <p className="text-sm text-[var(--cf-secondary)] line-clamp-2 max-w-md">
+                    <p className="text-sm text-[var(--cf-secondary)] line-clamp-2">
                         {product.description}
                     </p>
                 </div>
             </div>
 
             {/* Price and Action */}
-            <div className="flex flex-col items-end gap-3 min-w-[120px]">
-                <div className="text-right">
+            <div className="flex flex-col md:flex-col md:items-center items-center md:items-end gap-3 md:gap-3 shrink-0">
+                <div className="text-center md:text-right">
                     <span className="text-xl font-bold text-[var(--cf-dark)]">
                         {product.sizes[0].price.toLocaleString('vi-VN')} ₫
                     </span>
@@ -55,10 +55,13 @@ function ProductCard({ product, franchiseId }: { product: MenuProduct; franchise
                     )} */}
                 </div>
                 <button
-                    className="bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95 flex items-center gap-2"
+                    className="hidden md:flex items-center justify-center gap-2 bg-[var(--cf-primary)] hover:bg-[var(--cf-dark)] text-white px-5 py-2 rounded-lg text-sm font-bold transition-all transform active:scale-95"
                 >
-                    <span className="material-icons-outlined text-[18px]">add</span>
-                    Thêm
+                    <span className="material-icons-outlined text-[18px] leading-none">
+                        add
+                    </span>
+
+                    <span className="leading-none">Thêm</span>
                 </button>
             </div>
         </div>
