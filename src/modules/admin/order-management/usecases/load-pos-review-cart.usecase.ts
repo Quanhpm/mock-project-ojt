@@ -7,7 +7,6 @@ interface LoadPosReviewCartUsecaseInput {
   activeCartId?: string | null;
   customerId?: string | null;
   franchiseId?: string | null;
-  selectedAdminFranchiseId?: string | null;
 }
 
 export const loadPosReviewCartUsecase = async ({
@@ -15,7 +14,6 @@ export const loadPosReviewCartUsecase = async ({
   activeCartId,
   customerId,
   franchiseId,
-  selectedAdminFranchiseId,
 }: LoadPosReviewCartUsecaseInput): Promise<CartDetail | null> => {
   if (cartId) {
     return cartService.getCartDetail(cartId);
@@ -26,7 +24,7 @@ export const loadPosReviewCartUsecase = async ({
   }
 
   if (customerId) {
-    return getActiveCartUsecase(customerId, franchiseId ?? selectedAdminFranchiseId ?? undefined);
+    return getActiveCartUsecase(customerId, franchiseId ?? undefined);
   }
 
   return null;

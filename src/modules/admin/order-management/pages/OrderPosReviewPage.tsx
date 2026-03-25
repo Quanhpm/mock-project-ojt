@@ -35,6 +35,7 @@ export const OrderPosReviewPage = () => {
     setVoucherCode,
     editCartItem,
     closeProductConfigurator,
+    saveCartInfo,
     saveEditedCartItem,
     setConfiguredSize,
     setConfiguredNote,
@@ -77,6 +78,9 @@ export const OrderPosReviewPage = () => {
           onBack={goBackToBuilder}
           onDraftAddressChange={setDraftAddress}
           onDraftMessageChange={setDraftMessage}
+          onSaveCartInfo={() => {
+            void saveCartInfo();
+          }}
           onEditItem={editCartItem}
           onIncreaseItem={addOneMoreOfCartItem}
           onDecreaseItem={decreaseCartItemQuantity}
@@ -93,6 +97,9 @@ export const OrderPosReviewPage = () => {
           canApplyVoucher={canApplyVoucher}
           canCheckout={canCheckout}
           onDraftPhoneChange={setDraftPhone}
+          onSaveCartInfo={() => {
+            void saveCartInfo();
+          }}
           onVoucherCodeChange={setVoucherCode}
           onApplyVoucher={applyVoucher}
           onRemoveVoucher={removeVoucher}

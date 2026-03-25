@@ -12,6 +12,7 @@ interface PosReviewSummarySidebarProps {
   canApplyVoucher: boolean;
   canCheckout: boolean;
   onDraftPhoneChange: (value: string) => void;
+  onSaveCartInfo: () => void | Promise<void>;
   onVoucherCodeChange: (value: string) => void;
   onApplyVoucher: () => void | Promise<void>;
   onRemoveVoucher?: () => void | Promise<void>;
@@ -27,6 +28,7 @@ export const PosReviewSummarySidebar = ({
   canApplyVoucher,
   canCheckout,
   onDraftPhoneChange,
+  onSaveCartInfo,
   onVoucherCodeChange,
   onApplyVoucher,
   onRemoveVoucher,
@@ -64,6 +66,9 @@ export const PosReviewSummarySidebar = ({
                 type="tel"
                 value={draftPhone}
                 onChange={(event) => onDraftPhoneChange(event.target.value)}
+                onBlur={() => {
+                  void onSaveCartInfo();
+                }}
                 disabled={isMutatingCart}
                 className="border-none bg-transparent p-0 text-right font-medium text-gray-900 placeholder:text-gray-400 focus:ring-0 disabled:opacity-50"
                 placeholder="Nhập SĐT..."

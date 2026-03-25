@@ -1,6 +1,5 @@
 import { PosCategoryTabs } from "../partials/pos/PosCategoryTabs";
 import { PosDraftSidebar } from "../partials/pos/PosDraftSidebar";
-import { PosExistingActiveCartModal } from "../partials/pos/PosExistingActiveCartModal";
 import { PosFranchiseSelectionGate } from "../partials/pos/PosFranchiseSelectionGate";
 import { PosHeader } from "../partials/pos/PosHeader";
 import { PosProductConfigModal } from "../partials/pos/PosProductConfigModal";
@@ -27,10 +26,8 @@ export const OrderPosPage = () => {
     isMutatingCart,
     isCheckingActiveCart,
     isSwitchingFranchise,
-    hasPersistedCart,
-    existingActiveCart,
+    activeCartId,
     canContinue,
-    isExistingCartModalOpen,
     isProductConfiguratorOpen,
     isEditingConfiguredProduct,
     productBeingConfigured,
@@ -62,9 +59,6 @@ export const OrderPosPage = () => {
     decreaseCartItemQuantity,
     removeCartItem,
     continueToReview,
-    closeExistingCartModal,
-    useExistingServerCart,
-    mergeDraftIntoExistingCart,
   } = useOrderPosPage();
 
   return (
@@ -104,12 +98,20 @@ export const OrderPosPage = () => {
 
             <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
               {franchiseId ? (
-                <PosProductGrid
-                  products={products}
-                  isLoading={isLoadingMenu}
-                  disabled={isMutatingCart || isCheckingActiveCart}
-                  onAdd={addProductToCart}
-                />
+                <div className="space-y-4">
+                  {!selectedCustomer ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
+                      Chọn khách hàng trước để tải giỏ hàng đang hoạt động và bắt đầu thêm món.
+                    </div>
+                  ) : null}
+
+                  <PosProductGrid
+                    products={products}
+                    isLoading={isLoadingMenu}
+                    disabled={!selectedCustomer || isMutatingCart || isCheckingActiveCart}
+                    onAdd={addProductToCart}
+                  />
+                </div>
               ) : (
                 <div className="flex h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white px-6 text-center">
                   <p className="text-lg font-semibold text-gray-900">Chưa chọn chi nhánh phục vụ</p>
@@ -129,7 +131,7 @@ export const OrderPosPage = () => {
             customerResults={customerResults}
             isSearchingCustomers={isSearchingCustomers}
             isMutatingCart={isMutatingCart || isCheckingActiveCart}
-            hasPersistedCart={hasPersistedCart}
+            cartId={activeCartId}
             onCustomerKeywordChange={setCustomerKeyword}
             onSearchCustomers={searchCustomers}
             onSelectCustomer={selectCustomer}
@@ -169,18 +171,6 @@ export const OrderPosPage = () => {
           />
         </main>
       )}
-
-      <PosExistingActiveCartModal
-        open={isExistingCartModalOpen}
-        existingCart={existingActiveCart}
-        draftItems={displayItems}
-        isSubmitting={isMutatingCart}
-        onClose={closeExistingCartModal}
-        onUseExistingCart={useExistingServerCart}
-        onMergeDraftIntoCart={() => {
-          void mergeDraftIntoExistingCart();
-        }}
-      />
     </>
   );
 };

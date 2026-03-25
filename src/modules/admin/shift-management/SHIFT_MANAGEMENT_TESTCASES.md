@@ -50,7 +50,7 @@ Khi test, lưu ý đây là behavior hiện tại của hệ thống:
 
 - `Shift View` chỉ hiển thị shift group của những ngày đang có assignment
 - Nếu một shift đã được tạo nhưng chưa có ai được assign vào ngày đó, calendar chưa hiện shift đó ở `Shift View`
-- Import Excel dùng `work_date`, `shift_id`, `user_id`
+- Import Excel dùng `work_date`, `shift_name`, `user_email`
 - File template import có `2` sheet: `Import` và `References`
 
 ## 5. Test Cases
@@ -429,11 +429,13 @@ Khi test, lưu ý đây là behavior hiện tại của hệ thống:
 - Tải đúng `1` file Excel
 - File có `2` sheet: `Import`, `References`
 - `References` có hướng dẫn date format `YYYY-MM-DD`
+- `Import` dùng cột `work_date`, `shift_name`, `user_email`
+- `References` không còn cột `shift_id` hoặc `user_id`
 
 #### TC-SM-034 - Parse file import hợp lệ
 
 **Steps**
-1. Upload file hợp lệ với cột `work_date`, `shift_id`, `user_id`
+1. Upload file hợp lệ với cột `work_date`, `shift_name`, `user_email`
 
 **Expected**
 - Preview row hiển thị đúng
@@ -461,7 +463,7 @@ Khi test, lưu ý đây là behavior hiện tại của hệ thống:
 #### TC-SM-037 - Validate duplicate trong file
 
 **Steps**
-1. Upload file có 2 row cùng `shift_id + user_id + work_date`
+1. Upload file có 2 row cùng `shift_name + user_email + work_date`
 
 **Expected**
 - Row duplicate bị mark error

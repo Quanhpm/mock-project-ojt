@@ -49,7 +49,6 @@ export const useOrderPosPage = () => {
     selectedToppings,
     totalPrice: configuredTotalPrice,
     openConfigurator,
-    openConfiguratorForEdit,
     closeConfigurator,
     setSelectedSize: setConfiguredSize,
     setNote: setConfiguredNote,
@@ -61,7 +60,6 @@ export const useOrderPosPage = () => {
   } = usePosProductConfigurator(toppingProducts);
   const cartLifecycle = usePosBuilderCartLifecycle({
     franchiseId,
-    franchiseName,
     clearCustomerResults,
     closeProductConfigurator: closeConfigurator,
   });
@@ -70,11 +68,7 @@ export const useOrderPosPage = () => {
     cart: cartLifecycle.cart,
     activeCartId: cartLifecycle.activeCartId,
     selectedCustomer: cartLifecycle.selectedCustomer,
-    hasPersistedCart: cartLifecycle.hasPersistedCart,
-    products,
-    productFranchiseLookup,
     openConfigurator,
-    openConfiguratorForEdit,
     closeConfigurator,
     buildSelection,
     syncPersistedCartState: cartLifecycle.syncPersistedCartState,
@@ -99,7 +93,7 @@ export const useOrderPosPage = () => {
   }, [products, searchQuery, selectedCategory]);
 
   const displayItems = useMemo(() => {
-    const sourceItems = cartLifecycle.cart?.cart_items ?? cartLifecycle.draftItems;
+    const sourceItems = cartLifecycle.cart?.cart_items ?? [];
 
     return sourceItems.map((item) => {
       const nextSizeLabel =
@@ -115,30 +109,17 @@ export const useOrderPosPage = () => {
         selected_size_label: nextSizeLabel,
       };
     });
-  }, [cartLifecycle.cart?.cart_items, cartLifecycle.draftItems, productFranchiseLookup]);
+  }, [cartLifecycle.cart?.cart_items, productFranchiseLookup]);
 
   const displaySubtotal = useMemo(() => {
-    if (cartLifecycle.cart) {
-      return cartLifecycle.cart.subtotal_amount;
-    }
+    return cartLifecycle.cart?.subtotal_amount ?? 0;
+  }, [cartLifecycle.cart?.subtotal_amount]);
 
-    return cartLifecycle.draftItems.reduce((sum, item) => sum + item.final_line_total, 0);
-  }, [cartLifecycle.cart, cartLifecycle.draftItems]);
-
-  const canContinue = useMemo(() => {
-    return Boolean(
-      (cartLifecycle.selectedCustomer || cartLifecycle.cart?.customer_id) &&
-      (cartLifecycle.hasPersistedCart ||
-        cartLifecycle.existingActiveCart?._id ||
-        cartLifecycle.draftItems.length > 0),
-    );
-  }, [
-    cartLifecycle.cart?.customer_id,
-    cartLifecycle.draftItems.length,
-    cartLifecycle.existingActiveCart?._id,
-    cartLifecycle.hasPersistedCart,
-    cartLifecycle.selectedCustomer,
-  ]);
+  const canContinue = Boolean(
+    cartLifecycle.selectedCustomer &&
+    cartLifecycle.cart?._id &&
+    (cartLifecycle.cart.cart_items?.length ?? 0) > 0,
+  );
 
   return {
     franchiseId,
@@ -159,12 +140,8 @@ export const useOrderPosPage = () => {
     isSearchingCustomers,
     isMutatingCart: cartLifecycle.isMutatingCart,
     isCheckingActiveCart: cartLifecycle.isCheckingActiveCart,
-    hasPersistedCart: cartLifecycle.hasPersistedCart,
-    hasExistingActiveCart: Boolean(cartLifecycle.existingActiveCart?._id),
-    existingActiveCart: cartLifecycle.existingActiveCart,
-    existingActiveCartItemCount: cartLifecycle.existingActiveCart?.cart_items?.length ?? 0,
+    activeCartId: cartLifecycle.activeCartId,
     canContinue,
-    isExistingCartModalOpen: cartLifecycle.isExistingCartModalOpen,
     isProductConfiguratorOpen,
     isEditingConfiguredProduct: itemActions.isEditingConfiguredProduct,
     productBeingConfigured,
@@ -196,8 +173,5 @@ export const useOrderPosPage = () => {
     decreaseCartItemQuantity: itemActions.decreaseCartItemQuantity,
     removeCartItem: itemActions.removeCartItem,
     continueToReview: cartLifecycle.continueToReview,
-    closeExistingCartModal: cartLifecycle.closeExistingCartModal,
-    useExistingServerCart: cartLifecycle.useExistingServerCart,
-    mergeDraftIntoExistingCart: cartLifecycle.mergeDraftIntoExistingCart,
   };
 };
