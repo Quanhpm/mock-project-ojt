@@ -49,8 +49,6 @@ interface RawOrderApi {
   subtotal_amount?: number;
   promotion_discount?: number;
   voucher_discount?: number;
-  message?: string;
-  failed_reason?: string;
   created_at?: string;
   updated_at?: string;
   order_items?: RawOrderItemApi[];
@@ -141,6 +139,10 @@ const mapBackendStatusToUi = (status?: RawOrderApi['status']): OrderData['status
     return 'READY_FOR_PICKUP';
   }
 
+  if (normalized === 'OUT_FOR_DELIVERY') {
+    return 'OUT_FOR_DELIVERY';
+  }
+
   if (
     normalized === 'CONFIRMED' ||
     normalized === 'PENDING'
@@ -169,7 +171,7 @@ const mapRawOrderToUiOrder = (rawOrder: RawOrderApi): OrderData => {
         : typeof rawOrder.cartId === 'string'
           ? rawOrder.cartId
           : undefined,
-    failedReason:
+    failed_reason:
       typeof rawOrder.failed_reason === 'string'
         ? rawOrder.failed_reason
         : typeof rawOrder.failedReason === 'string'
@@ -197,8 +199,6 @@ const mapRawOrderToUiOrder = (rawOrder: RawOrderApi): OrderData => {
       items_count: itemsCount,
       created_at: rawOrder.created_at ?? rawOrder.updated_at ?? new Date().toISOString(),
     },
-    cancelReason: rawOrder.failed_reason ?? null,
-    message: rawOrder.message ?? null,
     orderItems: mappedItems,
   };
 };
@@ -267,7 +267,8 @@ export const buildSummaryFromOrders = (
         order.status.code === 'DRAFT' ||
         order.status.code === 'PREPARING' ||
         order.status.code === 'CONFIRMED' ||
-        order.status.code === 'READY_FOR_PICKUP',
+        order.status.code === 'READY_FOR_PICKUP' ||
+        order.status.code === 'OUT_FOR_DELIVERY',
     ).length,
     total_revenue: {
       value: orders.reduce((total, order) => total + order.pricing.total, 0),

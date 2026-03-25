@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { CheckCircle2, CircleEllipsis, ClipboardList } from 'lucide-react';
 import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
 import { useClientAuthStore } from '@/modules/client/auth-client';
 import { PAGE_SIZE } from '../order.config';
@@ -11,7 +9,7 @@ export interface OrderStatItem {
   key: string;
   label: string;
   value: string;
-  icon: LucideIcon;
+  icon: string;
   iconClass: string;
 }
 
@@ -67,21 +65,21 @@ export const useOrders = () => {
         key: 'total',
         label: 'Tổng đơn hàng',
         value: summary.total_orders.toString(),
-        icon: ClipboardList,
+        icon: 'receipt_long',
         iconClass: 'bg-primary/10 text-primary',
       },
       {
         key: 'completed',
         label: 'Hoàn thành',
         value: summary.completed_orders.toString(),
-        icon: CheckCircle2,
+        icon: 'check_circle',
         iconClass: 'bg-emerald-500/10 text-emerald-500',
       },
       {
         key: 'pending',
         label: 'Đang xử lý',
         value: summary.preparing_orders.toString(),
-        icon: CircleEllipsis,
+        icon: 'pending',
         iconClass: 'bg-amber-500/10 text-amber-500',
       },
     ],
@@ -99,7 +97,8 @@ export const useOrders = () => {
           order.status.code === 'DRAFT' ||
           order.status.code === 'PREPARING' ||
           order.status.code === 'CONFIRMED' ||
-          order.status.code === 'READY_FOR_PICKUP',
+          order.status.code === 'READY_FOR_PICKUP' ||
+          order.status.code === 'OUT_FOR_DELIVERY',
       );
     } else if (selectedFilter === 'cancelled') {
       filtered = filtered.filter((order) => order.status.code === 'CANCELLED');

@@ -21,14 +21,14 @@ export interface OrderData {
   id: string | number;
   code: string;
   cartId?: string;
-  failedReason?: string;
+  failed_reason?: string;
   store: {
     id: string | number;
     name: string;
   };
   channel: string;
   status: {
-    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'DRAFT';
+    code: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'OUT_FOR_DELIVERY' | 'DRAFT';
     label: string;
     color: string;
   };
@@ -44,7 +44,7 @@ export interface OrderData {
     items_count: number;
     created_at: string;
   };
-  cancelReason?: string | null;
+  fail_reason?: string | null;
   message?: string | null;
   orderItems: OrderItemData[];
 }

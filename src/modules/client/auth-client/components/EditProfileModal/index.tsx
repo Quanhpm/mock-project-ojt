@@ -16,11 +16,12 @@ interface EditProfileModalProps {
   profile: CustomerUser;
   onClose: () => void;
   onSaved: (updated: CustomerUser) => void;
+  initialTab?: Tab;
 }
 
 type Tab = 'profile' | 'security';
 
-function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModalProps) {
+function EditProfileModal({ isOpen, profile, onClose, onSaved, initialTab = 'profile' }: EditProfileModalProps) {
   // ── Profile edit state ──
   const [isEditMode, setIsEditMode] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -57,9 +58,9 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
         avatar_url: profile.avatar_url ?? '',
       });
       setIsEditMode(false);
-      setActiveTab('profile');
+      setActiveTab(initialTab);
     }
-  }, [isOpen, profile, reset]);
+  }, [isOpen, initialTab, profile, reset]);
 
   if (!isOpen) return null;
 
@@ -134,11 +135,11 @@ function EditProfileModal({ isOpen, profile, onClose, onSaved }: EditProfileModa
       />
 
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+        className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
         onClick={handleClose}
       >
       <div
-        className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100"
+        className="modal-panel-enter w-full max-w-4xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
 

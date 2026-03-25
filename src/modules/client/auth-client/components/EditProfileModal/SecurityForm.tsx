@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast.hook';
-import { changePassword } from '@/apis/endpointsCLIENT/customerAuth.api';
+import { changePassword, logoutCustomer } from '@/apis/endpointsCLIENT/customerAuth.api';
+import { ROUTER_URL } from '@/routes/router.const';
+import { useClientAuthStore } from '../../stores/client-auth.store';
 import { changePasswordSchema } from '../../schemas/client-change-password.schema';
+
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 function SecurityForm() {
+  const navigate = useNavigate();
+  const { clearAuth } = useClientAuthStore();
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -32,6 +38,12 @@ function SecurityForm() {
       });
       success('Đổi mật khẩu thành công!');
       reset();
+      try {
+        await logoutCustomer();
+      } finally {
+        clearAuth();
+        navigate(ROUTER_URL.CLIENT_ROUTER?.LOGIN || '/client/login');
+      }
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
