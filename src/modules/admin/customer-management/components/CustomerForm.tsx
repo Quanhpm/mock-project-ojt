@@ -10,6 +10,10 @@ import type { Customer } from "../../../../types/customer.types";
 import { useToast } from "@/hooks/use-toast.hook";
 import axios from "axios";
 import { ENV } from "@/config/env.config";
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from "@/utils";
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -202,15 +206,10 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        error("Invalid file", "Please select an image file.");
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        error("File too large", "Maximum file size is 5MB.");
+      try {
+        validateCloudinaryImageFile(file);
+      } catch {
+        error("Upload failed", CLOUDINARY_IMAGE_REQUIREMENT_TEXT);
         return;
       }
 
@@ -704,63 +703,74 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                   </button>
                 </div>
               ) : (
-                // Upload Mode
-                <div
-                  onClick={() => !isUploading && fileInputRef.current?.click()}
-                  style={{
-                    border: "2px dashed #DDB892",
-                    borderRadius: "8px",
-                    padding: "32px 24px",
-                    textAlign: "center",
-                    backgroundColor: "#faf8f6",
-                    cursor: isUploading ? "not-allowed" : "pointer",
-                    transition: "all 0.2s",
-                    opacity: isUploading ? 0.6 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isUploading) {
-                      e.currentTarget.style.borderColor = "#8B4513";
-                      e.currentTarget.style.backgroundColor = "#fff";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isUploading) {
-                      e.currentTarget.style.borderColor = "#DDB892";
-                      e.currentTarget.style.backgroundColor = "#faf8f6";
-                    }
-                  }}
-                >
-                  <Upload
-                    size={40}
+                <>
+                  <div
+                    onClick={() => !isUploading && fileInputRef.current?.click()}
                     style={{
-                      color: isUploading ? "#6c757d" : "#8B4513",
-                      margin: "0 auto 12px",
+                      border: "2px dashed #DDB892",
+                      borderRadius: "8px",
+                      padding: "32px 24px",
+                      textAlign: "center",
+                      backgroundColor: "#faf8f6",
+                      cursor: isUploading ? "not-allowed" : "pointer",
+                      transition: "all 0.2s",
+                      opacity: isUploading ? 0.6 : 1,
                     }}
-                  />
-                  <p
-                    style={{
-                      margin: "0 0 4px 0",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: isUploading ? "#6c757d" : "#212529",
+                    onMouseEnter={(e) => {
+                      if (!isUploading) {
+                        e.currentTarget.style.borderColor = "#8B4513";
+                        e.currentTarget.style.backgroundColor = "#fff";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isUploading) {
+                        e.currentTarget.style.borderColor = "#DDB892";
+                        e.currentTarget.style.backgroundColor = "#faf8f6";
+                      }
                     }}
                   >
-                    {isUploading
-                      ? "Uploading..."
-                      : "Click to select an avatar"}
-                  </p>
+                    <Upload
+                      size={40}
+                      style={{
+                        color: isUploading ? "#6c757d" : "#8B4513",
+                        margin: "0 auto 12px",
+                      }}
+                    />
+                    <p
+                      style={{
+                        margin: "0 0 4px 0",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: isUploading ? "#6c757d" : "#212529",
+                      }}
+                    >
+                      {isUploading
+                        ? "Uploading..."
+                        : "Click to select an avatar"}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: "12px",
+                        color: "#6c757d",
+                      }}
+                    >
+                      {isUploading
+                        ? "Please wait..."
+                        : "Supported: JPG, PNG, GIF"}
+                    </p>
+                  </div>
                   <p
                     style={{
-                      margin: 0,
+                      margin: "10px 0 0 0",
                       fontSize: "12px",
                       color: "#6c757d",
+                      textAlign: "center",
                     }}
                   >
-                    {isUploading
-                      ? "Please wait..."
-                      : "Supported: JPG, PNG, GIF (max 5MB)"}
+                    {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
                   </p>
-                </div>
+                </>
               )}
             </div>
 

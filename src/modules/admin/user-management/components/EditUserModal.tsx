@@ -12,6 +12,10 @@ import { Upload, X } from 'lucide-react'
 import axios from 'axios'
 import { ENV } from '@/config/env.config'
 import { useToast } from '@/hooks/use-toast.hook'
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from '@/utils'
 
 // ======================== Types ========================
 
@@ -64,9 +68,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
       setAvatarUrl(response.data.secure_url)
       showSuccess('Avatar uploaded successfully', 'Profile picture has been updated.')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Avatar Upload Error:', err)
-      showError('Upload failed', err.message || 'Unable to upload image.')
+      const errorMessage =
+        err instanceof Error ? err.message : 'Unable to upload image.'
+      showError('Upload failed', errorMessage)
       setError('Image upload failed. The file may be too large or there is a connection error.')
     } finally {
       setIsUploading(false)
@@ -76,12 +82,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        showError('Invalid file', 'Please select a valid image file.')
-        return
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        showError('File too large', 'Maximum image size is 5MB.')
+      try {
+        validateCloudinaryImageFile(file)
+      } catch {
+        showError('Upload failed', CLOUDINARY_IMAGE_REQUIREMENT_TEXT)
         return
       }
       handleImageUpload(file)
@@ -385,22 +389,27 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
                   </div>
                 ) : (
                   // Upload Mode
-                  <div
-                    onClick={() => !isUploading && fileInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${isUploading
-                        ? 'border-slate-300 bg-slate-50 cursor-not-allowed opacity-60'
-                        : 'border-slate-300 bg-slate-50 hover:bg-white hover:border-primary cursor-pointer'
-                      }`}
-                  >
-                    <Upload
-                      size={32}
-                      className={`mx-auto mb-3 ${isUploading ? 'text-slate-400' : 'text-primary'}`}
-                    />
-                    <p className={`text-sm font-semibold m-0 mb-1 ${isUploading ? 'text-slate-500' : 'text-slate-800'}`}>
-                      {isUploading ? "Uploading..." : "Click to select avatar image"}
-                    </p>
-                    <p className="text-xs text-slate-500 m-0">
-                      JPG, PNG, WEBP (max 5MB)
+                  <div>
+                    <div
+                      onClick={() => !isUploading && fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${isUploading
+                          ? 'border-slate-300 bg-slate-50 cursor-not-allowed opacity-60'
+                          : 'border-slate-300 bg-slate-50 hover:bg-white hover:border-primary cursor-pointer'
+                        }`}
+                    >
+                      <Upload
+                        size={32}
+                        className={`mx-auto mb-3 ${isUploading ? 'text-slate-400' : 'text-primary'}`}
+                      />
+                      <p className={`text-sm font-semibold m-0 mb-1 ${isUploading ? 'text-slate-500' : 'text-slate-800'}`}>
+                        {isUploading ? "Uploading..." : "Click to select avatar image"}
+                      </p>
+                      <p className="text-xs text-slate-500 m-0">
+                        JPG, PNG, WEBP
+                      </p>
+                    </div>
+                    <p className="mt-3 text-center text-xs text-slate-500">
+                      {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
                     </p>
                   </div>
                 )}

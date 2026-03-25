@@ -3,6 +3,7 @@ import { updateUser } from "@/apis/endpoints/user.api";
 import type { UpdateUserRequest } from "@/apis/endpoints/user.api";
 import { HttpError } from "@/apis";
 import { ENV } from "@/config";
+import { validateCloudinaryImageFile } from "@/utils";
 
 // ======================== Cloudinary Config ========================
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${ENV.CLOUDINARY_CLOUD_NAME}/image/upload`;
@@ -23,6 +24,8 @@ interface UploadResult {
 // ======================== Helper: Upload ảnh lên Cloudinary ========================
 
 async function uploadAvatarToCloudinary(file: File): Promise<string> {
+  validateCloudinaryImageFile(file);
+
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", ENV.CLOUDINARY_UPLOAD_PRESET);

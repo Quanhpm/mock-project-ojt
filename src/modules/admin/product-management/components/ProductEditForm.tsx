@@ -7,6 +7,10 @@ import inventory from "@/mockdata/inventory.json";
 import axios from "axios";
 import { ENV } from "@/config/env.config";
 import { useToast } from "@/hooks/use-toast.hook";
+import {
+  CLOUDINARY_IMAGE_REQUIREMENT_TEXT,
+  validateCloudinaryImageFile,
+} from "@/utils";
 
 export default function ProductEditForm() {
   const navigate = useNavigate();
@@ -188,8 +192,7 @@ export default function ProductEditForm() {
     setIsUploading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
-        if (!file.type.startsWith("image/")) throw new Error("File không phải là ảnh");
-        if (file.size > 5 * 1024 * 1024) throw new Error("File vượt quá 5MB");
+        validateCloudinaryImageFile(file);
 
         const uploadData = new FormData();
         uploadData.append("file", file);
@@ -213,9 +216,13 @@ export default function ProductEditForm() {
         images: [...prev.images, ...urls],
       }));
       showSuccess("Thành công", `Đã tải lên ${urls.length} ảnh.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Images Upload Error:", err);
-      showError("Upload thất bại", err.message || "Không thể tải lên một hoặc nhiều ảnh.");
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Không thể tải lên một hoặc nhiều ảnh.";
+      showError("Upload thất bại", errorMessage);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -496,7 +503,7 @@ export default function ProductEditForm() {
                   Click to upload or drag and drop
                 </p>
                 <p style={{ margin: 0, fontSize: "12px", color: isUploading ? "#8B4513" : "#9e9e9e" }}>
-                  {isUploading ? "Uploading..." : "PNG, JPG or WEBP (max. 5MB)"}
+                  {isUploading ? "Uploading..." : "PNG, JPG or WEBP"}
                 </p>
                 <input
                   type="file"
@@ -527,6 +534,16 @@ export default function ProductEditForm() {
                 >
                   {isUploading ? "Uploading..." : "Choose Files"}
                 </label>
+                <p
+                  style={{
+                    margin: "12px 0 0 0",
+                    fontSize: "12px",
+                    color: "#6c757d",
+                    textAlign: "center",
+                  }}
+                >
+                  {CLOUDINARY_IMAGE_REQUIREMENT_TEXT}
+                </p>
               </div>
 
               {imagePreview.length > 0 && (
