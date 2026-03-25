@@ -101,7 +101,15 @@ export const ADMIN_MENU: AdminMenuItem[] = [
     path: ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE,
     icon: <Package size={18} />,
     component: React.lazy(() => import("@/modules/admin/product-franchise/pages/ProductFranchisePage")),
-    module: "franchise",
+    module: "products",
+    hideFromSidebar: true,
+  },
+  {
+    label: "Product Franchise Legacy",
+    path: ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE_LEGACY,
+    icon: <Package size={18} />,
+    component: React.lazy(() => import("@/modules/admin/product-franchise/pages/ProductFranchisePage")),
+    module: "products",
     hideFromSidebar: true,
   },
   {
