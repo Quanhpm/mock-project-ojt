@@ -50,6 +50,7 @@ function CartDetail() {
           <CartDetailSummaryAside
             subtotalAmount={vm.cart.subtotalAmount}
             voucherDiscount={vm.cart.voucherDiscount}
+            promotionDiscount={vm.cart.promotionDiscount}
             finalAmount={vm.cart.finalAmount}
             totalDiscount={vm.totalDiscount}
             voucherCode={vm.voucherCode}

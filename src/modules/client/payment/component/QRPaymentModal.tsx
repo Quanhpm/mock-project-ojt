@@ -145,7 +145,7 @@ export function QRPaymentModal({
               onClick={onClose}
               type="button"
             >
-              Quay lại
+              Quay Lại
             </button>
             <button
               className="flex-1 rounded-full bg-[linear-gradient(135deg,rgba(127,85,57,1),rgba(156,102,68,1))] py-3 text-sm font-bold text-white shadow-[0_16px_28px_rgba(127,85,57,0.2)] transition-opacity hover:opacity-95"
@@ -155,7 +155,7 @@ export function QRPaymentModal({
               }}
               type="button"
             >
-              Xác nhận đơn hàng
+              Thanh Toán
             </button>
           </div>
         </div>

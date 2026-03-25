@@ -40,11 +40,11 @@ export function RefundSuccessPopup({ onClose }: RefundSuccessPopupProps) {
           className="w-full rounded-full bg-[var(--cf-primary)] py-2.5 text-sm font-semibold text-white"
           onClick={() => {
             onClose();
-            navigate("/menu");
+            navigate("/order-history");
           }}
           type="button"
         >
-          Về trang chủ
+          Xem lại lịch sử đơn hàng
         </button>
       </div>
     </div>

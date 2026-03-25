@@ -20,6 +20,8 @@ export interface OrderItemData {
 export interface OrderData {
   id: string | number;
   code: string;
+  cartId?: string;
+  failedReason?: string;
   store: {
     id: string | number;
     name: string;

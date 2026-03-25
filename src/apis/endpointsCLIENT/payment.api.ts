@@ -129,3 +129,16 @@ export const getOrderbyCartId = (id: string): Promise<OrderResponse | null> => {
         url: `orders/cart/${id}`
     })
 }
+
+export const getOrderById = (id: string): Promise<OrderResponse | null> => {
+    return httpClient.get<OrderResponse>({
+        url: `orders/${id}`
+    })
+}
+
+export const getOrderByCode = (code: string): Promise<OrderResponse | null> => {
+    return httpClient.get<OrderResponse, { code: string }>({
+        url: "orders/code",
+        params: { code }
+    })
+}
