@@ -14,8 +14,8 @@ function CartDetailHeader({
   onOpenCancelCartConfirm,
 }: CartDetailHeaderProps) {
   return (
-    <div className="mb-10 flex items-end justify-between">
-      <div>
+    <div className="mb-6 flex flex-col gap-4 md:mb-10 md:flex-row md:items-end md:justify-between">
+      <div className="space-y-3">
         <button
           onClick={onBack}
           className="group inline-flex items-center gap-2 text-sm font-semibold text-[var(--cf-primary)]/70 hover:text-[var(--cf-primary)] transition-colors cursor-pointer"
@@ -24,14 +24,19 @@ function CartDetailHeader({
           <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
           Quay lại danh sách
         </button>
-        <h1 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-[var(--cf-dark)]">
-          Giỏ hàng của bạn
-          <span className="ml-3 text-xl md:text-2xl font-semibold text-[var(--cf-primary)]/45">({itemCount} sản phẩm)</span>
-        </h1>
+
+        <div className="space-y-2">
+          <span className="inline-flex w-fit items-center rounded-full bg-[var(--cf-primary)]/8 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cf-primary)]/70">
+            {itemCount} sản phẩm
+          </span>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[var(--cf-dark)] md:text-4xl">
+            Giỏ hàng của bạn
+          </h1>
+        </div>
       </div>
 
       <button
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors text-sm font-semibold border border-red-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed md:w-auto md:rounded-lg md:py-2"
         onClick={onOpenCancelCartConfirm}
         disabled={isCancellingCart}
         type="button"

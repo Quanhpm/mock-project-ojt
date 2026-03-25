@@ -62,7 +62,7 @@ function AboutPage() {
             </div>
           </div>
 
-          <div className={`transition-all duration-1000 delay-200 ${aboutSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className={`hidden md:block transition-all duration-1000 delay-200 ${aboutSection.inView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <h3 className="text-center text-2xl md:text-3xl font-black text-[var(--cf-primary)] uppercase tracking-wider mb-8 md:mb-10">Nền tảng tạo nên Boutique Brews</h3>
             <div className="flex sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 overflow-x-auto sm:overflow-visible snap-x snap-mandatory pb-2 px-1 -mx-1">
               {BRAND_DNA.map(item => (

@@ -2,37 +2,36 @@ import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 import type { BulkAssignShiftRequest } from '@/apis/endpoints/shift.api'
 
-export interface ShiftImportReferenceShift {
+export interface ShiftAssignmentLookupShift {
   shiftId: string
   shiftName: string
   startTime: string
   endTime: string
 }
 
-export interface ShiftImportReferenceUser {
+export interface ShiftAssignmentLookupUser {
   userId: string
   userName: string
   userEmail: string
 }
 
-export interface ShiftImportReferenceData {
-  shifts: ShiftImportReferenceShift[]
-  users: ShiftImportReferenceUser[]
+export interface ShiftAssignmentLookupData {
+  shifts: ShiftAssignmentLookupShift[]
+  users: ShiftAssignmentLookupUser[]
   existingAssignmentKeys: string[]
 }
 
 export interface ShiftImportValidationIssue {
   row: number
-  field: 'work_date' | 'shift_id' | 'user_id' | 'row' | 'file'
+  field: 'work_date' | 'shift_name' | 'user_email' | 'row' | 'file'
   message: string
 }
 
 export interface ShiftImportPreviewRow {
   row: number
   workDate: string
-  shiftId: string
   shiftName: string
-  userId: string
+  shiftTime: string
   userName: string
   userEmail: string
   status: 'valid' | 'error'
@@ -59,35 +58,39 @@ export interface PreparedShiftImportResult {
 
 interface ShiftImportExcelRow {
   work_date: string
-  shift_id: string
-  user_id: string
+  shift_name: string
+  user_email: string
 }
 
 interface ShiftReferenceRow {
-  shift_id: string
   shift_name: string
   start_time: string
   end_time: string
 }
 
 interface UserReferenceRow {
-  user_id: string
   user_name: string
   user_email: string
 }
 
 const EXCEL_HEADER_MAP: Record<string, keyof ShiftImportExcelRow> = {
   work_date: 'work_date',
-  shift_id: 'shift_id',
-  user_id: 'user_id',
+  shift_name: 'shift_name',
+  user_email: 'user_email',
 }
 
-const EXCEL_TEMPLATE_HEADERS = ['work_date', 'shift_id', 'user_id']
+const EXCEL_TEMPLATE_HEADERS: Array<keyof ShiftImportExcelRow> = [
+  'work_date',
+  'shift_name',
+  'user_email',
+]
 const TEMPLATE_IMPORT_ROW_COUNT = 200
 
 const normalizeHeader = (value: string) => value.replace(/^\uFEFF/, '').trim()
 
-const normalizeId = (value: string) => value.trim()
+const normalizeLookupKey = (value: string) => value.trim().toLowerCase()
+
+const normalizeTextValue = (value: unknown) => String(value ?? '').trim()
 
 const formatDateParts = (year: number, month: number, day: number) => {
   return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
@@ -157,13 +160,32 @@ const buildImportKey = (shiftId: string, userId: string, workDate: string) => {
   return `${shiftId}__${userId}__${workDate}`
 }
 
+const buildLookupMap = <T>(items: T[], getKey: (item: T) => string) => {
+  const lookupMap = new Map<string, T[]>()
+
+  items.forEach((item) => {
+    const key = getKey(item)
+    if (!key) return
+
+    const existingItems = lookupMap.get(key)
+    if (existingItems) {
+      existingItems.push(item)
+      return
+    }
+
+    lookupMap.set(key, [item])
+  })
+
+  return lookupMap
+}
+
 const buildImportTemplateSheet = () => {
   const worksheet = XLSX.utils.aoa_to_sheet([EXCEL_TEMPLATE_HEADERS])
 
   worksheet['!cols'] = [
     { wch: 16 },
     { wch: 28 },
-    { wch: 28 },
+    { wch: 32 },
   ]
 
   for (let rowIndex = 2; rowIndex <= TEMPLATE_IMPORT_ROW_COUNT + 1; rowIndex += 1) {
@@ -177,19 +199,18 @@ const buildImportTemplateSheet = () => {
   return worksheet
 }
 
-const buildReferencesSheet = (referenceData: ShiftImportReferenceData) => {
-  const shiftReferenceRows = referenceData.shifts
+const buildReferencesSheet = (lookupData: ShiftAssignmentLookupData) => {
+  const shiftReferenceRows = lookupData.shifts
     .map<ShiftReferenceRow>((shift) => ({
-      shift_id: shift.shiftId,
       shift_name: shift.shiftName,
       start_time: shift.startTime,
       end_time: shift.endTime,
     }))
     .sort((left, right) => left.shift_name.localeCompare(right.shift_name))
 
-  const userReferenceRows = referenceData.users
+  const userReferenceRows = lookupData.users
+    .filter((user) => normalizeLookupKey(user.userEmail) !== '')
     .map<UserReferenceRow>((user) => ({
-      user_id: user.userId,
       user_name: user.userName,
       user_email: user.userEmail,
     }))
@@ -197,8 +218,8 @@ const buildReferencesSheet = (referenceData: ShiftImportReferenceData) => {
 
   const rows: Array<Array<string>> = [
     ['DATE FORMAT', 'YYYY-MM-DD', 'Example', '2026-04-03', '', ''],
-    ['SHIFT REFERENCES', '', '', '', '', 'USER REFERENCES', '', ''],
-    ['shift_id', 'shift_name', 'start_time', 'end_time', '', 'user_id', 'user_name', 'user_email'],
+    ['SHIFT REFERENCES', '', '', '', 'USER REFERENCES', ''],
+    ['shift_name', 'start_time', 'end_time', '', 'user_name', 'user_email'],
   ]
 
   const totalRows = Math.max(shiftReferenceRows.length, userReferenceRows.length)
@@ -208,12 +229,10 @@ const buildReferencesSheet = (referenceData: ShiftImportReferenceData) => {
     const userRow = userReferenceRows[index]
 
     rows.push([
-      shiftRow?.shift_id || '',
       shiftRow?.shift_name || '',
       shiftRow?.start_time || '',
       shiftRow?.end_time || '',
       '',
-      userRow?.user_id || '',
       userRow?.user_name || '',
       userRow?.user_email || '',
     ])
@@ -222,11 +241,9 @@ const buildReferencesSheet = (referenceData: ShiftImportReferenceData) => {
   const worksheet = XLSX.utils.aoa_to_sheet(rows)
   worksheet['!cols'] = [
     { wch: 28 },
-    { wch: 24 },
     { wch: 12 },
     { wch: 12 },
     { wch: 4 },
-    { wch: 28 },
     { wch: 24 },
     { wch: 30 },
   ]
@@ -234,10 +251,10 @@ const buildReferencesSheet = (referenceData: ShiftImportReferenceData) => {
   return worksheet
 }
 
-export const downloadShiftImportTemplate = (referenceData: ShiftImportReferenceData) => {
+export const downloadShiftImportTemplate = (lookupData: ShiftAssignmentLookupData) => {
   const workbook = XLSX.utils.book_new()
   const importWorksheet = buildImportTemplateSheet()
-  const referencesWorksheet = buildReferencesSheet(referenceData)
+  const referencesWorksheet = buildReferencesSheet(lookupData)
 
   XLSX.utils.book_append_sheet(workbook, importWorksheet, 'Import')
   XLSX.utils.book_append_sheet(workbook, referencesWorksheet, 'References')
@@ -340,24 +357,34 @@ export const parseShiftImportFile = async (file: File): Promise<ParsedShiftImpor
 
 export const prepareShiftImportRows = (
   rows: Record<string, unknown>[],
-  referenceData: ShiftImportReferenceData,
+  lookupData: ShiftAssignmentLookupData,
 ): PreparedShiftImportResult => {
   const issues: ShiftImportValidationIssue[] = []
   const previewRows: ShiftImportPreviewRow[] = []
   const items: BulkAssignShiftRequest['items'] = []
-  const shiftIdMap = new Map(referenceData.shifts.map((shift) => [shift.shiftId, shift] as const))
-  const userIdMap = new Map(referenceData.users.map((user) => [user.userId, user] as const))
-  const existingAssignmentKeySet = new Set(referenceData.existingAssignmentKeys)
+  const shiftMatchesByName = buildLookupMap(
+    lookupData.shifts,
+    (shift) => normalizeLookupKey(shift.shiftName),
+  )
+  const userMatchesByEmail = buildLookupMap(
+    lookupData.users.filter((user) => normalizeLookupKey(user.userEmail) !== ''),
+    (user) => normalizeLookupKey(user.userEmail),
+  )
+  const existingAssignmentKeySet = new Set(lookupData.existingAssignmentKeys)
   const importedAssignmentKeyMap = new Map<string, number>()
 
   rows.forEach((row, index) => {
     const excelRowNumber = index + 2
     const rowErrors: string[] = []
-    const rawShiftId = String(row.shift_id ?? '').trim()
-    const rawUserId = String(row.user_id ?? '').trim()
-    const normalizedShiftId = normalizeId(rawShiftId)
-    const normalizedUserId = normalizeId(rawUserId)
+    const rawShiftName = normalizeTextValue(row.shift_name)
+    const rawUserEmail = normalizeTextValue(row.user_email)
+    const normalizedShiftName = normalizeLookupKey(rawShiftName)
+    const normalizedUserEmail = normalizeLookupKey(rawUserEmail)
     const normalizedWorkDate = normalizeWorkDate(row.work_date)
+    const shiftMatches = normalizedShiftName ? shiftMatchesByName.get(normalizedShiftName) || [] : []
+    const userMatches = normalizedUserEmail ? userMatchesByEmail.get(normalizedUserEmail) || [] : []
+    const matchedShift = shiftMatches.length === 1 ? shiftMatches[0] : undefined
+    const matchedUser = userMatches.length === 1 ? userMatches[0] : undefined
 
     if (!normalizedWorkDate) {
       const message = `Row ${excelRowNumber}: work_date must be a valid date in YYYY-MM-DD format.`
@@ -365,31 +392,36 @@ export const prepareShiftImportRows = (
       issues.push({ row: excelRowNumber, field: 'work_date', message })
     }
 
-    if (!rawShiftId) {
-      const message = `Row ${excelRowNumber}: shift_id is required.`
+    if (!rawShiftName) {
+      const message = `Row ${excelRowNumber}: shift_name is required.`
       rowErrors.push(message)
-      issues.push({ row: excelRowNumber, field: 'shift_id', message })
+      issues.push({ row: excelRowNumber, field: 'shift_name', message })
     }
 
-    if (!rawUserId) {
-      const message = `Row ${excelRowNumber}: user_id is required.`
+    if (!rawUserEmail) {
+      const message = `Row ${excelRowNumber}: user_email is required.`
       rowErrors.push(message)
-      issues.push({ row: excelRowNumber, field: 'user_id', message })
+      issues.push({ row: excelRowNumber, field: 'user_email', message })
     }
 
-    const matchedShift = normalizedShiftId ? shiftIdMap.get(normalizedShiftId) : undefined
-    const matchedUser = normalizedUserId ? userIdMap.get(normalizedUserId) : undefined
-
-    if (rawShiftId && !matchedShift) {
-      const message = `Row ${excelRowNumber}: shift_id "${rawShiftId}" was not found in References.`
+    if (rawShiftName && shiftMatches.length === 0) {
+      const message = `Row ${excelRowNumber}: shift_name "${rawShiftName}" was not found in References.`
       rowErrors.push(message)
-      issues.push({ row: excelRowNumber, field: 'shift_id', message })
+      issues.push({ row: excelRowNumber, field: 'shift_name', message })
+    } else if (rawShiftName && shiftMatches.length > 1) {
+      const message = `Row ${excelRowNumber}: shift_name "${rawShiftName}" matches multiple shifts in References.`
+      rowErrors.push(message)
+      issues.push({ row: excelRowNumber, field: 'shift_name', message })
     }
 
-    if (rawUserId && !matchedUser) {
-      const message = `Row ${excelRowNumber}: user_id "${rawUserId}" was not found in References.`
+    if (rawUserEmail && userMatches.length === 0) {
+      const message = `Row ${excelRowNumber}: user_email "${rawUserEmail}" was not found in References.`
       rowErrors.push(message)
-      issues.push({ row: excelRowNumber, field: 'user_id', message })
+      issues.push({ row: excelRowNumber, field: 'user_email', message })
+    } else if (rawUserEmail && userMatches.length > 1) {
+      const message = `Row ${excelRowNumber}: user_email "${rawUserEmail}" matches multiple users in References.`
+      rowErrors.push(message)
+      issues.push({ row: excelRowNumber, field: 'user_email', message })
     }
 
     if (normalizedWorkDate && matchedShift && matchedUser) {
@@ -426,11 +458,10 @@ export const prepareShiftImportRows = (
     previewRows.push({
       row: excelRowNumber,
       workDate: normalizedWorkDate || String(row.work_date ?? '').trim(),
-      shiftId: normalizedShiftId,
-      shiftName: matchedShift?.shiftName || '',
-      userId: normalizedUserId,
+      shiftName: matchedShift?.shiftName || rawShiftName,
+      shiftTime: matchedShift ? `${matchedShift.startTime} - ${matchedShift.endTime}` : '',
       userName: matchedUser?.userName || '',
-      userEmail: matchedUser?.userEmail || '',
+      userEmail: matchedUser?.userEmail || rawUserEmail,
       status: rowErrors.length === 0 ? 'valid' : 'error',
       errors: rowErrors,
     })
