@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useProductSearch } from "../hooks/use-product-search.hook";
 import { useDeleteProduct } from "./hooks/useDeleteProduct";
 import { useRestoreProduct } from "./hooks/useRestoreProduct";
@@ -10,10 +10,12 @@ import ProductDetailsModal from "./ProductDetailsModal";
 import EditProductModal from "./EditProductModal";
 import AssignFranchiseModal from "./AssignFranchiseModal";
 import {
+  getFranchiseId,
   getTableScope,
   useAdminAuthStore,
 } from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import { getFranchisesForSelect, type FranchiseSelectItem } from "@/apis/endpoints/user.api";
+import { ROUTER_URL } from "@/routes/router.const";
 
 // Add CSS keyframes for animations
 const styleSheet = document.createElement("style");
@@ -63,8 +65,10 @@ const formatPriceRange = (minPrice: number, maxPrice: number) => {
 };
 
 export default function ProductTable() {
+  const location = useLocation();
   const navigate = useNavigate();
   const tableScope = useAdminAuthStore((state) => getTableScope(state));
+  const activeFranchiseId = useAdminAuthStore((state) => getFranchiseId(state));
   const isGlobalScope = tableScope === "GLOBAL_TABLE_SCOPE";
   const {
     products,
@@ -403,6 +407,48 @@ export default function ProductTable() {
     clearProduct();
   };
 
+  const navigateToProductFranchise = (
+    franchiseId: string,
+    franchiseName?: string,
+  ) => {
+    if (!franchiseId) return;
+
+    const searchParams = new URLSearchParams({
+      franchise_id: franchiseId,
+    });
+
+    navigate(
+      `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.PRODUCT_FRANCHISE}?${searchParams.toString()}`,
+      {
+        state: {
+          franchiseName,
+          returnTo: {
+            pathname: location.pathname,
+            search: location.search,
+          },
+        },
+      },
+    );
+  };
+
+  const handleChooseFranchiseNavigation = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const selectedFranchiseId = event.target.value;
+    if (!selectedFranchiseId) return;
+
+    const selectedFranchise = franchiseOptions.find(
+      (item) => item.value === selectedFranchiseId,
+    );
+
+    navigateToProductFranchise(
+      selectedFranchiseId,
+      selectedFranchise?.name,
+    );
+
+    event.target.value = "";
+  };
+
   return (
     <div
       style={{
@@ -489,38 +535,110 @@ export default function ProductTable() {
                 {isLoading ? "..." : totalItems}
               </p>
             </div>
-            <button
-              onClick={() => navigate("/admin/products/create")}
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
-                backgroundColor: "#8B4513",
-                color: "white",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                boxShadow: "0 1px 2px rgba(139, 69, 19, 0.2)",
-                transition: "all 0.2s",
-                cursor: "pointer",
-                border: "none",
-                fontWeight: "700",
-                fontSize: "14px",
+                justifyContent: "flex-end",
+                gap: "12px",
+                flexWrap: "wrap",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#6d3610")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "#8B4513")
-              }
             >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: "20px" }}
+              {isGlobalScope ? (
+                <select
+                  defaultValue=""
+                  onChange={handleChooseFranchiseNavigation}
+                  style={{
+                    minWidth: "220px",
+                    height: "44px",
+                    padding: "0 16px",
+                    borderRadius: "10px",
+                    border: "1px solid #d6d3d1",
+                    backgroundColor: "#ffffff",
+                    color: "#44403c",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    cursor: "pointer",
+                    outline: "none",
+                    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+                  }}
+                  title="Choose Franchise"
+                >
+                  <option value="">Choose Franchise</option>
+                  {franchiseOptions.map((franchise) => (
+                    <option key={franchise.value} value={franchise.value}>
+                      {franchise.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    activeFranchiseId
+                      ? navigateToProductFranchise(activeFranchiseId)
+                      : undefined
+                  }
+                  disabled={!activeFranchiseId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    backgroundColor: "#ffffff",
+                    color: "#6b4f3a",
+                    padding: "10px 18px",
+                    borderRadius: "10px",
+                    border: "1px solid #d6d3d1",
+                    transition: "all 0.2s",
+                    cursor: activeFranchiseId ? "pointer" : "not-allowed",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    opacity: activeFranchiseId ? 1 : 0.6,
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: "20px" }}
+                  >
+                    storefront
+                  </span>
+                  <span>Current Franchise</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => navigate("/admin/products/create")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  backgroundColor: "#8B4513",
+                  color: "white",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  boxShadow: "0 1px 2px rgba(139, 69, 19, 0.2)",
+                  transition: "all 0.2s",
+                  cursor: "pointer",
+                  border: "none",
+                  fontWeight: "700",
+                  fontSize: "14px",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#6d3610")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#8B4513")
+                }
               >
-                add
-              </span>
-              <span>Create Product</span>
-            </button>
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: "20px" }}
+                >
+                  add
+                </span>
+                <span>Create Product</span>
+              </button>
+            </div>
           </div>
         </header>
 
