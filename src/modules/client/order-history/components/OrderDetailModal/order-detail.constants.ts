@@ -44,19 +44,11 @@ export const STATUS_COLORS: Record<
   },
 };
 
-export function getStatusIcon(status: OrderStatusCode): LucideIcon {
-  switch (status) {
-    case 'COMPLETED':
-      return CheckCircle2;
-    case 'PREPARING':
-      return LoaderCircle;
-    case 'CONFIRMED':
-      return Clock3;
-    case 'READY_FOR_PICKUP':
-      return Package;
-    case 'CANCELLED':
-      return XCircle;
-    default:
-      return Receipt;
-  }
-}
+export const STATUS_ICONS: Record<OrderStatusCode, LucideIcon> = {
+  COMPLETED: CheckCircle2,
+  CANCELLED: XCircle,
+  READY_FOR_PICKUP: Package,
+  CONFIRMED: Clock3,
+  PREPARING: LoaderCircle,
+  DRAFT: Receipt,
+};
