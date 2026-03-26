@@ -45,9 +45,10 @@ export default function ProductDetailsModal({
         background: "rgba(0,0,0,0.45)",
         zIndex: 999,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
-        padding: "20px",
+        padding: "12px",
+        overflowY: "auto",
       }}
     >
       <div
@@ -65,9 +66,11 @@ export default function ProductDetailsModal({
           style={{
             display: "flex",
             justifyContent: "space-between",
-            padding: "20px 24px",
+            padding: "18px 20px",
             borderBottom: "1px solid #eee",
             alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
           }}
         >
           <h2 style={{ margin: 0, fontSize: "18px", fontWeight: 600 }}>
@@ -86,15 +89,15 @@ export default function ProductDetailsModal({
           </button>
         </div>
 
-        <div style={{ padding: "24px" }}>
+        <div style={{ padding: "20px" }}>
           {isLoading ? (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
                 gap: "28px",
                 alignItems: "start",
               }}
+              className="grid-cols-1 md:grid-cols-2"
             >
               <div>
                 <div
@@ -159,9 +162,9 @@ export default function ProductDetailsModal({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
                     gap: "12px",
                   }}
+                  className="grid-cols-1 sm:grid-cols-2"
                 >
                   {Array.from({ length: 2 }).map((_, index) => (
                     <div
@@ -199,10 +202,10 @@ export default function ProductDetailsModal({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
                 gap: "28px",
                 alignItems: "start",
               }}
+              className="grid-cols-1 md:grid-cols-2"
             >
               <div>
                 {product.image_url && (
@@ -285,9 +288,9 @@ export default function ProductDetailsModal({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
                     gap: "12px",
                   }}
+                  className="grid-cols-1 sm:grid-cols-2"
                 >
                   <div
                     style={{
@@ -404,7 +407,7 @@ export default function ProductDetailsModal({
 
         <div
           style={{
-            padding: "14px 24px",
+            padding: "14px 20px",
             borderTop: "1px solid #eee",
             display: "flex",
             justifyContent: "flex-start",

@@ -151,14 +151,16 @@ export default function FranchiseDetailModal({
         background:rgba(0,0,0,0.55);
         backdrop-filter:blur(4px);
         display:flex;
-        align-items:center;
+        align-items:flex-start;
         justify-content:center;
         z-index:999;
+        padding:12px;
+        overflow-y:auto;
       }
 
       .fdm-modal{
-        width:680px;
-        max-height:85vh;
+        width:min(680px, calc(100vw - 24px));
+        max-height:calc(100dvh - 24px);
         background:white;
         border-radius:16px;
         overflow:hidden;
@@ -179,6 +181,7 @@ export default function FranchiseDetailModal({
 
       .fdm-header{
         display:flex;
+        flex-wrap:wrap;
         justify-content:space-between;
         align-items:center;
         padding:22px 26px;
@@ -247,6 +250,25 @@ export default function FranchiseDetailModal({
         display:grid;
         grid-template-columns:1fr 1fr;
         gap:16px;
+      }
+
+      @media (max-width: 640px){
+        .fdm-modal{
+          width:100%;
+          max-height:calc(100dvh - 24px);
+          border-radius:14px;
+        }
+
+        .fdm-header,
+        .fdm-body,
+        .fdm-footer{
+          padding-left:18px;
+          padding-right:18px;
+        }
+
+        .fdm-grid{
+          grid-template-columns:1fr;
+        }
       }
 
       .fdm-card{

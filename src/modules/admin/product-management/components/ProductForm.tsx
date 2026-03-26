@@ -149,7 +149,7 @@ export default function ProductForm() {
   };
 
   return (
-    <div className="min-h-screen py-10 flex justify-center">
+    <div className="min-h-screen px-4 py-8 sm:px-6 sm:py-10 flex justify-center">
       <div className="w-full max-w-6xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#7F5539]">
@@ -162,7 +162,7 @@ export default function ProductForm() {
           </p>
         </div>
 
-        <div className="flex items-center justify-center mb-8">
+        <div className="mb-8 flex flex-wrap items-center justify-center gap-3">
           <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 1 ? "bg-[#7F5539] text-white" : "bg-[#9C6644] text-white"}`}
@@ -171,7 +171,7 @@ export default function ProductForm() {
             </div>
             <span className="text-sm font-medium text-slate-700">Product Info</span>
           </div>
-          <div className={`w-28 h-[3px] mx-4 rounded-full ${currentStep > 1 ? "bg-[#7F5539]" : "bg-slate-200"}`} />
+          <div className={`hidden h-[3px] w-20 rounded-full sm:block sm:w-28 ${currentStep > 1 ? "bg-[#7F5539]" : "bg-slate-200"}`} />
           <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 2 ? "bg-[#7F5539] text-white" : "bg-slate-200 text-slate-500"}`}
@@ -190,7 +190,7 @@ export default function ProductForm() {
         )}
 
         {currentStep === 1 && (
-          <form onSubmit={handleSubmit(onSubmitStep1)} className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-8">
+          <form onSubmit={handleSubmit(onSubmitStep1)} className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-5 sm:p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
                 <label className="text-sm font-medium text-slate-700">SKU *</label>
@@ -340,18 +340,18 @@ export default function ProductForm() {
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
+            <div className="flex flex-col-reverse gap-3 pt-6 mt-6 border-t border-slate-200 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={() => navigate("/admin/products")}
-                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
+                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isStep1Submitting}
-                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isCreating ? "Creating..." : "Next Step"}
               </button>
@@ -360,7 +360,7 @@ export default function ProductForm() {
         )}
 
         {currentStep === 2 && (
-          <form onSubmit={handleSubmitStep2(onSubmitStep2)} className="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+          <form onSubmit={handleSubmitStep2(onSubmitStep2)} className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="p-3 mb-6 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 font-medium">
               Product created successfully. Select a franchise and save.
             </div>
@@ -405,18 +405,18 @@ export default function ProductForm() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-6 mt-6 border-t border-slate-200">
+            <div className="flex flex-col-reverse gap-3 pt-6 mt-6 border-t border-slate-200 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={() => navigate("/admin/products")}
-                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition"
+                className="h-10 px-5 rounded-lg border border-slate-300 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isAssigning}
-                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isAssigning ? "Saving..." : "Save"}
               </button>

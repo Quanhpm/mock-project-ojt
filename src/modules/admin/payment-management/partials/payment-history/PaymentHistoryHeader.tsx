@@ -33,7 +33,7 @@ export const PaymentHistoryHeader = ({
             <button
               type="button"
               onClick={onChangeFranchise}
-              className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100"
+              className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 sm:w-auto"
             >
               <ArrowRightLeft size={16} />
               Chọn chi nhánh khác

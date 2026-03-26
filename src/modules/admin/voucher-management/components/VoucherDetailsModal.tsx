@@ -105,9 +105,8 @@ export default function VoucherDetailsModal({
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "90%",
-          maxWidth: "580px",
-          maxHeight: "90vh",
+          width: "min(580px, calc(100vw - 24px))",
+          maxHeight: "calc(100dvh - 24px)",
           overflowY: "auto",
           boxShadow:
             "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
@@ -128,7 +127,7 @@ export default function VoucherDetailsModal({
             zIndex: 1,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             <div
               style={{
                 backgroundColor: "#fdf3eb",

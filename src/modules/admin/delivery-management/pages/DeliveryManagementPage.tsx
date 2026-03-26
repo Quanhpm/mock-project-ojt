@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Truck } from "lucide-react";
 import { PosFranchiseSelectionGate } from "@/modules/admin/order-management/partials/pos/PosFranchiseSelectionGate";
 import { useDeliveryOrders } from "../hooks/use-delivery-orders";
@@ -29,12 +30,23 @@ export default function DeliveryManagementPage() {
     pickupSelectedDelivery,
     completeSelectedDelivery,
   } = useDeliveryOrders();
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [isDetailFocused, setIsDetailFocused] = useState(false);
+  const isShowingMobileDetail = Boolean(isMobileDetailOpen && selectedDeliveryId);
+  const isSidebarCollapsed = Boolean(isDetailFocused && selectedDeliveryId);
+
+  const handleSelectDelivery = (deliveryId: string | undefined) => {
+    selectDelivery(deliveryId);
+    if (deliveryId) {
+      setIsMobileDetailOpen(true);
+      setIsDetailFocused(true);
+    }
+  };
 
   if (requiresFranchiseSelection) {
     return (
       <main
-        className="flex min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-        style={{ height: "calc(100vh - 48px)" }}
+        className="flex min-h-[calc(100dvh-48px)] flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)]"
       >
         <PosFranchiseSelectionGate
           franchiseOptions={franchiseOptions}
@@ -48,8 +60,7 @@ export default function DeliveryManagementPage() {
   if (!franchiseId) {
     return (
       <div
-        className="flex min-h-0 flex-1 items-center justify-center rounded-[32px] border border-dashed border-gray-200 bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5"
-        style={{ height: "calc(100vh - 48px)" }}
+        className="flex min-h-[calc(100dvh-48px)] flex-1 items-center justify-center rounded-[32px] border border-dashed border-gray-200 bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5 lg:h-[calc(100dvh-48px)]"
       >
         <div className="max-w-lg">
           <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-orange-50 text-[#A3581E]">
@@ -69,9 +80,15 @@ export default function DeliveryManagementPage() {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: "calc(100vh - 48px)" }}>
+    <div className="flex min-h-[calc(100dvh-48px)] flex-col overflow-visible lg:h-[calc(100dvh-48px)] lg:overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
-        <div className="flex w-full flex-shrink-0 flex-col gap-4 lg:w-[360px] xl:w-[400px]">
+        <div
+          className={`${
+            isShowingMobileDetail ? "hidden lg:flex" : "flex"
+          } w-full flex-shrink-0 flex-col gap-4 ${
+            isSidebarCollapsed ? "lg:w-[300px] xl:w-[340px]" : "lg:w-[360px] xl:w-[400px]"
+          }`}
+        >
           <div className="flex-shrink-0">
             <DeliveryFiltersBar
               franchiseName={franchiseName}
@@ -87,14 +104,25 @@ export default function DeliveryManagementPage() {
               deliveries={deliveries}
               isLoading={isLoading}
               selectedDeliveryId={selectedDeliveryId}
-              onSelectDelivery={selectDelivery}
+              onSelectDelivery={handleSelectDelivery}
             />
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-[#EDE5D8] bg-[#FCFBF8] shadow-sm ring-1 ring-black/5">
+        <div
+          className={`${
+            isShowingMobileDetail ? "flex" : "hidden"
+          } min-w-0 flex-1 flex-col overflow-visible rounded-[32px] border border-[#EDE5D8] bg-[#FCFBF8] shadow-sm ring-1 ring-black/5 lg:flex lg:overflow-hidden`}
+        >
           {selectedDelivery ? (
-            <div className="h-full overflow-y-auto p-6 md:p-8 scrollbar-hide">
+            <div className="h-full overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-hide">
+              <button
+                type="button"
+                onClick={() => setIsMobileDetailOpen(false)}
+                className="mb-4 inline-flex items-center rounded-full border border-[#EDE5D8] bg-white px-4 py-2 text-sm font-semibold text-[#8A5A2B] transition hover:border-[#D9C9AE] hover:text-[#6D4522] lg:hidden"
+              >
+                ← Danh sách delivery
+              </button>
               <DeliveryDetailPanel
                 delivery={selectedDelivery}
                 orderDetail={selectedOrderDetail}

@@ -26,6 +26,9 @@ export default function CustomerEditModal({
   onClose,
   onSuccess,
 }: CustomerEditModalProps) {
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 640 : false,
+  );
   const { customer, isLoading, fetchCustomer } = useGetCustomer();
   const { updateCustomer, isUpdating } = useUpdateCustomer();
   const { success, error: showError } = useToast();
@@ -171,6 +174,15 @@ export default function CustomerEditModal({
 
   const isBusy = isUpdating || isUploading;
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 640);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   if (!isOpen) return null;
 
   const inputStyle = (hasError: boolean): React.CSSProperties => ({
@@ -238,9 +250,9 @@ export default function CustomerEditModal({
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "90%",
+          width: isMobileViewport ? "100%" : "90%",
           maxWidth: "580px",
-          maxHeight: "90vh",
+          maxHeight: isMobileViewport ? "calc(100dvh - 16px)" : "90vh",
           overflowY: "auto",
           boxShadow:
             "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
@@ -250,10 +262,10 @@ export default function CustomerEditModal({
         {/* Header */}
         <div
           style={{
-            padding: "20px 24px",
+            padding: isMobileViewport ? "16px 20px" : "20px 24px",
             borderBottom: "1px solid #f0f0f0",
             display: "flex",
-            alignItems: "center",
+            alignItems: isMobileViewport ? "flex-start" : "center",
             justifyContent: "space-between",
             position: "sticky",
             top: 0,
@@ -311,7 +323,7 @@ export default function CustomerEditModal({
         {/* Body */}
         <div
           style={{
-            padding: "24px",
+            padding: isMobileViewport ? "20px" : "24px",
             display: "flex",
             flexDirection: "column",
             gap: "24px",
@@ -496,7 +508,11 @@ export default function CustomerEditModal({
                   <span style={sectionLabelStyle}>Contact Information</span>
                 </div>
                 <div
-                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: isMobileViewport ? "1fr" : "1fr 1fr",
+                    gap: "16px",
+                  }}
                 >
                   {/* Email */}
                   <div>
@@ -566,16 +582,17 @@ export default function CustomerEditModal({
           )}
 
           {/* Footer */}
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              justifyContent: "flex-end",
-              paddingTop: "20px",
-              borderTop: "1px solid #f0f0f0",
-            }}
-          >
-            <button
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+                paddingTop: "20px",
+                borderTop: "1px solid #f0f0f0",
+              }}
+              className="flex-col-reverse sm:flex-row"
+            >
+              <button
               type="button"
               onClick={onClose}
               disabled={isBusy}
@@ -588,8 +605,8 @@ export default function CustomerEditModal({
                 cursor: isBusy ? "not-allowed" : "pointer",
                 backgroundColor: "white",
                 color: "#374151",
-                marginRight: "auto",
                 opacity: isBusy ? 0.5 : 1,
+                width: isMobileViewport ? "100%" : "auto",
               }}
             >
               Cancel
@@ -610,6 +627,8 @@ export default function CustomerEditModal({
                 fontSize: "14px",
                 fontWeight: "600",
                 cursor: isBusy || !customer ? "not-allowed" : "pointer",
+                width: isMobileViewport ? "100%" : "auto",
+                justifyContent: "center",
               }}
             >
               <Save size={16} />

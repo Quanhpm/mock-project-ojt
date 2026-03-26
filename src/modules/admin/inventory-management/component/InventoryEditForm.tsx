@@ -107,7 +107,7 @@ export default function InventoryEditForm() {
   const productId = getProductId(formData.productFranchiseId);
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100dvh", padding: "clamp(16px, 3vw, 24px)" }}>
       {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
         <span 
@@ -119,7 +119,7 @@ export default function InventoryEditForm() {
       </div>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px", gap: "16px", flexWrap: "wrap" }}>
         <div>
           <button
             onClick={() => navigate("/admin/inventory")}
@@ -146,7 +146,7 @@ export default function InventoryEditForm() {
             Update inventory quantity, alert threshold, and status.
           </p>
         </div>
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "12px", width: "100%", maxWidth: "320px" }}>
           <button
             type="button"
             onClick={() => navigate("/admin/inventory")}
@@ -189,7 +189,7 @@ export default function InventoryEditForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
           {/* Left Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Inventory Identity */}
@@ -262,7 +262,7 @@ export default function InventoryEditForm() {
                   borderRadius: "8px",
                   padding: "16px"
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px", flexWrap: "wrap" }}>
                     <img
                       src={`https://picsum.photos/seed/product${productId}/400`}
                       alt={productName}
@@ -311,7 +311,7 @@ export default function InventoryEditForm() {
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
                   Quantity <span style={{ color: "#dc3545" }}>*</span>
                 </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                   <button
                     type="button"
                     onClick={() => handleQuantityChange(-10)}
@@ -443,7 +443,7 @@ export default function InventoryEditForm() {
                   Status
                 </label>
                 
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "14px", color: "#374151" }}>Active Inventory</span>
                   <div
                     onClick={toggleActive}
@@ -485,19 +485,19 @@ export default function InventoryEditForm() {
                 <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", color: "#6c757d", marginBottom: "12px" }}>
                   STOCK STATUS PREVIEW
                 </p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", gap: "12px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "13px", color: "#374151" }}>Current Quantity:</span>
                   <span style={{ fontSize: "14px", fontWeight: "600", color: "#212529" }}>
                     {formData.quantity}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "12px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "13px", color: "#374151" }}>Alert Threshold:</span>
                   <span style={{ fontSize: "14px", fontWeight: "600", color: "#ffc107" }}>
                     {formData.alertThreshold}
                   </span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "13px", color: "#374151" }}>Status:</span>
                   <span style={{
                     display: "inline-flex",
@@ -557,8 +557,9 @@ export default function InventoryEditForm() {
       {/* Sync Status */}
       <div style={{
         position: "fixed",
-        bottom: "24px",
-        right: "24px",
+        bottom: "16px",
+        right: "16px",
+        maxWidth: "calc(100vw - 32px)",
         backgroundColor: "#212529",
         color: "white",
         padding: "12px 20px",

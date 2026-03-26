@@ -27,8 +27,12 @@ export default function CategoryEditDrawer({
 
   useEffect(() => {
     if (category) {
-      setDisplayOrder(category.display_order);
-      setIsActive(category.is_active);
+      const frame = window.requestAnimationFrame(() => {
+        setDisplayOrder(category.display_order);
+        setIsActive(category.is_active);
+      });
+
+      return () => window.cancelAnimationFrame(frame);
     }
   }, [category]);
 
@@ -64,7 +68,7 @@ export default function CategoryEditDrawer({
 
       onSuccess?.();
       onClose();
-    } catch (error) {
+    } catch {
       // Error already handled by hooks
     }
   };
@@ -103,7 +107,7 @@ export default function CategoryEditDrawer({
         {/* Header */}
         <div
           style={{
-            padding: "20px 24px",
+            padding: "18px 20px",
             borderBottom: "1px solid #f0f0f0",
             display: "flex",
             alignItems: "center",
@@ -112,6 +116,8 @@ export default function CategoryEditDrawer({
             top: 0,
             backgroundColor: "white",
             zIndex: 1,
+            gap: "12px",
+            flexWrap: "wrap",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -155,7 +161,7 @@ export default function CategoryEditDrawer({
         </div>
 
         {/* Body */}
-        <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "24px" }}>
           {isLoading ? (
             <div style={{ textAlign: "center", padding: "48px 0", color: "#64748b" }}>
               Loading...
@@ -232,7 +238,7 @@ export default function CategoryEditDrawer({
                     Settings & Display
                   </span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "grid", gap: "16px" }} className="grid-cols-1 sm:grid-cols-2">
                   <div>
                     <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" }}>
                       Display Order
@@ -318,6 +324,7 @@ export default function CategoryEditDrawer({
               justifyContent: "flex-end",
               paddingTop: "20px",
               borderTop: "1px solid #f0f0f0",
+              flexDirection: "column-reverse",
             }}
           >
             <button
@@ -335,6 +342,7 @@ export default function CategoryEditDrawer({
                 color: "#374151",
                 marginRight: "auto",
                 opacity: isUpdating || isToggling ? 0.5 : 1,
+                width: "100%",
               }}
             >
               Cancel
@@ -355,6 +363,7 @@ export default function CategoryEditDrawer({
                 fontSize: "14px",
                 fontWeight: "600",
                 cursor: isUpdating || isToggling || !category ? "not-allowed" : "pointer",
+                width: "100%",
               }}
             >
               <Save size={16} />

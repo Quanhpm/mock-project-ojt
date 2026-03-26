@@ -34,7 +34,7 @@ export const StaffOrderQueueHeader = ({
   };
 
   return (
-    <div className="rounded-[32px] border border-[#EDE5D8] bg-white px-6 py-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] md:px-8">
+    <div className="rounded-[32px] border border-[#EDE5D8] bg-white px-4 py-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:px-6 md:px-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">
           <p className="inline-flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">
@@ -49,7 +49,7 @@ export const StaffOrderQueueHeader = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-4">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="flex flex-col justify-center rounded-[24px] bg-[#FCFBF8] px-6 py-4 ring-1 ring-inset ring-[#EDE5D8]">
             <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">Chi nhánh</p>
             <p className="mt-1.5 text-[0.95rem] font-black text-gray-900">{franchiseName || "Theo franchise hiện tại"}</p>
@@ -73,7 +73,7 @@ export const StaffOrderQueueHeader = ({
                 key={option.value}
                 type="button"
                 onClick={() => onSortChange(option.value)}
-                className={`flex items-center gap-2.5 rounded-[16px] px-5 py-3 text-[0.9rem] font-black uppercase tracking-[0.05em] transition-all active:scale-95 ${
+                className={`flex w-full items-center justify-between gap-2.5 rounded-[16px] px-4 py-3 text-[0.9rem] font-black uppercase tracking-[0.05em] transition-all active:scale-95 sm:w-auto sm:px-5 ${
                   isActive
                     ? "bg-gradient-to-r from-[#C85712] to-[#A3581E] text-white shadow-[0_4px_12px_-4px_rgba(200,87,18,0.4)]"
                     : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-[#FDFCF9] hover:text-[#C85712] hover:ring-[#F0D8B7]"

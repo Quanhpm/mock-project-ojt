@@ -53,8 +53,7 @@ export const StaffOrderQueuePage = () => {
   if (requiresFranchiseSelection) {
     return (
       <main
-        className="flex min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-        style={{ height: "calc(100vh - 48px)" }}
+        className="flex min-h-[calc(100dvh-48px)] flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)]"
       >
         <PosFranchiseSelectionGate
           franchiseOptions={franchiseOptions}
@@ -68,8 +67,7 @@ export const StaffOrderQueuePage = () => {
   if (!franchiseId) {
     return (
       <div
-        className="flex min-h-0 flex-1 items-center justify-center rounded-[32px] border border-dashed border-gray-200 bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5"
-        style={{ height: "calc(100vh - 48px)" }}
+        className="flex min-h-[calc(100dvh-48px)] flex-1 items-center justify-center rounded-[32px] border border-dashed border-gray-200 bg-white px-6 py-10 text-center shadow-sm ring-1 ring-black/5 lg:h-[calc(100dvh-48px)]"
       >
         <div className="max-w-md">
           <p className="text-xl font-black tracking-tight text-gray-900">
@@ -87,7 +85,7 @@ export const StaffOrderQueuePage = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-6 overflow-hidden" style={{ height: "calc(100vh - 48px)" }}>
+      <div className="flex min-h-[calc(100dvh-48px)] flex-col gap-6 overflow-visible lg:h-[calc(100dvh-48px)] lg:overflow-hidden">
         <StaffOrderQueueHeader
           franchiseName={franchiseName}
           totalOrders={orders.length}

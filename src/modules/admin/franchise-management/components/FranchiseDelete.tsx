@@ -36,8 +36,10 @@ export default function FranchiseDelete({
           backgroundColor: "rgba(0, 0, 0, 0.5)",
           zIndex: 999,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
+          alignItems: "flex-start",
+          justifyContent: "center",
+          padding: "12px",
+          overflowY: "auto",
         }}
       >
         {/* Modal */}
@@ -46,8 +48,8 @@ export default function FranchiseDelete({
           style={{
             backgroundColor: "white",
             borderRadius: "12px",
-            width: "90%",
-            maxWidth: "480px",
+            width: "min(480px, calc(100vw - 24px))",
+            maxHeight: "calc(100dvh - 24px)",
             boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
             overflow: "hidden"
           }}
@@ -159,7 +161,8 @@ export default function FranchiseDelete({
             borderTop: "1px solid #f0f0f0",
             display: "flex",
             gap: "12px",
-            justifyContent: "space-between"
+            justifyContent: "space-between",
+            flexDirection: "column-reverse"
           }}>
             <button
               onClick={onClose}
@@ -171,7 +174,8 @@ export default function FranchiseDelete({
                 fontWeight: "500",
                 cursor: "pointer",
                 backgroundColor: "white",
-                color: "#374151"
+                color: "#374151",
+                width: "100%"
               }}
             >
               Cancel
@@ -186,7 +190,8 @@ export default function FranchiseDelete({
                 fontWeight: "600",
                 cursor: "pointer",
                 backgroundColor: "#f44336",
-                color: "white"
+                color: "white",
+                width: "100%"
               }}
             >
               Delete Franchise

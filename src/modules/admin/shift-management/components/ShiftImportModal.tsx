@@ -186,14 +186,14 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
   })
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/55 px-4 py-6">
-      <div className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] bg-white shadow-[0_30px_80px_rgba(15,23,42,0.28)]">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-[linear-gradient(135deg,_rgba(248,250,252,0.98),_rgba(239,246,255,0.95))] px-8 py-6">
+    <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-slate-950/55 px-3 py-3 sm:items-center sm:px-4 sm:py-6">
+      <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-[0_30px_80px_rgba(15,23,42,0.28)] sm:max-h-[94vh] sm:rounded-[32px]">
+        <div className="flex flex-col gap-4 border-b border-slate-200 bg-[linear-gradient(135deg,_rgba(248,250,252,0.98),_rgba(239,246,255,0.95))] px-4 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6 lg:px-8 lg:py-6">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
               Shift Import
             </p>
-            <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
               Import Shift Assignments
             </h3>
             <p className="mt-3 text-sm text-slate-500">
@@ -213,7 +213,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
         </div>
 
         <div className="grid min-h-0 flex-1 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <div className="overflow-y-auto border-b border-slate-200 bg-slate-50/70 px-6 py-6 lg:border-b-0 lg:border-r">
+          <div className="overflow-y-auto border-b border-slate-200 bg-slate-50/70 px-4 py-5 sm:px-6 lg:border-b-0 lg:border-r lg:px-6 lg:py-6">
             <form onSubmit={submitImport} className="space-y-4">
               <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start gap-3">
@@ -282,7 +282,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="flex min-h-[138px] flex-col justify-between rounded-[24px] border border-slate-200 bg-white px-4 py-4 text-center shadow-sm">
                   <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
                     Total Rows
@@ -303,7 +303,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col-reverse items-stretch gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
                 <button
                   type="button"
                   onClick={handleClose}
@@ -329,7 +329,7 @@ export const ShiftImportModal: React.FC<ShiftImportModalProps> = ({
             </form>
           </div>
 
-          <div className="min-w-0 overflow-y-auto px-6 py-6">
+          <div className="min-w-0 overflow-y-auto px-4 py-5 sm:px-6 lg:px-6 lg:py-6">
             <div className="rounded-[28px] border border-slate-200 bg-slate-50 px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>

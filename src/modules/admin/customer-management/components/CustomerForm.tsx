@@ -98,6 +98,9 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
   const navigate = useNavigate();
   const { success, error } = useToast();
   const isEditMode = !!customer;
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
 
   // ============================================================================
   // FILE UPLOAD STATE
@@ -140,6 +143,15 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
   const { updateCustomer, isUpdating } = useUpdateCustomer();
 
   const isLoading = isCreating || isUpdating || isUploading;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // ============================================================================
   // USE EFFECT - FILL FORM WITH EXISTING DATA (EDIT MODE)
@@ -293,15 +305,20 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
     <div
       style={{
         backgroundColor: "#f9f7f4",
-        minHeight: "100vh",
-        padding: "24px",
+        minHeight: "100dvh",
+        padding: isMobileViewport ? "16px" : "24px",
       }}
     >
       {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: isEditMode ? "24px" : "40px" }}>
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: isEditMode ? "24px" : isMobileViewport ? "32px" : "40px",
+        }}
+      >
         <h1
           style={{
-            fontSize: isEditMode ? "32px" : "28px",
+            fontSize: isEditMode ? "clamp(1.75rem, 4vw, 2rem)" : "clamp(1.5rem, 4vw, 1.875rem)",
             fontWeight: "700",
             color: "#7F5539",
             margin: 0,
@@ -315,15 +332,15 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
       </div>
 
       {/* Form Container */}
-      <div style={{ maxWidth: "760px", margin: "0 auto" }}>
+      <div style={{ maxWidth: "760px", margin: "0 auto", width: "100%" }}>
         <form id="customer-form" onSubmit={hookFormHandleSubmit(onSubmit)}>
           {/* Basic Information */}
           <div
             style={{
               backgroundColor: "white",
-              padding: "24px",
+              padding: isMobileViewport ? "20px" : "24px",
               borderRadius: "12px",
-              marginBottom: "24px",
+              marginBottom: isMobileViewport ? "20px" : "24px",
               boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)",
               border: "1px solid #E6CCB2",
             }}
@@ -352,7 +369,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 1fr",
+                gridTemplateColumns: isMobileViewport ? "1fr" : "1fr 1fr",
                 gap: "20px",
                 marginBottom: "20px",
               }}
@@ -779,14 +796,16 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
               <div
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: isMobileViewport ? "stretch" : "center",
                   justifyContent: "space-between",
+                  gap: "12px",
                   marginTop: "20px",
                   padding: "16px",
                   borderRadius: "8px",
                   backgroundColor: "#faf8f6",
                   border: "1px solid #E6CCB2",
                 }}
+                className="flex-col sm:flex-row sm:items-center"
               >
                 <div>
                   <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#212529" }}>
@@ -850,11 +869,13 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
-                  marginTop: "32px",
-                  paddingTop: "24px",
+                  alignItems: isMobileViewport ? "stretch" : "center",
+                  gap: "12px",
+                  marginTop: isMobileViewport ? "28px" : "32px",
+                  paddingTop: isMobileViewport ? "20px" : "24px",
                   borderTop: "1px solid #E6CCB2",
                 }}
+                className="flex-col-reverse sm:flex-row sm:items-center"
               >
                 <button
                   type="button"
@@ -869,6 +890,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     backgroundColor: "white",
                     color: "#7F5539",
                     transition: "all 0.2s",
+                    width: isMobileViewport ? "100%" : "auto",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "#faf8f6";
@@ -894,6 +916,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     fontWeight: "600",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
+                    width: isMobileViewport ? "100%" : "auto",
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading) e.currentTarget.style.backgroundColor = "#9C6644";
@@ -913,11 +936,13 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  alignItems: "center",
-                  marginTop: "32px",
-                  paddingTop: "24px",
+                  alignItems: isMobileViewport ? "stretch" : "center",
+                  gap: "12px",
+                  marginTop: isMobileViewport ? "28px" : "32px",
+                  paddingTop: isMobileViewport ? "20px" : "24px",
                   borderTop: "1px solid #E6CCB2",
                 }}
+                className="flex-col-reverse sm:flex-row sm:items-center"
               >
                 <button
                   type="button"
@@ -932,6 +957,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     backgroundColor: "white",
                     color: "#7F5539",
                     transition: "all 0.2s",
+                    width: isMobileViewport ? "100%" : "auto",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "#faf8f6";
@@ -957,6 +983,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     fontWeight: "600",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
+                    width: isMobileViewport ? "100%" : "auto",
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading) e.currentTarget.style.backgroundColor = "#9C6644";

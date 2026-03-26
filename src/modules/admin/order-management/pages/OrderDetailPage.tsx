@@ -123,8 +123,7 @@ export const OrderDetailPage = ({
   if (!isEmbedded && requiresFranchiseSelection) {
     return (
       <main
-        className="flex min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-        style={{ height: "calc(100vh - 48px)" }}
+        className="flex min-h-[calc(100dvh-48px)] flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)]"
       >
         <PosFranchiseSelectionGate
           franchiseOptions={franchiseOptions}
@@ -137,7 +136,7 @@ export const OrderDetailPage = ({
 
   if (!isEmbedded && !franchiseId) {
     return (
-      <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm">
+      <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-6 text-center text-gray-500 shadow-sm sm:p-8">
         Không xác định được chi nhánh làm việc. Vui lòng kiểm tra franchise context trước khi xử lý đơn hàng.
       </div>
     );
@@ -168,10 +167,10 @@ export const OrderDetailPage = ({
     <div
       className={cn(
         "w-full min-w-0",
-        isEmbedded ? "bg-transparent" : "mx-auto max-w-7xl bg-white pb-12",
+        isEmbedded ? "bg-transparent" : "mx-auto max-w-7xl bg-white pb-8 sm:pb-12",
       )}
     >
-      <div className="space-y-8">
+      <div className="space-y-6 lg:space-y-8">
         <OrderProgressHeader
           order={order}
           paymentStatus={payment?.status}

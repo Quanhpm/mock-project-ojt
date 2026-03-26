@@ -18,6 +18,20 @@ styleSheet.textContent = `
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-spin { animation: spin 1s linear infinite; }
+  @media (max-width: 1024px) {
+    [data-voucher-shell] { height: auto; min-height: 100dvh; overflow-x: hidden; }
+    [data-voucher-main] { height: auto; min-height: 100dvh; overflow: visible; }
+    [data-voucher-header], [data-voucher-content] { padding-left: 16px !important; padding-right: 16px !important; }
+    [data-voucher-content] { overflow: visible !important; }
+    [data-voucher-filter-panel] { padding: 12px !important; }
+    [data-voucher-search-row], [data-voucher-filter-row] { flex-direction: column !important; align-items: stretch !important; }
+    [data-voucher-search-row] > *, [data-voucher-filter-row] > * { width: 100% !important; min-width: 0 !important; }
+    [data-voucher-search-row] button, [data-voucher-filter-row] button { width: 100%; justify-content: center; }
+    [data-voucher-table-wrap] { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    [data-voucher-table-wrap] table { min-width: 980px; }
+    [data-voucher-pagination] { flex-direction: column; align-items: stretch; gap: 12px; }
+    [data-voucher-pagination] > div, [data-voucher-pagination] nav { width: 100%; justify-content: center; flex-wrap: wrap; }
+  }
 `;
 if (!document.head.querySelector("style[data-voucher-table]")) {
   styleSheet.setAttribute("data-voucher-table", "true");
@@ -94,17 +108,33 @@ export default function VoucherTable() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [pageNum, setPageNum] = useState(1);
   const [pageInput, setPageInput] = useState("");
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
+  );
 
   // Franchise list for dropdown
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktopViewport(window.innerWidth >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   // Prevent page scroll (match other modules)
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = isDesktopViewport ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [isDesktopViewport]);
 
   // ---------------------------------------------------------------------------
   // Core search function — accepts optional overrides so callers can pass
@@ -255,18 +285,29 @@ export default function VoucherTable() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden" }}>
+    <div
+      data-voucher-shell
+      style={{
+        display: "flex",
+        minHeight: "100dvh",
+        width: "100%",
+        overflowX: "hidden",
+        overflowY: isDesktopViewport ? "hidden" : "visible",
+      }}
+    >
       <main
+        data-voucher-main
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          height: "100vh",
-          overflow: "hidden",
+          minHeight: "100dvh",
+          overflow: isDesktopViewport ? "hidden" : "visible",
         }}
       >
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <header
+          data-voucher-header
           style={{
             width: "100%",
             padding: "24px 32px",
@@ -345,16 +386,19 @@ export default function VoucherTable() {
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div
+          data-voucher-content
           style={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             padding: "0 32px 32px",
-            overflow: "hidden",
+            overflow: isDesktopViewport ? "hidden" : "visible",
+            minHeight: 0,
           }}
         >
           {/* ── Filter bar ───────────────────────────────────────────────── */}
           <div
+            data-voucher-filter-panel
             style={{
               backgroundColor: "white",
               padding: "16px",
@@ -367,6 +411,7 @@ export default function VoucherTable() {
           >
             {/* Row 1: keyword search + search button */}
             <div
+              data-voucher-search-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -522,6 +567,7 @@ export default function VoucherTable() {
 
             {/* Row 2: dropdowns + toggle + clear */}
             <div
+              data-voucher-filter-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -673,6 +719,7 @@ export default function VoucherTable() {
 
           {/* ── Table ────────────────────────────────────────────────────── */}
           <div
+            data-voucher-table-wrap
             style={{
               flex: 1,
               display: "flex",
@@ -1156,7 +1203,7 @@ export default function VoucherTable() {
 
                      {/* Pagination */}
           {!isLoading && vouchers.length > 0 && totalPages > 1 && (
-            <div style={styles.paginationContainer}>
+            <div data-voucher-pagination style={styles.paginationContainer}>
               <span style={{ color: "#6b7280", fontWeight: "600" }}>
                 Showing {(currentPage - 1) * 10 + 1} to{" "}
                 {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}

@@ -195,7 +195,7 @@ export default function InventoryForm() {
   };
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100dvh", padding: "clamp(16px, 3vw, 24px)" }}>
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
         Inventory &rsaquo; <span style={{ color: "#212529" }}>Create Inventory</span>
       </div>
@@ -243,7 +243,7 @@ export default function InventoryForm() {
         noValidate
         onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
       >
-        <div style={{ maxWidth: "760px", display: "grid", gap: "24px" }}>
+        <div style={{ maxWidth: "760px", width: "100%", display: "grid", gap: "24px" }}>
           <div
             style={{
               backgroundColor: "white",
@@ -376,7 +376,7 @@ export default function InventoryForm() {
               </h2>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "20px" }}>
               <div style={{ display: "grid", gap: "8px" }}>
                 <label style={{ fontSize: "13px", fontWeight: "500", color: "#374151" }}>
                   Quantity <span style={{ color: "#dc3545" }}>*</span>
@@ -436,7 +436,7 @@ export default function InventoryForm() {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px" }}>
             <button
               type="button"
               onClick={handleClose}

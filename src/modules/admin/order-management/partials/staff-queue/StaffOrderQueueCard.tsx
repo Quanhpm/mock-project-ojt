@@ -81,7 +81,7 @@ export const StaffOrderQueueCard = ({
 
   return (
     <>
-      <article className="flex h-[580px] flex-col overflow-hidden rounded-[32px] border border-[#EDE5D8] bg-white p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition hover:shadow-lg md:p-6 relative z-10">
+      <article className="relative z-10 flex min-h-[520px] flex-col overflow-hidden rounded-[32px] border border-[#EDE5D8] bg-white p-5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition hover:shadow-lg md:p-6 lg:h-[580px]">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[0.7rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">Order ID</p>
@@ -122,7 +122,7 @@ export const StaffOrderQueueCard = ({
         </div>
 
         <div className="relative mt-6 flex flex-1 flex-col min-h-0">
-          <div className={cn("flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-hide", hiddenCount > 0 ? "pb-16" : "")}>
+          <div className={cn("flex-1 space-y-3 overflow-y-auto pr-2 scrollbar-hide", hiddenCount > 0 ? "pb-16" : "")}>
             {isDetailLoading ? (
               Array.from({ length: 3 }).map((_, index) => (
                 <div
@@ -254,13 +254,13 @@ export const StaffOrderQueueCard = ({
       </article>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm transition-opacity sm:items-center sm:px-4 sm:py-6">
           <div className="absolute inset-0" onClick={() => setIsModalOpen(false)} />
-          <div className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200">
-            <div className="shrink-0 border-b border-[#EDE5D8] bg-gradient-to-r from-[#FCFBF8] to-white px-6 py-6 sm:px-8">
-              <div className="flex items-start justify-between">
+          <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl ring-1 ring-black/5 animate-in zoom-in-95 duration-200 sm:max-h-[85vh] sm:rounded-[32px]">
+            <div className="shrink-0 border-b border-[#EDE5D8] bg-gradient-to-r from-[#FCFBF8] to-white px-5 py-5 sm:px-8 sm:py-6">
+              <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-[1.8rem] font-black tracking-tight text-gray-900">Chi tiết sản phẩm</h3>
+                  <h3 className="text-[1.5rem] font-black tracking-tight text-gray-900 sm:text-[1.8rem]">Chi tiết sản phẩm</h3>
                   <p className="mt-1 text-[0.95rem] font-medium text-gray-500">
                     Mã đơn <span className="font-black text-[#C85712]">{order.code}</span> • {order.order_items.length} phần
                   </p>
@@ -275,7 +275,7 @@ export const StaffOrderQueueCard = ({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-[#FDFCF9] p-6 sm:p-8 space-y-4">
+            <div className="flex-1 space-y-4 overflow-y-auto bg-[#FDFCF9] p-5 sm:p-8">
               {order.order_items.map((item) => (
                 <div
                   key={`modal-${item.order_item_id}`}
@@ -326,11 +326,11 @@ export const StaffOrderQueueCard = ({
               ))}
             </div>
 
-            <div className="shrink-0 border-t border-[#EDE5D8] bg-white px-6 py-5 sm:px-8 flex justify-end">
+            <div className="shrink-0 border-t border-[#EDE5D8] bg-white px-5 py-5 sm:flex sm:justify-end sm:px-8">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="flex h-14 min-w-[140px] items-center justify-center rounded-[20px] bg-gray-100 px-6 text-[0.95rem] font-black text-gray-700 transition hover:bg-gray-200"
+                className="flex h-14 w-full items-center justify-center rounded-[20px] bg-gray-100 px-6 text-[0.95rem] font-black text-gray-700 transition hover:bg-gray-200 sm:w-auto sm:min-w-[140px]"
               >
                 Đóng
               </button>

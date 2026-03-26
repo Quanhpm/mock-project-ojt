@@ -27,24 +27,24 @@ interface DeleteModal {
 const styles = {
   container: {
     display: "flex" as const,
-    height: "100vh",
+    minHeight: "100dvh",
     width: "100%",
-    overflow: "hidden" as const,
+    overflow: "visible" as const,
   },
   main: {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    height: "100vh",
-    overflow: "hidden" as const,
+    minHeight: "100dvh",
+    overflow: "visible" as const,
     position: "relative" as const,
   },
   header: {
     width: "100%",
-    padding: "32px 40px",
+    padding: "24px 16px",
     display: "flex" as const,
     flexDirection: "column" as const,
-    gap: "28px",
+    gap: "20px",
     flexShrink: 0,
     zIndex: 10,
   },
@@ -52,8 +52,8 @@ const styles = {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    padding: "0 40px 40px",
-    overflow: "hidden" as const,
+    padding: "0 16px 24px",
+    overflow: "visible" as const,
   },
   filterContainer: {
     backgroundColor: "white",
@@ -65,7 +65,6 @@ const styles = {
   },
   tableContainer: {
     flex: 1,
-    display: "flex" as const,
     flexDirection: "column" as const,
     backgroundColor: "white",
     borderRadius: "12px",
@@ -90,10 +89,19 @@ const styles = {
     display: "flex" as const,
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
+    flexWrap: "wrap" as const,
+    gap: "12px",
     padding: "12px 24px",
     backgroundColor: "#f8f9fa",
     borderTop: "1px solid #e9ecef",
     flexShrink: 0,
+  },
+  mobileCard: {
+    backgroundColor: "white",
+    border: "1px solid #e5e7eb",
+    borderRadius: "12px",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+    padding: "16px",
   },
 };
 
@@ -178,6 +186,9 @@ const getButtonStyles = {
 
 export default function CustomerTable() {
   const navigate = useNavigate();
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
 
   // ========================================================================
   // SEARCH HOOK
@@ -237,12 +248,13 @@ export default function CustomerTable() {
   // EFFECTS
   // ========================================================================
 
-  // Prevent body scroll
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
     };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Keyboard shortcuts (Ctrl+K)
@@ -593,6 +605,153 @@ export default function CustomerTable() {
     );
   };
 
+  const renderMobileCard = (customer: Customer) => {
+    const isActive = customerStatus[customer.id] ?? customer.is_active;
+
+    return (
+      <div key={customer.id} style={styles.mobileCard}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+          <div
+            style={{
+              width: "48px",
+              height: "48px",
+              borderRadius: "12px",
+              backgroundImage: `url('${customer.avatar_url}')`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              border: "1px solid #e5e7eb",
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#111827", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {customer.name}
+                </h3>
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#6b7280", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {customer.email || "—"}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewModal({ isOpen: true, customer })}
+                style={{
+                  ...getButtonStyles.actionButton,
+                  color: "#4b5563",
+                  width: "36px",
+                  height: "36px",
+                  flexShrink: 0,
+                  border: "1px solid #e5e7eb",
+                  backgroundColor: "white",
+                }}
+                title="View"
+              >
+                <Eye size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "10px", marginTop: "12px" }}>
+              <div style={{ borderRadius: "10px", backgroundColor: "#f8fafc", padding: "10px" }}>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Phone</div>
+                <div style={{ fontSize: "13px", color: "#111827", fontWeight: 600 }}>{customer.phone}</div>
+              </div>
+              <div style={{ borderRadius: "10px", backgroundColor: "#f8fafc", padding: "10px" }}>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Status</div>
+                <button
+                  onClick={() => handleToggleCustomerStatus(customer.id)}
+                  disabled={updatingId === customer.id}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    border: "none",
+                    background: "transparent",
+                    padding: 0,
+                    cursor: updatingId === customer.id ? "not-allowed" : "pointer",
+                    color: "#111827",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: "36px",
+                      height: "20px",
+                      borderRadius: "999px",
+                      backgroundColor: isActive ? "#8B5A2B" : "#d1d5db",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "2px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "999px",
+                        backgroundColor: "white",
+                        transform: isActive ? "translateX(16px)" : "translateX(0)",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  </span>
+                  {isActive ? "Active" : "Inactive"}
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
+              {!customer.is_deleted && (
+                <button
+                  onClick={() => setEditModal({ isOpen: true, customerId: customer.id })}
+                  style={{
+                    border: "1px solid #fde68a",
+                    backgroundColor: "#fffbeb",
+                    color: "#92400e",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Edit2 size={14} />
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={() =>
+                  customer.is_deleted
+                    ? handleRestore(customer.id.toString())
+                    : handleDeleteClick(customer.id.toString(), customer.name)
+                }
+                disabled={isDeleting || isRestoring}
+                style={{
+                  border: "1px solid #e5e7eb",
+                  backgroundColor: "white",
+                  color: "#374151",
+                  borderRadius: "8px",
+                  padding: "8px 12px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  opacity: isDeleting || isRestoring ? 0.6 : 1,
+                }}
+              >
+                {customer.is_deleted ? <RotateCcw size={14} /> : <Trash2 size={14} />}
+                {customer.is_deleted ? "Restore" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ========================================================================
   // RENDER
   // ========================================================================
@@ -600,9 +759,20 @@ export default function CustomerTable() {
   return (
     <div style={styles.container}>
       {/* Main Content */}
-      <main style={styles.main}>
+      <main
+        style={{
+          ...styles.main,
+          minHeight: isMobileViewport ? "100dvh" : "100vh",
+        }}
+      >
         {/* Header */}
-        <header style={styles.header}>
+        <header
+          style={{
+            ...styles.header,
+            padding: isMobileViewport ? "24px 16px" : "32px 40px",
+            gap: isMobileViewport ? "20px" : "28px",
+          }}
+        >
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <nav
               style={{
@@ -643,7 +813,7 @@ export default function CustomerTable() {
             >
               <h1
                 style={{
-                  fontSize: "36px",
+                  fontSize: "clamp(1.75rem, 4vw, 2.25rem)",
                   fontWeight: "900",
                   letterSpacing: "-0.025em",
                   color: "#212529",
@@ -658,7 +828,11 @@ export default function CustomerTable() {
             </div>
             <button
               onClick={() => navigate("/admin/customers/create")}
-              style={getButtonStyles.primary as React.CSSProperties}
+              style={{
+                ...(getButtonStyles.primary as React.CSSProperties),
+                width: isMobileViewport ? "100%" : "auto",
+                justifyContent: "center",
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#6d4423";
                 e.currentTarget.style.boxShadow =
@@ -677,14 +851,31 @@ export default function CustomerTable() {
         </header>
 
         {/* Content Area */}
-        <div style={styles.contentArea}>
+        <div
+          style={{
+            ...styles.contentArea,
+            padding: isMobileViewport ? "0 16px 24px" : "0 40px 40px",
+          }}
+        >
           {/* Filters */}
           <div style={styles.filterContainer}>
             {/* Row 1: Search Bar + Search Button */}
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "12px" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobileViewport ? "column" : "row",
+                gap: "12px",
+                alignItems: isMobileViewport ? "stretch" : "center",
+                marginBottom: "12px",
+              }}
+            >
             {/* Search Bar with History */}
             <div
-              style={{ flex: 1, minWidth: "300px", position: "relative" }}
+              style={{
+                flex: 1,
+                minWidth: isMobileViewport ? 0 : "300px",
+                position: "relative",
+              }}
               ref={dropdownRef}
             >
               <div style={{ position: "relative" }}>
@@ -918,8 +1109,10 @@ export default function CustomerTable() {
               onClick={handleSearch}
               style={{
                 ...getButtonStyles.primary,
-                minWidth: "110px",
                 height: "42px",
+                width: isMobileViewport ? "100%" : "auto",
+                minWidth: isMobileViewport ? undefined : "110px",
+                justifyContent: "center",
               }}
               aria-label="Search customers"
             >
@@ -929,7 +1122,15 @@ export default function CustomerTable() {
             </div>{/* end Row 1 */}
 
             {/* Row 2: Filter dropdowns + Current/Deleted toggle + Clear */}
-            <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobileViewport ? "column" : "row",
+                gap: "12px",
+                alignItems: isMobileViewport ? "stretch" : "center",
+                flexWrap: isMobileViewport ? "nowrap" : "wrap",
+              }}
+            >
             {/* Status Filter */}
               <select
                 value={String(filters.is_active ?? "")}
@@ -943,7 +1144,7 @@ export default function CustomerTable() {
                   backgroundColor: "#f9fafb",
                   cursor: "pointer",
                   outline: "none",
-                  minWidth: "160px",
+                  minWidth: isMobileViewport ? "100%" : "160px",
                 }}
               >
                 <option value="">All Status</option>
@@ -979,6 +1180,8 @@ export default function CustomerTable() {
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
+                  width: isMobileViewport ? "100%" : "auto",
+                  justifyContent: isMobileViewport ? "center" : "flex-start",
                 }}
               >
                 <svg
@@ -1024,6 +1227,7 @@ export default function CustomerTable() {
                   cursor: "pointer",
                   transition: "all 0.2s",
                   whiteSpace: "nowrap",
+                  width: isMobileViewport ? "100%" : "auto",
                 }}
               >
                 Clear filters
@@ -1031,8 +1235,52 @@ export default function CustomerTable() {
             </div>{/* end Row 2 */}
           </div>
 
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {isLoading && Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} style={styles.mobileCard} className="animate-pulse">
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <div className="h-12 w-12 rounded-xl bg-slate-200" />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div className="h-4 w-1/2 rounded bg-slate-200" />
+                    <div className="h-3 w-2/3 rounded bg-slate-100" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="h-16 rounded-lg bg-slate-100" />
+                      <div className="h-16 rounded-lg bg-slate-100" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {!isLoading && error && (
+              <div style={styles.mobileCard}>
+                <div style={{ textAlign: "center", padding: "12px 0" }}>
+                  <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px", color: "#dc2626" }}>
+                    Error loading customers
+                  </div>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#dc2626" }}>
+                    {error}
+                  </p>
+                </div>
+              </div>
+            )}
+            {!isLoading && !error && customers?.length > 0 && customers.map(renderMobileCard)}
+            {!isLoading && !error && customers?.length === 0 && (
+              <div style={styles.mobileCard}>
+                <div style={{ textAlign: "center", padding: "12px 0" }}>
+                  <div style={{ fontSize: "16px", fontWeight: 600, marginBottom: "6px", color: "#111827" }}>
+                    No customers found
+                  </div>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#6b7280" }}>
+                    Try adjusting your filters or create a new customer.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Table */}
-          <div style={styles.tableContainer}>
+          <div style={styles.tableContainer} className="hidden md:flex">
             <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
             <table style={styles.table}>
               <thead style={styles.tableHead}>

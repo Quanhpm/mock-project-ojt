@@ -128,7 +128,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
       {/* Row 1: keyword input + Search button */}
-      <div className="flex gap-3 items-center mb-3">
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-3">
         {/* Search Bar */}
         <div className="flex-1 relative" ref={dropdownRef}>
           <div className="relative">
@@ -246,7 +246,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
         {/* Search Button */}
         <button
           onClick={handleSearch}
-          className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-[#6c4830] transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
+          className="w-full lg:w-auto justify-center px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-[#6c4830] transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
         >
           <svg
             width="16"
@@ -264,7 +264,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
       </div>
 
       {/* Row 2: Filters + Clear button */}
-      <div className="flex gap-3 items-center flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:flex-wrap">
         {/* Status Filter */}
         <select
           value={filters.is_active}
@@ -312,7 +312,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
         {/* Clear Filters Button */}
         <button
           onClick={onClearFilters}
-          className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap"
+          className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap self-start"
         >
           Clear filters
         </button>
@@ -320,4 +320,3 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
     </div>
   );
 }
-

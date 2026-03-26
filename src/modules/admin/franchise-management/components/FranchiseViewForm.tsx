@@ -19,7 +19,7 @@ export default function FranchiseViewForm() {
 
   if (isFetching) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", backgroundColor: "#f8f9fa", padding: "24px" }}>
         <div style={{ textAlign: "center" }}>
           <Loader size={32} style={{ animation: "spin 1s linear infinite", margin: "0 auto 16px" }} />
           <p style={{ fontSize: "16px", color: "#6c757d" }}>Đang tải thông tin nhượng quyền...</p>
@@ -30,7 +30,7 @@ export default function FranchiseViewForm() {
 
   if (error || !franchise) {
     return (
-      <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+      <div style={{ backgroundColor: "#f8f9fa", minHeight: "100dvh", padding: "16px" }}>
         <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
           <button 
             onClick={() => navigate("/admin/franchises")}
@@ -51,16 +51,16 @@ export default function FranchiseViewForm() {
   }
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100dvh", padding: "16px" }}>
       {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
         Franchises › <span style={{ color: "#212529" }}>Chi Tiết Nhượng Quyền</span>
       </div>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
         <div>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
+          <h1 style={{ fontSize: "clamp(24px, 4vw, 32px)", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
             {franchise.name}
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
@@ -69,10 +69,11 @@ export default function FranchiseViewForm() {
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px", width: "100%" }}>
           <button
             onClick={() => navigate("/admin/franchises")}
             style={{
+              width: "100%",
               padding: "10px 16px",
               backgroundColor: "#f3f4f6",
               color: "#374151",
@@ -126,7 +127,7 @@ export default function FranchiseViewForm() {
       </div>
 
       {/* Content */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px" }}>
         {/* Left Column */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Basic Information Section */}

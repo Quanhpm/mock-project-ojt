@@ -157,7 +157,7 @@ export default function LoyaltyRuleForm() {
             {errors.franchise_id && <p style={errorStyle}>{errors.franchise_id.message}</p>}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Earn Amount / Point <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="number" min={1} step={1} {...register("earn_amount_per_point", { valueAsNumber: true })} style={inputStyle} />
@@ -170,7 +170,7 @@ export default function LoyaltyRuleForm() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Min Redeem Points <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="number" min={1} step={1} {...register("min_redeem_points", { valueAsNumber: true })} style={inputStyle} />
@@ -190,7 +190,7 @@ export default function LoyaltyRuleForm() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.LOYALTY}`)}

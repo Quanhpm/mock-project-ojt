@@ -41,6 +41,76 @@ styleSheet.textContent = `
   .animate-spin {
     animation: spin 1s linear infinite;
   }
+
+  @media (max-width: 1024px) {
+    [data-product-shell] {
+      height: auto;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    [data-product-main] {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+
+    [data-product-header],
+    [data-product-content] {
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+    }
+
+    [data-product-content] {
+      overflow: visible !important;
+    }
+
+    [data-product-toolbar-actions],
+    [data-product-search-row],
+    [data-product-filter-row] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+
+    [data-product-toolbar-actions] > *,
+    [data-product-search-row] > *,
+    [data-product-filter-row] > * {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    [data-product-search-row] > button,
+    [data-product-filter-row] > button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    [data-product-search-field] {
+      flex: 0 0 auto !important;
+    }
+
+    [data-product-table-wrap] {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    [data-product-table-wrap] table {
+      min-width: 920px;
+    }
+
+    [data-product-pagination] {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    [data-product-pagination] > div,
+    [data-product-pagination] nav {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
 `;
 if (!document.head.querySelector("style[data-product-table]")) {
   styleSheet.setAttribute("data-product-table", "true");
@@ -148,17 +218,34 @@ export default function ProductTable() {
   const [pageInput, setPageInput] = useState("");
   const hasInitializedFilterSearch = useRef(false);
   const hasInitializedKeywordSearch = useRef(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
+  );
+  const isMobileViewport = !isDesktopViewport;
 
   // Track if we need to check pagination after deletion
   const [shouldCheckPagination, setShouldCheckPagination] = useState(false);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktopViewport(window.innerWidth >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   // Remove page scroll
   React.useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = isDesktopViewport ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [isDesktopViewport]);
 
   // ── Handle pagination after deletion ────────────────────────────
   // If page is empty after deletion and we're not on page 1, go back to page 1
@@ -447,32 +534,36 @@ export default function ProductTable() {
 
   return (
     <div
+      data-product-shell
       style={{
         display: "flex",
-        height: "100vh",
+        minHeight: "100dvh",
         width: "100%",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: isDesktopViewport ? "hidden" : "visible",
       }}
     >
       {/* Main Content */}
       <main
+        data-product-main
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          height: "100vh",
-          overflow: "hidden",
+          minHeight: "100dvh",
+          overflow: isDesktopViewport ? "hidden" : "visible",
           position: "relative",
         }}
       >
         {/* Top Header & Breadcrumbs */}
         <header
+          data-product-header
           style={{
             width: "100%",
-            padding: "24px 32px",
+            padding: isDesktopViewport ? "24px 32px" : "20px 16px 24px",
             display: "flex",
             flexDirection: "column",
-            gap: "24px",
+            gap: isDesktopViewport ? "24px" : "20px",
             flexShrink: 0,
             zIndex: 10,
           }}
@@ -513,7 +604,7 @@ export default function ProductTable() {
             }}
           >
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+              style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}
             >
               <h2
                 style={{
@@ -532,12 +623,14 @@ export default function ProductTable() {
               </p>
             </div>
             <div
+              data-product-toolbar-actions
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-end",
                 gap: "12px",
                 flexWrap: "wrap",
+                width: isMobileViewport ? "100%" : "auto",
               }}
             >
               {isGlobalScope ? (
@@ -545,7 +638,8 @@ export default function ProductTable() {
                   defaultValue=""
                   onChange={handleChooseFranchiseNavigation}
                   style={{
-                    minWidth: "220px",
+                    width: isMobileViewport ? "100%" : "220px",
+                    minWidth: isMobileViewport ? 0 : "220px",
                     height: "44px",
                     padding: "0 16px",
                     borderRadius: "10px",
@@ -590,6 +684,8 @@ export default function ProductTable() {
                     fontWeight: "700",
                     fontSize: "14px",
                     opacity: activeFranchiseId ? 1 : 0.6,
+                    width: isMobileViewport ? "100%" : "auto",
+                    justifyContent: "center",
                   }}
                 >
                   <span
@@ -618,6 +714,8 @@ export default function ProductTable() {
                   border: "none",
                   fontWeight: "700",
                   fontSize: "14px",
+                  width: isMobileViewport ? "100%" : "auto",
+                  justifyContent: "center",
                 }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.backgroundColor = "#6d3610")
@@ -640,23 +738,27 @@ export default function ProductTable() {
 
         {/* Content Area - No Scroll */}
         <div
+          data-product-content
           style={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            padding: "0 32px 32px",
-            overflow: "hidden",
+            padding: isDesktopViewport ? "0 32px 32px" : "0 16px 24px",
+            overflow: isDesktopViewport ? "hidden" : "visible",
+            minHeight: 0,
           }}
         >
           {/* Filters & Toolbar - Fixed */}
           <div
+            data-product-filter-panel
             style={{
               backgroundColor: "#ffffff",
-              padding: "16px",
+              padding: isMobileViewport ? "14px" : "16px",
               borderRadius: "14px",
               border: "1px solid #e5e7eb",
-              marginBottom: "24px",
+              marginBottom: isMobileViewport ? "16px" : "24px",
               flexShrink: 0,
+              boxShadow: "0 1px 3px rgba(15,23,42,0.05)",
             }}
           >
             <div
@@ -668,9 +770,10 @@ export default function ProductTable() {
               }}
             >
               <div
+                data-product-search-row
                 style={{
                   display: "flex",
-                  gap: "10px",
+                  gap: "12px",
                   alignItems: "center",
                   flexWrap: "wrap",
                   width: "100%",
@@ -678,7 +781,8 @@ export default function ProductTable() {
               >
                 {/* Advanced Search Bar */}
                 <div
-                  style={{ flex: "1 1 480px", minWidth: "280px", position: "relative" }}
+                  data-product-search-field
+                  style={{ flex: isMobileViewport ? "0 0 auto" : "1 1 360px", minWidth: 0, position: "relative" }}
                   ref={dropdownRef}
                 >
                   <div style={{ position: "relative" }}>
@@ -734,13 +838,13 @@ export default function ProductTable() {
                       style={{
                         display: "block",
                         width: "100%",
-                        height: "42px",
-                        borderRadius: "10px",
-                        border: "1px solid #e5e7eb",
-                        padding: "0 40px 0 40px",
-                        color: "#212529",
-                        backgroundColor: "#ffffff",
-                        fontSize: "13px",
+                        height: "48px",
+                        borderRadius: "12px",
+                        border: "1px solid #d9dee7",
+                        padding: "0 16px 0 42px",
+                        color: "#475569",
+                        backgroundColor: "#f8fafc",
+                        fontSize: "15px",
                         boxSizing: "border-box",
                       }}
                     />
@@ -919,14 +1023,16 @@ export default function ProductTable() {
                   onClick={handleSearch}
                   disabled={isLoading}
                   style={{
-                    height: "42px",
-                    padding: "0 14px",
-                    borderRadius: "10px",
+                    height: "48px",
+                    minWidth: isMobileViewport ? undefined : "120px",
+                    width: isMobileViewport ? "100%" : "auto",
+                    padding: "0 16px",
+                    borderRadius: "12px",
                     border: "none",
-                    backgroundColor: "#8B5A2B",
+                    backgroundColor: "#8B4513",
                     color: "white",
                     fontWeight: "600",
-                    fontSize: "13px",
+                    fontSize: "14px",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
                     whiteSpace: "nowrap",
@@ -935,14 +1041,14 @@ export default function ProductTable() {
                     justifyContent: "center",
                     gap: "6px",
                     opacity: isLoading ? 0.6 : 1,
-                    boxShadow: "0 1px 2px rgba(139, 90, 43, 0.2)",
+                    boxShadow: "0 1px 2px rgba(15, 23, 42, 0.08)",
                   }}
                   onMouseEnter={(e) => {
                     if (!isLoading)
-                      e.currentTarget.style.backgroundColor = "#6d4522";
+                      e.currentTarget.style.backgroundColor = "#6d3610";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#8B5A2B";
+                    e.currentTarget.style.backgroundColor = "#8B4513";
                   }}
                 >
                   {isLoading ? (
@@ -980,9 +1086,10 @@ export default function ProductTable() {
               </div>
 
               <div
+                data-product-filter-row
                 style={{
                   display: "flex",
-                  gap: "10px",
+                  gap: "12px",
                   alignItems: "center",
                   justifyContent: "flex-start",
                   flexWrap: "wrap",
@@ -993,18 +1100,21 @@ export default function ProductTable() {
                     value={filters.franchise_id || ""}
                     onChange={(e) => handleFranchiseFilterChange(e.target.value)}
                     style={{
-                      height: "42px",
-                      padding: "0 16px",
-                      borderRadius: "12px",
-                      border: "1px solid #d1d5db",
-                      backgroundColor: "#ffffff",
-                      color: "#374151",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      cursor: "pointer",
+                      display: "block",
+                      width: isMobileViewport ? "100%" : "auto",
+                      minWidth: isMobileViewport ? 0 : "180px",
+                      height: "44px",
+                      appearance: "none",
+                      borderRadius: "10px",
+                      border: "1px solid #d9dee7",
+                      padding: "0 38px 0 14px",
+                      color: "#111827",
+                      backgroundColor: "#fcfcfd",
                       outline: "none",
-                      transition: "all 0.2s",
-                      minWidth: "160px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      boxSizing: "border-box",
                     }}
                     onMouseEnter={(e) =>
                       (e.currentTarget.style.borderColor = "#bdbdbd")
@@ -1026,13 +1136,13 @@ export default function ProductTable() {
                   type="button"
                   onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
                   style={{
-                    height: "36px",
+                    height: "44px",
                     padding: "0 14px",
-                    borderRadius: "8px",
-                    border: `1px solid ${filters.is_deleted ? "#f2d1a1" : "#d1d5db"}`,
-                    backgroundColor: filters.is_deleted ? "#fbf2e3" : "#ffffff",
-                    color: filters.is_deleted ? "#f97316" : "#64748b",
-                    fontWeight: 600,
+                    borderRadius: "10px",
+                    border: `1px solid ${filters.is_deleted ? "#fb923c" : "#d1d5db"}`,
+                    backgroundColor: filters.is_deleted ? "#fff7ed" : "#fcfcfd",
+                    color: filters.is_deleted ? "#f97316" : "#6b7280",
+                    fontWeight: 500,
                     fontSize: "14px",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -1041,17 +1151,15 @@ export default function ProductTable() {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "6px",
-                    width: "100px",
-                    boxShadow: filters.is_deleted
-                      ? "0 1px 2px rgba(249, 115, 22, 0.08)"
-                      : "none",
+                    width: isMobileViewport ? "100%" : "auto",
+                    boxShadow: filters.is_deleted ? "0 0 0 1px rgba(249,115,22,0.08)" : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = filters.is_deleted
-                      ? "#edc58f"
+                      ? "#fb923c"
                       : "#cbd5e1";
                     e.currentTarget.style.backgroundColor = filters.is_deleted
-                      ? "#faebd7"
+                      ? "#fff7ed"
                       : "#f8fafc";
                     e.currentTarget.style.color = filters.is_deleted
                       ? "#ea580c"
@@ -1082,18 +1190,18 @@ export default function ProductTable() {
                 <button
                   onClick={clearFilters}
                   style={{
-                    height: "36px",
+                    height: "44px",
                     padding: "0 14px",
-                    borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
-                    backgroundColor: "#f3f4f6",
+                    borderRadius: "10px",
+                    border: "1px solid #d9dee7",
+                    backgroundColor: "#f4f6f8",
                     color: "#334155",
-                    fontWeight: "600",
+                    fontWeight: "500",
                     fontSize: "14px",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     whiteSpace: "nowrap",
-                    width: "100px",
+                    width: isMobileViewport ? "100%" : "auto",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.color = "#1f2937";
@@ -1123,9 +1231,13 @@ export default function ProductTable() {
               boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
               border: "1px solid #e9ecef",
               overflow: "hidden",
+              minHeight: 0,
             }}
           >
-            <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
+            <div
+              data-product-table-wrap
+              style={{ flex: 1, minHeight: 0, overflowY: "auto", overflowX: "auto" }}
+            >
               <table
                 style={{
                   width: "100%",
@@ -1662,25 +1774,29 @@ export default function ProductTable() {
             {/* Pagination - Fixed at Bottom */}
             {totalPages > 0 && (
               <div
+                data-product-pagination
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   borderTop: "1px solid #e9ecef",
                   backgroundColor: "#f8f9fa",
-                  padding: "12px 24px",
+                  padding: isMobileViewport ? "16px" : "12px 24px",
                   flexShrink: 0,
                 }}
               >
                 <div
+                  data-product-pagination-inner
                   style={{
                     display: "flex",
                     flex: 1,
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    alignItems: isMobileViewport ? "stretch" : "center",
+                    justifyContent: isMobileViewport ? "center" : "space-between",
+                    flexDirection: isMobileViewport ? "column" : "row",
+                    gap: isMobileViewport ? "12px" : "16px",
                   }}
                 >
-                  <div>
+                  <div style={{ textAlign: isMobileViewport ? "center" : "left" }}>
                     <p
                       style={{ fontSize: "14px", color: "#495057", margin: 0 }}
                     >
@@ -1693,10 +1809,18 @@ export default function ProductTable() {
                       products)
                     </p>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: isMobileViewport ? "center" : "flex-start",
+                      gap: "8px",
+                      flexWrap: isMobileViewport ? "wrap" : "nowrap",
+                    }}
+                  >
                     <nav
                       aria-label="Pagination"
-                      style={{ display: "inline-flex" }}
+                      style={{ display: "inline-flex", flexWrap: isMobileViewport ? "wrap" : "nowrap", justifyContent: "center" }}
                     >
                       <button
                         onClick={() =>
@@ -1825,7 +1949,15 @@ export default function ProductTable() {
                         Next
                       </button>
                     </nav>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        flexWrap: isMobileViewport ? "wrap" : "nowrap",
+                      }}
+                    >
                       <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to</span>
                       <input
                         type="number" min={1} max={totalPages}

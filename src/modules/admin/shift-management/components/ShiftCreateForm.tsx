@@ -138,11 +138,11 @@ export const ShiftCreateForm: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen py-12 flex justify-center">
+    <div className="min-h-[100dvh] py-8 flex justify-center px-4 sm:px-6 lg:px-8 lg:py-12">
       <div className="w-full max-w-6xl">
         {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-[#7F5539]">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl font-bold text-[#7F5539] sm:text-3xl">
             Create New Shift
           </h1>
           <p className="text-sm text-slate-500 mt-2">
@@ -151,8 +151,8 @@ export const ShiftCreateForm: React.FC = () => {
         </div>
 
         {/* STEP INDICATOR */}
-        <div className="flex items-center justify-center mb-10">
-          <div className="flex items-center gap-3">
+        <div className="mb-8 flex flex-col items-stretch justify-center gap-4 sm:flex-row sm:items-center sm:mb-10">
+          <div className="flex items-center gap-3 justify-center">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold
               ${
@@ -169,11 +169,11 @@ export const ShiftCreateForm: React.FC = () => {
           </div>
 
           <div
-            className={`w-28 h-0.75 mx-4 rounded-full
+            className={`mx-auto h-0.75 w-24 rounded-full sm:w-28 sm:mx-4
             ${currentStep > 1 ? 'bg-[#7F5539]' : 'bg-slate-200'}`}
           />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-center">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold
               ${
@@ -201,9 +201,9 @@ export const ShiftCreateForm: React.FC = () => {
         {currentStep === 1 && (
           <form
             onSubmit={handleSubmitStep1(onSubmitStep1)}
-            className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-10"
+            className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-6 sm:p-8 lg:p-10"
           >
-            <h2 className="text-lg font-semibold text-slate-800 mb-8">
+            <h2 className="text-lg font-semibold text-slate-800 mb-6 sm:mb-8">
               Shift Information
             </h2>
 
@@ -270,7 +270,7 @@ export const ShiftCreateForm: React.FC = () => {
             </div>
 
             {/* TIME RANGE */}
-            <div className="grid grid-cols-2 gap-5 mb-8">
+            <div className="grid grid-cols-1 gap-5 mb-8 sm:grid-cols-2">
               <div>
                 <label className="text-sm font-medium text-slate-700">
                   Start Time
@@ -305,11 +305,11 @@ export const ShiftCreateForm: React.FC = () => {
             </div>
 
             {/* FOOTER */}
-            <div className="flex justify-between items-center pt-6">
+            <div className="flex flex-col-reverse gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="text-sm text-slate-500 hover:text-slate-700 sm:w-auto"
               >
                 Cancel
               </button>
@@ -329,9 +329,9 @@ export const ShiftCreateForm: React.FC = () => {
         {currentStep === 2 && (
           <form
             onSubmit={handleSubmitStep2(onSubmitStep2)}
-            className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10"
+            className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8 lg:p-10"
           >
-            <h2 className="text-lg font-semibold text-slate-800 mb-8">
+            <h2 className="text-lg font-semibold text-slate-800 mb-6 sm:mb-8">
               Staff Assignment
             </h2>
 
@@ -396,11 +396,11 @@ export const ShiftCreateForm: React.FC = () => {
             </div>
 
             {/* FOOTER */}
-            <div className="flex justify-between items-center pt-6">
+            <div className="flex flex-col-reverse gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={handleBackStep1}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="text-sm text-slate-500 hover:text-slate-700 sm:w-auto"
               >
                 Back
               </button>

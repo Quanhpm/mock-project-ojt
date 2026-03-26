@@ -136,7 +136,7 @@ export default function CategoryAssignPage() {
 
   if (!isGlobalRole && !authFranchiseId) {
     return (
-      <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ minHeight: "100dvh", padding: "24px", backgroundColor: "#f9f7f4", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "16px", fontFamily: "Inter, sans-serif", textAlign: "center" }}>
         <p style={{ color: "#ef4444", fontWeight: "600", fontSize: "18px", margin: 0 }}>No franchise selected</p>
         <p style={{ color: "#6b7280", fontSize: "14px", margin: 0 }}>
           Please select a franchise from the context menu to assign categories.
@@ -186,10 +186,10 @@ export default function CategoryAssignPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ minHeight: "100dvh", backgroundColor: "#f9f7f4", padding: "24px 16px 32px", fontFamily: "Inter, sans-serif" }}>
       <div style={{ maxWidth: "700px", margin: "0 auto" }}>
         {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: "40px" }}>
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0 }}>
             Assign Category
           </h1>
@@ -205,7 +205,7 @@ export default function CategoryAssignPage() {
             borderRadius: "12px",
             border: "1px solid #E6CCB2",
             boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)",
-            padding: "32px",
+            padding: "24px",
           }}
         >
           {isLoadingCategories || isLoadingFranchises ? (
@@ -213,7 +213,7 @@ export default function CategoryAssignPage() {
               <p style={{ color: "#6b7280" }}>Loading...</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
               {/* Franchise Selection */}
               {isGlobalRole && (
                 <div>
@@ -324,6 +324,7 @@ export default function CategoryAssignPage() {
               <div
                 style={{
                   display: "flex",
+                  flexDirection: "column-reverse",
                   gap: "12px",
                   marginTop: "8px",
                   paddingTop: "24px",
@@ -345,6 +346,7 @@ export default function CategoryAssignPage() {
                     color: "#7F5539",
                     transition: "all 0.2s",
                     marginRight: "auto",
+                    width: "100%",
                   }}
                   onMouseEnter={(e) => {
                     if (!isCreating) {
@@ -376,6 +378,7 @@ export default function CategoryAssignPage() {
                     fontWeight: "600",
                     cursor: isCreating || isLoadingCategories ? "not-allowed" : "pointer",
                     transition: "all 0.2s",
+                    width: "100%",
                   }}
                   onMouseEnter={(e) => {
                     if (!isCreating && !isLoadingCategories) {

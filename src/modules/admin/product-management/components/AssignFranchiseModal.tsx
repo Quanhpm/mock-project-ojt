@@ -265,10 +265,10 @@ export default function AssignFranchiseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
         {/* ═══════════ Header ═══════════ */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex-1">
             <h2 className="text-xl font-bold text-primary tracking-tight">
               Assign Franchise
@@ -291,7 +291,7 @@ export default function AssignFranchiseModal({
 
         {/* ═══════════ Error Banner ═══════════ */}
         {error && (
-          <div className="mx-6 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+        <div className="mx-4 mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 sm:mx-6">
             <span className="material-symbols-outlined text-red-500 text-[18px] mt-0.5">
               error
             </span>
@@ -301,7 +301,7 @@ export default function AssignFranchiseModal({
 
         {/* ═══════════ Form ═══════════ */}
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-          <div className="p-6 space-y-5">
+          <div className="space-y-5 p-4 sm:p-6">
             {/* Franchise Dropdown */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -516,19 +516,19 @@ export default function AssignFranchiseModal({
           </div>
 
           {/* ═══════════ Footer ═══════════ */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitDisabled}
-              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="w-full rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#6c4830] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
               {isSubmitting ? (
                 <>
                   <span className="material-symbols-outlined text-[18px] animate-spin">

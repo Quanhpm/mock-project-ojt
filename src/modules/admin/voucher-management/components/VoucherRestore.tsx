@@ -43,8 +43,8 @@ export default function VoucherRestore({
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "90%",
-          maxWidth: "480px",
+          width: "min(480px, calc(100vw - 24px))",
+          maxHeight: "calc(100dvh - 24px)",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
           overflow: "hidden",
         }}
@@ -56,8 +56,10 @@ export default function VoucherRestore({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             <div style={{
               backgroundColor: "#e8f5e9",
               padding: "10px",
@@ -125,6 +127,7 @@ export default function VoucherRestore({
           display: "flex",
           gap: "12px",
           justifyContent: "flex-end",
+          flexWrap: "wrap",
         }}>
           <button
             onClick={onClose}

@@ -67,7 +67,7 @@ interface CreateMasterModal {
 const styles = {
   container: {
     display: "flex" as const,
-    height: "100vh",
+    minHeight: "100dvh",
     width: "100%",
     overflow: "hidden" as const,
   },
@@ -75,16 +75,16 @@ const styles = {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    height: "100vh",
+    minHeight: "100dvh",
     overflow: "hidden" as const,
     position: "relative" as const,
   },
   header: {
     width: "100%",
-    padding: "32px 40px",
+    padding: "24px 16px",
     display: "flex" as const,
     flexDirection: "column" as const,
-    gap: "28px",
+    gap: "20px",
     flexShrink: 0,
     zIndex: 10,
   },
@@ -92,7 +92,7 @@ const styles = {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    padding: "0 40px 40px",
+    padding: "0 16px 24px",
     overflow: "hidden" as const,
   },
   filterContainer: {
@@ -277,7 +277,8 @@ export default function CategoryTable() {
 
   // Prevent body scroll
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const shouldLockScroll = window.innerWidth >= 1024;
+    document.body.style.overflow = shouldLockScroll ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -305,6 +306,8 @@ export default function CategoryTable() {
 
   useEffect(() => {
     if (!isGlobalScope) {
+      // Reset franchise options when leaving global scope.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFranchiseOptions([]);
       return;
     }

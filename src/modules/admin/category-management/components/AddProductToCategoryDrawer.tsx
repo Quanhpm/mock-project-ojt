@@ -97,7 +97,7 @@ export default function AddProductToCategoryDrawer({
     };
 
     void loadDrawerData();
-  }, [isOpen, franchiseId, categoryFranchiseId, categoryId]);
+  }, [isOpen, franchiseId, categoryFranchiseId, categoryId, showError]);
 
   const availableProducts = useMemo(
     () =>
@@ -163,9 +163,10 @@ export default function AddProductToCategoryDrawer({
       success("Product added to category successfully");
       handleClose();
       onSuccess?.();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to add product to category:", error);
-      showError(error?.response?.data?.message || "Failed to add product to category");
+      const apiError = error as { response?: { data?: { message?: string } } } | undefined;
+      showError(apiError?.response?.data?.message || "Failed to add product to category");
     } finally {
       setIsSaving(false);
     }
@@ -180,8 +181,8 @@ export default function AddProductToCategoryDrawer({
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
           onClick={handleClose}
         />
-        <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white shadow-2xl flex flex-col border-l border-slate-200">
-          <header className="flex items-center justify-between px-6 py-5 border-b border-[#8B5A2B]/10">
+        <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl">
+          <header className="flex flex-wrap items-start justify-between gap-3 border-b border-[#8B5A2B]/10 px-4 py-4 sm:px-6 sm:py-5">
             <div>
               <h2 className="text-xl font-semibold text-[#8B5A2B]">Add Product to Category</h2>
               <p className="text-sm text-slate-500 mt-1">Please select a franchise context first</p>
@@ -205,8 +206,8 @@ export default function AddProductToCategoryDrawer({
         onClick={handleClose}
       />
 
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-lg bg-white shadow-2xl flex flex-col border-l border-slate-200 overflow-hidden">
-        <header className="flex items-center justify-between px-6 py-5 border-b border-[#8B5A2B]/10 bg-white">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-[#8B5A2B]/10 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col">
             <h2 className="text-2xl font-bold text-[#8B5A2B]">Add Product to Category</h2>
             <p className="text-sm text-slate-500 mt-1">Select an existing franchise product and link it to this category</p>
@@ -219,7 +220,7 @@ export default function AddProductToCategoryDrawer({
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
           <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
             <div className="grid grid-cols-1 gap-4">
               <div>
@@ -322,18 +323,18 @@ export default function AddProductToCategoryDrawer({
           )}
         </div>
 
-        <div className="p-6 bg-slate-50 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 border-t border-slate-200">
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end sm:p-6">
           <button
             onClick={handleClose}
             disabled={isSaving}
-            className="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+            className="w-full rounded-lg px-6 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50 sm:w-auto"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving || isLoading || availableProducts.length === 0}
-            className="w-full sm:w-auto px-8 py-2.5 text-sm font-bold text-white bg-[#8B5A2B] hover:bg-[#7F5539] rounded-lg shadow-lg shadow-[#8B5A2B]/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#8B5A2B] px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-[#8B5A2B]/20 transition-all hover:bg-[#7F5539] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isSaving ? (
               <>

@@ -74,7 +74,7 @@ export default function FranchiseEditModal({
 
   useEffect(() => {
     if (franchise && isOpen) {
-      const f = franchise as any;
+      const f = franchise;
       setFormData({
         id: f.id ?? 0,
         code: f.code || "",
@@ -137,8 +137,9 @@ export default function FranchiseEditModal({
       } else {
         throw new Error("Update failed – server returned no data.");
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err.message || "An error occurred while updating.";
+    } catch (err) {
+      const apiError = err as { response?: { data?: { message?: string } }; message?: string }
+      const msg = apiError.response?.data?.message || apiError.message || "An error occurred while updating.";
       showError?.(msg);
     } finally {
       setIsUpdating(false);
@@ -156,7 +157,7 @@ export default function FranchiseEditModal({
       });
     }
 
-    let newValue: any = value;
+    let newValue: string | boolean = value;
     if (type === "checkbox") {
       newValue = (e.target as HTMLInputElement).checked;
     }
@@ -309,15 +310,16 @@ export default function FranchiseEditModal({
           background: rgba(0, 0, 0, 0.55);
           backdrop-filter: blur(4px);
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: center;
           z-index: 1000;
-          padding: 20px;
+          padding: 12px;
+          overflow-y: auto;
         }
 
         .fem-modal {
-          width: 850px;
-          max-height: 90vh;
+          width: min(850px, calc(100vw - 24px));
+          max-height: calc(100dvh - 24px);
           background: white;
           border-radius: 16px;
           display: flex;
@@ -563,6 +565,33 @@ export default function FranchiseEditModal({
         .fem-btn-submit:disabled {
           opacity: 0.7;
           cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+          .fem-modal {
+            width: 100%;
+          }
+
+          .fem-header,
+          .fem-body,
+          .fem-footer {
+            padding-left: 18px;
+            padding-right: 18px;
+          }
+
+          .fem-grid,
+          .fem-row-2 {
+            grid-template-columns: 1fr;
+          }
+
+          .fem-footer {
+            flex-direction: column-reverse;
+          }
+
+          .fem-btn-cancel,
+          .fem-btn-submit {
+            width: 100%;
+          }
         }
 
         @keyframes spin {

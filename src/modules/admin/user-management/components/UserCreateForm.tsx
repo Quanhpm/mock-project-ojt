@@ -190,12 +190,12 @@ export const UserCreateForm: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
-      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+    <div style={{ minHeight: "100dvh", backgroundColor: "#f9f7f4", padding: "24px 16px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: "700px", margin: "0 auto", width: "100%" }}>
 
         {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-[#7F5539]">
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#7F5539]">
             Create New User
           </h1>
           <p className="text-sm text-slate-500 mt-2">
@@ -204,7 +204,7 @@ export const UserCreateForm: React.FC = () => {
         </div>
 
         {/* STEP INDICATOR */}
-        <div className="flex items-center justify-center mb-10">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4 sm:gap-0 mb-8 sm:mb-10">
           <div className="flex items-center gap-3">
             <div
               className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold
@@ -216,7 +216,7 @@ export const UserCreateForm: React.FC = () => {
           </div>
 
           <div
-            className={`w-28 h-[3px] mx-4 rounded-full ${currentStep > 1 ? 'bg-[#7F5539]' : 'bg-slate-200'}`}
+            className={`w-px h-6 sm:w-28 sm:h-[3px] sm:mx-4 rounded-full ${currentStep > 1 ? 'bg-[#7F5539]' : 'bg-slate-200'}`}
           />
 
           <div className="flex items-center gap-3">
@@ -239,8 +239,8 @@ export const UserCreateForm: React.FC = () => {
 
         {/* STEP 1 */}
         {currentStep === 1 && (
-          <div className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-10">
-            <h2 className="text-lg font-semibold text-slate-800 mb-8">
+          <div className="bg-white rounded-2xl border border-[#E6CCB2] shadow-sm p-6 sm:p-10">
+            <h2 className="text-lg font-semibold text-slate-800 mb-6 sm:mb-8">
               Personal Information
             </h2>
 
@@ -314,7 +314,7 @@ export const UserCreateForm: React.FC = () => {
             </div>
 
             {/* PASSWORD */}
-            <div className="grid grid-cols-2 gap-5 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
               <div>
                 <label className={labelClass}>
                   Password <span className="text-red-500">*</span>
@@ -387,11 +387,12 @@ export const UserCreateForm: React.FC = () => {
                 paddingTop: "24px",
                 borderTop: "1px solid #E6CCB2",
               }}
+              className="flex-col-reverse sm:flex-row"
             >
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm w-full sm:w-auto"
               >
                 Cancel
               </button>
@@ -399,7 +400,7 @@ export const UserCreateForm: React.FC = () => {
                 type="button"
                 onClick={onSubmitStep1}
                 disabled={isSubmitting || isUploading}
-                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isSubmitting ? 'Creating...' : 'Next Step →'}
               </button>
@@ -409,8 +410,8 @@ export const UserCreateForm: React.FC = () => {
 
         {/* STEP 2 */}
         {currentStep === 2 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10">
-            <h2 className="text-lg font-semibold text-slate-800 mb-8">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-10">
+            <h2 className="text-lg font-semibold text-slate-800 mb-6 sm:mb-8">
               Role Selection
             </h2>
 
@@ -475,11 +476,12 @@ export const UserCreateForm: React.FC = () => {
                 paddingTop: "24px",
                 borderTop: "1px solid #E6CCB2",
               }}
+              className="flex-col-reverse sm:flex-row"
             >
               <button
                 type="button"
                 onClick={handleBackStep1}
-                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm"
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-800 transition-colors shadow-sm w-full sm:w-auto"
               >
                 Close
               </button>
@@ -487,7 +489,7 @@ export const UserCreateForm: React.FC = () => {
                 type="button"
                 onClick={onSubmitStep2}
                 disabled={isSubmitting}
-                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 rounded-lg bg-[#7F5539] text-white text-sm font-medium hover:bg-[#9C6644] transition disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isSubmitting ? 'Saving...' : 'Save User'}
               </button>

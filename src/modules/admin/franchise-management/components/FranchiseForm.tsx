@@ -100,10 +100,10 @@ export default function FranchiseForm() {
   };
 
   return (
-    <div style={{ backgroundColor: "#f9f7f4", minHeight: "100vh", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ backgroundColor: "#f9f7f4", minHeight: "100dvh", padding: "24px 16px 32px", fontFamily: "Inter, sans-serif" }}>
       {/* Header */}
-      <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "center", marginBottom: "40px" }}>
-        <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0, marginBottom: "8px" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto", textAlign: "center", marginBottom: "28px" }}>
+        <h1 style={{ fontSize: "clamp(24px, 4vw, 28px)", fontWeight: "700", color: "#7F5539", margin: 0, marginBottom: "8px" }}>
           Create New Franchise
         </h1>
         <p style={{ color: "#9C6644", margin: 0, fontSize: "14px" }}>
@@ -114,14 +114,14 @@ export default function FranchiseForm() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div style={{ maxWidth: "700px", margin: "0 auto" }}>
           {/* Basic Information Card */}
-          <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #E6CCB2", boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)", padding: "32px", marginBottom: "24px" }}>
+          <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #E6CCB2", boxShadow: "0 4px 6px rgba(127, 85, 57, 0.08)", padding: "20px", marginBottom: "24px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
               <MapPin size={18} color="#7F5539" />
               <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0, color: "#7F5539" }}>Basic Information</h2>
             </div>
 
             {/* Code and Name */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "16px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "13px", fontWeight: "600", marginBottom: "6px", color: "#374151" }}>
                   Franchise Code <span style={{ color: "#ef4444" }}>*</span>
@@ -328,6 +328,7 @@ export default function FranchiseForm() {
           <div
               style={{
                 display: "flex",
+                flexDirection: "column-reverse",
                 gap: "12px",
                 marginTop: "32px",
                 paddingTop: "24px",
@@ -348,7 +349,7 @@ export default function FranchiseForm() {
                 backgroundColor: "white",
                 color: "#7F5539",
                 transition: "all 0.2s",
-                marginRight: "auto",
+                width: "100%",
               }}
               onMouseEnter={(e) => {
                 if (!isCreating) {
@@ -379,6 +380,8 @@ export default function FranchiseForm() {
                 fontWeight: "600",
                 cursor: isCreating ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
+                width: "100%",
+                justifyContent: "center",
               }}
               onMouseEnter={(e) => {
                 if (!isCreating) {

@@ -245,7 +245,7 @@ export const DeliveryDetailPanel = ({
             disabled={!isActionAvailable || isUpdatingStatus}
             onClick={handleAction}
             className={cn(
-              "group relative inline-flex h-14 shrink-0 items-center justify-center overflow-hidden rounded-[20px] px-7 text-[0.95rem] font-black shadow-sm ring-1 ring-inset transition-all active:scale-[0.98]",
+              "group relative inline-flex h-14 w-full shrink-0 items-center justify-center overflow-hidden rounded-[20px] px-7 text-[0.95rem] font-black shadow-sm ring-1 ring-inset transition-all active:scale-[0.98] md:w-auto",
               isActionAvailable
                 ? "bg-white text-gray-900 ring-[#EDE5D8] hover:bg-[#FCFBF8] hover:shadow-md hover:ring-[#F0D8B7]"
                 : "cursor-not-allowed bg-gray-50 text-gray-400 ring-gray-200",

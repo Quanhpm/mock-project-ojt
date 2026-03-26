@@ -401,10 +401,9 @@ export const ProductFranchisePage: React.FC = () => {
             onDragCancel={() => setActiveDraggedProduct(null)}
         >
             <main
-                className="flex flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-                style={{ height: 'calc(100vh - 48px)' }}
+                className="flex min-h-[calc(100dvh-48px)] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100vh-48px)] lg:flex-row"
             >
-                <section className="relative flex flex-1 flex-col overflow-hidden border-r border-gray-100">
+                <section className="relative flex min-w-0 flex-1 flex-col overflow-hidden border-r border-gray-100 lg:border-b-0">
                     <ProductFranchiseHeader
                         franchiseName={franchiseName}
                         searchQuery={searchQuery}
@@ -436,7 +435,7 @@ export const ProductFranchisePage: React.FC = () => {
                         </div>
                     )}
 
-                    <div className="flex-1 overflow-hidden p-6 pt-2">
+                    <div className="flex-1 overflow-hidden p-4 pt-2 sm:p-6 sm:pt-2">
                         <ProductFranchiseTable
                             items={filteredProducts}
                             isLoading={isTableLoading}

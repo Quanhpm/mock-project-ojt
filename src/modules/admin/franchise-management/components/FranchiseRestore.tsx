@@ -31,8 +31,10 @@ export default function FranchiseRestore({
         backgroundColor: "rgba(0, 0, 0, 0.5)",
         zIndex: 999,
         display: "flex",
-        alignItems: "center",
+        alignItems: "flex-start",
         justifyContent: "center",
+        padding: "12px",
+        overflowY: "auto",
       }}
     >
       <div
@@ -40,8 +42,8 @@ export default function FranchiseRestore({
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "90%",
-          maxWidth: "480px",
+          width: "min(480px, calc(100vw - 24px))",
+          maxHeight: "calc(100dvh - 24px)",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
           overflow: "hidden",
         }}
@@ -122,6 +124,7 @@ export default function FranchiseRestore({
           display: "flex",
           gap: "12px",
           justifyContent: "space-between",
+          flexDirection: "column-reverse",
         }}>
           <button
             onClick={onClose}
@@ -136,6 +139,7 @@ export default function FranchiseRestore({
               backgroundColor: "white",
               color: "#374151",
               opacity: isRestoring ? 0.7 : 1,
+              width: "100%",
             }}
           >
             Cancel
@@ -157,6 +161,7 @@ export default function FranchiseRestore({
               justifyContent: "center",
               gap: "8px",
               opacity: isRestoring ? 0.7 : 1,
+              width: "100%",
             }}
           >
             {isRestoring ? (

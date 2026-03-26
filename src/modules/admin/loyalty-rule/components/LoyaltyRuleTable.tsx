@@ -16,6 +16,20 @@ styleSheet.textContent = `
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-spin { animation: spin 1s linear infinite; }
+  @media (max-width: 1024px) {
+    [data-loyalty-shell] { height: auto; min-height: 100dvh; overflow-x: hidden; }
+    [data-loyalty-main] { height: auto; min-height: 100dvh; overflow: visible; }
+    [data-loyalty-header], [data-loyalty-content] { padding-left: 16px !important; padding-right: 16px !important; }
+    [data-loyalty-content] { overflow: visible !important; }
+    [data-loyalty-filter-panel] { padding: 12px !important; }
+    [data-loyalty-search-row], [data-loyalty-filter-row] { flex-direction: column !important; align-items: stretch !important; }
+    [data-loyalty-search-row] > *, [data-loyalty-filter-row] > * { width: 100% !important; min-width: 0 !important; }
+    [data-loyalty-search-row] button, [data-loyalty-filter-row] button { width: 100%; justify-content: center; }
+    [data-loyalty-table-wrap] { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    [data-loyalty-table-wrap] table { min-width: 980px; }
+    [data-loyalty-pagination] { flex-direction: column; align-items: stretch; gap: 12px; }
+    [data-loyalty-pagination] > div, [data-loyalty-pagination] nav { width: 100%; justify-content: center; flex-wrap: wrap; }
+  }
 `;
 if (!document.head.querySelector("style[data-loyalty-rule-table]")) {
   styleSheet.setAttribute("data-loyalty-rule-table", "true");
@@ -40,15 +54,31 @@ export default function LoyaltyRuleTable() {
   const [isActiveFilter, setIsActiveFilter] = useState("");
   const [showDeleted, setShowDeleted] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
+  );
 
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const handleResize = () => {
+      setIsDesktopViewport(window.innerWidth >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = isDesktopViewport ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [isDesktopViewport]);
 
   const doSearch = useCallback(
     (page?: number) => {
@@ -160,17 +190,28 @@ export default function LoyaltyRuleTable() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden" }}>
+    <div
+      data-loyalty-shell
+      style={{
+        display: "flex",
+        minHeight: "100dvh",
+        width: "100%",
+        overflowX: "hidden",
+        overflowY: isDesktopViewport ? "hidden" : "visible",
+      }}
+    >
       <main
+        data-loyalty-main
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          height: "100vh",
-          overflow: "hidden",
+          minHeight: "100dvh",
+          overflow: isDesktopViewport ? "hidden" : "visible",
         }}
       >
         <header
+          data-loyalty-header
           style={{
             width: "100%",
             padding: "24px 32px",
@@ -246,15 +287,18 @@ export default function LoyaltyRuleTable() {
         </header>
 
         <div
+          data-loyalty-content
           style={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             padding: "0 32px 32px",
-            overflow: "hidden",
+            overflow: isDesktopViewport ? "hidden" : "visible",
+            minHeight: 0,
           }}
         >
           <div
+            data-loyalty-filter-panel
             style={{
               backgroundColor: "white",
               padding: "16px",
@@ -266,6 +310,7 @@ export default function LoyaltyRuleTable() {
             }}
           >
             <div
+              data-loyalty-search-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -378,6 +423,7 @@ export default function LoyaltyRuleTable() {
             </div>
 
             <div
+              data-loyalty-filter-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -490,6 +536,7 @@ export default function LoyaltyRuleTable() {
           </div>
 
           <div
+            data-loyalty-table-wrap
             style={{
               flex: 1,
               display: "flex",
@@ -684,6 +731,7 @@ export default function LoyaltyRuleTable() {
 
             {totalPages > 0 && (
               <div
+                data-loyalty-pagination
                 style={{
                   display: "flex",
                   alignItems: "center",

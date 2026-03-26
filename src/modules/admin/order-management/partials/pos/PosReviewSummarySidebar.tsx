@@ -50,18 +50,18 @@ export const PosReviewSummarySidebar = ({
         </div>
 
         <div className="mb-8 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-gray-500">Khách hàng</span>
             <span
-              className="max-w-[150px] truncate text-right font-bold text-gray-900"
+              className="max-w-full text-left font-bold text-gray-900 sm:max-w-[150px] sm:text-right sm:truncate"
               title={customerName}
             >
               {customerName}
             </span>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-gray-500">Số điện thoại</span>
-            <span className="font-medium text-gray-900">
+            <span className="w-full font-medium text-gray-900 sm:w-auto">
               <input
                 type="tel"
                 value={draftPhone}
@@ -70,7 +70,7 @@ export const PosReviewSummarySidebar = ({
                   void onSaveCartInfo();
                 }}
                 disabled={isMutatingCart}
-                className="border-none bg-transparent p-0 text-right font-medium text-gray-900 placeholder:text-gray-400 focus:ring-0 disabled:opacity-50"
+                className="w-full border-none bg-transparent p-0 text-left font-medium text-gray-900 placeholder:text-gray-400 focus:ring-0 disabled:opacity-50 sm:w-auto sm:text-right"
                 placeholder="Nhập SĐT..."
               />
             </span>
@@ -83,7 +83,7 @@ export const PosReviewSummarySidebar = ({
           </label>
 
           {cart.voucher_code ? (
-            <div className="flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 p-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-emerald-100 bg-emerald-50 p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2 font-bold text-emerald-700">
                 <TicketPercent size={18} />
                 <span>{cart.voucher_code}</span>
@@ -102,7 +102,7 @@ export const PosReviewSummarySidebar = ({
               ) : null}
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 value={voucherCode}
                 onChange={(event) => onVoucherCodeChange(event.target.value.toUpperCase())}
@@ -117,7 +117,7 @@ export const PosReviewSummarySidebar = ({
                   void onApplyVoucher();
                 }}
                 disabled={!canApplyVoucher || isMutatingCart}
-                className="shrink-0 rounded-xl bg-amber-800 px-4 py-2 font-bold text-white transition-colors hover:bg-amber-900 disabled:bg-gray-200 disabled:text-gray-400 disabled:opacity-50"
+                className="w-full shrink-0 rounded-xl bg-amber-800 px-4 py-2 font-bold text-white transition-colors hover:bg-amber-900 disabled:bg-gray-200 disabled:text-gray-400 disabled:opacity-50 sm:w-auto"
               >
                 Áp dụng
               </button>
@@ -150,9 +150,9 @@ export const PosReviewSummarySidebar = ({
             <span className="font-semibold text-gray-900">0đ</span>
           </div>
 
-          <div className="mt-4 flex items-end justify-between border-t border-dashed border-gray-100 pt-4">
+          <div className="mt-4 flex flex-col gap-2 border-t border-dashed border-gray-100 pt-4 sm:flex-row sm:items-end sm:justify-between">
             <span className="text-lg font-bold uppercase tracking-tight text-gray-900">TỔNG CỘNG</span>
-            <div className="text-right">
+            <div className="text-left sm:text-right">
               <span className="block text-3xl font-black text-amber-800">
                 {currency.format(cart.final_amount)}
                 <span className="mt-0.5 inline-block text-xl">đ</span>

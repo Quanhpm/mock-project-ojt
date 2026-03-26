@@ -18,24 +18,24 @@ import FranchiseEditModal from "./FranchiseEditModal";
 const styles = {
   container: {
     display: "flex" as const,
-    height: "100vh",
+    minHeight: "100dvh",
     width: "100%",
-    overflow: "hidden" as const,
+    overflowX: "hidden" as const,
   },
   main: {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    height: "100vh",
-    overflow: "hidden" as const,
+    minHeight: "100dvh",
+    overflowX: "hidden" as const,
     position: "relative" as const,
   },
   header: {
     width: "100%",
-    padding: "32px 40px",
+    padding: "24px 20px",
     display: "flex" as const,
     flexDirection: "column" as const,
-    gap: "28px",
+    gap: "20px",
     flexShrink: 0,
     zIndex: 10,
     backgroundColor: "#ffffff",
@@ -44,8 +44,8 @@ const styles = {
     flex: 1,
     display: "flex" as const,
     flexDirection: "column" as const,
-    padding: "0 40px 40px",
-    overflow: "hidden" as const,
+    padding: "0 20px 28px",
+    overflow: "visible" as const,
   },
   filterContainer: {
     backgroundColor: "white",
@@ -64,12 +64,14 @@ const styles = {
     backgroundColor: "white",
     borderRadius: "12px",
     boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    overflow: "auto" as const,
+    overflowX: "auto" as const,
+    overflowY: "auto" as const,
     position: "relative" as const,
     border: "1px solid #e5e7eb",
   },
   table: {
     width: "100%",
+    minWidth: "840px",
     borderCollapse: "collapse" as const,
     fontSize: "15px",
   },
@@ -83,6 +85,8 @@ const styles = {
   paginationContainer: {
     marginTop: "20px",
     display: "flex" as const,
+    flexWrap: "wrap" as const,
+    gap: "12px",
     justifyContent: "space-between" as const,
     alignItems: "center" as const,
     fontSize: "15px",
@@ -191,7 +195,7 @@ export default function FranchiseTable() {
 
   useEffect(() => {
     executeSearch();
-  }, [currentPage]);
+  }, [currentPage, executeSearch]);
 
   const [isLoadingDetail, setIsLoadingDetail] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState("");
@@ -230,7 +234,7 @@ export default function FranchiseTable() {
 
   // Prevent body scroll
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -520,8 +524,9 @@ export default function FranchiseTable() {
           <div
             style={{
               display: "flex",
+              flexDirection: "column",
               flexWrap: "wrap",
-              alignItems: "flex-end",
+              alignItems: "flex-start",
               justifyContent: "space-between",
               gap: "16px",
             }}
@@ -531,7 +536,7 @@ export default function FranchiseTable() {
             >
               <h1
                 style={{
-                  fontSize: "36px",
+                  fontSize: "clamp(28px, 4vw, 36px)",
                   fontWeight: "900",
                   letterSpacing: "-0.025em",
                   color: "#212529",
@@ -546,7 +551,7 @@ export default function FranchiseTable() {
             </div>
             <button
               onClick={() => navigate("/admin/franchises/create")}
-              style={getButtonStyles.primary as React.CSSProperties}
+              style={{ ...getButtonStyles.primary, alignSelf: "flex-start" } as React.CSSProperties}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = "#6d4423";
                 e.currentTarget.style.boxShadow =
@@ -749,7 +754,7 @@ export default function FranchiseTable() {
                 Showing {Math.min((currentPage - 1) * pageSize + 1, totalItems)} to{" "}
                 {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
               </span>
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}

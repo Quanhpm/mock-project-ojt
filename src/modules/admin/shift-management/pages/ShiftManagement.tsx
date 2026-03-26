@@ -500,8 +500,8 @@ function ShiftManagement() {
   }
 
   return (
-    <div className="flex h-screen w-full">
-      <main className="relative flex h-full flex-1 flex-col overflow-hidden">
+    <div className="flex min-h-[100dvh] w-full flex-col overflow-x-hidden">
+      <main className="relative flex min-h-[100dvh] flex-1 flex-col overflow-x-hidden">
         <PageHeader
           summaryLabel={headerSummary.label}
           summaryValue={headerSummary.value}
@@ -527,9 +527,9 @@ function ShiftManagement() {
             interval: 5,
           }}
         >
-          <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex rounded-xl bg-slate-100 p-1 ring-1 ring-inset ring-slate-200">
+          <div className="flex-1 overflow-y-auto px-4 pb-6 pt-2 sm:px-6 lg:px-8 lg:pb-8 lg:pt-4">
+            <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap rounded-xl bg-slate-100 p-1 ring-1 ring-inset ring-slate-200">
                 <button
                   onClick={() => setCalendarType('month')}
                   className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-all ${
@@ -563,7 +563,7 @@ function ShiftManagement() {
               {!isStaff && (
                 <button
                   onClick={() => setIsAssignMode(!isAssignMode)}
-                  className={`flex w-fit items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors lg:w-fit ${
                     isAssignMode
                       ? 'bg-primary text-white shadow-md'
                       : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 relative'
@@ -621,7 +621,7 @@ function ShiftManagement() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 items-stretch gap-6 xl:h-[calc(100vh-250px)] xl:grid-cols-3">
+            <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-3 xl:items-stretch xl:min-h-[calc(100dvh-250px)]">
               <div className="xl:col-span-2 xl:min-h-0">
                 {calendarType === 'month' ? (
                   <ShiftCalendar
@@ -673,7 +673,7 @@ function ShiftManagement() {
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600">
                   {activeDragUser.userName.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 min-h-0">
                   <p className="truncate text-sm font-semibold text-slate-900">{activeDragUser.userName}</p>
                 </div>
               </div>

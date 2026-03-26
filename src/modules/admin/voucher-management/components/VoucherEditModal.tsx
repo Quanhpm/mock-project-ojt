@@ -169,9 +169,8 @@ export default function VoucherEditModal({
         style={{
           backgroundColor: "white",
           borderRadius: "12px",
-          width: "90%",
-          maxWidth: "620px",
-          maxHeight: "90vh",
+          width: "min(620px, calc(100vw - 24px))",
+          maxHeight: "calc(100dvh - 24px)",
           overflowY: "auto",
           boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
           fontFamily: "Inter, sans-serif",
@@ -191,7 +190,7 @@ export default function VoucherEditModal({
             zIndex: 1,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             <div
               style={{
                 backgroundColor: "#fdf3eb",
@@ -232,7 +231,7 @@ export default function VoucherEditModal({
         </div>
 
         {/* Body */}
-        <div style={{ padding: "24px" }}>
+        <div style={{ padding: "clamp(16px, 4vw, 24px)" }}>
           {(
             <form onSubmit={handleSubmit(onSubmit)}>
               {/* Read-only info */}
@@ -275,7 +274,7 @@ export default function VoucherEditModal({
                 </div>
 
                 {/* Type + Value */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
                   <div>
                     <label style={labelStyle}>
                       Discount Type <span style={{ color: "#ef4444" }}>*</span>
@@ -315,7 +314,7 @@ export default function VoucherEditModal({
                 </div>
 
                 {/* Date range */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
                   <div>
                     <label style={labelStyle}>
                       Start date <span style={{ color: "#ef4444" }}>*</span>
@@ -342,6 +341,7 @@ export default function VoucherEditModal({
                   justifyContent: "flex-end",
                   paddingTop: "20px",
                   borderTop: "1px solid #f0f0f0",
+                  flexWrap: "wrap",
                 }}
               >
                 <button

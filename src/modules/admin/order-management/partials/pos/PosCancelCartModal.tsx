@@ -18,10 +18,10 @@ export const PosCancelCartModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/55 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-6">
       <div className="absolute inset-0" onClick={isSubmitting ? undefined : onClose} />
 
-      <div className="relative w-full max-w-md overflow-hidden rounded-[28px] bg-white shadow-2xl">
+      <div className="relative w-full max-w-md overflow-hidden rounded-[24px] bg-white shadow-2xl sm:rounded-[28px]">
         <button
           type="button"
           onClick={onClose}
@@ -31,7 +31,7 @@ export const PosCancelCartModal = ({
           <X size={20} />
         </button>
 
-        <div className="border-b border-gray-100 px-6 pb-5 pt-6 sm:px-7">
+        <div className="border-b border-gray-100 px-5 pb-5 pt-6 sm:px-7">
           <div className="flex items-start gap-4 pr-10">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
               <Trash2 size={22} />
@@ -50,13 +50,13 @@ export const PosCancelCartModal = ({
           </div>
         </div>
 
-        <div className="border-t border-gray-100 px-6 py-5 sm:px-7">
+        <div className="border-t border-gray-100 px-5 py-5 sm:px-7">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-11 rounded-2xl bg-gray-100 px-5 text-sm font-bold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              className="h-11 w-full rounded-2xl bg-gray-100 px-5 text-sm font-bold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:w-auto"
             >
               Giữ lại giỏ hàng
             </button>
@@ -64,7 +64,7 @@ export const PosCancelCartModal = ({
               type="button"
               onClick={onConfirm}
               disabled={isSubmitting}
-              className="flex h-11 min-w-[170px] items-center justify-center rounded-2xl bg-red-600 px-5 text-sm font-black text-white shadow-lg shadow-red-900/10 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+              className="flex h-11 w-full items-center justify-center rounded-2xl bg-red-600 px-5 text-sm font-black text-white shadow-lg shadow-red-900/10 transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none sm:w-auto sm:min-w-[170px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

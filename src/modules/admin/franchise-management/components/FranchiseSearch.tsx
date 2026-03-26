@@ -156,6 +156,7 @@ export function FranchiseSearch({
       <div
         style={{
           display: "flex",
+          flexWrap: "wrap",
           gap: "12px",
           alignItems: "center",
           marginBottom: "12px",
@@ -163,7 +164,7 @@ export function FranchiseSearch({
       >
         {/* Search Bar */}
         <div
-          style={{ flex: 1, position: "relative" }}
+          style={{ flex: "1 1 320px", position: "relative" }}
           ref={dropdownRef}
         >
           <div style={{ position: "relative" }}>
@@ -421,6 +422,7 @@ export function FranchiseSearch({
             transition: "all 0.2s",
             whiteSpace: "nowrap",
             height: "42px",
+            minWidth: "140px",
           }}
         >
           <svg
@@ -441,10 +443,10 @@ export function FranchiseSearch({
       {/* Row 2: Filters + Clear button */}
       <div
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
           gap: "12px",
           alignItems: "center",
-          flexWrap: "wrap",
         }}
       >
         {/* Status Filter */}
@@ -462,7 +464,7 @@ export function FranchiseSearch({
             backgroundColor: "#f9fafb",
             cursor: "pointer",
             outline: "none",
-            minWidth: "160px",
+            minWidth: 0,
           }}
         >
           <option value="null">All statuses</option>
@@ -483,7 +485,7 @@ export function FranchiseSearch({
             backgroundColor: "#f9fafb",
             cursor: "pointer",
             outline: "none",
-            minWidth: "140px",
+            minWidth: 0,
           }}
         >
           <option value="false">Not deleted</option>
@@ -494,6 +496,7 @@ export function FranchiseSearch({
         <button
           onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
           style={{
+            width: "100%",
             padding: "9px 16px",
             borderRadius: "8px",
             border: "1px solid #e0e0e0",
@@ -540,6 +543,7 @@ export function FranchiseSearch({
             e.currentTarget.style.backgroundColor = "#f3f4f6";
           }}
           style={{
+            width: "100%",
             padding: "9px 16px",
             backgroundColor: "#f3f4f6",
             border: "1px solid #e5e7eb",

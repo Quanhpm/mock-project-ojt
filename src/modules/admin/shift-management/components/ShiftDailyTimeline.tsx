@@ -21,7 +21,7 @@ const getStatusClass = (assignment: ShiftAssignmentView) => {
 interface ShiftDailyTimelineProps {
   selectedDay: CalendarDay | undefined
   onSelectDate: (date: Date) => void
-  onOpenShiftDetail?: (shift: any) => void
+  onOpenShiftDetail?: (shift: DailyShiftView) => void
 }
 
 const START_HOUR = 0
@@ -148,7 +148,7 @@ export const ShiftDailyTimeline: React.FC<ShiftDailyTimelineProps> = ({
 }) => {
   if (!selectedDay) {
     return (
-      <div className="flex xl:h-full h-[600px] flex-col items-center justify-center rounded-xl bg-white p-8 text-center ring-1 ring-slate-200">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center rounded-xl bg-white p-6 text-center ring-1 ring-slate-200 md:min-h-[600px] xl:h-full">
         <span className="material-symbols-outlined mb-4 text-5xl text-slate-300">
           view_timeline
         </span>
@@ -164,8 +164,8 @@ export const ShiftDailyTimeline: React.FC<ShiftDailyTimelineProps> = ({
   const todayKey = selectedDay.date.toISOString().split('T')[0] // rough key for passing
 
   return (
-    <div className="flex xl:h-full h-[600px] flex-col rounded-xl bg-white ring-1 ring-slate-200">
-      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+    <div className="flex min-h-[60vh] flex-col rounded-xl bg-white ring-1 ring-slate-200 md:min-h-[600px] xl:h-full">
+      <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <span className="material-symbols-outlined">today</span>
@@ -185,16 +185,16 @@ export const ShiftDailyTimeline: React.FC<ShiftDailyTimelineProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-slate-50 p-5">
-        <div className="min-w-[1000px] rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="flex-1 overflow-auto bg-slate-50 p-4 sm:p-5">
+        <div className="min-w-[760px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:min-w-[1000px]">
           {/* Header Axis */}
           <div className="relative flex h-10 border-b border-slate-100 bg-slate-50/50">
             {hours.map((hour) => (
               <div
                 key={hour}
-                className="flex-1 border-r border-slate-100 text-center relative"
+                className="relative flex-1 border-r border-slate-100 text-center"
               >
-                <span className="absolute -left-3 top-2.5 text-[10px] font-semibold text-slate-400 bg-slate-50/50 px-1 z-10">
+                <span className="absolute -left-3 top-2.5 z-10 bg-slate-50/50 px-1 text-[10px] font-semibold text-slate-400">
                   {hour.toString().padStart(2, '0')}:00
                 </span>
               </div>
@@ -204,7 +204,7 @@ export const ShiftDailyTimeline: React.FC<ShiftDailyTimelineProps> = ({
           {/* Body Timeline */}
           <div className="relative min-h-[400px]">
             {/* Background Grid Lines */}
-            <div className="absolute inset-0 flex pointer-events-none">
+            <div className="pointer-events-none absolute inset-0 flex">
               {hours.map((hour) => (
                 <div key={hour} className="flex-1 border-r border-slate-100 border-dashed" />
               ))}

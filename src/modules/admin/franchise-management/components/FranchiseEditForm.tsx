@@ -51,7 +51,7 @@ export default function FranchiseEditForm() {
   // Populate form when franchise data is loaded
   useEffect(() => {
     if (franchise) {
-      const f = franchise as any;
+      const f = franchise;
       setFormData({
         id: f.id ?? 0,
         code: f.code || "",
@@ -108,8 +108,9 @@ export default function FranchiseEditForm() {
       } else {
         throw new Error("Update failed – server returned no data.");
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err.message || "An error occurred while updating.";
+    } catch (err) {
+      const apiError = err as { response?: { data?: { message?: string } }; message?: string }
+      const msg = apiError.response?.data?.message || apiError.message || "An error occurred while updating.";
       showError?.(msg);
     } finally {
       setIsUpdating(false);
@@ -127,7 +128,7 @@ export default function FranchiseEditForm() {
       });
     }
 
-    let newValue: any = value;
+    let newValue: string | boolean = value;
     if (type === "checkbox") {
       newValue = (e.target as HTMLInputElement).checked;
     }
@@ -147,7 +148,7 @@ export default function FranchiseEditForm() {
 
   if (isFetching) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", backgroundColor: "#f8f9fa", padding: "24px" }}>
         <div style={{ textAlign: "center" }}>
           <Loader size={32} style={{ animation: "spin 1s linear infinite", margin: "0 auto 16px" }} />
           <p style={{ fontSize: "16px", color: "#6c757d" }}>Loading franchise information...</p>
@@ -157,16 +158,16 @@ export default function FranchiseEditForm() {
   }
 
   return (
-    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100vh", padding: "24px" }}>
+    <div style={{ backgroundColor: "#f8f9fa", minHeight: "100dvh", padding: "16px" }}>
       {/* Breadcrumb */}
       <div style={{ marginBottom: "16px", fontSize: "14px", color: "#6c757d" }}>
         Franchises › <span style={{ color: "#212529" }}>Edit Franchise</span>
       </div>
 
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "24px" }}>
         <div>
-          <h1 style={{ fontSize: "32px", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
+          <h1 style={{ fontSize: "clamp(24px, 4vw, 32px)", fontWeight: "bold", margin: 0, marginBottom: "8px" }}>
             Edit Franchise
           </h1>
           <p style={{ color: "#6c757d", margin: 0, fontSize: "14px" }}>
@@ -176,18 +177,18 @@ export default function FranchiseEditForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px" }}>
           {/* Left Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Basic Info Section */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
                 <MapPin size={18} color="#8B4513" />
                 <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Basic Information</h2>
               </div>
 
               {/* Code & Name */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "500", marginBottom: "8px", color: "#374151" }}>
                     Franchise Code <span style={{ color: "#ef4444" }}>*</span>
@@ -240,7 +241,7 @@ export default function FranchiseEditForm() {
           {/* Right Column */}
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Timing Section */}
-            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "24px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
+            <div style={{ backgroundColor: "white", borderRadius: "12px", padding: "20px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
                 <Calendar size={18} color="#8B4513" />
                 <h2 style={{ fontSize: "18px", fontWeight: "600", margin: 0 }}>Operating Period</h2>
@@ -295,7 +296,7 @@ export default function FranchiseEditForm() {
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column-reverse", gap: "12px" }}>
               <button
                 type="button"
                 onClick={() => navigate("/admin/franchises")}
@@ -309,6 +310,7 @@ export default function FranchiseEditForm() {
                   fontSize: "14px",
                   fontWeight: "500",
                   cursor: "pointer",
+                  width: "100%",
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#e5e7eb"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f3f4f6"; }}
@@ -329,6 +331,7 @@ export default function FranchiseEditForm() {
                   fontWeight: "500",
                   cursor: isUpdating ? "not-allowed" : "pointer",
                   opacity: isUpdating ? 0.7 : 1,
+                  width: "100%",
                 }}
                 onMouseEnter={(e) => { if (!isUpdating) e.currentTarget.style.backgroundColor = "#7a4a1d"; }}
                 onMouseLeave={(e) => { if (!isUpdating) e.currentTarget.style.backgroundColor = "#8B5A2B"; }}

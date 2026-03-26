@@ -153,7 +153,7 @@ export default function InventoryDeletedTable() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ backgroundColor: "white", borderRadius: "12px", width: "90%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}
+            style={{ backgroundColor: "white", borderRadius: "12px", width: "min(480px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 24px)", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}
           >
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

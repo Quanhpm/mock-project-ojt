@@ -79,9 +79,12 @@ export default function EditProductCategoryDrawer({
       const savedOrder = formData.display_order;
       handleClose();
       onSuccess?.(savedId, savedOrder);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update display order:", error);
-      showError(error?.response?.data?.message || "Failed to update display order");
+      const apiError = error as {
+        response?: { data?: { message?: string } };
+      };
+      showError(apiError.response?.data?.message || "Failed to update display order");
     } finally {
       setIsUpdating(false);
     }
@@ -97,16 +100,16 @@ export default function EditProductCategoryDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={handleClose}
     >
       {/* Modal */}
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+        className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-200">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#8B5A2B]/10 flex items-center justify-center flex-shrink-0">
               <Package className="text-[#8B5A2B]" size={20} />
@@ -129,7 +132,7 @@ export default function EditProductCategoryDrawer({
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5">
+        <div className="space-y-5 p-4 sm:p-6">
           {/* Product Info (Read-only) */}
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
             <div className="flex items-start gap-3">
@@ -183,18 +186,18 @@ export default function EditProductCategoryDrawer({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <button
             onClick={handleClose}
             disabled={isUpdating}
-            className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
+            className="w-full rounded-lg px-5 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50 sm:w-auto"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isUpdating}
-            className="px-6 py-2.5 text-sm font-bold text-white bg-[#8B5A2B] hover:bg-[#7F5539] rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#8B5A2B] px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#7F5539] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isUpdating ? (
               <>

@@ -18,7 +18,7 @@ function AdminLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex min-h-[100svh] bg-gray-50 overflow-x-hidden lg:h-screen lg:overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         isMobileOpen={isMobileSidebarOpen}
@@ -27,9 +27,9 @@ function AdminLayout() {
       />
 
       {/* Main Content Area */}
-      <div className="flex flex-col flex-1 lg:ml-64">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         {/* Mobile Header with Menu Button */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-10">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
           <button
             onClick={toggleMobileSidebar}
             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -43,8 +43,8 @@ function AdminLayout() {
         </header>
 
         {/* Content Area with Independent Scroll */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="p-6">
+        <main className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <div className="px-4 py-4 sm:p-6">
             <Outlet />
           </div>
         </main>

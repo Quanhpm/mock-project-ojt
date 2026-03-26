@@ -37,10 +37,10 @@ export const OrderReadyForPickupModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/60 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-4 sm:py-6">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl">
+      <div className="relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl sm:max-h-[88vh] sm:rounded-[28px]">
         <button
           type="button"
           onClick={onClose}
@@ -50,7 +50,7 @@ export const OrderReadyForPickupModal = ({
           <X size={20} />
         </button>
 
-        <div className="shrink-0 border-b border-gray-100 px-6 pb-5 pt-6 sm:px-8">
+        <div className="shrink-0 border-b border-gray-100 px-5 pb-5 pt-6 sm:px-8">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
               <Truck size={22} />
@@ -69,7 +69,7 @@ export const OrderReadyForPickupModal = ({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-8">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-8">
           {isLoading ? (
             <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-gray-400">
               <Loader2 size={28} className="animate-spin" />
@@ -132,13 +132,13 @@ export const OrderReadyForPickupModal = ({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-gray-100 px-6 py-5 sm:px-8">
+        <div className="shrink-0 border-t border-gray-100 px-5 py-5 sm:px-8">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-12 rounded-2xl bg-gray-100 px-5 text-sm font-bold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+              className="h-12 w-full rounded-2xl bg-gray-100 px-5 text-sm font-bold text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 sm:w-auto"
             >
               Hủy
             </button>
@@ -146,7 +146,7 @@ export const OrderReadyForPickupModal = ({
               type="button"
               onClick={onConfirm}
               disabled={isLoading || isSubmitting || !selectedStaffId || staffOptions.length === 0}
-              className="flex h-12 min-w-[200px] items-center justify-center rounded-2xl bg-[#A3581E] px-5 text-sm font-black text-white shadow-lg shadow-orange-900/10 transition hover:bg-orange-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none"
+              className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#A3581E] px-5 text-sm font-black text-white shadow-lg shadow-orange-900/10 transition hover:bg-orange-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 disabled:shadow-none sm:w-auto sm:min-w-[200px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">

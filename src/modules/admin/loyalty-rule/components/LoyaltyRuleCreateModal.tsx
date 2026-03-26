@@ -181,7 +181,12 @@ export default function LoyaltyRuleCreateModal({ isOpen, onClose, onSuccess }: L
   const onSubmit = (data: CreateLoyaltyRuleFormValues) => {
     const enabledTiers = data.tier_rules
       .filter((tier) => tier.enabled)
-      .map(({ enabled, ...tier }) => tier);
+      .map((tier) => ({
+        tier: tier.tier,
+        min_points: tier.min_points,
+        max_points: tier.max_points,
+        benefit: tier.benefit,
+      }));
 
     const payload = {
       franchise_id: data.franchise_id,
@@ -220,8 +225,8 @@ export default function LoyaltyRuleCreateModal({ isOpen, onClose, onSuccess }: L
     <div className="fixed inset-0 z-[999] flex items-center justify-center p-6" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-      <div onClick={(e) => e.stopPropagation()} className="relative z-10 w-full max-w-5xl max-h-[95vh] overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col">
-        <header className="px-8 py-6 flex justify-between items-start border-b border-white/40">
+      <div onClick={(e) => e.stopPropagation()} className="relative z-10 w-[min(100%,calc(100vw-24px))] max-w-5xl max-h-[calc(100dvh-24px)] overflow-hidden rounded-xl bg-white shadow-2xl flex flex-col">
+        <header className="px-8 py-6 flex justify-between items-start border-b border-white/40 max-md:flex-col max-md:gap-4 max-md:px-4 max-md:py-4">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-[#6f4315] leading-none">Create New Loyalty Rule</h1>
             <p className="mt-2 text-[#51443a] text-sm">Set up points, redemption values, and tier benefits.</p>
@@ -231,7 +236,7 @@ export default function LoyaltyRuleCreateModal({ isOpen, onClose, onSuccess }: L
           </button>
         </header>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-10 bg-white">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-8 space-y-10 bg-white max-md:p-4">
           <section className="space-y-6">
             <div className="flex items-center gap-3">
               <Settings size={18} className="text-[#8b5a2b]" />
@@ -348,7 +353,7 @@ export default function LoyaltyRuleCreateModal({ isOpen, onClose, onSuccess }: L
             </div>
           </section>
 
-          <footer className="pt-6 bg-[#f7ece5] px-8 py-6 -mx-8 -mb-8 flex justify-end gap-4 items-center border-t border-[#d5c3b6]/40 sticky bottom-0">
+          <footer className="pt-6 bg-[#f7ece5] px-8 py-6 -mx-8 -mb-8 flex justify-end gap-4 items-center border-t border-[#d5c3b6]/40 sticky bottom-0 max-md:flex-col max-md:items-stretch max-md:px-4 max-md:py-4 max-md:-mx-4 max-md:-mb-4">
             <button type="button" onClick={onClose} disabled={isCreating} className="px-6 py-2.5 text-sm font-bold tracking-wide text-[#51443a] hover:text-[#201b17] transition-colors disabled:opacity-50">
               Cancel
             </button>

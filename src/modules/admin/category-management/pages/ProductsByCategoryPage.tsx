@@ -84,7 +84,7 @@ export default function ProductsByCategoryPage() {
     };
 
     void loadCategoryContext();
-  }, [params.categoryId, state?.categoryFranchiseId, state?.categoryId, state?.categoryName]);
+  }, [franchiseId, params.categoryId, state?.categoryFranchiseId, state?.categoryId, state?.categoryName, state?.franchiseId]);
 
   const fetchProducts = async (overrides?: { isDeleted?: boolean; keyword?: string; isActive?: "" | "true" | "false" }) => {
     const effectiveFranchiseId = categoryContext.franchiseId || franchiseId;
@@ -114,7 +114,7 @@ export default function ProductsByCategoryPage() {
       });
 
       setProducts(response.data);
-    } catch (error) {
+    } catch {
       // Error handling
     } finally {
       setIsLoading(false);
@@ -124,7 +124,7 @@ export default function ProductsByCategoryPage() {
   useEffect(() => {
     void fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryContext.categoryFranchiseId, categoryContext.categoryId, categoryContext.franchiseId, franchiseId]);
+  }, [categoryContext.categoryFranchiseId, categoryContext.categoryId, categoryContext.franchiseId, franchiseId, state?.franchiseId]);
 
   const handleSearch = () => {
     setActiveKeyword(keyword);
@@ -217,7 +217,7 @@ export default function ProductsByCategoryPage() {
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between gap-4 mb-8">
+            <div className="flex flex-col gap-4 mb-8 md:flex-row md:items-center md:justify-between">
               <div className="flex flex-col">
                 <h1 className="text-slate-900 text-3xl font-bold">
                   {categoryContext.categoryName} Products
@@ -228,7 +228,7 @@ export default function ProductsByCategoryPage() {
               </div>
               <button
                 onClick={handleBack}
-                className="flex items-center justify-center gap-2 rounded-full h-10 px-6 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm"
+                className="flex h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
               >
                 <ArrowLeft size={20} />
                 <span>Back to Categories</span>
@@ -236,10 +236,10 @@ export default function ProductsByCategoryPage() {
             </div>
 
             {/* Filters */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 mb-10 flex flex-col gap-3">
+            <div className="mb-10 flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
               {/* Row 1: Search + Search Button */}
-              <div className="flex gap-3 items-center">
-                <div className="flex flex-1 items-center rounded-lg bg-white border border-[#e5e7eb] px-3 min-w-[260px]">
+              <div className="flex flex-col gap-3 items-stretch md:flex-row md:items-center">
+                <div className="flex flex-1 min-w-0 items-center rounded-lg border border-[#e5e7eb] bg-white px-3">
                   <Search className="text-[#9ca3af] shrink-0" size={18} />
                   <input
                     className="w-full bg-transparent border-none text-slate-900 focus:ring-0 placeholder-[#9ca3af] px-2 py-2.5 text-sm outline-none"
@@ -265,7 +265,7 @@ export default function ProductsByCategoryPage() {
                   type="button"
                   onClick={handleSearch}
                   disabled={isLoading}
-                  className="flex items-center gap-2 bg-[#8B5A2B] text-white px-5 h-[42px] rounded-lg font-bold text-sm hover:bg-[#6d4523] disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-sm whitespace-nowrap"
+                  className="flex h-[42px] items-center justify-center gap-2 rounded-lg bg-[#8B5A2B] px-5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#6d4523] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap md:w-auto"
                 >
                   <Search size={16} />
                   <span>{isLoading ? "Searching..." : "Search"}</span>
@@ -273,15 +273,17 @@ export default function ProductsByCategoryPage() {
               </div>
 
               {/* Row 2: Status filter + Current / Deleted toggle + Clear filters */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center">
                 {/* Status Filter */}
                 <select
                   value={statusFilter}
                   onChange={(e) => handleStatusFilterChange(e.target.value as "" | "true" | "false")}
                   disabled={isLoading}
-                  style={{
-                    padding: "9px 16px",
-                    border: "1px solid #e0e0e0",
+                    style={{
+                      width: "100%",
+                      minWidth: 0,
+                      padding: "9px 16px",
+                      border: "1px solid #e0e0e0",
                     borderRadius: "8px",
                     fontSize: "14px",
                     fontFamily: "inherit",
@@ -289,9 +291,9 @@ export default function ProductsByCategoryPage() {
                     color: statusFilter !== "" ? "#f57c00" : "#6c757d",
                     cursor: isLoading ? "not-allowed" : "pointer",
                     outline: "none",
-                    minWidth: "140px",
-                    opacity: isLoading ? 0.6 : 1,
-                  }}
+                      flex: "1 1 140px",
+                      opacity: isLoading ? 0.6 : 1,
+                    }}
                 >
                   <option value="">All Status</option>
                   <option value="true">Active</option>
@@ -316,7 +318,7 @@ export default function ProductsByCategoryPage() {
                   type="button"
                   onClick={handleClearFilters}
                   disabled={isLoading}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-[#e0e0e0] bg-white text-[#6c757d] text-sm font-medium transition-all hover:bg-slate-50 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded-lg border border-[#e0e0e0] bg-white px-4 py-2.5 text-sm font-medium text-[#6c757d] transition-all hover:bg-slate-50 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Clear filters
                 </button>

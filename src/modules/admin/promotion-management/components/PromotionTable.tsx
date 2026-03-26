@@ -18,6 +18,20 @@ styleSheet.textContent = `
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .animate-spin { animation: spin 1s linear infinite; }
+  @media (max-width: 1024px) {
+    [data-promotion-shell] { height: auto; min-height: 100dvh; overflow-x: hidden; }
+    [data-promotion-main] { height: auto; min-height: 100dvh; overflow: visible; }
+    [data-promotion-header], [data-promotion-content] { padding-left: 16px !important; padding-right: 16px !important; }
+    [data-promotion-content] { overflow: visible !important; }
+    [data-promotion-filter-panel] { padding: 12px !important; }
+    [data-promotion-search-row], [data-promotion-filter-row] { flex-direction: column !important; align-items: stretch !important; }
+    [data-promotion-search-row] > *, [data-promotion-filter-row] > * { width: 100% !important; min-width: 0 !important; }
+    [data-promotion-search-row] button, [data-promotion-filter-row] button { width: 100%; justify-content: center; }
+    [data-promotion-table-wrap] { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    [data-promotion-table-wrap] table { min-width: 980px; }
+    [data-promotion-pagination] { flex-direction: column; align-items: stretch; gap: 12px; }
+    [data-promotion-pagination] > div, [data-promotion-pagination] nav { width: 100%; justify-content: center; flex-wrap: wrap; }
+  }
 `;
 if (!document.head.querySelector("style[data-promotion-table]")) {
   styleSheet.setAttribute("data-promotion-table", "true");
@@ -99,17 +113,33 @@ export default function PromotionTable() {
   const [showDeleted, setShowDeleted] = useState(false);
   const [pageNum, setPageNum] = useState(1);
   const [pageInput, setPageInput] = useState("");
+  const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
+  );
 
   // Franchise list for dropdown
   const [franchises, setFranchises] = useState<FranchiseItem[]>([]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsDesktopViewport(window.innerWidth >= 1024);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   // Prevent page scroll (match other modules)
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = isDesktopViewport ? "hidden" : "auto";
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [isDesktopViewport]);
 
   // ---------------------------------------------------------------------------
   // Core search function — accepts optional overrides so callers can pass
@@ -261,18 +291,29 @@ export default function PromotionTable() {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%", overflow: "hidden" }}>
+    <div
+      data-promotion-shell
+      style={{
+        display: "flex",
+        minHeight: "100dvh",
+        width: "100%",
+        overflowX: "hidden",
+        overflowY: isDesktopViewport ? "hidden" : "visible",
+      }}
+    >
       <main
+        data-promotion-main
         style={{
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          height: "100vh",
-          overflow: "hidden",
+          minHeight: "100dvh",
+          overflow: isDesktopViewport ? "hidden" : "visible",
         }}
       >
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <header
+          data-promotion-header
           style={{
             width: "100%",
             padding: "24px 32px",
@@ -351,16 +392,19 @@ export default function PromotionTable() {
 
         {/* ── Content ────────────────────────────────────────────────────── */}
         <div
+          data-promotion-content
           style={{
             flex: 1,
             display: "flex",
             flexDirection: "column",
             padding: "0 32px 32px",
-            overflow: "hidden",
+            overflow: isDesktopViewport ? "hidden" : "visible",
+            minHeight: 0,
           }}
         >
           {/* ── Filter bar ───────────────────────────────────────────────── */}
           <div
+            data-promotion-filter-panel
             style={{
               backgroundColor: "white",
               padding: "16px",
@@ -373,6 +417,7 @@ export default function PromotionTable() {
           >
             {/* Row 1: keyword search + search button */}
             <div
+              data-promotion-search-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -528,6 +573,7 @@ export default function PromotionTable() {
 
             {/* Row 2: dropdowns + toggle + clear */}
             <div
+              data-promotion-filter-row
               style={{
                 display: "flex",
                 gap: "12px",
@@ -679,6 +725,7 @@ export default function PromotionTable() {
 
           {/* ── Table ────────────────────────────────────────────────────── */}
           <div
+            data-promotion-table-wrap
             style={{
               flex: 1,
               display: "flex",
@@ -1132,7 +1179,7 @@ export default function PromotionTable() {
 
                     {/* Pagination */}
           {!isLoading && promotions.length > 0 && totalPages > 1 && (
-            <div style={styles.paginationContainer}>
+            <div data-promotion-pagination style={styles.paginationContainer}>
               <span style={{ color: "#6b7280", fontWeight: "600" }}>
                 Showing {(currentPage - 1) * 10 + 1} to{" "}
                 {Math.min(currentPage * 10, totalItems)} of {totalItems}{" "}

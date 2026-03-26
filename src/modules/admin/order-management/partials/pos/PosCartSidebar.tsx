@@ -78,11 +78,13 @@ export const PosCartSidebar = memo(({
   const customerDisplayEmail = selectedCustomer?.email || "";
 
   return (
-    <aside className="z-10 flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-gray-100 bg-white">
+    <aside className="z-10 flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-t border-gray-100 bg-white lg:h-full lg:w-96 lg:border-l lg:border-t-0">
       {/* Khách hàng & Mã đơn */}
-      <div className="shrink-0 border-b border-gray-50 bg-white p-6 pb-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-black tracking-tight text-gray-900">Order #{cartNumber}</h2>
+      <div className="shrink-0 border-b border-gray-50 bg-white p-4 pb-5 sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h2 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
+            Order #{cartNumber}
+          </h2>
           <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700">
             Tại quầy
           </span>
@@ -120,7 +122,7 @@ export const PosCartSidebar = memo(({
 
           {showCustomerSearch ? (
             <>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <div className="relative min-w-0 flex-1">
                   <Search
                     size={16}
@@ -145,7 +147,7 @@ export const PosCartSidebar = memo(({
                   type="button"
                   onClick={onSearchCustomers}
                   disabled={isSearchingCustomers}
-                  className="rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-800 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-amber-800 active:scale-95 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSearchingCustomers ? "..." : "Tìm"}
                 </button>
@@ -173,7 +175,7 @@ export const PosCartSidebar = memo(({
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col bg-gray-50/30">
-        <div className="min-h-0 flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide">
           {items.length === 0 ? (
             <div className="flex h-full min-h-[220px] flex-col items-center justify-center space-y-3 text-center text-gray-400">
               <div className="rounded-full bg-gray-100 p-4">
@@ -242,7 +244,7 @@ export const PosCartSidebar = memo(({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-50 pt-3">
                     <div className="flex items-center gap-1.5 rounded-full bg-gray-50 p-1">
                       <button
                         onClick={() => onDecreaseItem(item)}
@@ -261,7 +263,7 @@ export const PosCartSidebar = memo(({
 
                     <button
                       onClick={() => onRemoveItem(item.cart_item_id)}
-                      className="rounded-full p-2 text-gray-300 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                      className="rounded-full p-2 text-gray-300 opacity-100 transition-all hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Xóa món"
                     >
                       <Trash2 size={16} />
@@ -273,7 +275,7 @@ export const PosCartSidebar = memo(({
           )}
         </div>
 
-        <div className="shrink-0 space-y-4 border-t border-gray-100 bg-white px-6 py-5">
+      <div className="shrink-0 space-y-4 border-t border-gray-100 bg-white px-4 py-5 sm:px-6">
           <textarea
             value={draftMessage}
             onChange={(event) => onMessageChange(event.target.value)}
@@ -293,7 +295,7 @@ export const PosCartSidebar = memo(({
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 value={voucherCode}
                 onChange={(event) => onVoucherCodeChange(event.target.value.toUpperCase())}
@@ -304,7 +306,7 @@ export const PosCartSidebar = memo(({
               <button
                 onClick={onApplyVoucher}
                 disabled={!canApplyVoucher || isMutatingCart}
-                className="shrink-0 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                className="w-full shrink-0 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400 sm:w-auto"
               >
                 Áp dụng
               </button>
@@ -378,7 +380,7 @@ export const PosCartSidebar = memo(({
           ) : null}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             onClick={onSaveCartInfo}
             disabled={!cart?._id || isMutatingCart}

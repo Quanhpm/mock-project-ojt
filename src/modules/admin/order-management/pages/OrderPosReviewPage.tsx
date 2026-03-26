@@ -67,7 +67,7 @@ export const OrderPosReviewPage = () => {
   const franchiseDisplayName = cart.franchise_name || cart.franchise_id;
 
   return (
-    <div className="relative h-[calc(100vh-48px)] overflow-y-auto rounded-2xl border border-gray-200 bg-[#f9f9f9] shadow-sm">
+    <div className="relative min-h-[calc(100dvh-48px)] overflow-y-auto rounded-2xl border border-gray-200 bg-[#f9f9f9] shadow-sm lg:h-[calc(100dvh-48px)]">
       <main className="grid w-full grid-cols-1 gap-6 px-4 pb-28 pt-6 font-sans text-gray-900 lg:grid-cols-12 lg:gap-8 lg:px-6 lg:pb-8">
         <PosReviewMainColumn
           franchiseName={franchiseDisplayName}

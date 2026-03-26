@@ -25,7 +25,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 }) => {
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 z-20">
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Search */}
         <div className="flex-1 relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -41,9 +41,9 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         </div>
 
         {/* Filters Group */}
-        <div className="flex gap-3 overflow-x-auto pb-1 md:pb-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
           {/* Role Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative w-full sm:w-[140px]">
             <select
               value={roleFilter}
               onChange={(e) => onRoleChange(e.target.value)}
@@ -60,7 +60,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           </div>
 
           {/* Franchise Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative w-full sm:w-[140px]">
             <select
               value={franchiseFilter}
               onChange={(e) => onFranchiseChange(e.target.value)}
@@ -78,7 +78,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           </div>
 
           {/* Status Filter */}
-          <div className="relative min-w-[140px]">
+          <div className="relative w-full sm:w-[140px]">
             <select
               value={statusFilter}
               onChange={(e) => onStatusChange(e.target.value)}
@@ -95,8 +95,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
 
           <button
             onClick={onClearFilters}
-            className="text-sm font-medium text-primary hover:text-blue-600 px-2 whitespace-nowrap"
-          >
+          className="text-sm font-medium text-primary hover:text-blue-600 px-2 py-2 sm:py-0 whitespace-nowrap self-start"
+        >
             Clear Filters
           </button>
         </div>

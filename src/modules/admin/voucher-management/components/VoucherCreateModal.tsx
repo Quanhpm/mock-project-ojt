@@ -171,8 +171,8 @@ useEffect(() => {
 
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f9f7f4", padding: "48px 20px", fontFamily: "Inter, sans-serif" }}>
-      <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+    <div style={{ minHeight: "100dvh", backgroundColor: "#f9f7f4", padding: "clamp(16px, 4vw, 48px) 16px", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ maxWidth: "700px", width: "100%", margin: "0 auto" }}>
         {/* HEADER */}
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <h1 style={{ fontSize: "28px", fontWeight: "700", color: "#7F5539", margin: 0 }}>
@@ -289,7 +289,7 @@ useEffect(() => {
               </div>
 
               {/* Type + Value */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
                     Discount Type <span style={{ color: "#ef4444" }}>*</span>
@@ -358,7 +358,7 @@ useEffect(() => {
               </div>
 
               {/* Date range */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
                 <div>
                   <label style={labelStyle}>
                     Start Date <span style={{ color: "#ef4444" }}>*</span>
@@ -408,6 +408,7 @@ useEffect(() => {
                 marginTop: "32px",
                 paddingTop: "24px",
                 borderTop: "1px solid #E6CCB2",
+                flexWrap: "wrap",
               }}
             >
               <button

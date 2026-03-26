@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { OrderFiltersBar } from "../partials/orders/OrderFiltersBar";
 import { OrderList } from "../partials/orders/OrderList";
 import { OrderDetailPage } from "./OrderDetailPage";
@@ -15,12 +16,28 @@ export const OrderListPage = () => {
     selectOrder,
     reload,
   } = useOrderListPage();
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [isDetailFocused, setIsDetailFocused] = useState(false);
+  const isShowingMobileDetail = Boolean(isMobileDetailOpen && selectedOrderId);
+  const isSidebarCollapsed = Boolean(isDetailFocused && selectedOrderId);
+
+  const handleSelectOrder = (orderId: string) => {
+    selectOrder(orderId);
+    setIsMobileDetailOpen(true);
+    setIsDetailFocused(true);
+  };
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: "calc(100vh - 48px)" }}>
+    <div className="flex min-h-[calc(100dvh-48px)] flex-col overflow-visible lg:h-[calc(100dvh-48px)] lg:overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row">
         {/* Cột trái: Danh sách đơn hàng (Master) */}
-        <div className="flex w-full flex-shrink-0 flex-col gap-4 lg:w-[380px] xl:w-[440px]">
+        <div
+          className={`${
+            isShowingMobileDetail ? "hidden lg:flex" : "flex"
+          } w-full flex-shrink-0 flex-col gap-4 ${
+            isSidebarCollapsed ? "lg:w-[300px] xl:w-[340px]" : "lg:w-[380px] xl:w-[440px]"
+          }`}
+        >
           <div className="flex-shrink-0">
             <OrderFiltersBar
               status={statusFilter}
@@ -38,15 +55,26 @@ export const OrderListPage = () => {
               orders={orders}
               isLoading={isLoading}
               selectedOrderId={selectedOrderId}
-              onSelectOrder={selectOrder}
+              onSelectOrder={handleSelectOrder}
             />
           </div>
         </div>
 
         {/* Cột phải: Chi tiết đơn hàng (Detail) */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-sm ring-1 ring-black/5">
+        <div
+          className={`${
+            isShowingMobileDetail ? "flex" : "hidden"
+          } min-w-0 flex-1 flex-col overflow-visible rounded-[32px] border border-gray-200 bg-white shadow-sm ring-1 ring-black/5 lg:flex lg:overflow-hidden`}
+        >
           {selectedOrderId ? (
-            <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-6 md:p-8 scrollbar-hide">
+            <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-hide">
+              <button
+                type="button"
+                onClick={() => setIsMobileDetailOpen(false)}
+                className="mb-4 inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-gray-300 hover:text-gray-900 lg:hidden"
+              >
+                ← Danh sách đơn
+              </button>
               <OrderDetailPage
                 providedOrderId={selectedOrderId}
                 isEmbedded

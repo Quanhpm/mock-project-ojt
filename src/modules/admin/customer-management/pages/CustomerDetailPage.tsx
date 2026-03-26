@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Edit2 } from "lucide-react";
 import CustomerDetail from "../components/CustomerDetail";
@@ -8,6 +8,18 @@ export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { customer, isLoading, error, fetchCustomer } = useGetCustomer();
+  const [isMobileViewport, setIsMobileViewport] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false,
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -20,8 +32,8 @@ export default function CustomerDetailPage() {
       <div
         style={{
           backgroundColor: "#f9f7f4",
-          minHeight: "100vh",
-          padding: "24px",
+          minHeight: "100dvh",
+          padding: isMobileViewport ? "16px" : "24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -51,8 +63,8 @@ export default function CustomerDetailPage() {
       <div
         style={{
           backgroundColor: "#f9f7f4",
-          minHeight: "100vh",
-          padding: "24px",
+          minHeight: "100dvh",
+          padding: isMobileViewport ? "16px" : "24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -86,8 +98,8 @@ export default function CustomerDetailPage() {
       <div
         style={{
           backgroundColor: "#f9f7f4",
-          minHeight: "100vh",
-          padding: "24px",
+          minHeight: "100dvh",
+          padding: isMobileViewport ? "16px" : "24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -116,13 +128,21 @@ export default function CustomerDetailPage() {
   }
 
   return (
-    <div style={{ backgroundColor: "#f9f7f4", minHeight: "100vh", padding: "24px" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+    <div
+      style={{
+        backgroundColor: "#f9f7f4",
+        minHeight: "100dvh",
+        padding: isMobileViewport ? "16px" : "24px",
+      }}
+    >
+      <div style={{ maxWidth: "900px", margin: "0 auto", width: "100%" }}>
         <div
           style={{
             display: "flex",
-            alignItems: "center",
+            flexDirection: isMobileViewport ? "column" : "row",
+            alignItems: isMobileViewport ? "stretch" : "center",
             justifyContent: "space-between",
+            gap: "12px",
             marginBottom: "24px",
           }}
         >
@@ -131,8 +151,10 @@ export default function CustomerDetailPage() {
             style={{
               display: "flex",
               alignItems: "center",
+              justifyContent: isMobileViewport ? "center" : "flex-start",
               gap: "6px",
               padding: "8px 12px",
+              width: isMobileViewport ? "100%" : "auto",
               border: "1px solid #E6CCB2",
               borderRadius: "8px",
               backgroundColor: "white",
@@ -160,8 +182,10 @@ export default function CustomerDetailPage() {
             style={{
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: "6px",
               padding: "9px 18px",
+              width: isMobileViewport ? "100%" : "auto",
               border: "none",
               borderRadius: "8px",
               backgroundColor: "#7F5539",

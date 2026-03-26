@@ -240,7 +240,7 @@ export default function VoucherForm() {
           </div>
 
           {/* Type + Value */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Loại giảm giá <span style={{ color: "#ef4444" }}>*</span></label>
               <select {...register("type")} style={{ ...inputStyle, cursor: "pointer" }}>
@@ -288,7 +288,7 @@ export default function VoucherForm() {
           </div>
 
           {/* Date range */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Ngày bắt đầu <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="datetime-local" {...register("start_date")} style={inputStyle} />
@@ -303,7 +303,7 @@ export default function VoucherForm() {
         </div>
 
         {/* Actions */}
-        <div style={{ display: "flex", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.VOUCHER}`)}

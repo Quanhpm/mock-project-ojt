@@ -50,8 +50,9 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                     backgroundColor: "rgba(0, 0, 0, 0.5)",
                     zIndex: 999,
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center"
+                    alignItems: "flex-end",
+                    justifyContent: "center",
+                    padding: "8px"
                 }}
             >
                 {/* Modal */}
@@ -60,18 +61,19 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                     style={{
                         backgroundColor: "white",
                         borderRadius: "12px",
-                        width: "90%",
+                        width: "100%",
                         maxWidth: "480px",
                         boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        maxHeight: "calc(100dvh - 16px)"
                     }}
                 >
                     {/* Header */}
                     <div style={{
-                        padding: "20px 24px",
+                        padding: "16px 20px",
                         borderBottom: "1px solid #f0f0f0",
                         display: "flex",
-                        alignItems: "center",
+                        alignItems: "flex-start",
                         justifyContent: "space-between"
                     }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -111,7 +113,7 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                     </div>
 
                     {/* Body */}
-                    <div style={{ padding: "24px" }}>
+                    <div style={{ padding: "20px" }}>
                         <p style={{
                             margin: 0,
                             marginBottom: "16px",
@@ -189,9 +191,10 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
 
                     {/* Footer */}
                     <div style={{
-                        padding: "16px 24px",
+                        padding: "16px 20px",
                         borderTop: "1px solid #f0f0f0",
                         display: "flex",
+                        flexDirection: "column-reverse",
                         gap: "12px",
                         justifyContent: "space-between"
                     }}>
@@ -210,7 +213,8 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                                 backgroundColor: "white",
                                 color: "#374151",
                                 opacity: isDeleting ? 0.7 : 1,
-                                transition: "all 0.2s"
+                                transition: "all 0.2s",
+                                width: "100%"
                             }}
                         >
                             Cancel
@@ -230,7 +234,9 @@ export const DeleteUserDialog: React.FC<DeleteUserDialogProps> = ({
                                 display: "flex",
                                 alignItems: "center",
                                 gap: "8px",
-                                opacity: isDeleting ? 0.7 : 1
+                                opacity: isDeleting ? 0.7 : 1,
+                                width: "100%",
+                                justifyContent: "center"
                             }}
                         >
                             {isDeleting ? "Deleting..." : "Delete User"}

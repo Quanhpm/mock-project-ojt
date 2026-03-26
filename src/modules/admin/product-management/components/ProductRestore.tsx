@@ -35,7 +35,7 @@ export default function ProductRestore({
           backgroundColor: "rgba(0, 0, 0, 0.5)",
           zIndex: 999,
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "center"
         }}
       >
@@ -48,16 +48,19 @@ export default function ProductRestore({
             width: "90%",
             maxWidth: "480px",
             boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            overflow: "hidden"
+            overflow: "hidden",
+            marginTop: "24px"
           }}
         >
           {/* Header */}
           <div style={{
-            padding: "20px 24px",
+            padding: "18px 20px",
             borderBottom: "1px solid #f0f0f0",
             display: "flex",
+            flexWrap: "wrap",
             alignItems: "center",
-            justifyContent: "space-between"
+            justifyContent: "space-between",
+            gap: "12px"
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div style={{
@@ -96,7 +99,7 @@ export default function ProductRestore({
           </div>
 
           {/* Body */}
-          <div style={{ padding: "24px" }}>
+          <div style={{ padding: "20px" }}>
             <p style={{
               margin: 0,
               marginBottom: "16px",
@@ -154,10 +157,11 @@ export default function ProductRestore({
 
           {/* Footer */}
           <div style={{
-            padding: "16px 24px",
+            padding: "16px 20px",
             borderTop: "1px solid #f0f0f0",
             display: "flex",
-            alignItems: "center",
+            flexDirection: "column-reverse",
+            alignItems: "stretch",
             justifyContent: "space-between",
             gap: "12px"
           }}>

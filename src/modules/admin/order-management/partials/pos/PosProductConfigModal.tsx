@@ -56,10 +56,10 @@ export const PosProductConfigModal = memo(({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 px-2 py-2 backdrop-blur-sm transition-opacity sm:items-center sm:px-4 sm:py-6">
       <div className="absolute inset-0" onClick={onClose} />
 
-      <div className="relative flex h-[92vh] max-h-[860px] w-full max-w-[1100px] flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl lg:flex-row">
+      <div className="relative flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] w-full max-w-[1100px] flex-col overflow-hidden rounded-[24px] bg-white shadow-2xl sm:h-[92vh] sm:max-h-[92vh] sm:rounded-[32px] lg:flex-row">
         {/* Left Column: Hình ảnh lớn (Chỉ hiện trên Desktop/Tablet lớn) */}
         <div className="relative hidden w-[42%] flex-col bg-gray-100 lg:flex">
           {product.image_url ? (
@@ -98,7 +98,7 @@ export const PosProductConfigModal = memo(({
           </button>
 
           {/* Header phiên bản Mobile (Ẩn trên Desktop) */}
-          <div className="relative flex shrink-0 items-center gap-4 border-b border-gray-100 p-5 lg:hidden">
+          <div className="relative flex shrink-0 items-center gap-4 border-b border-gray-100 p-4 sm:p-5 lg:hidden">
             <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-gray-100">
               {product.image_url && (
                 <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
@@ -111,7 +111,7 @@ export const PosProductConfigModal = memo(({
           </div>
 
           {/* Khung cuộn nội dung cấu hình */}
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 pb-[120px] pt-8 lg:px-8 lg:pt-10">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-4 pb-[144px] pt-6 sm:px-6 sm:pb-[132px] sm:pt-8 lg:px-8 lg:pb-[120px] lg:pt-10">
             <section>
               <h3 className="flex items-center gap-2 text-xl font-black text-gray-900">
                 Kích cỡ <span className="rounded-md bg-amber-100 px-2 py-0.5 text-xs text-amber-800">Bắt buộc</span>
@@ -242,8 +242,8 @@ export const PosProductConfigModal = memo(({
           </div>
 
           {/* Sticky Footer: Phủ kính mờ bám đáy */}
-          <div className="absolute inset-x-0 bottom-0 border-t border-gray-100 bg-white/85 p-5 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 sm:px-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div className="absolute inset-x-0 bottom-0 border-t border-gray-100 bg-white/85 p-4 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60 sm:px-8 sm:py-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               {/* Cụm Số lượng */}
               <div className="flex shrink-0 items-center justify-between rounded-2xl border border-gray-200 bg-white p-1 shadow-sm">
                 <button
@@ -271,7 +271,7 @@ export const PosProductConfigModal = memo(({
                 onClick={onConfirm}
                 type="button"
                 disabled={!selectedSize || isSubmitting}
-                className="group flex h-14 flex-1 items-center justify-between rounded-2xl bg-amber-700 px-6 shadow-lg shadow-amber-700/25 transition-all hover:bg-amber-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none"
+                className="group flex h-14 w-full flex-1 items-center justify-between rounded-2xl bg-amber-700 px-5 shadow-lg shadow-amber-700/25 transition-all hover:bg-amber-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:shadow-none sm:px-6"
               >
                 <span className="text-base font-bold text-white">
                   {isSubmitting ? "Đang xử lý..." : confirmLabel}

@@ -72,7 +72,7 @@ export default function CategoryCreateDrawer({
     };
 
     loadCategories();
-  }, [isOpen]);
+  }, [isOpen, showError]);
 
   // Load franchises for admin/manager
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function CategoryCreateDrawer({
     };
 
     loadFranchises();
-  }, [isOpen, isGlobalRole]);
+  }, [isOpen, isGlobalRole, showError]);
 
   // Reset form when drawer opens
   useEffect(() => {
@@ -178,8 +178,8 @@ export default function CategoryCreateDrawer({
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"
           onClick={handleClose}
         />
-        <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col border-l border-slate-200">
-          <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+        <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[540px] flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl">
+          <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
             <div>
               <h2 className="text-xl font-semibold text-slate-900">Assign Category</h2>
               <p className="text-sm text-slate-500 mt-1">
@@ -193,7 +193,7 @@ export default function CategoryCreateDrawer({
               <X size={20} />
             </button>
           </header>
-          <div className="flex-1 flex items-center justify-center p-8">
+          <div className="flex flex-1 items-center justify-center p-6 sm:p-8">
             <div className="text-center">
               <p className="text-red-500 font-medium mb-4">
                 No franchise selected
@@ -217,9 +217,9 @@ export default function CategoryCreateDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[540px] bg-white shadow-2xl flex flex-col transform transition-transform duration-300 border-l border-slate-200">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[540px] flex-col overflow-hidden border-l border-slate-200 bg-white shadow-2xl transition-transform duration-300">
         {/* Drawer Header */}
-        <header className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Assign Category</h2>
             <p className="text-sm text-slate-500 mt-1">
@@ -235,7 +235,7 @@ export default function CategoryCreateDrawer({
         </header>
 
         {/* Drawer Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+        <div className="flex-1 space-y-8 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
           {isLoadingCategories || isLoadingFranchises ? (
             <div className="flex items-center justify-center py-12">
               <p className="text-slate-600">Loading...</p>
@@ -433,18 +433,18 @@ export default function CategoryCreateDrawer({
         </div>
 
         {/* Drawer Footer */}
-        <div className="border-t border-slate-200 p-6 bg-slate-50 flex items-center justify-end gap-3 mt-auto">
+        <div className="mt-auto flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-end sm:p-6">
           <button
             onClick={handleClose}
             disabled={isCreating}
-            className="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={isCreating || isLoadingCategories}
-            className="px-5 py-2.5 text-sm font-medium text-white bg-[#8B5A2B] border border-transparent rounded-lg hover:bg-[#8B5A2B]/90 focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/50 transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-[#8B5A2B] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#8B5A2B]/90 focus:outline-none focus:ring-2 focus:ring-[#8B5A2B]/50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <Save size={18} />
             {isCreating ? "Creating..." : "Assign Category"}

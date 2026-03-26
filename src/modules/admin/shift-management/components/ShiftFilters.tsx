@@ -42,8 +42,8 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
   const isAssignmentView = viewMode === 'assignment'
 
   return (
-    <div className="sticky top-0 z-20 mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row">
+    <div className="z-20 mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:sticky md:top-0">
+      <div className="flex flex-col gap-4">
         <div className="relative flex-1">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <span className="material-symbols-outlined text-slate-400">search</span>
@@ -59,9 +59,9 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           />
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-1 md:pb-0">
+        <div className="grid gap-3 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
           {!isFranchiseLocked && (
-            <div className="relative min-w-[160px]">
+            <div className="relative min-w-0">
               <select
                 value={franchiseFilter}
                 onChange={(event) => onFranchiseChange(event.target.value)}
@@ -81,7 +81,7 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {isFranchiseLocked && (
-            <div className="flex h-[44px] min-w-[220px] items-center gap-2 rounded-lg bg-slate-100 px-3 ring-1 ring-inset ring-slate-200">
+            <div className="flex h-[44px] min-w-0 items-center gap-2 rounded-lg bg-slate-100 px-3 ring-1 ring-inset ring-slate-200 sm:col-span-2 xl:min-w-[220px]">
               <span className="material-symbols-outlined text-[18px] text-slate-400">lock</span>
               <span className="truncate text-sm font-medium text-slate-800">
                 {selectedFranchiseName || 'Selected franchise'}
@@ -90,7 +90,7 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {isAssignmentView && (
-            <div className="relative min-w-[160px]">
+            <div className="relative min-w-0">
               <select
                 value={staffFilter}
                 onChange={(event) => onStaffChange(event.target.value)}
@@ -110,7 +110,7 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {isAssignmentView && (
-            <div className="relative min-w-[160px]">
+            <div className="relative min-w-0">
               <select
                 value={statusFilter}
                 onChange={(event) => onStatusChange(event.target.value)}
@@ -130,14 +130,14 @@ export const ShiftFilters: React.FC<ShiftFiltersProps> = ({
           )}
 
           {!isAssignmentView && (
-            <div className="inline-flex h-[44px] min-w-[170px] items-center rounded-lg bg-slate-100 px-3 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+            <div className="inline-flex h-[44px] min-w-0 items-center rounded-lg bg-slate-100 px-3 text-sm font-medium text-slate-600 ring-1 ring-inset ring-slate-200 sm:col-span-2 xl:min-w-[170px]">
               Shift overview filters
             </div>
           )}
 
           <button
             onClick={onClearFilters}
-            className="whitespace-nowrap px-2 text-sm font-medium text-primary hover:text-blue-600"
+            className="justify-self-start whitespace-nowrap px-2 text-left text-sm font-medium text-primary hover:text-blue-600 sm:col-span-2 xl:justify-self-auto xl:text-right"
           >
             Clear Filters
           </button>

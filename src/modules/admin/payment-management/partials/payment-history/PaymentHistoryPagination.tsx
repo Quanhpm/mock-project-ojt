@@ -44,7 +44,7 @@ export const PaymentHistoryPagination = ({
   const pageNumbers = buildPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="flex flex-col gap-4 border-t border-gray-100 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-4 border-t border-gray-100 px-4 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
       <p className="text-sm text-gray-500">
         Hiển thị <span className="font-semibold text-gray-900">{startItem}</span>
         {" - "}
@@ -61,7 +61,7 @@ export const PaymentHistoryPagination = ({
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           <ChevronLeft size={16} />
           Prev
@@ -102,7 +102,7 @@ export const PaymentHistoryPagination = ({
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           Next
           <ChevronRight size={16} />

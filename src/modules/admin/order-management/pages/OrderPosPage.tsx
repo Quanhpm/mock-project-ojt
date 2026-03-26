@@ -65,8 +65,7 @@ export const OrderPosPage = () => {
     <>
       {requiresFranchiseSelection ? (
         <main
-          className="flex min-h-0 flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-          style={{ height: "calc(100vh - 48px)" }}
+          className="flex min-h-[calc(100dvh-48px)] flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)]"
         >
           <PosFranchiseSelectionGate
             franchiseOptions={franchiseOptions}
@@ -76,10 +75,9 @@ export const OrderPosPage = () => {
         </main>
       ) : (
         <main
-          className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-gray-200 bg-gray-50 shadow-sm"
-          style={{ height: "calc(100vh - 48px)" }}
+          className="flex min-h-[calc(100dvh-48px)] flex-1 flex-col overflow-visible rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)] lg:flex-row lg:overflow-hidden"
         >
-          <section className="relative flex min-w-0 flex-1 basis-0 flex-col overflow-hidden border-r border-gray-100">
+          <section className="relative flex min-w-0 flex-1 basis-0 flex-col overflow-hidden border-b border-gray-100 lg:border-b-0 lg:border-r">
             <PosHeader
               franchiseId={franchiseId}
               franchiseName={franchiseName}
@@ -96,7 +94,7 @@ export const OrderPosPage = () => {
               onSelectCategory={setSelectedCategory}
             />
 
-            <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+            <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-4 sm:p-6">
               {franchiseId ? (
                 <div className="space-y-4">
                   {!selectedCustomer ? (

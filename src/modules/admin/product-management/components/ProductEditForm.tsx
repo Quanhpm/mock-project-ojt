@@ -395,7 +395,7 @@ export default function ProductEditForm() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gap: "16px" }} className="grid-cols-1 sm:grid-cols-2">
                 <div>
                   <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
                     Brand
@@ -442,7 +442,7 @@ export default function ProductEditForm() {
             {/* Pricing */}
             <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }}>
               <h2 style={{ margin: 0, marginBottom: "20px", fontSize: "18px", fontWeight: "600" }}>Pricing</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              <div style={{ display: "grid", gap: "16px" }} className="grid-cols-1 sm:grid-cols-2">
                 <div>
                   <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: "500", color: "#374151" }}>
                     Current Price (VNĐ) *
@@ -547,7 +547,7 @@ export default function ProductEditForm() {
               </div>
 
               {imagePreview.length > 0 && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                <div style={{ display: "grid", gap: "12px" }} className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                   {imagePreview.map((img, index) => (
                     <div key={index} style={{ position: "relative" }}>
                       <img

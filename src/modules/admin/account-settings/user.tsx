@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User,
@@ -124,29 +124,31 @@ const AccountSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   // ==================== Zustand Store ====================
   const { admin, roles, hydrate } = useAdminAuthStore();
+  const baseUserProfile = useMemo<UserProfile>(() => {
+    const roleLabel = roles.length > 0 ? roles[0].role : "User";
+
+    return {
+      name: admin?.name || "",
+      email: admin?.email || "",
+      phone: admin?.phone || "",
+      avatar_url: admin?.avatar_url || "",
+      role: roleLabel,
+    };
+  }, [admin, roles]);
 
   // ==================== Profile State ====================
-  const [userProfile, setUserProfile] = useState<UserProfile>({
-    name: "",
-    email: "",
-    phone: "",
-    avatar_url: "",
-    role: "",
-  });
+  const [userProfile, setUserProfile] = useState<UserProfile>(() =>
+    baseUserProfile,
+  );
 
   // Đồng bộ state từ Zustand store khi admin thay đổi
   useEffect(() => {
-    if (admin) {
-      const roleLabel = roles.length > 0 ? roles[0].role : "User";
-      setUserProfile({
-        name: admin.name || "",
-        email: admin.email || "",
-        phone: admin.phone || "",
-        avatar_url: admin.avatar_url || "",
-        role: roleLabel,
-      });
-    }
-  }, [admin, roles]);
+    const frame = window.requestAnimationFrame(() => {
+      setUserProfile(baseUserProfile);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [baseUserProfile]);
 
   // ==================== Avatar Upload State ====================
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -231,17 +233,7 @@ const AccountSettingsPage: React.FC = () => {
     setAvatarFile(null);
     setAvatarPreview(null);
     setUploadedAvatarUrl(null);
-    // Reset về dữ liệu gốc từ store
-    if (admin) {
-      const roleLabel = roles.length > 0 ? roles[0].role : "User";
-      setUserProfile({
-        name: admin.name || "",
-        email: admin.email || "",
-        phone: admin.phone || "",
-        avatar_url: admin.avatar_url || "",
-        role: roleLabel,
-      });
-    }
+    setUserProfile(baseUserProfile);
   };
 
   const getUserInitials = () => {
@@ -256,12 +248,12 @@ const AccountSettingsPage: React.FC = () => {
   const displayAvatarUrl = avatarPreview || userProfile.avatar_url || null;
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FDFCFB] p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
-        <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Account Settings
             </h1>
             <p className="text-gray-600">
@@ -272,7 +264,7 @@ const AccountSettingsPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SECURITY}`)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <Key size={16} />
             Change Password
@@ -283,7 +275,7 @@ const AccountSettingsPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-8 h-full">
+            <div className="bg-white rounded-2xl shadow-sm border border-stone-200 p-6 sm:p-8 h-full">
               <div className="flex flex-col items-center">
                 {/* Avatar with Camera Icon */}
                 <div className="relative group mb-6">
@@ -353,7 +345,7 @@ const AccountSettingsPage: React.FC = () => {
             {/* Personal Information Card */}
             <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden h-full">
               {/* Card Header */}
-              <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between">
+              <div className="px-4 sm:px-6 py-5 border-b border-stone-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
                     <User className="text-amber-800" size={20} />
@@ -379,7 +371,7 @@ const AccountSettingsPage: React.FC = () => {
               </div>
 
               {/* Card Body - Form */}
-              <form onSubmit={handleProfileSave} className="p-6">
+              <form onSubmit={handleProfileSave} className="p-4 sm:p-6">
                 <div className="space-y-5">
                   {/* Name & Phone */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -433,11 +425,11 @@ const AccountSettingsPage: React.FC = () => {
 
                 {/* Action Buttons */}
                 {isEditing && (
-                  <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-stone-200">
+                  <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 mt-6 pt-6 border-t border-stone-200">
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                      className="px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors w-full sm:w-auto"
                       disabled={isUpdatingProfile}
                     >
                       Hủy
@@ -445,7 +437,7 @@ const AccountSettingsPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={isUpdatingProfile || isUploading}
-                      className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
                     >
                       {isUpdatingProfile && (
                         <Loader2 size={16} className="animate-spin" />

@@ -222,7 +222,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar - Mobile (drawer) */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200
+          fixed inset-y-0 left-0 z-50 w-[min(18rem,100vw)] max-w-full bg-white border-r border-gray-200
           transform transition-transform duration-300 ease-in-out lg:hidden
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}

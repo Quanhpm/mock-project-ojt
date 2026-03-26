@@ -447,7 +447,8 @@ export default function ProductFranchisePage() {
   }, [locationState?.franchiseName, resolvedFranchiseId]);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    const shouldLockScroll = window.innerWidth >= 1024;
+    document.body.style.overflow = shouldLockScroll ? "hidden" : "auto";
 
     return () => {
       document.body.style.overflow = "auto";
@@ -914,9 +915,9 @@ export default function ProductFranchisePage() {
   const isViewModeLoading = isLoading && !isSearchApplying;
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-slate-50">
-      <main className="flex h-screen flex-1 flex-col overflow-hidden">
-        <header className="z-10 flex shrink-0 flex-col gap-6 px-8 py-6">
+    <div className="flex min-h-screen w-full overflow-hidden bg-slate-50">
+      <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
+        <header className="z-10 flex shrink-0 flex-col gap-6 px-4 py-5 sm:px-8 sm:py-6">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
             <span>Home</span>
             <span>{">"}</span>
@@ -983,7 +984,7 @@ export default function ProductFranchisePage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-3">
+            <div className="flex w-full flex-wrap items-center justify-end gap-3 lg:w-auto">
               <div className="relative">
                 <select
                   value={resolvedFranchiseId}
@@ -999,7 +1000,7 @@ export default function ProductFranchisePage() {
                     );
                   }}
                   disabled={isFranchiseOptionsLoading || isFranchiseChanging}
-                  className="min-w-[220px] appearance-none rounded-xl border border-stone-300 bg-white px-4 py-3 pr-10 text-sm font-semibold text-stone-700 shadow-sm outline-none transition focus:border-[#8B4513] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full appearance-none rounded-xl border border-stone-300 bg-white px-4 py-3 pr-10 text-sm font-semibold text-stone-700 shadow-sm outline-none transition focus:border-[#8B4513] disabled:cursor-not-allowed disabled:opacity-70 sm:min-w-[220px]"
                   title="Choose Franchise"
                 >
                   <option value="">Choose Franchise</option>
@@ -1051,7 +1052,7 @@ export default function ProductFranchisePage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col overflow-hidden px-8 pb-8">
+        <div className="flex flex-1 flex-col overflow-hidden px-4 pb-6 sm:px-8 sm:pb-8">
           {!resolvedFranchiseId ? (
             <div className="rounded-2xl border border-amber-300 bg-amber-50 px-6 py-6 text-amber-900">
               <h3 className="text-xl font-bold">No franchise selected</h3>
@@ -1093,8 +1094,8 @@ export default function ProductFranchisePage() {
 
               <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="flex flex-col gap-3">
-                  <div className="flex w-full flex-wrap items-center gap-3">
-                    <div className="relative min-w-[280px] flex-1">
+                  <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
+                    <div className="relative min-w-0 flex-1">
                       <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                         <svg
                           width="20"
@@ -1154,8 +1155,8 @@ export default function ProductFranchisePage() {
                         handleApplySearchNow();
                       }}
                       disabled={isSearchLoading}
-                      className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#8B5A2B] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6d4522] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#8B5A2B] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#6d4522] disabled:cursor-not-allowed disabled:opacity-60 lg:w-auto"
+                  >
                       {isSearchLoading ? (
                         <>
                           <svg
@@ -1200,7 +1201,7 @@ export default function ProductFranchisePage() {
                         setCurrentPage(1);
                         setPageInput("");
                       }}
-                      className="h-11 min-w-[160px] rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#8B4513]"
+                      className="h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 outline-none transition focus:border-[#8B4513] sm:min-w-[160px]"
                     >
                       <option value="">All Status</option>
                       <option value="active">Active</option>
@@ -1213,7 +1214,7 @@ export default function ProductFranchisePage() {
                         setShowDeleted(!showDeleted);
                       }}
                       disabled={isViewModeLoading || isFranchiseChanging}
-                      className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold transition ${
+                      className={`inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border px-4 text-sm font-semibold transition sm:w-auto ${
                         showDeleted
                           ? "border-amber-200 bg-amber-50 text-orange-500"
                           : "border-slate-300 bg-white text-slate-500"
@@ -1243,7 +1244,7 @@ export default function ProductFranchisePage() {
                       type="button"
                       onClick={handleClearFilters}
                       disabled={isSearchLoading || isFranchiseChanging}
-                      className="h-9 rounded-lg border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-slate-100 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                     >
                       Clear Filters
                     </button>

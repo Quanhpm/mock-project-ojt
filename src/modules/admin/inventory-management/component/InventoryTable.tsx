@@ -51,6 +51,90 @@ type ToolbarLoadingAction =
   | "clear"
   | null;
 
+const inventoryTableStyleSheet = document.createElement("style");
+inventoryTableStyleSheet.textContent = `
+  @keyframes inventorySpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  @media (max-width: 1024px) {
+    [data-inventory-shell] {
+      height: auto;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    [data-inventory-main] {
+      height: auto;
+      min-height: 100dvh;
+      overflow: visible;
+    }
+
+    [data-inventory-header],
+    [data-inventory-content] {
+      padding-left: 16px !important;
+      padding-right: 16px !important;
+    }
+
+    [data-inventory-content] {
+      overflow: visible !important;
+    }
+
+    [data-inventory-filter-panel] {
+      padding: 12px !important;
+    }
+
+    [data-inventory-search-row],
+    [data-inventory-filter-row],
+    [data-inventory-action-row] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+    }
+
+    [data-inventory-search-row] > *,
+    [data-inventory-filter-row] > *,
+    [data-inventory-action-row] > * {
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+
+    [data-inventory-search-field] {
+      flex: 0 0 auto !important;
+    }
+
+    [data-inventory-search-row] button,
+    [data-inventory-filter-row] button,
+    [data-inventory-action-row] button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    [data-inventory-table-wrap] {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    [data-inventory-table-wrap] table {
+      min-width: 980px;
+    }
+
+    [data-inventory-pagination] {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    [data-inventory-pagination] > div,
+    [data-inventory-pagination] nav {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  }
+`;
+if (!document.head.querySelector("style[data-inventory-table]")) {
+  inventoryTableStyleSheet.setAttribute("data-inventory-table", "true");
+  document.head.appendChild(inventoryTableStyleSheet);
+}
+
 export default function InventoryTable() {
   const { error: toastError, success: toastSuccess } = useToast();
   const SEARCH_DEBOUNCE_DELAY = 400;
@@ -718,10 +802,10 @@ export default function InventoryTable() {
   const isToolbarLoading = isLoading && hasLoadedOnce;
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", overflow: "hidden", position: "relative" }}>
+    <div data-inventory-shell style={{ display: "flex", minHeight: "100dvh", width: "100%", overflow: "hidden" }}>
+      <main data-inventory-main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "100dvh", overflow: "hidden", position: "relative" }}>
         {/* Header */}
-        <header style={{ width: "100%", padding: "24px 32px", display: "flex", flexDirection: "column", gap: "24px", flexShrink: 0, zIndex: 10 }}>
+        <header data-inventory-header style={{ width: "100%", padding: "24px 32px", display: "flex", flexDirection: "column", gap: "24px", flexShrink: 0, zIndex: 10 }}>
           <nav style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#6c757d" }}>
             <a href="#" style={{ color: "#6c757d", textDecoration: "none" }}>Home</a>
             <span style={{ fontSize: "16px" }}>›</span>
@@ -733,7 +817,7 @@ export default function InventoryTable() {
               <p style={{ color: "#6c757d", margin: 0 }}>Total Items: {totalItems}</p>
             </div>
             {/* Action buttons */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+            <div data-inventory-action-row style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               <button onClick={handleExportAll} style={btnOutline}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#f8f0e8"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "white"; }}>
@@ -767,12 +851,12 @@ export default function InventoryTable() {
         </header>
 
         {/* Content Area */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 32px 32px", gap: "16px", minHeight: 0 }}>
+        <div data-inventory-content style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", padding: "0 32px 32px", gap: "16px", minHeight: 0 }}>
           {/* Filters */}
-          <div style={{ backgroundColor: "white", padding: "14px", borderRadius: "16px", boxShadow: "0 1px 3px rgba(15,23,42,0.05)", border: "1px solid #e5e7eb", flexShrink: 0, zIndex: 20 }}>
+          <div data-inventory-filter-panel style={{ backgroundColor: "white", padding: "14px", borderRadius: "16px", boxShadow: "0 1px 3px rgba(15,23,42,0.05)", border: "1px solid #e5e7eb", flexShrink: 0, zIndex: 20 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>
-                <div style={{ flex: "1 1 520px", position: "relative", minWidth: "260px" }}>
+              <div data-inventory-search-row style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>
+                <div data-inventory-search-field style={{ flex: "1 1 360px", position: "relative", minWidth: 0 }}>
                   <div style={{ position: "absolute", top: "50%", left: "14px", transform: "translateY(-50%)", pointerEvents: "none", color: "#9ca3af" }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
                   </div>
@@ -790,7 +874,7 @@ export default function InventoryTable() {
                     style={toolbarSearchInputStyle}
                   />
                 </div>
-                <button onClick={handleSearch} style={toolbarSearchButtonStyle}
+                <button onClick={handleSearch} style={{ ...toolbarSearchButtonStyle, minWidth: "120px" }}
                   onMouseEnter={e => e.currentTarget.style.backgroundColor = "#6d3610"} onMouseLeave={e => e.currentTarget.style.backgroundColor = "#8B4513"}>
                   {isToolbarLoading && toolbarLoadingAction === "search" ? (
                     <>
@@ -806,7 +890,7 @@ export default function InventoryTable() {
                 </button>
               </div>
 
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", justifyContent: "flex-start" }}>
+              <div data-inventory-filter-row style={{ display: "flex", flexWrap: "wrap", gap: "12px", alignItems: "center", justifyContent: "flex-start" }}>
                 <div style={{ position: "relative", minWidth: "160px" }}>
                   <select value={statusFilter} onChange={e => void handleStatusChange(e.target.value)} style={toolbarSelectStyle}>
                     <option value="all">All Status</option><option value="in-stock">In Stock</option><option value="low-stock">Low Stock</option><option value="out-of-stock">Out of Stock</option>
@@ -908,8 +992,8 @@ export default function InventoryTable() {
               <p style={{ color: "#6c757d", fontSize: "16px" }}>Loading...</p>
             </div>
           ) : filteredFields.length > 0 ? (
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden", minHeight: 0, position: "relative" }}>
-              <div style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
+            <div data-inventory-table-card style={{ flex: 1, display: "flex", flexDirection: "column", backgroundColor: "white", borderRadius: "12px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e9ecef", overflow: "hidden", minHeight: 0, position: "relative" }}>
+              <div data-inventory-table-wrap style={{ flex: 1, overflowY: "auto", overflowX: "auto" }}>
                 <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f8f9fa", borderBottom: "1px solid #e9ecef" }}>
@@ -1036,7 +1120,7 @@ export default function InventoryTable() {
                 </table>
               </div>
               {/* Pagination */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e9ecef", backgroundColor: "#f8f9fa", padding: "12px 24px" }}>
+              <div data-inventory-pagination style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid #e9ecef", backgroundColor: "#f8f9fa", padding: "12px 24px" }}>
                 <p style={{ fontSize: "14px", color: "#495057", margin: 0 }}>Page {currentPage} of {totalPages} — {totalItems} results</p>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <nav
@@ -1203,7 +1287,7 @@ export default function InventoryTable() {
       {/* Adjust Quantity Modal */}
       {adjustPopover.open && adjustPopover.item && (
         <div onClick={() => setAdjustPopover({ open: false, item: null })} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 998, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", boxShadow: "0 20px 40px rgba(0,0,0,0.18)", width: "90%", maxWidth: "400px", overflow: "hidden" }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", boxShadow: "0 20px 40px rgba(0,0,0,0.18)", width: "min(400px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 24px)", overflow: "hidden" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #e9ecef", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#212529" }}>Adjust Quantity</h3>
               <button onClick={() => setAdjustPopover({ open: false, item: null })} style={{ background: "none", border: "none", cursor: "pointer", color: "#6c757d", fontSize: "20px", lineHeight: 1, padding: "0 2px" }}>✕</button>
@@ -1214,7 +1298,7 @@ export default function InventoryTable() {
                 <span style={{ color: "#6c757d" }}>Current: </span><strong style={{ color: "#212529" }}>{adjustPopover.item.quantity}</strong>
                 <span style={{ color: "#6c757d" }}> · Threshold: {adjustPopover.item.alert_threshold}</span>
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: "block", fontSize: "13px", fontWeight: "600", color: "#28a745", marginBottom: "6px" }}>▲ Increase</label>
                   <input type="number" min="0" value={popoverIncrease} onChange={e => setPopoverIncrease(e.target.value)} placeholder="0" style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: `2px solid ${popoverIncrease ? "#28a745" : "#dee2e6"}`, fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
@@ -1239,7 +1323,7 @@ export default function InventoryTable() {
                 <input type="text" value={popoverReason} onChange={e => setPopoverReason(e.target.value)} placeholder="Enter adjustment reason..." style={{ width: "100%", padding: "10px 12px", borderRadius: "8px", border: "1px solid #dee2e6", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
               </div>
             </div>
-            <div style={{ padding: "16px 24px", borderTop: "1px solid #e9ecef", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+            <div style={{ padding: "16px 24px", borderTop: "1px solid #e9ecef", display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
               <button onClick={() => setAdjustPopover({ open: false, item: null })} style={{ padding: "8px 16px", borderRadius: "8px", border: "1px solid #dee2e6", backgroundColor: "white", cursor: "pointer", fontSize: "14px" }}>Cancel</button>
               <button disabled={isAdjusting || (popoverIncrease === "" && popoverDecrease === "") || ((Number(popoverIncrease) || 0) - (Number(popoverDecrease) || 0) === 0)} onClick={handleAdjustSubmit}
                 style={{ padding: "8px 16px", borderRadius: "8px", border: "none", backgroundColor: "#8B4513", color: "white", cursor: isAdjusting ? "not-allowed" : "pointer", fontSize: "14px", fontWeight: "600", opacity: isAdjusting ? 0.7 : 1 }}>
@@ -1253,7 +1337,7 @@ export default function InventoryTable() {
       {/* Logs Modal */}
       {logsModal.open && (
         <div onClick={() => setLogsModal({ open: false, inventoryId: "", productName: "" })} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", width: "90%", maxWidth: "600px", maxHeight: "80vh", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px rgba(0,0,0,0.12)", overflow: "hidden" }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", width: "min(600px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 24px)", display: "flex", flexDirection: "column", boxShadow: "0 20px 25px rgba(0,0,0,0.12)", overflow: "hidden" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #e9ecef", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
               <div><h3 style={{ margin: "0 0 2px", fontSize: "18px", fontWeight: "700" }}>Adjustment History</h3><p style={{ margin: 0, fontSize: "13px", color: "#6c757d" }}>{logsModal.productName}</p></div>
               <button onClick={() => setLogsModal({ open: false, inventoryId: "", productName: "" })} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "20px", color: "#6c757d" }}>✕</button>
@@ -1310,6 +1394,9 @@ export default function InventoryTable() {
               borderRadius: "12px",
               boxShadow: "0 20px 30px rgba(0,0,0,0.18)",
               overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              maxHeight: "calc(100dvh - 32px)",
             }}
           >
             <div style={{ padding: "16px 20px", borderBottom: "1px solid #e9ecef", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1327,8 +1414,9 @@ export default function InventoryTable() {
             <form
               noValidate
               onSubmit={handleCreateFormSubmit(handleCreateSubmit, handleCreateInvalidSubmit)}
+              style={{ display: "flex", flexDirection: "column", minHeight: 0 }}
             >
-              <div style={{ padding: "20px", display: "grid", gap: "14px" }}>
+              <div style={{ padding: "20px", display: "grid", gap: "14px", overflowY: "auto" }}>
                 <div style={{ display: "grid", gap: "6px" }}>
                   <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
                     Franchise
@@ -1381,7 +1469,7 @@ export default function InventoryTable() {
                   )}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px" }}>
                   <div style={{ display: "grid", gap: "6px" }}>
                     <label style={{ fontSize: "13px", color: "#374151", fontWeight: 600 }}>
                       Quantity
@@ -1442,7 +1530,7 @@ export default function InventoryTable() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4">
+              <div className="flex items-center justify-between gap-3 border-t border-slate-200 px-5 py-4" style={{ flexWrap: "wrap" }}>
                 <button
                   type="button"
                   onClick={handleCloseCreateModal}
@@ -1467,7 +1555,7 @@ export default function InventoryTable() {
       {/* Restore Modal */}
       {restoreModal.open && (
         <div onClick={() => setRestoreModal({ open: false, inventoryId: "", productName: "" })} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", width: "90%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+          <div onClick={e => e.stopPropagation()} style={{ backgroundColor: "white", borderRadius: "12px", width: "min(480px, calc(100vw - 24px))", maxHeight: "calc(100dvh - 24px)", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)", overflow: "hidden" }}>
             <div style={{ padding: "20px 24px", borderBottom: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div style={{ backgroundColor: "#d4edda", padding: "10px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}><span className="material-symbols-outlined" style={{ fontSize: "24px", color: "#28a745" }}>restore</span></div>

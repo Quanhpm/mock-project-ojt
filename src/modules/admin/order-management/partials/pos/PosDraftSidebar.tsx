@@ -50,10 +50,10 @@ export const PosDraftSidebar = memo(({
   const cartStatusLabel = cartId ? "Cart active" : "Chưa có cart";
 
   return (
-    <aside className="z-10 flex h-full min-h-0 w-96 shrink-0 flex-col overflow-hidden border-l border-gray-100 bg-white">
-      <div className="shrink-0 border-b border-gray-50 bg-white p-6 pb-5">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-2xl font-black tracking-tight text-gray-900">
+    <aside className="z-10 flex min-h-0 w-full shrink-0 flex-col overflow-hidden border-t border-gray-100 bg-white lg:h-full lg:w-96 lg:border-l lg:border-t-0">
+      <div className="shrink-0 border-b border-gray-50 bg-white p-4 pb-5 sm:p-6">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h2 className="text-xl font-black tracking-tight text-gray-900 sm:text-2xl">
             Order #{orderLabel}
           </h2>
           <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700">
@@ -91,7 +91,7 @@ export const PosDraftSidebar = memo(({
             ) : null}
           </div>
 
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <div className="relative min-w-0 flex-1">
               <Search
                 size={16}
@@ -106,11 +106,11 @@ export const PosDraftSidebar = memo(({
                     onSearchCustomers();
                   }
                 }}
-                className="w-full rounded-xl bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-gray-900 ring-1 ring-black/5 outline-none transition-all placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-amber-700/20"
-                placeholder="Tìm SĐT hoặc Tên..."
-                type="text"
-              />
-            </div>
+              className="w-full rounded-xl bg-gray-50 py-2.5 pl-10 pr-3 text-sm text-gray-900 ring-1 ring-black/5 outline-none transition-all placeholder:text-gray-400 focus:bg-white focus:ring-2 focus:ring-amber-700/20"
+              placeholder="Tìm SĐT hoặc Tên..."
+              type="text"
+            />
+          </div>
 
             <button
               type="button"
@@ -143,7 +143,7 @@ export const PosDraftSidebar = memo(({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col bg-gray-50/30">
-        <div className="min-h-0 flex-1 overflow-y-auto p-6 scrollbar-hide">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide">
           {items.length === 0 ? (
             <div className="flex h-full min-h-[220px] flex-col items-center justify-center space-y-3 text-center text-gray-400">
               <div className="rounded-full bg-gray-100 p-4">
@@ -204,7 +204,7 @@ export const PosDraftSidebar = memo(({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between border-t border-gray-50 pt-3">
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-50 pt-3">
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                       Nhấn để chỉnh sửa
                     </span>
@@ -235,7 +235,7 @@ export const PosDraftSidebar = memo(({
                         event.stopPropagation();
                         onRemoveItem(item.cart_item_id);
                       }}
-                      className="rounded-full p-2 text-gray-300 opacity-0 transition-all hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
+                      className="rounded-full p-2 text-gray-300 opacity-100 transition-all hover:bg-red-50 hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100"
                       title="Xóa món"
                     >
                       <Trash2 size={16} />
@@ -248,12 +248,12 @@ export const PosDraftSidebar = memo(({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-gray-100 bg-white p-6">
+      <div className="shrink-0 border-t border-gray-100 bg-white p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between rounded-2xl bg-white px-1 py-1">
           <span className="text-[15px] font-black uppercase tracking-[0.08em] text-gray-900">
             TỔNG CỘNG
           </span>
-          <span className="text-[42px] font-black leading-none tracking-tight text-amber-700">
+          <span className="text-[clamp(2rem,6vw,2.6rem)] font-black leading-none tracking-tight text-amber-700">
             {currency.format(subtotalAmount)}đ
           </span>
         </div>

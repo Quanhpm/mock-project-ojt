@@ -57,17 +57,17 @@ const SecurityPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FDFCFB] p-4 sm:p-6 lg:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Security</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Security</h1>
             <p className="text-gray-600">Manage your password and security settings.</p>
           </div>
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 px-4 py-2.5 border border-stone-300 text-stone-700 text-sm font-medium rounded-xl hover:bg-stone-50 transition-colors"
+            className="inline-flex w-full sm:w-auto justify-center items-center gap-2 px-4 py-2.5 border border-stone-300 text-stone-700 text-sm font-medium rounded-xl hover:bg-stone-50 transition-colors"
           >
             <ArrowLeft size={16} />
             Back
@@ -75,7 +75,7 @@ const SecurityPage: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-          <div className="px-6 py-5 border-b border-stone-200 flex items-center gap-3">
+          <div className="px-4 sm:px-6 py-5 border-b border-stone-200 flex items-center gap-3">
             <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
               <Key className="text-red-700" size={20} />
             </div>
@@ -85,7 +85,7 @@ const SecurityPage: React.FC = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-5">
             <div className="space-y-2">
               <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
               <div className="relative">
@@ -170,7 +170,7 @@ const SecurityPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isChangingPassword}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-700 to-amber-800 hover:from-amber-800 hover:to-amber-900 text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isChangingPassword && <Loader2 size={16} className="animate-spin" />}
                 {isChangingPassword ? "Updating..." : "Update Password"}

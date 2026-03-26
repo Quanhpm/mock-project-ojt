@@ -56,6 +56,85 @@ const getPaymentMethodLabel = (method: string) => {
   return normalizedMethod || "Chưa xác định";
 };
 
+const PaymentHistoryMobileCard = ({
+  payment,
+}: {
+  payment: PaymentHistoryItem;
+}) => {
+  return (
+    <article className="rounded-[28px] border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-black/5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Payment Code
+          </p>
+          <p className="mt-1 break-all text-lg font-black tracking-tight text-gray-900">
+            {payment.code}
+          </p>
+          <p className="mt-1 text-sm font-medium text-gray-500">
+            Order: {payment.order_id?.code || "-"}
+          </p>
+        </div>
+
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] ring-1",
+            PAYMENT_HISTORY_STATUS_BADGES[payment.status],
+          )}
+        >
+          {PAYMENT_HISTORY_STATUS_LABELS[payment.status]}
+        </span>
+      </div>
+
+      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+          <dt className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Customer
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-gray-900">
+            {payment.customer_id?.name || "Khách vãng lai"}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+          <dt className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Method
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-gray-900">
+            {getPaymentMethodLabel(payment.method)}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+          <dt className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Created At
+          </dt>
+          <dd className="mt-1 text-sm font-semibold text-gray-900">
+            {formatPaymentDateTime(payment.created_at)}
+          </dd>
+        </div>
+        <div className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+          <dt className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Amount
+          </dt>
+          <dd className="mt-1 text-lg font-black text-gray-900">
+            {formatCurrency(payment.amount)}
+          </dd>
+        </div>
+      </dl>
+
+      <div className="mt-3 grid gap-2 text-sm text-gray-500 sm:grid-cols-2">
+        <div className="rounded-2xl bg-gray-50 p-3 ring-1 ring-black/5">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400">
+            Paid At
+          </p>
+          <p className="mt-1 font-semibold text-gray-900">
+            {formatPaymentDateTime(payment.paid_at)}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+};
+
 const PaymentHistoryLoadingRows = () => {
   return (
     <tbody className="divide-y divide-gray-100">
@@ -138,6 +217,56 @@ export const PaymentHistoryTable = ({
   onResetFilters,
   onPageChange,
 }: PaymentHistoryTableProps) => {
+  const renderMobileContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-3 md:hidden">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="h-40 animate-pulse rounded-[28px] bg-gray-100" />
+          ))}
+        </div>
+      );
+    }
+
+    if (errorMessage) {
+      return (
+        <div className="rounded-[28px] border border-red-200 bg-red-50 px-5 py-10 text-center md:hidden">
+          <AlertTriangle size={32} className="mx-auto text-red-500" />
+          <p className="mt-3 text-lg font-black tracking-tight text-red-900">
+            Không thể tải dữ liệu payment
+          </p>
+          <p className="mt-2 text-sm leading-6 text-red-700">{errorMessage}</p>
+        </div>
+      );
+    }
+
+    if (payments.length === 0) {
+      return (
+        <div className="rounded-[28px] border border-dashed border-gray-300 bg-gray-50 px-5 py-10 text-center md:hidden">
+          <SearchX size={32} className="mx-auto text-gray-400" />
+          <p className="mt-3 text-lg font-black tracking-tight text-gray-900">
+            {hasActiveFilters
+              ? "Không có giao dịch phù hợp với bộ lọc hiện tại"
+              : "Chưa có giao dịch payment nào cho chi nhánh này"}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-gray-500">
+            {hasActiveFilters
+              ? "Thử nới rộng khoảng ngày hoặc bỏ chọn trạng thái để xem thêm giao dịch."
+              : "Khi chi nhánh phát sinh giao dịch thanh toán, lịch sử sẽ hiện tại đây."}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3 md:hidden">
+        {payments.map((payment) => (
+          <PaymentHistoryMobileCard key={payment._id} payment={payment} />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <section className="overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-sm ring-1 ring-black/5">
       <div className="border-b border-gray-100 px-6 py-6">
@@ -170,7 +299,11 @@ export const PaymentHistoryTable = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="px-4 py-4 md:hidden">
+        {renderMobileContent()}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full border-collapse text-left text-sm text-gray-600">
           <thead className="bg-gray-50 text-xs font-black uppercase tracking-[0.18em] text-gray-500">
             <tr>

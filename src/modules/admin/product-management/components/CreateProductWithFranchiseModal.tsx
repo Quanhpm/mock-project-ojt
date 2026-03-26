@@ -150,10 +150,10 @@ export default function CreateProductWithFranchiseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 p-3 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
         {/* ═══════════ Header ═══════════ */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex-1">
             <h2 className="text-xl font-bold text-primary tracking-tight">
               {currentStep === 1
@@ -177,8 +177,8 @@ export default function CreateProductWithFranchiseModal({
         </div>
 
         {/* ═══════════ Step Indicator ═══════════ */}
-        <div className="px-6 pt-5 pb-2">
-          <div className="flex items-center gap-0">
+        <div className="px-4 pt-4 pb-2 sm:px-6 sm:pt-5">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Step 1 */}
             <div className="flex items-center gap-2">
               <div
@@ -207,7 +207,7 @@ export default function CreateProductWithFranchiseModal({
 
             {/* Connector */}
             <div
-              className={`flex-1 h-0.5 mx-3 rounded transition-colors ${
+              className={`hidden h-0.5 flex-1 rounded transition-colors sm:block ${
                 currentStep > 1 ? "bg-green-500" : "bg-gray-200"
               }`}
             />
@@ -247,9 +247,9 @@ export default function CreateProductWithFranchiseModal({
         {/* ═══════════ Step 1: Create Product ═══════════ */}
         {currentStep === 1 && (
           <form onSubmit={onSubmitStep1} className="flex flex-col flex-1">
-            <div className="overflow-y-auto p-6 space-y-4 flex-1">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
               {/* SKU & Name */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     SKU <span className="text-red-500">*</span>
@@ -289,7 +289,7 @@ export default function CreateProductWithFranchiseModal({
               </div>
 
               {/* Min & Max Price */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                     Min Price (VND) <span className="text-red-500">*</span>
@@ -443,18 +443,18 @@ export default function CreateProductWithFranchiseModal({
             </div>
 
             {/* Footer Step 1 */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                className="w-full rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isCreating}
-                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#6c4830] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 {isCreating ? (
                   <>
@@ -479,7 +479,7 @@ export default function CreateProductWithFranchiseModal({
         {/* ═══════════ Step 2: Assign Franchise ═══════════ */}
         {currentStep === 2 && (
           <form onSubmit={onSubmitStep2} className="flex flex-col flex-1">
-            <div className="overflow-y-auto p-6 space-y-5 flex-1">
+            <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
               {/* Success banner from Step 1 */}
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
                 <span className="material-symbols-outlined text-green-600 text-[18px]">
@@ -576,18 +576,18 @@ export default function CreateProductWithFranchiseModal({
             </div>
 
             {/* Footer Step 2 */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                className="w-full rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm transition-colors hover:bg-gray-50 sm:w-auto"
               >
                 Skip
               </button>
               <button
                 type="submit"
                 disabled={!isStep2Valid || isAssigning}
-                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#6c4830] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
               >
                 {isAssigning ? (
                   <>

@@ -169,10 +169,10 @@ function UserManagement() {
   }, [executeSearch]);
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full min-h-screen">
       <main className="flex flex-col flex-1">
         {/* Page Header */}
-        <header className="w-full px-8 py-6 flex flex-col gap-6 shrink-0 z-10">
+        <header className="w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex flex-col gap-5 sm:gap-6 shrink-0 z-10">
           <div className="flex flex-col gap-1">
             <nav className="flex items-center gap-2 text-sm text-slate-500">
               <a className="hover:text-primary transition-colors" href="#">
@@ -184,9 +184,9 @@ function UserManagement() {
               <span className="text-slate-900 font-medium">Users</span>
             </nav>
           </div>
-          <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-4">
             <div className="flex flex-col gap-1">
-              <h2 className="text-3xl font-black tracking-tight text-slate-900">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
                 User Management
               </h2>
               <p className="text-slate-500">
@@ -195,7 +195,7 @@ function UserManagement() {
             </div>
             <button
               onClick={handleCreateClick}
-              className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm"
+              className="inline-flex w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors items-center gap-2 text-sm"
             >
               <Plus size={18} />
               Create User
@@ -204,7 +204,7 @@ function UserManagement() {
         </header>
 
         {/* Content Area */}
-        <div className="px-8 pb-8">
+        <div className="px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
           {/* Filters & Search Bar */}
           <UserSearch
             searchState={searchState}
@@ -214,8 +214,8 @@ function UserManagement() {
 
           {/* Table Container */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div>
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
                     <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">

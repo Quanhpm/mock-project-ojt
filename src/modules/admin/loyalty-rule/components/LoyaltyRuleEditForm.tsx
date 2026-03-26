@@ -104,8 +104,8 @@ export default function LoyaltyRuleEditForm() {
   }
 
   return (
-    <div style={{ padding: "24px", maxWidth: "720px", fontFamily: "Inter, sans-serif" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+    <div style={{ padding: "clamp(16px, 3vw, 24px)", maxWidth: "720px", width: "100%", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
         <button
           type="button"
           onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.LOYALTY}`)}
@@ -152,7 +152,7 @@ export default function LoyaltyRuleEditForm() {
             </div>
           )}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Earn Amount / Point <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="number" min={1} step={1} {...register("earn_amount_per_point", { valueAsNumber: true })} style={inputStyle} />
@@ -165,7 +165,7 @@ export default function LoyaltyRuleEditForm() {
             </div>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px" }}>
             <div>
               <label style={labelStyle}>Min Redeem Points <span style={{ color: "#ef4444" }}>*</span></label>
               <input type="number" min={1} step={1} {...register("min_redeem_points", { valueAsNumber: true })} style={inputStyle} />
@@ -185,7 +185,7 @@ export default function LoyaltyRuleEditForm() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "12px", marginTop: "20px", justifyContent: "flex-end" }}>
           <button
             type="button"
             onClick={() => navigate(`/admin/${ROUTER_URL.ADMIN_ROUTER.LOYALTY}`)}

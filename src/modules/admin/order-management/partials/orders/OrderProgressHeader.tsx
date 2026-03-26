@@ -143,7 +143,7 @@ export const OrderProgressHeader = ({
       </p>
 
       <div className="mt-4 overflow-x-auto pb-1">
-        <div className="mx-auto min-w-[1040px] px-3">
+        <div className="mx-auto min-w-[840px] px-2 sm:min-w-[1040px] sm:px-3">
           <div className="relative">
             <div className="grid grid-cols-5 gap-0">
               {PROGRESS_STEPS.map((step, index) => {

@@ -225,10 +225,10 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   const isRoleValid = selectedRoleId && (isAdmin || selectedFranchiseId)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden border border-gray-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-sm">
+      <div className="w-full max-w-[calc(100vw-1rem)] sm:max-w-xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[calc(100dvh-1rem)] sm:max-h-[90vh] overflow-hidden border border-gray-100">
         {/* ═══════════ Header ═══════════ */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white">
+        <div className="flex items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-white">
           <div className="flex-1">
             <h2 className="text-xl font-bold text-primary tracking-tight">
               Edit User
@@ -246,11 +246,11 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         </div>
 
         {/* ═══════════ Tabs ═══════════ */}
-        <div className="px-6 pt-4 flex gap-0 border-b border-gray-100">
+        <div className="px-4 sm:px-6 pt-4 flex gap-0 border-b border-gray-100 overflow-x-auto">
           <button
             type="button"
             onClick={() => { setActiveTab('info'); setError(null); setSuccessMsg(null) }}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'info'
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'info'
               ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
@@ -263,7 +263,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           <button
             type="button"
             onClick={() => { setActiveTab('role'); setError(null); setSuccessMsg(null) }}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'role'
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'role'
               ? 'border-primary text-primary'
               : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
@@ -277,13 +277,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
         {/* ═══════════ Messages ═══════════ */}
         {error && (
-          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+          <div className="mx-4 sm:mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
             <span className="material-symbols-outlined text-red-500 text-[18px] mt-0.5">error</span>
             <p className="text-sm text-red-700">{error}</p>
           </div>
         )}
         {successMsg && (
-          <div className="mx-6 mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
+          <div className="mx-4 sm:mx-6 mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">
             <span className="material-symbols-outlined text-green-600 text-[18px] mt-0.5">check_circle</span>
             <p className="text-sm text-green-700 font-medium">{successMsg}</p>
           </div>
@@ -292,7 +292,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         {/* ═══════════ Tab 1: User Info ═══════════ */}
         {activeTab === 'info' && (
           <form onSubmit={onSubmitInfo} className="flex flex-col flex-1">
-            <div className="overflow-y-auto p-6 space-y-4 flex-1">
+            <div className="overflow-y-auto p-4 sm:p-6 space-y-4 flex-1">
               {/* Name */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -417,18 +417,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!isInfoValid || isSubmitting}
-                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isSubmitting ? (
                   <>
@@ -449,7 +449,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         {/* ═══════════ Tab 2: Assign Role ═══════════ */}
         {activeTab === 'role' && (
           <form onSubmit={onSubmitRole} className="flex flex-col flex-1">
-            <div className="overflow-y-auto p-6 space-y-5 flex-1">
+            <div className="overflow-y-auto p-4 sm:p-6 space-y-5 flex-1">
               {/* Hint */}
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
                 <span className="material-symbols-outlined text-blue-600 text-[18px]">info</span>
@@ -520,18 +520,18 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between gap-3 px-6 py-4 bg-gray-50 border-t border-gray-100">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-gray-50 border-t border-gray-100">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm"
+                className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-600 font-semibold hover:bg-gray-50 transition-colors text-sm shadow-sm w-full sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={!isRoleValid || isSubmitting}
-                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
               >
                 {isSubmitting ? (
                   <>
