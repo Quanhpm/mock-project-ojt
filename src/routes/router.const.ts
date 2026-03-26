@@ -65,5 +65,6 @@ export const ROUTER_URL = {
     SECURITY: `account/security`,
     SELECT_FRANCHISE: `select-franchise`,
     PRODUCT_FRANCHISE: `franchises/:franchiseId/products`,
+    PRODUCT_FRANCHISE_MANAGEMENT: `product-franchise-management`,
   },
 };
