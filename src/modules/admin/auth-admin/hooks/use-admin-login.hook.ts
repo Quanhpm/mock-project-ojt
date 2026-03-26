@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { login, getProfile } from "@/apis/endpoints/auth.api";
 import { HttpError } from "@/apis/http.types";
-import { resetAuthRedirecting } from "@/apis";
+import { resetAuthRedirecting } from "@/apis/axios.config";
 import { useAdminAuthStore } from "../stores/admin-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
 import { useToast } from "@/hooks/use-toast.hook";

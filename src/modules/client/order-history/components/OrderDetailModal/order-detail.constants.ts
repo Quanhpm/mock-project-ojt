@@ -1,6 +1,6 @@
 import type { OrderData } from '../../order.types';
 import type { LucideIcon } from 'lucide-react';
-import { CheckCircle2, Clock3, LoaderCircle, Package, Receipt, XCircle } from 'lucide-react';
+import { Bike, CheckCircle2, Clock3, LoaderCircle, Package, Receipt, XCircle } from 'lucide-react';
 
 export type OrderStatusCode = OrderData['status']['code'];
 
@@ -56,4 +56,5 @@ export const STATUS_ICONS: Record<OrderStatusCode, LucideIcon> = {
   CONFIRMED: Clock3,
   PREPARING: LoaderCircle,
   DRAFT: Receipt,
+  OUT_FOR_DELIVERY: Bike,
 };

@@ -50,7 +50,7 @@ export default function AdminLoginPage() {
 
       <AdminLoginForm 
         onSubmit={handleLogin} 
-        isLoading={false}
+        isLoading={loading}
         error={errorMessage} 
       />
 

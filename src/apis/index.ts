@@ -17,4 +17,23 @@ export type {
 
 // API Endpoints
 export * from "./endpoints";
-export * from "./endpointsCLIENT";
+export {
+  getCustomerProfile,
+  loginCustomer,
+  logoutCustomer,
+  registerCustomer,
+  updateCustomerProfile,
+} from "./endpointsCLIENT/customerAuth.api";
+export type {
+  CustomerChangePasswordRequest,
+  CustomerForgotPasswordRequest,
+  CustomerLoginRequest,
+  CustomerRegisterRequest,
+  CustomerUser,
+  CustomerVerifyEmailRequest,
+} from "./endpointsCLIENT/customerAuth.api";
+export { getFranchiseDetail } from "./endpointsCLIENT/franchiseDetail.api";
+export type { FranchiseDetailResponse } from "./endpointsCLIENT/franchiseDetail.api";
+export * from "./endpointsCLIENT/loyalty.api";
+export * from "./endpointsCLIENT/order.api";
+export * from "./endpointsCLIENT/productDetail.api";

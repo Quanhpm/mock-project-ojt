@@ -34,14 +34,6 @@ const franchiseSchema = z.object({
 type FranchiseFormValues = z.infer<typeof franchiseSchema>;
 
 // ──────── Shared Styles ────────
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: "13px",
-  fontWeight: "600",
-  color: "#374151",
-  marginBottom: "6px",
-};
-
 const inputStyle: React.CSSProperties = {
   width: "100%",
   padding: "9px 12px",

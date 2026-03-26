@@ -71,7 +71,6 @@ export const ProductFranchiseTableRow: React.FC<ProductFranchiseTableRowProps> =
         listeners,
         setNodeRef,
         transform,
-        transition,
         isDragging,
     } = useDraggable({
         id: `product-franchise-${rowId}`,
@@ -89,7 +88,6 @@ export const ProductFranchiseTableRow: React.FC<ProductFranchiseTableRowProps> =
             style={{
                 height: rowHeight,
                 transform: CSS.Translate.toString(transform),
-                transition,
                 visibility: isDragging ? 'hidden' : 'visible',
                 gridTemplateColumns,
             }}

@@ -8,7 +8,6 @@ import { useRestorePromotion } from "./hooks/useRestorePromotion";
 import PromotionDelete from "./PromotionDelete";
 import PromotionRestore from "./PromotionRestore";
 import PromotionDetailsModal from "./PromotionDetailsModal";
-import PromotionCreateModal from "./PromotionCreateModal";
 import PromotionEditModal from "./PromotionEditModal";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import type { Promotion, PromotionSearchCondition, PromotionType } from "./promotion.types";
@@ -90,7 +89,6 @@ export default function PromotionTable() {
   const [restoreModal, setRestoreModal] = useState<ModalState>(defaultModal);
   const [detailPromotion, setDetailPromotion] = useState<Promotion | null>(null);
   const [viewingPromotionId, setViewingPromotionId] = useState<string>("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editPromotionId, setEditPromotionId] = useState<string>("");
 
   // Filter states

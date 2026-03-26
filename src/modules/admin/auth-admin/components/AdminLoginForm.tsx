@@ -68,9 +68,10 @@ export function AdminLoginForm({ onSubmit, isLoading = false, error = "" }: Admi
 
       <button
         type="submit"
+        disabled={isLoading}
         className="w-full py-3 mt-2 font-bold text-white bg-[var(--cf-secondary)] hover:bg-[var(--cf-dark)] active:scale-[0.98] rounded-lg shadow-md transition-all cursor-pointer"
       >
-        Login
+        {isLoading ? "Signing in..." : "Login"}
       </button>
     </form>
     </>

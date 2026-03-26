@@ -50,7 +50,6 @@ interface RawOrderApi {
   promotion_discount?: number;
   voucher_discount?: number;
   message?: string;
-  failed_reason?: string;
   created_at?: string;
   updated_at?: string;
   order_items?: RawOrderItemApi[];

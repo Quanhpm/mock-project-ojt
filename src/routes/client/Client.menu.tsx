@@ -1,6 +1,6 @@
 import type { JSX } from "react";
-import { ROUTER_URL } from "../router.const";
 import React from "react";
+import { ROUTER_URL } from "../router.const";
 
 export type ClientMenuItem = {
   label: string;
@@ -12,13 +12,13 @@ export type ClientMenuItem = {
 export const CLIENT_MENU: ClientMenuItem[] = [
   {
     label: "Cart",
-    path: ROUTER_URL.CLIENT_ROUTER.CART,
+    path: ROUTER_URL.HOME_ROUTER.CART,
     component: React.lazy(() => import("@/modules/client/cart/pages/Cart")),
     isEnd: true,
   },
   {
     label: "Payment",
-    path: ROUTER_URL.CLIENT_ROUTER.PAYMENT,
+    path: ROUTER_URL.HOME_ROUTER.PAYMENT,
     component: React.lazy(() => import("@/modules/client/payment/pages/Payment")),
     isEnd: true,
   },

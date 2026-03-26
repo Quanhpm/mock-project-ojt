@@ -31,6 +31,7 @@ import type {
   ProductFranchiseCreateRequest,
   ProductFranchiseDetail,
   ProductFranchiseLocationState,
+  ProductFranchiseSearchRequest,
   ProductFranchiseSearchItem,
   ProductFranchiseStatusFilterValue,
   ProductFranchiseUpdateRequest,
@@ -90,7 +91,7 @@ const buildSearchPayload = (
   franchiseId: string,
   pageNum: number,
   isDeleted: boolean,
-) => ({
+): ProductFranchiseSearchRequest => ({
   searchCondition: {
     product_id: "",
     franchise_id: franchiseId,

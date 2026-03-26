@@ -1,4 +1,4 @@
-import type { Product, ProductFranchise } from './product.type';
+import type { Product, ProductFranchise } from './product.types';
 
 // Cart item type
 export interface CartItem {

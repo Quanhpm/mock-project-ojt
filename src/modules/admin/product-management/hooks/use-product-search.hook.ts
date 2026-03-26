@@ -119,14 +119,6 @@ export const useProductSearch = (
   const pageChangeInitRef = useRef(false);
 
   const { error: showError } = useToast();
-  const effectiveFranchiseId = useMemo(() => {
-    if (tableScope === "FRANCHISE_TABLE_SCOPE") {
-      return activeFranchiseId;
-    }
-
-    return filters.franchise_id?.trim() || "";
-  }, [activeFranchiseId, filters.franchise_id, tableScope]);
-
   // Load search history from localStorage
   useEffect(() => {
     try {

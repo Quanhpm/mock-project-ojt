@@ -39,7 +39,7 @@ function ForgotPasswordPage() {
       description="Nhập email của bạn, chúng tôi sẽ gửi mật khẩu mới ngay lập tức."
       footer={footer}
     >
-      <ForgotPasswordForm onSubmit={handleSubmit} isLoading={false} error={errorMessage || ''} />
+      <ForgotPasswordForm onSubmit={handleSubmit} isLoading={isLoading} error={errorMessage || ''} />
     </AuthCard>
   );
 }

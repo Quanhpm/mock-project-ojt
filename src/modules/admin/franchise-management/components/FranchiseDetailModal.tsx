@@ -113,9 +113,9 @@ export default function FranchiseDetailModal({
                     <div>
                       <label>Created At</label>
                       <p>
-                        {new Date(franchise.created_at).toLocaleDateString(
-                          "vi-VN"
-                        )}
+                        {franchise.created_at
+                          ? new Date(franchise.created_at).toLocaleDateString("vi-VN")
+                          : "—"}
                       </p>
                     </div>
                   </div>
@@ -125,9 +125,9 @@ export default function FranchiseDetailModal({
                     <div>
                       <label>Updated At</label>
                       <p>
-                        {new Date(franchise.updated_at).toLocaleDateString(
-                          "vi-VN"
-                        )}
+                        {franchise.updated_at
+                          ? new Date(franchise.updated_at).toLocaleDateString("vi-VN")
+                          : "—"}
                       </p>
                     </div>
                   </div>

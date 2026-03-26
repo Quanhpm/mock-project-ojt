@@ -1,27 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  CreditCard,
+  Award,
   MapPin,
   MessageSquare,
   Phone,
-  Tag,
-  Ticket,
+  ShieldCheck,
+  Truck,
   Wallet,
   X,
 } from 'lucide-react';
-import type { ComponentType } from 'react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { CheckoutPayload } from '../hooks/use-checkout-handler.hook';
 import { checkoutInfoSchema, type CheckoutInfoFormValues } from '../schemas/checkout.schema';
-
-interface SummaryRowProps {
-  icon: ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-  tone?: 'default' | 'discount';
-}
 
 interface CartDetailSummaryAsideProps {
   subtotalAmount: number;
@@ -37,33 +29,6 @@ interface CartDetailSummaryAsideProps {
   onRemoveVouchers: () => void;
   onCheckout: (payload: CheckoutPayload) => Promise<boolean>;
   formatCurrency: (amount: number) => string;
-}
-
-function SummaryRow({ icon: Icon, label, value, tone = 'default' }: SummaryRowProps) {
-  const isDiscount = tone === 'discount';
-
-  return (
-    <div className="flex items-center justify-between gap-3 py-2.5">
-      <div className="flex min-w-0 items-center gap-2.5">
-        <div
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
-            isDiscount ? 'bg-emerald-100 text-emerald-700' : 'bg-[var(--cf-primary)]/10 text-[var(--cf-primary)]'
-          }`}
-        >
-          <Icon className="h-4 w-4" />
-        </div>
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-      </div>
-
-      <span className={`shrink-0 text-sm font-bold ${isDiscount ? 'text-emerald-700' : 'text-slate-900'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
-function SummaryDivider() {
-  return <div className="border-t border-dashed border-slate-200/90" />;
 }
 
 function CartDetailSummaryAside({
@@ -223,6 +188,12 @@ function CartDetailSummaryAside({
                 <span>-{formatCurrency(voucherDiscount)}</span>
               </div>
             )}
+            {promotionDiscount > 0 && (
+              <div className="flex items-center justify-between px-1 text-sm font-medium text-[#2D6A4F]">
+                <span>Khuyến mãi</span>
+                <span>-{formatCurrency(promotionDiscount)}</span>
+              </div>
+            )}
           </div>
 
           <div className="mb-7 flex items-center gap-2 rounded-2xl border border-[#2D6A4F]/20 bg-[#2D6A4F]/10 px-4 py-3 text-[#2D6A4F]">
@@ -247,12 +218,11 @@ function CartDetailSummaryAside({
           </div>
 
           <button
-            className="mt-4 flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,#7F5539,#A26A45)] px-6 py-3.5 text-sm font-black uppercase tracking-[0.16em] text-white shadow-[0_16px_30px_rgba(127,85,57,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(127,85,57,0.3)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-7 hidden w-full rounded-2xl bg-[var(--cf-primary)] py-4 text-base font-extrabold uppercase tracking-[0.12em] text-white shadow-[0px_18px_34px_rgba(139,29,29,0.3)] transition-all hover:bg-[var(--cf-dark)] active:scale-[0.98] cursor-pointer lg:block disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmittingCheckout}
             onClick={() => {
-              openCheckoutModal();
+              void openCheckoutModal();
             }}
-            className="mt-7 hidden w-full rounded-2xl bg-[var(--cf-primary)] py-4 text-base font-extrabold uppercase tracking-[0.12em] text-white shadow-[0px_18px_34px_rgba(139,29,29,0.3)] transition-all hover:bg-[var(--cf-dark)] active:scale-[0.98] cursor-pointer lg:block"
             type="button"
           >
             {isSubmittingCheckout ? 'Đang xử lý...' : 'Tiến hành thanh toán'}
@@ -316,13 +286,14 @@ function CartDetailSummaryAside({
               </div>
 
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800"
-                disabled={isSubmittingCheckout}
                 className="rounded-full p-2 text-[var(--cf-primary)]/70 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSubmittingCheckout}
+                onClick={closeCheckoutModal}
+                type="button"
               >
                 <X className="h-4.5 w-4.5" />
               </button>
-            </div>
+            </header>
 
             <form
               className="space-y-6 bg-white px-6 py-8 md:px-10 md:py-10"
@@ -340,10 +311,8 @@ function CartDetailSummaryAside({
                     <MapPin size={18} />
                   </div>
                   <input
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
                     disabled={isSubmittingCheckout}
                     id="checkout-address"
-                    type="text"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Nhập địa chỉ giao hàng"
                     type="text"
@@ -364,10 +333,8 @@ function CartDetailSummaryAside({
                     <Phone size={18} />
                   </div>
                   <input
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
                     disabled={isSubmittingCheckout}
                     id="checkout-phone"
-                    type="text"
                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Nhập số điện thoại"
                     type="text"
@@ -388,10 +355,8 @@ function CartDetailSummaryAside({
                     <MessageSquare size={18} />
                   </div>
                   <textarea
-                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-900 outline-none transition-all focus:border-[var(--cf-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--cf-primary)]/10"
                     disabled={isSubmittingCheckout}
                     id="checkout-message"
-                    rows={4}
                     className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-[var(--cf-dark)] transition-all placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100"
                     placeholder="Ví dụ: giao trong giờ hành chính..."
                     rows={3}
@@ -417,9 +382,10 @@ function CartDetailSummaryAside({
 
               <footer className="flex items-center justify-end gap-3 border-t border-slate-200/80 pt-2 md:gap-4">
                 <button
-                  className="flex-1 rounded-full border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-[var(--cf-primary)] transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSubmittingCheckout}
                   className="rounded-xl border border-[var(--cf-primary)]/20 bg-[var(--cf-bg)] px-6 py-3 text-sm font-bold uppercase tracking-wider text-[var(--cf-primary)] transition-all hover:bg-[var(--cf-primary)]/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSubmittingCheckout}
+                  onClick={closeCheckoutModal}
+                  type="button"
                 >
                   Hủy
                 </button>
@@ -430,11 +396,11 @@ function CartDetailSummaryAside({
                 >
                   {isSubmittingCheckout ? 'Đang xử lý...' : 'Xác nhận'}
                 </button>
-              </div>
+              </footer>
             </form>
           </div>
         </div>
-      ) : null}
+      )}
     </>
   );
 }

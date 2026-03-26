@@ -6,7 +6,7 @@ import type {
   ProfileResponse,
 } from "@/apis/endpoints/auth.api";
 import { HttpError } from "@/apis/http.types";
-import { isAuthRedirecting } from "@/apis";
+import { isAuthRedirecting } from "@/apis/axios.config";
 import { getProfile, logout as logoutApi } from "@/apis/endpoints/auth.api";
 
 // ======================== State Interface ========================

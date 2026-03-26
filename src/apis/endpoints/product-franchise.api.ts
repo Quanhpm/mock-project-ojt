@@ -7,6 +7,7 @@ export interface ProductFranchiseItem {
     id: string;
     franchise_id: string;
     product_id: string;
+    product_name?: string;
     size: string;
     price_base: number;
     is_active?: boolean;

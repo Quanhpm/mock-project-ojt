@@ -8,10 +8,7 @@ export const buildPriceSchema = (label: string) =>
   z
     .union([
       z.string().trim().min(1, `${label} is required`),
-      z.number({
-        required_error: `${label} is required`,
-        invalid_type_error: `${label} must be an integer`,
-      }),
+      z.number(),
     ])
     .transform((value, ctx) => {
       const nextValue =

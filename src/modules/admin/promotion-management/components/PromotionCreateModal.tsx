@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Loader2, Tag } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useCreatePromotion } from "./hooks/useCreatePromotion";
 import { franchiseApi, type FranchiseItem } from "@/apis/endpoints/franchise.api";
 import { searchProductFranchises, type ProductFranchiseItem } from "@/apis/endpoints/product-franchise.api";
@@ -16,6 +16,7 @@ const createPromotionSchema = z
     product_franchise_id: z.string().optional(),
     type: z.enum(["FIXED", "PERCENT"]),
     value: z.number("Must be a number").int("Must be an integer").min(1, "Minimum is 1"),
+    quota_total: z.number("Must be a number").int("Must be an integer").min(1, "Minimum is 1"),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().min(1, "End date is required"),
   })
@@ -102,37 +103,13 @@ export default function PromotionCreateModal() {
       product_franchise_id: "",
       type: "FIXED",
       value: undefined,
+      quota_total: undefined,
       start_date: "",
       end_date: "",
     },
   });
 
   const selectedFranchiseId = watch("franchise_id");
-  const selectedType = watch("type");
-  const currentValue = watch("value");
-
-  // Format value display based on type
-  const formatValueDisplay = (value: number) => {
-    if (selectedType === "PERCENT") {
-      return value.toString();
-    }
-    // FIXED: format as Vietnamese currency
-    return value.toLocaleString("vi-VN");
-  };
-
-  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
-    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
-    setValue("value", numValue, { shouldValidate: true });
-  };
-
-  const getValuePlaceholder = () => {
-    return selectedType === "PERCENT" ? "0-100" : "0";
-  };
-
-  const getValueSuffix = () => {
-    return selectedType === "PERCENT" ? " %" : " VND";
-  };
 
 
 
@@ -175,6 +152,7 @@ export default function PromotionCreateModal() {
         product_franchise_id: data.product_franchise_id || undefined,
         type: data.type,
         value: data.value,
+        quota_total: data.quota_total,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       },
@@ -344,6 +322,20 @@ export default function PromotionCreateModal() {
                   />
                   {errors.value && <p style={errorStyle}>{errors.value.message}</p>}
                 </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>
+                  Total quota <span style={{ color: "#dc2626" }}>*</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  {...register("quota_total", { valueAsNumber: true })}
+                  placeholder="100"
+                  style={inputStyle}
+                />
+                {errors.quota_total && <p style={errorStyle}>{errors.quota_total.message}</p>}
               </div>
 
               {/* Date range */}

@@ -1,7 +1,7 @@
 import { TriangleAlert } from 'lucide-react';
 
 interface OrderFailedReasonProps {
-	status: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'DRAFT';
+	status: 'PREPARING' | 'COMPLETED' | 'CANCELLED' | 'CONFIRMED' | 'READY_FOR_PICKUP' | 'OUT_FOR_DELIVERY' | 'DRAFT';
 	reason?: string | null;
 }
 

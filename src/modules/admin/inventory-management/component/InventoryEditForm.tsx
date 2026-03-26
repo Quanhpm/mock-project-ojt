@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Package, AlertCircle, Check, ArrowLeft, Save } from "lucide-react";
+import { Package, Check, ArrowLeft, Save } from "lucide-react";
 import { mockProducts, mockFranchises } from "../../../../mockdata";
 import productFranchise from "../../../../mockdata/product_franchise.json";
 import inventory from "../../../../mockdata/inventory.json";

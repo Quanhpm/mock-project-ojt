@@ -16,12 +16,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const store = useAdminAuthStore();
   const roleCode = getRoleCode(store);
+  const currentRole = roleCode as RoleCode | null;
   
-  if (!roleCode || !hasPermission(roleCode, requiredModule)) {
+  if (!currentRole || !hasPermission(currentRole, requiredModule)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(roleCode)) {
+  if (allowedRoles && !allowedRoles.includes(currentRole)) {
     return <Navigate to="/admin/dashboard" replace />;
   }
   

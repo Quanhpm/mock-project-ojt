@@ -27,7 +27,7 @@ export const useCreateFranchise = () => {
       success("Franchise created successfully", "New franchise has been created.");
 
       // Kích hoạt hành động tiếp theo sau khi thành công
-      if (onSuccess) {
+      if (onSuccess && newFranchise) {
         onSuccess(newFranchise);
       }
 

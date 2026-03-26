@@ -36,7 +36,7 @@ const markQueueOrdersAsLoading = (
 const mergeQueueOrdersWithExistingDetails = (
   nextOrders: StaffQueueOrder[],
   currentOrders: StaffQueueOrder[],
-) => {
+): StaffQueueOrder[] => {
   const currentByCode = new Map(currentOrders.map((order) => [order.code, order]));
 
   return nextOrders.map((nextOrder) => {
@@ -53,7 +53,7 @@ const mergeQueueOrdersWithExistingDetails = (
         phone: existingOrder.phone ?? nextOrder.phone,
         franchise_name: existingOrder.franchise_name ?? nextOrder.franchise_name,
         order_items: existingOrder.order_items,
-        detailLoadState: "loaded",
+        detailLoadState: "loaded" as const,
         detailLoadFailed: false,
       };
     }
@@ -61,7 +61,7 @@ const mergeQueueOrdersWithExistingDetails = (
     if (hasFailedQueueOrderDetail(existingOrder)) {
       return {
         ...nextOrder,
-        detailLoadState: "failed",
+        detailLoadState: "failed" as const,
         detailLoadFailed: true,
       };
     }
@@ -69,7 +69,7 @@ const mergeQueueOrdersWithExistingDetails = (
     if (isLoadingQueueOrderDetail(existingOrder)) {
       return {
         ...nextOrder,
-        detailLoadState: "loading",
+        detailLoadState: "loading" as const,
         detailLoadFailed: false,
       };
     }

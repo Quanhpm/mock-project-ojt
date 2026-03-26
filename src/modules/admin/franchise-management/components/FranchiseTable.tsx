@@ -326,10 +326,10 @@ export default function FranchiseTable() {
           >
             <input
               type="checkbox"
-              checked={franchise.is_active}
-              onChange={() =>
-                !isLoading && !franchise.is_deleted && toggleFranchiseStatus(franchise.id, franchise.is_active)
-              }
+                  checked={Boolean(franchise.is_active)}
+                  onChange={() =>
+                    !isLoading && !franchise.is_deleted && toggleFranchiseStatus(franchise.id, Boolean(franchise.is_active))
+                  }
               style={getButtonStyles.toggleInput as React.CSSProperties}
               disabled={isLoading || franchise.is_deleted}
             />

@@ -78,6 +78,7 @@ export default function PromotionEditForm() {
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<UpdatePromotionFormValues>({

@@ -279,7 +279,7 @@ export default function ProductDetailsModal({
                     color: "#06b6d4",
                   }}
                 >
-                  {formatPriceRange(product.min_price, product.max_price)}
+                  {formatPriceRange(product.min_price ?? 0, product.max_price ?? 0)}
                 </div>
 
                 <div

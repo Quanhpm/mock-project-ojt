@@ -2,9 +2,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import type { CartItem } from '@/stores/cart.store';
 import { useCartStore } from '@/stores/cart.store';
-import type { ProductSize } from '@/apis/endpointsCLIENT/client.api';
 import { getAllFranchises } from '@/apis/endpointsCLIENT/client.api';
-import { getProductDetail as getProductDetailByFranchise } from '@/apis/endpointsCLIENT/productDetail.api';
+import {
+  getProductDetail as getProductDetailByFranchise,
+  type ProductSize,
+} from '@/apis/endpointsCLIENT/productDetail.api';
 
 interface CartItemEditorProps {
   item: CartItem;

@@ -72,8 +72,6 @@ export const useCategorySearch = (options?: UseCategorySearchOptions) => {
   const { refetch, setCurrentPage } = search;
 
   const previousFranchiseIdRef = useRef<string | null | undefined>(undefined);
-  const isInitializedRef = useRef(false);
-
   // Handle franchise context changes for franchise-scoped users
   useEffect(() => {
     if (tableScope !== "FRANCHISE_TABLE_SCOPE") {

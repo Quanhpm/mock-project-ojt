@@ -1,5 +1,5 @@
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
-import { setupApi } from "@/apis";
+import { setupApi } from "@/apis/axios.config";
 import { Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import NotFoundPage from "@/modules/NotFoundPage.page";
@@ -49,4 +49,3 @@ const App = () => {
 };
 
 export default App;
-

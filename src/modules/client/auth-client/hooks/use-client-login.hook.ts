@@ -2,7 +2,8 @@ import { useState } from "react";
 import { loginCustomer, getCustomerProfile } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
-import { HttpError, resetAuthRedirecting } from "@/apis";
+import { HttpError } from "@/apis";
+import { resetAuthRedirecting } from "@/apis/axios.config";
 import type { CustomerLoginRequest } from "@/apis/endpointsCLIENT/customerAuth.api";
 
 export const useClientLogin = () => {

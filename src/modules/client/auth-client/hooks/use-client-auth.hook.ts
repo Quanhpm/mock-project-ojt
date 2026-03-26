@@ -2,7 +2,8 @@ import { useState, useCallback } from "react";
 import { getCustomerProfile, logoutCustomer } from "@/apis/endpointsCLIENT";
 import { useClientAuthStore } from "../stores/client-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
-import { HttpError, isAuthRedirecting } from "@/apis";
+import { HttpError } from "@/apis";
+import { isAuthRedirecting } from "@/apis/axios.config";
 
 export const useClientAuth = () => {
   const [isLoading, setIsLoading] = useState(false);

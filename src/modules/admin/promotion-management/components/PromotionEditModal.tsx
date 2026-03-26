@@ -10,6 +10,7 @@ const updatePromotionSchema = z.object({
     name: z.string().min(1, "Promotion name is required"),
     type: z.enum(["FIXED", "PERCENT"]),
     value: z.number({ message: "Value must be a number" }),
+    quota_total: z.number({ message: "Quota total must be a number" }).int().min(1, "Minimum is 1"),
     start_date: z.string().min(1, "Start date is required"),
     end_date: z.string().min(1, "End date is required"),
   })
@@ -160,6 +161,7 @@ export default function PromotionEditModal({
         name: promotion.name,
         type: promotion.type,
         value: promotion.value,
+        quota_total: promotion.quota_total,
         start_date: toDatetimeLocal(promotion.start_date),
         end_date: toDatetimeLocal(promotion.end_date),
       });
@@ -173,6 +175,7 @@ export default function PromotionEditModal({
         name: data.name,
         type: data.type,
         value: data.value,
+        quota_total: data.quota_total,
         start_date: new Date(data.start_date).toISOString(),
         end_date: new Date(data.end_date).toISOString(),
       },

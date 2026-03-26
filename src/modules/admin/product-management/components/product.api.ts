@@ -93,8 +93,8 @@ export const getProductSelectItems = async (): Promise<ProductSelectItem[]> => {
       value: product.id,
       label: product.name,
       SKU: product.SKU,
-      min_price: product.min_price,
-      max_price: product.max_price,
+      min_price: product.min_price ?? 0,
+      max_price: product.max_price ?? 0,
     }));
   } catch (error) {
     console.error("Failed to load products via search API:", error);

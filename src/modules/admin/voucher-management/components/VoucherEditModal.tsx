@@ -96,46 +96,17 @@ export default function VoucherEditModal({
   onClose,
   onSuccess,
 }: VoucherEditModalProps) {
-  const { voucher, isLoading, fetchById } = useGetVoucherById();
+  const { voucher, fetchById } = useGetVoucherById();
   const { updateVoucher, isUpdating } = useUpdateVoucher();
 
   const {
     register,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<UpdateVoucherFormValues>({
     resolver: zodResolver(updateVoucherSchema),
   });
-
-  const selectedType = watch("type");
-  const currentValue = watch("value");
-
-  // Format value display based on type
-  const formatValueDisplay = (value: number) => {
-    if (selectedType === "PERCENT") {
-      return value.toString();
-    }
-    // FIXED: format as Vietnamese currency
-    return value.toLocaleString("vi-VN");
-  };
-
-  const getValuePlaceholder = () => {
-    return selectedType === "PERCENT" ? "0-100" : "0";
-  };
-
-  const getValueSuffix = () => {
-    return selectedType === "PERCENT" ? " %" : " VND";
-  };
-
-  // Handle value input with formatting
-  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawInput = e.target.value.replace(/\D/g, ""); // Remove non-numeric
-    const numValue = rawInput ? parseInt(rawInput, 10) : 0;
-    setValue("value", numValue, { shouldValidate: true });
-  };
 
   useEffect(() => {
     if (isOpen && voucherId) {

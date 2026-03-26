@@ -4,15 +4,15 @@ export interface Franchise {
   code: string
   name: string
   hotline: string
-  logo_url: string
-  address: string
+  logo_url?: string
+  address?: string
   opened_at: string
-  closed_at: string | null
+  closed_at?: string | null
   google_map_script?: string | null
-  is_active: boolean
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
+  is_active?: boolean
+  is_deleted?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 // Customer type definition - aligned with DBML schema
