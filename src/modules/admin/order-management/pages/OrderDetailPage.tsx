@@ -87,10 +87,11 @@ export const OrderDetailPage = ({
     franchiseId,
     franchiseOptions,
     isSwitchingFranchise,
+    isAdminGlobalMode,
     requiresFranchiseSelection,
     switchFranchise,
   } = useOrderFranchiseContext({ enabled: !isEmbedded });
-  const canLoadOrderDetail = isEmbedded || Boolean(franchiseId);
+  const canLoadOrderDetail = isEmbedded || isAdminGlobalMode || Boolean(franchiseId);
   const {
     order,
     payment,
@@ -120,7 +121,7 @@ export const OrderDetailPage = ({
     documentTitle: order?.code ? `${order.code}-invoice` : "order-invoice",
   });
 
-  if (!isEmbedded && requiresFranchiseSelection) {
+  if (!isEmbedded && requiresFranchiseSelection && !isAdminGlobalMode) {
     return (
       <main
         className="flex min-h-[calc(100dvh-48px)] flex-1 overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 shadow-sm lg:h-[calc(100dvh-48px)]"
@@ -134,7 +135,7 @@ export const OrderDetailPage = ({
     );
   }
 
-  if (!isEmbedded && !franchiseId) {
+  if (!isEmbedded && !isAdminGlobalMode && !franchiseId) {
     return (
       <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-6 text-center text-gray-500 shadow-sm sm:p-8">
         Không xác định được chi nhánh làm việc. Vui lòng kiểm tra franchise context trước khi xử lý đơn hàng.

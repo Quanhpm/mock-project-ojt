@@ -7,6 +7,7 @@ import {
 import type { OrderFranchiseOption } from "../models/franchise.models";
 import { franchiseService } from "../services/franchise.service";
 import { switchOrderFranchiseContextUsecase } from "../usecases/switch-order-franchise-context.usecase";
+import { useAdminGlobalFranchiseScope } from "./use-admin-global-franchise-scope";
 
 interface UseOrderFranchiseContextOptions {
   enabled?: boolean;
@@ -25,7 +26,15 @@ export const useOrderFranchiseContext = (
 
   const contextFranchiseId = activeContext?.franchise_id ?? null;
   const isAdminUser = enabled && roleCode === "ADMIN";
-  const isAdminWithoutFranchiseContext = isAdminUser && !contextFranchiseId;
+  const isAdminGlobalMode =
+    isAdminUser &&
+    activeContext?.scope === "GLOBAL" &&
+    !contextFranchiseId;
+  const {
+    franchiseId: adminGlobalFranchiseId,
+    selectFranchise: selectAdminGlobalFranchise,
+    clearSelectedFranchise: clearAdminGlobalFranchise,
+  } = useAdminGlobalFranchiseScope({ enabled: isAdminGlobalMode });
 
   const roleBasedFranchiseOptions = useMemo<OrderFranchiseOption[]>(() => {
     return roles
@@ -95,8 +104,8 @@ export const useOrderFranchiseContext = (
     return roleBasedFranchiseOptions;
   }, [adminFranchiseOptions, isAdminUser, roleBasedFranchiseOptions]);
 
-  const franchiseId = contextFranchiseId;
-  const requiresFranchiseSelection = isAdminWithoutFranchiseContext && !franchiseId;
+  const franchiseId = isAdminGlobalMode ? adminGlobalFranchiseId : contextFranchiseId;
+  const requiresFranchiseSelection = enabled && isAdminUser && !franchiseId;
   const hasInvalidFranchiseContext = enabled && !requiresFranchiseSelection && !franchiseId;
 
   const franchiseName = useMemo(() => {
@@ -114,6 +123,12 @@ export const useOrderFranchiseContext = (
         return;
       }
 
+      if (isAdminGlobalMode) {
+        selectAdminGlobalFranchise(nextFranchiseId);
+        showSuccess("Đã chọn chi nhánh hiển thị");
+        return;
+      }
+
       try {
         setIsSwitchingFranchise(true);
         const updatedProfile = await switchOrderFranchiseContextUsecase(nextFranchiseId);
@@ -128,19 +143,31 @@ export const useOrderFranchiseContext = (
     },
     [
       franchiseId,
+      isAdminGlobalMode,
+      selectAdminGlobalFranchise,
       setProfile,
       showError,
       showSuccess,
     ],
   );
 
+  const clearSelectedFranchise = useCallback(() => {
+    if (!isAdminGlobalMode) {
+      return;
+    }
+
+    clearAdminGlobalFranchise();
+  }, [clearAdminGlobalFranchise, isAdminGlobalMode]);
+
   return {
     franchiseId,
     franchiseName,
     franchiseOptions,
     isSwitchingFranchise,
+    isAdminGlobalMode,
     requiresFranchiseSelection,
     hasInvalidFranchiseContext,
     switchFranchise,
+    clearSelectedFranchise,
   };
 };

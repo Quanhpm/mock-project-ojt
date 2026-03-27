@@ -61,7 +61,7 @@ export const PaymentHistoryPagination = ({
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
           disabled={currentPage === 1}
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           <ChevronLeft size={16} />
           Prev
@@ -89,8 +89,8 @@ export const PaymentHistoryPagination = ({
               className={cn(
                 "inline-flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-sm font-semibold transition-all",
                 isActive
-                  ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
-                  : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-100",
+                  ? "border-amber-700 bg-amber-700 text-white shadow-sm shadow-amber-700/20"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800",
               )}
             >
               {pageNumber}
@@ -102,7 +102,7 @@ export const PaymentHistoryPagination = ({
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
           disabled={currentPage === totalPages}
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 transition-all hover:border-amber-300 hover:bg-amber-50 hover:text-amber-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           Next
           <ChevronRight size={16} />

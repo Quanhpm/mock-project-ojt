@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast.hook";
 import { loadFranchiseOrdersUsecase } from "../usecases/load-franchise-orders.usecase";
 import type { FranchiseOrderListItem, OrderStatus } from "../models/order.models";
@@ -6,12 +7,14 @@ import { useOrderFranchiseContext } from "./use-order-franchise-context";
 
 export const useOrderListPage = () => {
   const { error: showError } = useToast();
+  const [searchParams] = useSearchParams();
   const { franchiseId } = useOrderFranchiseContext();
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [rawOrders, setRawOrders] = useState<FranchiseOrderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
+  const preferredSelectedOrderId = searchParams.get("selectedOrderId")?.trim() || undefined;
 
   const loadOrders = useCallback(async () => {
     if (!franchiseId) {
@@ -45,10 +48,7 @@ export const useOrderListPage = () => {
     }
 
     return rawOrders.filter((order) => {
-      return (
-        order.code.toLowerCase().includes(keyword) ||
-        order.phone.toLowerCase().includes(keyword)
-      );
+      return order.code.toLowerCase().includes(keyword);
     });
   }, [rawOrders, searchQuery]);
 
@@ -63,13 +63,23 @@ export const useOrderListPage = () => {
     }
 
     setSelectedOrderId((currentSelectedOrderId) => {
-      if (currentSelectedOrderId && displayOrders.some((order) => order._id === currentSelectedOrderId)) {
+      if (
+        currentSelectedOrderId &&
+        displayOrders.some((order) => order._id === currentSelectedOrderId)
+      ) {
         return currentSelectedOrderId;
+      }
+
+      if (
+        preferredSelectedOrderId &&
+        displayOrders.some((order) => order._id === preferredSelectedOrderId)
+      ) {
+        return preferredSelectedOrderId;
       }
 
       return displayOrders[0]._id;
     });
-  }, [displayOrders]);
+  }, [displayOrders, preferredSelectedOrderId]);
 
   const summary = useMemo(() => {
     return {

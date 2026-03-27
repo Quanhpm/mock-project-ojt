@@ -7,7 +7,7 @@ export default function PaymentHistoryPage() {
   const {
     franchiseId,
     franchiseName,
-    isAdminUser,
+    isAdminGlobalMode,
     franchiseOptions,
     isLoadingFranchiseOptions,
     requiresFranchiseSelection,
@@ -70,7 +70,7 @@ export default function PaymentHistoryPage() {
       <PaymentHistoryHeader
         franchiseName={franchiseName}
         totalItems={totalItems}
-        canChangeFranchise={isAdminUser}
+        canChangeFranchise={isAdminGlobalMode}
         onChangeFranchise={clearSelectedFranchise}
       />
 

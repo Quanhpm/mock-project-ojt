@@ -30,7 +30,7 @@ export const OrderFiltersBar = ({
               value={searchQuery}
               onChange={(event) => onSearchChange(event.target.value)}
               className="w-full rounded-2xl border-none bg-gray-50 py-3.5 pl-11 pr-4 text-sm text-gray-900 outline-none transition focus:bg-white focus:ring-2 focus:ring-amber-700/20"
-              placeholder="Tìm theo mã đơn hoặc SĐT..."
+              placeholder="Tìm theo mã đơn..."
               type="text"
             />
           </div>

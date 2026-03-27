@@ -17,6 +17,7 @@ import {
 import { addCartItemsUsecase } from "../usecases/add-cart-items.usecase";
 import { checkoutCartUsecase } from "../usecases/checkout-cart.usecase";
 import { replaceCartItemWithRestoreUsecase } from "../usecases/replace-cart-item-with-restore.usecase";
+import { withAdminGlobalFranchiseId } from "../utils/admin-global-franchise-scope";
 import { usePosSession } from "./use-pos-session";
 
 interface UsePosReviewActionsOptions {
@@ -451,16 +452,33 @@ export const usePosReviewActions = ({
 
         if (order?._id) {
           showSuccess("Checkout thành công");
-          navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
-            replace: true,
+          const orderPageSearchParams = new URLSearchParams({
+            selectedOrderId: order._id,
+            openDetail: "1",
           });
+
+          navigate(
+            withAdminGlobalFranchiseId(
+              `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}?${orderPageSearchParams.toString()}`,
+              cart?.franchise_id ?? null,
+            ),
+            {
+              replace: true,
+            },
+          );
           return true;
         }
 
         showSuccess("Checkout thành công, đơn hàng đang được đồng bộ");
-        navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
-          replace: true,
-        });
+        navigate(
+          withAdminGlobalFranchiseId(
+            `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`,
+            cart?.franchise_id ?? null,
+          ),
+          {
+            replace: true,
+          },
+        );
         return true;
       } catch (error) {
         console.error("[OrderPOSReview] Failed to checkout cart", error);
@@ -470,7 +488,7 @@ export const usePosReviewActions = ({
         setIsMutatingCart(false);
       }
     },
-    [cart?._id, navigate, setActiveCartId, setIsMutatingCart, showError, showSuccess],
+    [cart?._id, cart?.franchise_id, navigate, setActiveCartId, setIsMutatingCart, showError, showSuccess],
   );
 
   const openCancelCurrentOrderModal = useCallback(() => {
@@ -500,9 +518,15 @@ export const usePosReviewActions = ({
       closeProductConfigurator();
       closeCancelCurrentOrderModal();
       showSuccess("Đã hủy giỏ hàng hiện tại");
-      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`, {
-        replace: true,
-      });
+      navigate(
+        withAdminGlobalFranchiseId(
+          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`,
+          cart?.franchise_id ?? null,
+        ),
+        {
+          replace: true,
+        },
+      );
     } catch (error) {
       console.error("[OrderPOSReview] Failed to cancel current cart", error);
       showError("Không xóa được giỏ hàng hiện tại");
@@ -511,6 +535,7 @@ export const usePosReviewActions = ({
     }
   }, [
     cart?._id,
+    cart?.franchise_id,
     closeCancelCurrentOrderModal,
     closeProductConfigurator,
     navigate,

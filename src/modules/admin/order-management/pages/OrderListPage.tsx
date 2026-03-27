@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { OrderFiltersBar } from "../partials/orders/OrderFiltersBar";
 import { OrderList } from "../partials/orders/OrderList";
 import { OrderDetailPage } from "./OrderDetailPage";
 import { useOrderListPage } from "../hooks/use-order-list-page";
 
 export const OrderListPage = () => {
+  const [searchParams] = useSearchParams();
   const {
     isLoading,
     orders,
@@ -16,7 +18,9 @@ export const OrderListPage = () => {
     selectOrder,
     reload,
   } = useOrderListPage();
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(false);
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(
+    () => searchParams.get("openDetail") === "1",
+  );
   const [isDetailFocused, setIsDetailFocused] = useState(false);
   const isShowingMobileDetail = Boolean(isMobileDetailOpen && selectedOrderId);
   const isSidebarCollapsed = Boolean(isDetailFocused && selectedOrderId);

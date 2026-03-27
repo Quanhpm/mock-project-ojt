@@ -1,13 +1,51 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
 import type { UserRoleItem } from '@/apis/endpoints/auth.api'
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+import { withAdminGlobalFranchiseId } from '@/modules/admin/order-management/utils/admin-global-franchise-scope'
 import { useLoadingStore } from '@/stores/loading.store'
 import { ROUTER_URL } from '@/routes/router.const'
 
 const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
 const ITEMS_PER_PAGE = 6
+const SELECT_FRANCHISE_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`
+
+const getRedirectToFromState = (state: unknown): string | null => {
+  if (!state || typeof state !== 'object') {
+    return null
+  }
+
+  const redirectTo = (state as { redirectTo?: unknown }).redirectTo
+
+  if (typeof redirectTo === 'string') {
+    return redirectTo
+  }
+
+  if (!redirectTo || typeof redirectTo !== 'object') {
+    return null
+  }
+
+  const pathname = typeof (redirectTo as { pathname?: unknown }).pathname === 'string'
+    ? (redirectTo as { pathname: string }).pathname
+    : ''
+  const search = typeof (redirectTo as { search?: unknown }).search === 'string'
+    ? (redirectTo as { search: string }).search
+    : ''
+  const hash = typeof (redirectTo as { hash?: unknown }).hash === 'string'
+    ? (redirectTo as { hash: string }).hash
+    : ''
+
+  return pathname ? `${pathname}${search}${hash}` : null
+}
+
+const normalizeRedirectTo = (redirectTo: string | null) => {
+  if (!redirectTo || redirectTo.startsWith(SELECT_FRANCHISE_PATH)) {
+    return DASHBOARD_PATH
+  }
+
+  return redirectTo
+}
 
 interface UseFranchiseSelectionReturn {
   userName: string
@@ -27,6 +65,8 @@ interface UseFranchiseSelectionReturn {
 
 export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
   const admin = useAdminAuthStore((s) => s.admin)
   const storeRoles = useAdminAuthStore((s) => s.roles)
   const storeActiveContext = useAdminAuthStore((s) => s.activeContext)
@@ -37,6 +77,13 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const isAdminGlobalMode =
+    storeActiveContext?.role === 'ADMIN' &&
+    storeActiveContext?.scope === 'GLOBAL' &&
+    !storeActiveContext?.franchise_id
+  const redirectTo = normalizeRedirectTo(
+    searchParams.get('redirectTo')?.trim() || getRedirectToFromState(location.state),
+  )
   
   // Track mounted state để tránh setState sau khi unmount
   const isMountedRef = useRef(false)
@@ -85,6 +132,11 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     setSwitching(franchiseId)
     incrementGlobalLoading()
     try {
+      if (isAdminGlobalMode) {
+        navigate(withAdminGlobalFranchiseId(redirectTo, franchiseId), { replace: true })
+        return
+      }
+
       await switchContext(franchiseId)
       
       // Lấy profile mới sau khi switch
@@ -116,6 +168,11 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     setSwitching('GLOBAL')
     incrementGlobalLoading()
     try {
+      if (isAdminGlobalMode) {
+        navigate(withAdminGlobalFranchiseId(redirectTo, null), { replace: true })
+        return
+      }
+
       // Gọi API với franchise_id = null để switch sang GLOBAL
       await switchContext(null)
       

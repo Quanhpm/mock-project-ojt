@@ -1,12 +1,17 @@
 import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ROUTER_URL } from "@/routes/router.const";
+import {
+  readAdminGlobalFranchiseId,
+  withAdminGlobalFranchiseId,
+} from "../utils/admin-global-franchise-scope";
 import { usePosProductConfigurator } from "./use-pos-product-configurator";
 import { usePosReviewActions } from "./use-pos-review-actions";
 import { usePosReviewLoader } from "./use-pos-review-loader";
 
 export const useOrderPosReviewPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loader = usePosReviewLoader();
   const configurator = usePosProductConfigurator(loader.toppingProducts);
   const actions = usePosReviewActions({
@@ -29,10 +34,16 @@ export const useOrderPosReviewPage = () => {
   });
 
   const goBackToBuilder = useCallback(() => {
-    navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`, {
-      state: { preservePosSession: true },
-    });
-  }, [navigate]);
+    navigate(
+      withAdminGlobalFranchiseId(
+        `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`,
+        readAdminGlobalFranchiseId(searchParams),
+      ),
+      {
+        state: { preservePosSession: true },
+      },
+    );
+  }, [navigate, searchParams]);
 
   return {
     cart: loader.cart,

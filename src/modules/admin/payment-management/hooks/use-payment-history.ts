@@ -4,8 +4,7 @@ import {
   getRoleCode,
   useAdminAuthStore,
 } from "@/modules/admin/auth-admin/stores/admin-auth.store";
-import type { OrderFranchiseOption } from "@/modules/admin/order-management/models/franchise.models";
-import { franchiseService } from "@/modules/admin/order-management/services/franchise.service";
+import { useOrderFranchiseContext } from "@/modules/admin/order-management/hooks/use-order-franchise-context";
 import type {
   PaymentHistoryFilters,
   PaymentHistoryItem,
@@ -65,11 +64,18 @@ const isPaymentWithinDateRange = (
 export const usePaymentHistory = () => {
   const authStore = useAdminAuthStore();
   const activeContext = useAdminAuthStore((state) => state.activeContext);
-  const roles = useAdminAuthStore((state) => state.roles);
   const { error: showError } = useToast();
-  const [franchiseOptions, setFranchiseOptions] = useState<OrderFranchiseOption[]>([]);
-  const [isLoadingFranchiseOptions, setIsLoadingFranchiseOptions] = useState(false);
-  const [selectedAdminFranchiseId, setSelectedAdminFranchiseId] = useState<string | null>(null);
+  const {
+    franchiseId,
+    franchiseName,
+    franchiseOptions,
+    isSwitchingFranchise: isLoadingFranchiseOptions,
+    requiresFranchiseSelection,
+    hasInvalidFranchiseContext,
+    switchFranchise: selectFranchise,
+    clearSelectedFranchise,
+    isAdminGlobalMode,
+  } = useOrderFranchiseContext();
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -83,55 +89,7 @@ export const usePaymentHistory = () => {
   const roleCode = activeContext?.role ?? getRoleCode(authStore);
   const isAdminUser = roleCode === "ADMIN";
   const isManagerUser = roleCode === "MANAGER";
-  const managerFranchiseId = activeContext?.franchise_id ?? null;
-  const franchiseId = isAdminUser ? selectedAdminFranchiseId : managerFranchiseId;
   const pageSize = PAGE_SIZE;
-
-  useEffect(() => {
-    if (!isAdminUser) {
-      setFranchiseOptions([]);
-      setIsLoadingFranchiseOptions(false);
-      setSelectedAdminFranchiseId(null);
-      return;
-    }
-
-    let isMounted = true;
-
-    const loadFranchises = async () => {
-      try {
-        if (isMounted) {
-          setIsLoadingFranchiseOptions(true);
-        }
-
-        const response = await franchiseService.getFranchisesForPosSelect();
-
-        if (!isMounted) {
-          return;
-        }
-
-        setFranchiseOptions(response);
-      } catch (error) {
-        console.error("[PaymentHistory] Failed to load franchises", error);
-
-        if (!isMounted) {
-          return;
-        }
-
-        setFranchiseOptions([]);
-        showError("Không tải được danh sách chi nhánh");
-      } finally {
-        if (isMounted) {
-          setIsLoadingFranchiseOptions(false);
-        }
-      }
-    };
-
-    void loadFranchises();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAdminUser, showError]);
 
   useEffect(() => {
     let isMounted = true;
@@ -190,23 +148,6 @@ export const usePaymentHistory = () => {
     setCurrentPage(1);
   }, [dateFrom, dateTo, franchiseId, statusFilter]);
 
-  const franchiseName = useMemo(() => {
-    if (!franchiseId) {
-      return "";
-    }
-
-    if (isAdminUser) {
-      const selectedFranchise = franchiseOptions.find(
-        (franchise) => franchise.id === franchiseId,
-      );
-
-      return selectedFranchise?.name ?? `Chi nhánh ${franchiseId}`;
-    }
-
-    const managerFranchise = roles.find((role) => role.franchise_id === franchiseId);
-    return managerFranchise?.franchise_name || `Chi nhánh ${franchiseId}`;
-  }, [franchiseId, franchiseOptions, isAdminUser, roles]);
-
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) =>
       isPaymentWithinDateRange(payment, dateFrom, dateTo),
@@ -234,14 +175,6 @@ export const usePaymentHistory = () => {
     setDateTo("");
   }, []);
 
-  const selectFranchise = useCallback((nextFranchiseId: string) => {
-    setSelectedAdminFranchiseId(nextFranchiseId || null);
-  }, []);
-
-  const clearSelectedFranchise = useCallback(() => {
-    setSelectedAdminFranchiseId(null);
-  }, []);
-
   const filters: PaymentHistoryFilters = {
     status: statusFilter,
     dateFrom,
@@ -256,8 +189,9 @@ export const usePaymentHistory = () => {
     franchiseName,
     franchiseOptions,
     isLoadingFranchiseOptions,
-    requiresFranchiseSelection: isAdminUser && !selectedAdminFranchiseId,
-    hasInvalidFranchiseContext: isManagerUser && !managerFranchiseId,
+    isAdminGlobalMode,
+    requiresFranchiseSelection,
+    hasInvalidFranchiseContext,
     selectFranchise,
     clearSelectedFranchise,
     payments,
