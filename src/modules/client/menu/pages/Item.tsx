@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react';
 import { ItemImageGallery, ItemPurchasePanel } from '../components';
 import { useItemPage } from '../hooks/use-item-page.hook';
 
@@ -23,6 +24,17 @@ function Item() {
   return (
     <div className="min-h-full bg-[var(--cf-bg)] px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex items-start justify-center">
       <main className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-10 gap-5 sm:gap-6 lg:gap-8 items-start">
+        <div className="lg:hidden lg:col-span-10">
+          <button
+            onClick={vm.goBack}
+            type="button"
+            className="group inline-flex items-center gap-2 rounded-full border border-[var(--cf-primary)]/15 bg-white px-4 py-2 text-sm font-semibold text-[var(--cf-primary)] shadow-[0px_10px_24px_rgba(28,27,27,0.05)] transition-colors hover:bg-[var(--cf-bg)] cursor-pointer"
+          >
+            <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" />
+            Trở về
+          </button>
+        </div>
+
         {/* Product image gallery */}
         <ItemImageGallery
           productName={vm.product.name}

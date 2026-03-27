@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { FloatingCartButton } from '@/components';
 import products from '@/mockdata/products.json';
 import ProductCard from '../components/ProductCard';
 import AboutPage from '@/modules/client/about/pages/AboutPage';
@@ -220,6 +221,8 @@ function HomePage() {
           </div>
         </div>
       </section>
+
+      <FloatingCartButton />
 
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Coffee, Gift, Percent, Zap, TrendingUp, ShoppingBag } from 'lucide-react';
+import { Coffee, Gift, Percent, Zap, TrendingUp, ShoppingCart } from 'lucide-react';
 import type { ClientCustomerLoyaltyDetail, ClientLoyaltyRule, LoyaltyTier, LoyaltyTierRule } from '@/apis/endpointsCLIENT';
 import { getClientCustomerLoyaltyDetail, getClientLoyaltyRuleByFranchise } from '@/apis/endpointsCLIENT';
 import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
@@ -274,7 +274,7 @@ function ClientLoyaltyPage() {
 						{/* Bước 1 */}
 						<div className="flex flex-col gap-3 rounded-2xl border border-(--cf-surface) bg-(--cf-bg) p-5">
 							<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--cf-primary)/10 text-(--cf-primary)">
-								<ShoppingBag size={20} />
+								<ShoppingCart size={20} />
 							</div>
 							<div>
 								<p className="font-bold text-(--cf-dark)">1. Mua hàng & Tích điểm</p>

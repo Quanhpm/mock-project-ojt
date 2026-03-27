@@ -78,6 +78,14 @@ export function useItemPage() {
 
   // Navigation helpers
   const goToMenu = () => navigate(ROUTER_URL.MENU);
+  const goBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    goToMenu();
+  };
 
   // Add to cart handler
   const handleAddToCart = async () => {
@@ -170,6 +178,7 @@ export function useItemPage() {
     increaseQty,
     updateQtyFromInput,
     handleAddToCart,
+    goBack,
     goToMenu,
   };
 }

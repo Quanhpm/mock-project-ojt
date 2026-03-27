@@ -52,11 +52,30 @@ export interface CountCustomerCartsResponse {
   count: number;
 }
 
+export interface CartCountByFranchiseResponse {
+  count: number;
+}
+
 interface CheckoutCartRequest {
   address: string;
   phone: string;
   message?: string;
 }
+
+export const getCart = (): Promise<unknown> => {
+  return httpClient.get<unknown>({
+    url: '/cart',
+  });
+};
+
+export const getCartCountByFranchise = (
+  franchiseId: string,
+): Promise<CartCountByFranchiseResponse | null> => {
+  return httpClient.get<CartCountByFranchiseResponse, { franchiseId: string }>({
+    url: '/cart/count',
+    params: { franchiseId },
+  });
+};
 
 export const addCartItem = (
   data: AddCartItemRequest,

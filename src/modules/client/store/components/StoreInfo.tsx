@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPin, Clock, Phone, ArrowLeft, ShoppingBag, Navigation } from 'lucide-react';
+import { MapPin, Clock, Phone, ArrowLeft, ShoppingCart, Navigation } from 'lucide-react';
 import type { FranchiseDetailResponse } from '@/apis/endpointsCLIENT/franchiseDetail.api';
 
 export function StoreInfo({ franchise }: { franchise: FranchiseDetailResponse }) {
@@ -73,7 +73,7 @@ export function StoreInfo({ franchise }: { franchise: FranchiseDetailResponse })
                     to="/menu"
                     className="flex items-center gap-2 bg-[var(--cf-primary)] text-white text-sm font-bold px-6 py-3 rounded-full hover:bg-[var(--cf-dark)] transition-colors"
                 >
-                    <ShoppingBag size={16} />
+                    <ShoppingCart size={16} />
                     Đặt hàng ngay
                 </Link>
                 <button
