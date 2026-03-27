@@ -1,4 +1,4 @@
-import { ChevronRight, ShoppingBag } from 'lucide-react';
+import { ChevronRight, ShoppingCart } from 'lucide-react';
 import type { CartSummaryView } from '../hooks/cartApiMapper';
 
 interface CartSummaryCardProps {
@@ -19,7 +19,7 @@ function CartSummaryCard({ cart, onOpenDetail, formatUpdatedAt }: CartSummaryCar
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-12 h-12 rounded-full bg-[var(--cf-bg)] flex items-center justify-center shrink-0">
-            <ShoppingBag size={20} className="text-[var(--cf-primary)]" />
+            <ShoppingCart size={20} className="text-[var(--cf-primary)]" />
           </div>
           <div className="min-w-0">
             <h3 className="font-bold text-[var(--cf-dark)] leading-tight truncate">{cart.franchiseName}</h3>
@@ -39,7 +39,7 @@ function CartSummaryCard({ cart, onOpenDetail, formatUpdatedAt }: CartSummaryCar
                 <img alt={item.name} className="w-full h-full object-cover" src={item.imageUrl} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[var(--cf-primary)]/40">
-                  <ShoppingBag size={16} />
+                  <ShoppingCart size={16} />
                 </div>
               )}
             </div>

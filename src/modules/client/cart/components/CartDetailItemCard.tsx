@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Minus, Pencil, Plus, ShoppingBag, X } from 'lucide-react';
+import { Minus, Pencil, Plus, ShoppingCart, X } from 'lucide-react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import type { CartDetailItemView } from '../hooks/cartApiMapper';
@@ -126,7 +126,7 @@ function CartDetailItemCard({
             <img alt={item.name} className="h-full w-full object-cover" src={item.imageUrl} />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[var(--cf-secondary)]">
-              <ShoppingBag size={22} />
+              <ShoppingCart size={22} />
             </div>
           )}
         </div>

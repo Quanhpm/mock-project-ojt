@@ -1,4 +1,4 @@
-import { ArrowLeft, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientAuthStore } from '../../auth-client/stores/client-auth.store';
@@ -36,7 +36,7 @@ function Cart() {
 
           <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-[var(--cf-primary)]/10 shadow-[0px_20px_60px_rgba(28,27,27,0.06)]">
             <div className="w-32 h-32 bg-[var(--cf-bg)] rounded-full flex items-center justify-center mb-6">
-              <ShoppingBag size={52} className="text-[var(--cf-primary)]/45" />
+              <ShoppingCart size={52} className="text-[var(--cf-primary)]/45" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Bạn chưa có giỏ hàng nào</h2>
             <p className="text-[var(--cf-primary)]/60 mb-8 max-w-xs mx-auto">

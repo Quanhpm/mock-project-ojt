@@ -33,6 +33,7 @@ const HomeHeader: React.FC = () => {
   const decrementLoading = useLoadingStore((state) => state.decrement);
   const { success, error } = useToast();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const visibleProcessingOrdersCount = profile?.id ? processingOrdersCount : 0;
 
   const mobileMenuItems = [
     { to: '/', label: 'Trang Chủ', icon: House },
@@ -95,7 +96,6 @@ const HomeHeader: React.FC = () => {
     const customerId = profile?.id;
 
     if (!customerId) {
-      setProcessingOrdersCount(0);
       return;
     }
 
@@ -194,7 +194,7 @@ const HomeHeader: React.FC = () => {
   }
 
   return (
-    <header className="bg-white shadow-sm md:sticky md:top-0 z-50">
+    <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="relative flex items-center justify-between h-16">
           <div className="flex items-center gap-2">
@@ -277,12 +277,12 @@ const HomeHeader: React.FC = () => {
 
             <Link
               to="/order-history"
-              className="relative flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
+              className="relative hidden md:flex items-center gap-2 text-[var(--cf-primary)] hover:text-[var(--cf-secondary)] font-medium transition-colors"
             >
               <ClipboardClock />
-              {processingOrdersCount > 0 && (
+              {visibleProcessingOrdersCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-bounce">
-                  {processingOrdersCount}
+                  {visibleProcessingOrdersCount}
                 </span>
               )}
             </Link>
@@ -400,7 +400,7 @@ const HomeHeader: React.FC = () => {
             <Link
               to="/order-history"
               onClick={closeMobileMenu}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/order-history' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
+              className={`hidden items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/order-history' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
             >
               <ClipboardClock size={18} className={location.pathname === '/order-history' ? 'text-white' : 'text-[var(--cf-secondary)]'} />
               <span>Lịch Sử Đơn Hàng</span>

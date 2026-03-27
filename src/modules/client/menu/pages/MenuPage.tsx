@@ -6,6 +6,7 @@ import {
   MenuMobileCategoryTabs,
   MenuSearchResultSection,
 } from '../components';
+import { FloatingCartButton } from '@/components';
 import { useMenuPage } from '../hooks/use-menu-page.hook';
 
 function MenuPage() {
@@ -50,6 +51,7 @@ function MenuPage() {
           )}
         </section>
       </div>
+      <FloatingCartButton />
     </div>
   );
 }
