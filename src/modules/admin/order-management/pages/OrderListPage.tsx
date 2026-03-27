@@ -1,35 +1,25 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { OrderFiltersBar } from "../partials/orders/OrderFiltersBar";
 import { OrderList } from "../partials/orders/OrderList";
 import { OrderDetailPage } from "./OrderDetailPage";
 import { useOrderListPage } from "../hooks/use-order-list-page";
 
 export const OrderListPage = () => {
-  const [searchParams] = useSearchParams();
   const {
     isLoading,
     orders,
     statusFilter,
     searchQuery,
     selectedOrderId,
+    isMobileDetailOpen,
+    isDetailFocused,
     setStatusFilter,
     setSearchQuery,
     selectOrder,
+    closeMobileDetail,
     reload,
   } = useOrderListPage();
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState(
-    () => searchParams.get("openDetail") === "1",
-  );
-  const [isDetailFocused, setIsDetailFocused] = useState(false);
   const isShowingMobileDetail = Boolean(isMobileDetailOpen && selectedOrderId);
   const isSidebarCollapsed = Boolean(isDetailFocused && selectedOrderId);
-
-  const handleSelectOrder = (orderId: string) => {
-    selectOrder(orderId);
-    setIsMobileDetailOpen(true);
-    setIsDetailFocused(true);
-  };
 
   return (
     <div className="flex min-h-[calc(100dvh-48px)] flex-col overflow-visible lg:h-[calc(100dvh-48px)] lg:overflow-hidden">
@@ -59,7 +49,7 @@ export const OrderListPage = () => {
               orders={orders}
               isLoading={isLoading}
               selectedOrderId={selectedOrderId}
-              onSelectOrder={handleSelectOrder}
+              onSelectOrder={selectOrder}
             />
           </div>
         </div>
@@ -74,7 +64,7 @@ export const OrderListPage = () => {
             <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-hide">
               <button
                 type="button"
-                onClick={() => setIsMobileDetailOpen(false)}
+                onClick={closeMobileDetail}
                 className="mb-4 inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-gray-300 hover:text-gray-900 lg:hidden"
               >
                 ← Danh sách đơn

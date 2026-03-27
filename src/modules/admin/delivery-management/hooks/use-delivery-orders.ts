@@ -57,7 +57,7 @@ export const useDeliveryOrders = () => {
     requiresFranchiseSelection,
     hasInvalidFranchiseContext,
     switchFranchise,
-  } = useOrderFranchiseContext();
+  } = useOrderFranchiseContext({ adminGlobalScopeKey: "deliveries" });
 
   const [statusFilter, setStatusFilter] = useState<DeliveryStatus | "">("");
   const [deliveries, setDeliveries] = useState<DeliverySearchItem[]>([]);

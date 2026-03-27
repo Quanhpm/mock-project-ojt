@@ -17,7 +17,8 @@ import {
 import { addCartItemsUsecase } from "../usecases/add-cart-items.usecase";
 import { checkoutCartUsecase } from "../usecases/checkout-cart.usecase";
 import { replaceCartItemWithRestoreUsecase } from "../usecases/replace-cart-item-with-restore.usecase";
-import { withAdminGlobalFranchiseId } from "../utils/admin-global-franchise-scope";
+import { useAdminGlobalFranchiseScopeStore } from "../stores/admin-global-franchise-scope.store";
+import { useOrderListUiStore } from "../stores/order-list-ui.store";
 import { usePosSession } from "./use-pos-session";
 
 interface UsePosReviewActionsOptions {
@@ -447,38 +448,29 @@ export const usePosReviewActions = ({
       try {
         setIsMutatingCart(true);
         const order = await checkoutCartUsecase(cart._id, payload);
+        const completedFranchiseId = cart.franchise_id || null;
 
         setActiveCartId(null);
 
-        if (order?._id) {
-          showSuccess("Checkout thành công");
-          const orderPageSearchParams = new URLSearchParams({
-            selectedOrderId: order._id,
-            openDetail: "1",
-          });
+        if (completedFranchiseId) {
+          useAdminGlobalFranchiseScopeStore
+            .getState()
+            .setSelectedFranchiseId("orders", completedFranchiseId);
+        }
 
-          navigate(
-            withAdminGlobalFranchiseId(
-              `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}?${orderPageSearchParams.toString()}`,
-              cart?.franchise_id ?? null,
-            ),
-            {
-              replace: true,
-            },
-          );
+        if (order?._id) {
+          useOrderListUiStore.getState().openOrderDetail(order._id);
+          showSuccess("Checkout thành công");
+          navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
+            replace: true,
+          });
           return true;
         }
 
         showSuccess("Checkout thành công, đơn hàng đang được đồng bộ");
-        navigate(
-          withAdminGlobalFranchiseId(
-            `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`,
-            cart?.franchise_id ?? null,
-          ),
-          {
-            replace: true,
-          },
-        );
+        navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
+          replace: true,
+        });
         return true;
       } catch (error) {
         console.error("[OrderPOSReview] Failed to checkout cart", error);
@@ -488,7 +480,15 @@ export const usePosReviewActions = ({
         setIsMutatingCart(false);
       }
     },
-    [cart?._id, cart?.franchise_id, navigate, setActiveCartId, setIsMutatingCart, showError, showSuccess],
+    [
+      cart?._id,
+      cart?.franchise_id,
+      navigate,
+      setActiveCartId,
+      setIsMutatingCart,
+      showError,
+      showSuccess,
+    ],
   );
 
   const openCancelCurrentOrderModal = useCallback(() => {
@@ -512,21 +512,20 @@ export const usePosReviewActions = ({
     try {
       setIsMutatingCart(true);
       await cartService.cancelCart(cart._id);
+      if (cart.franchise_id) {
+        useAdminGlobalFranchiseScopeStore
+          .getState()
+          .setSelectedFranchiseId("order-pos", cart.franchise_id);
+      }
       setCart(null);
       setActiveCartId(null);
       resetSession();
       closeProductConfigurator();
       closeCancelCurrentOrderModal();
       showSuccess("Đã hủy giỏ hàng hiện tại");
-      navigate(
-        withAdminGlobalFranchiseId(
-          `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`,
-          cart?.franchise_id ?? null,
-        ),
-        {
-          replace: true,
-        },
-      );
+      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`, {
+        replace: true,
+      });
     } catch (error) {
       console.error("[OrderPOSReview] Failed to cancel current cart", error);
       showError("Không xóa được giỏ hàng hiện tại");

@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast.hook";
+import {
+  getRoleCode,
+  useAdminAuthStore,
+} from "@/modules/admin/auth-admin/stores/admin-auth.store";
 import type { CartDetail } from "../models/cart.models";
 import type { CustomerOption } from "../models/customer.models";
 import { cartService } from "../services/cart.service";
 import { customerService } from "../services/customer.service";
 import { resolveProductSizeLabel } from "../services/menu-catalog.service";
 import { loadPosReviewCartUsecase } from "../usecases/load-pos-review-cart.usecase";
+import { useAdminGlobalFranchiseScope } from "./use-admin-global-franchise-scope";
 import { usePosMenuData } from "./use-pos-menu-data";
 import { usePosSession } from "./use-pos-session";
 
@@ -22,14 +26,26 @@ const buildCustomerOptionFromCart = (cart: CartDetail): CustomerOption => {
 };
 
 export const usePosReviewLoader = () => {
-  const [searchParams] = useSearchParams();
   const { error: showError } = useToast();
+  const authStore = useAdminAuthStore();
+  const activeContext = useAdminAuthStore((state) => state.activeContext);
+  const roleCode = getRoleCode(authStore);
   const {
+    sessionFranchiseId,
     selectedCustomer,
     activeCartId,
     setSelectedCustomer,
     setActiveCartId,
+    setSessionFranchiseId,
   } = usePosSession();
+  const isAdminGlobalMode =
+    roleCode === "ADMIN" &&
+    activeContext?.scope === "GLOBAL" &&
+    !activeContext?.franchise_id;
+  const { franchiseId: adminGlobalFranchiseId } = useAdminGlobalFranchiseScope({
+    enabled: isAdminGlobalMode,
+    scopeKey: "order-pos",
+  });
 
   const [isLoadingCart, setIsLoadingCart] = useState(true);
   const [isMutatingCart, setIsMutatingCart] = useState(false);
@@ -44,9 +60,9 @@ export const usePosReviewLoader = () => {
   const isDraftPhoneDirtyRef = useRef(false);
   const isDraftMessageDirtyRef = useRef(false);
 
-  const cartIdFromQuery = searchParams.get("cartId");
-  const customerIdFromQuery = searchParams.get("customerId");
-  const franchiseIdFromQuery = searchParams.get("franchiseId");
+  const resolvedCustomerId = selectedCustomer?.id ?? null;
+  const resolvedReviewFranchiseId =
+    isAdminGlobalMode ? adminGlobalFranchiseId : sessionFranchiseId;
   const { products, toppingProducts, productFranchiseLookup } = usePosMenuData(
     cart?.franchise_id ?? null,
   );
@@ -86,6 +102,7 @@ export const usePosReviewLoader = () => {
     (nextCart: CartDetail, customer?: CustomerOption | null) => {
       setCart(nextCart);
       setActiveCartId(nextCart._id);
+      setSessionFranchiseId(nextCart.franchise_id || null);
 
       if (customer) {
         selectedCustomerIdRef.current = customer.id;
@@ -100,7 +117,7 @@ export const usePosReviewLoader = () => {
       selectedCustomerIdRef.current = nextCart.customer_id;
       setSelectedCustomer(buildCustomerOptionFromCart(nextCart));
     },
-    [setActiveCartId, setSelectedCustomer],
+    [setActiveCartId, setSelectedCustomer, setSessionFranchiseId],
   );
 
   const loadCustomerDetail = useCallback(async (customerId: string | null | undefined) => {
@@ -167,11 +184,19 @@ export const usePosReviewLoader = () => {
     try {
       setIsLoadingCart(true);
 
+      if (!resolvedReviewFranchiseId) {
+        isDraftAddressDirtyRef.current = false;
+        isDraftPhoneDirtyRef.current = false;
+        isDraftMessageDirtyRef.current = false;
+        setCart(null);
+        setActiveCartId(null);
+        return;
+      }
+
       const nextCart = await loadPosReviewCartUsecase({
-        cartId: cartIdFromQuery,
         activeCartId,
-        customerId: customerIdFromQuery,
-        franchiseId: franchiseIdFromQuery,
+        customerId: resolvedCustomerId,
+        franchiseId: resolvedReviewFranchiseId,
       });
 
       if (!nextCart?._id) {
@@ -183,7 +208,7 @@ export const usePosReviewLoader = () => {
         return;
       }
 
-      const targetCustomerId = nextCart.customer_id || customerIdFromQuery;
+      const targetCustomerId = nextCart.customer_id || resolvedCustomerId;
       const shouldRefreshCustomerDetail =
         Boolean(targetCustomerId) && selectedCustomerIdRef.current !== targetCustomerId;
       const nextCustomer = shouldRefreshCustomerDetail
@@ -203,11 +228,10 @@ export const usePosReviewLoader = () => {
     }
   }, [
     activeCartId,
-    cartIdFromQuery,
-    customerIdFromQuery,
-    franchiseIdFromQuery,
     hydrateReviewCart,
     loadCustomerDetail,
+    resolvedReviewFranchiseId,
+    resolvedCustomerId,
     selectedCustomer,
     setActiveCartId,
     showError,

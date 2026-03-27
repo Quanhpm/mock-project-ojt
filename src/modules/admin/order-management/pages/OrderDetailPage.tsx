@@ -90,7 +90,10 @@ export const OrderDetailPage = ({
     isAdminGlobalMode,
     requiresFranchiseSelection,
     switchFranchise,
-  } = useOrderFranchiseContext({ enabled: !isEmbedded });
+  } = useOrderFranchiseContext({
+    enabled: !isEmbedded,
+    adminGlobalScopeKey: "orders",
+  });
   const canLoadOrderDetail = isEmbedded || isAdminGlobalMode || Boolean(franchiseId);
   const {
     order,

@@ -21,9 +21,7 @@ function ShiftFranchiseSelectionPage() {
   useEffect(() => {
     if (isFranchiseScopedShiftRole && activeContext?.franchise_id) {
       setSelectedFranchiseId(activeContext.franchise_id)
-      navigate(`/admin/shifts/calendar?franchiseId=${activeContext.franchise_id}`, {
-        replace: true,
-      })
+      navigate('/admin/shifts/calendar', { replace: true })
     }
   }, [activeContext?.franchise_id, isFranchiseScopedShiftRole, navigate, setSelectedFranchiseId])
 
@@ -84,7 +82,7 @@ function ShiftFranchiseSelectionPage() {
   const handleSelectFranchise = (franchiseId: string) => {
     resetShiftCalendarUi()
     setSelectedFranchiseId(franchiseId)
-    navigate(`/admin/shifts/calendar?franchiseId=${franchiseId}`)
+    navigate('/admin/shifts/calendar', { replace: true })
   }
 
   return (

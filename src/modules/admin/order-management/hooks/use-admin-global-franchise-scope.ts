@@ -1,54 +1,57 @@
-import { useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
+import { useAdminGlobalFranchiseScopeStore } from "../stores/admin-global-franchise-scope.store";
 import {
-  createAdminGlobalFranchiseSearchParams,
-  readAdminGlobalFranchiseId,
+  resolveAdminGlobalFranchiseScopeKey,
+  type AdminGlobalFranchiseScopeKey,
 } from "../utils/admin-global-franchise-scope";
 
 interface UseAdminGlobalFranchiseScopeOptions {
   enabled?: boolean;
+  scopeKey?: AdminGlobalFranchiseScopeKey | null;
 }
 
 export const useAdminGlobalFranchiseScope = (
   options: UseAdminGlobalFranchiseScopeOptions = {},
 ) => {
-  const { enabled = true } = options;
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentSearch = searchParams.toString();
-  const queryFranchiseId = readAdminGlobalFranchiseId(searchParams);
-  const franchiseId = enabled ? queryFranchiseId : null;
+  const { enabled = true, scopeKey = null } = options;
+  const location = useLocation();
+  const resolvedScopeKey = useMemo(
+    () => scopeKey ?? resolveAdminGlobalFranchiseScopeKey(location.pathname),
+    [location.pathname, scopeKey],
+  );
+  const franchiseId = useAdminGlobalFranchiseScopeStore((state) =>
+    enabled && resolvedScopeKey ? state.selections[resolvedScopeKey] ?? null : null,
+  );
+  const setSelectedFranchiseId = useAdminGlobalFranchiseScopeStore(
+    (state) => state.setSelectedFranchiseId,
+  );
+  const clearSelectedFranchiseId = useAdminGlobalFranchiseScopeStore(
+    (state) => state.clearSelectedFranchiseId,
+  );
 
   const selectFranchise = useCallback(
-    (nextFranchiseId: string, options?: { replace?: boolean }) => {
-      if (!enabled || !nextFranchiseId) {
+    (nextFranchiseId: string) => {
+      if (!enabled || !resolvedScopeKey || !nextFranchiseId) {
         return;
       }
 
-      const nextSearchParams = createAdminGlobalFranchiseSearchParams(
-        currentSearch,
-        nextFranchiseId,
-      );
-      setSearchParams(nextSearchParams, { replace: options?.replace ?? false });
+      setSelectedFranchiseId(resolvedScopeKey, nextFranchiseId);
     },
-    [currentSearch, enabled, setSearchParams],
+    [enabled, resolvedScopeKey, setSelectedFranchiseId],
   );
 
-  const clearSelectedFranchise = useCallback(
-    (options?: { replace?: boolean }) => {
-      if (!enabled) {
-        return;
-      }
+  const clearSelectedFranchise = useCallback(() => {
+    if (!enabled || !resolvedScopeKey) {
+      return;
+    }
 
-      const nextSearchParams = createAdminGlobalFranchiseSearchParams(currentSearch, null);
-      setSearchParams(nextSearchParams, { replace: options?.replace ?? false });
-    },
-    [currentSearch, enabled, setSearchParams],
-  );
+    clearSelectedFranchiseId(resolvedScopeKey);
+  }, [clearSelectedFranchiseId, enabled, resolvedScopeKey]);
 
   return {
+    scopeKey: resolvedScopeKey,
     franchiseId,
-    queryFranchiseId,
-    selectedFranchiseId: queryFranchiseId,
     selectFranchise,
     clearSelectedFranchise,
   };

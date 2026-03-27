@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast.hook";
 import {
   getRoleCode,
@@ -8,15 +9,21 @@ import type { OrderFranchiseOption } from "../models/franchise.models";
 import { franchiseService } from "../services/franchise.service";
 import { switchOrderFranchiseContextUsecase } from "../usecases/switch-order-franchise-context.usecase";
 import { useAdminGlobalFranchiseScope } from "./use-admin-global-franchise-scope";
+import {
+  resolveAdminGlobalFranchiseScopeKey,
+  type AdminGlobalFranchiseScopeKey,
+} from "../utils/admin-global-franchise-scope";
 
 interface UseOrderFranchiseContextOptions {
   enabled?: boolean;
+  adminGlobalScopeKey?: AdminGlobalFranchiseScopeKey | null;
 }
 
 export const useOrderFranchiseContext = (
   options: UseOrderFranchiseContextOptions = {},
 ) => {
-  const { enabled = true } = options;
+  const { enabled = true, adminGlobalScopeKey = null } = options;
+  const location = useLocation();
   const { error: showError, success: showSuccess } = useToast();
   const adminStore = useAdminAuthStore();
   const { activeContext, roles, setProfile } = adminStore;
@@ -30,11 +37,18 @@ export const useOrderFranchiseContext = (
     isAdminUser &&
     activeContext?.scope === "GLOBAL" &&
     !contextFranchiseId;
+  const resolvedAdminGlobalScopeKey = useMemo(
+    () => adminGlobalScopeKey ?? resolveAdminGlobalFranchiseScopeKey(location.pathname),
+    [adminGlobalScopeKey, location.pathname],
+  );
   const {
     franchiseId: adminGlobalFranchiseId,
     selectFranchise: selectAdminGlobalFranchise,
     clearSelectedFranchise: clearAdminGlobalFranchise,
-  } = useAdminGlobalFranchiseScope({ enabled: isAdminGlobalMode });
+  } = useAdminGlobalFranchiseScope({
+    enabled: isAdminGlobalMode,
+    scopeKey: resolvedAdminGlobalScopeKey,
+  });
 
   const roleBasedFranchiseOptions = useMemo<OrderFranchiseOption[]>(() => {
     return roles

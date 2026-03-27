@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { DndContext, pointerWithin, DragOverlay } from '@dnd-kit/core'
 import type { DragEndEvent, DragOverEvent, DragStartEvent } from '@dnd-kit/core'
@@ -47,7 +47,7 @@ function ShiftManagement() {
   const roleCode = getRoleCode(store)
   const activeContext = useAdminAuthStore((state) => state.activeContext)
   const adminUser = useAdminAuthStore((state) => state.admin)
-  const routeFranchiseId = searchParams.get('franchiseId')
+  const routeFranchiseId = searchParams.get('franchiseId')?.trim() || ''
 
   const isStaff = roleCode === 'STAFF'
   const staffUserId = adminUser?.id ?? null
@@ -78,11 +78,21 @@ function ShiftManagement() {
   const [activeDragUser, setActiveDragUser] = useState<ActiveDragUser | null>(null)
   const [isAssignMode, setIsAssignMode] = useState(false)
   const [closeSignal, setCloseSignal] = useState(0)
+  const [isRouteReady, setIsRouteReady] = useState(false)
+
+  useLayoutEffect(() => {
+    if (routeFranchiseId) {
+      setSelectedFranchiseId(routeFranchiseId)
+      navigate('/admin/shifts/calendar', { replace: true })
+    }
+
+    setIsRouteReady(true)
+  }, [navigate, routeFranchiseId, setSelectedFranchiseId])
 
   const resolvedFranchiseId =
     roleCode === 'ADMIN'
-      ? routeFranchiseId || selectedFranchiseId
-      : activeContext?.franchise_id || routeFranchiseId || selectedFranchiseId
+      ? selectedFranchiseId
+      : activeContext?.franchise_id || selectedFranchiseId
 
   const {
     filters,
@@ -215,12 +225,9 @@ function ShiftManagement() {
     }
   }, [closeDailyAssignment, dailyAssignment.isOpen, isLoading, selectedShift])
 
-  if (!resolvedFranchiseId) {
-    return <Navigate to="/admin/shifts/select-franchise" replace />
-  }
-
   const handleCreateShift = () => {
-    navigate(`/admin/shifts/create?franchiseId=${resolvedFranchiseId}`)
+    setSelectedFranchiseId(resolvedFranchiseId)
+    navigate('/admin/shifts/create')
   }
 
   const handleOpenImportModal = () => {
@@ -522,6 +529,18 @@ function ShiftManagement() {
       // Đóng modal bất kể thả vào đâu
       setCloseSignal((prev) => prev + 1)
     }
+  }
+
+  if (!isRouteReady) {
+    return (
+      <div className="flex min-h-[calc(100dvh-48px)] items-center justify-center rounded-3xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
+        <p className="text-sm font-medium text-gray-500">Preparing shift calendar...</p>
+      </div>
+    )
+  }
+
+  if (!resolvedFranchiseId) {
+    return <Navigate to="/admin/shifts/select-franchise" replace />
   }
 
   return (

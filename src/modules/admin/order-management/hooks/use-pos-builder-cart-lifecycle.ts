@@ -27,6 +27,7 @@ export const usePosBuilderCartLifecycle = ({
   const location = useLocation();
   const { error: showError, info: showInfo } = useToast();
   const {
+    setSessionFranchiseId,
     selectedCustomer,
     activeCartId,
     setSelectedCustomer,
@@ -58,37 +59,29 @@ export const usePosBuilderCartLifecycle = ({
     [setActiveCartId],
   );
 
-  const goToReviewPage = useCallback(
-    (cartId: string, customerId?: string) => {
-      const params = new URLSearchParams();
-      params.set("cartId", cartId);
-
-      if (customerId) {
-        params.set("customerId", customerId);
-      }
-
-      if (franchiseId) {
-        params.set("franchiseId", franchiseId);
-      }
-
-      navigate(
-        `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS_REVIEW}?${params.toString()}`,
-      );
-    },
-    [franchiseId, navigate],
-  );
+  const goToReviewPage = useCallback(() => {
+    navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS_REVIEW}`);
+  }, [navigate]);
 
   useEffect(() => {
     if (skipInitialResetRef.current) {
       skipInitialResetRef.current = false;
+      setSessionFranchiseId(franchiseId);
       return;
     }
 
     resetSession();
+    setSessionFranchiseId(franchiseId);
     setCart(null);
     clearCustomerResults();
     closeProductConfigurator();
-  }, [clearCustomerResults, closeProductConfigurator, franchiseId, resetSession]);
+  }, [
+    clearCustomerResults,
+    closeProductConfigurator,
+    franchiseId,
+    resetSession,
+    setSessionFranchiseId,
+  ]);
 
   const loadPersistedCart = useCallback(
     async (cartId: string, expectedCustomerId?: string | null) => {
@@ -234,7 +227,7 @@ export const usePosBuilderCartLifecycle = ({
       return;
     }
 
-    goToReviewPage(targetCartId, targetCustomerId);
+    goToReviewPage();
   }, [
     activeCartId,
     cart?._id,

@@ -16,7 +16,7 @@ export const useOrderPosPage = () => {
     isSwitchingFranchise,
     requiresFranchiseSelection,
     switchFranchise,
-  } = useOrderFranchiseContext();
+  } = useOrderFranchiseContext({ adminGlobalScopeKey: "order-pos" });
   const {
     selectedCategory,
     searchQuery,

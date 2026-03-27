@@ -10,7 +10,7 @@ export const OrderManagementPage = () => {
     requiresFranchiseSelection,
     hasInvalidFranchiseContext,
     switchFranchise,
-  } = useOrderFranchiseContext();
+  } = useOrderFranchiseContext({ adminGlobalScopeKey: "orders" });
 
   if (requiresFranchiseSelection) {
     return (

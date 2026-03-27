@@ -75,7 +75,7 @@ export const usePaymentHistory = () => {
     switchFranchise: selectFranchise,
     clearSelectedFranchise,
     isAdminGlobalMode,
-  } = useOrderFranchiseContext();
+  } = useOrderFranchiseContext({ adminGlobalScopeKey: "payments" });
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
