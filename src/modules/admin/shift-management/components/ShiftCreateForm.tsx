@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useLayoutEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useCreateShift } from '../hooks/useCreateShift.hook'
 import type { CreateShiftRequest } from '@/apis/endpoints'
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+import { useShiftManagementStore } from '../stores/shift-management.store'
 
 interface Step1FormValues {
   shiftName: string
@@ -22,13 +23,20 @@ export const ShiftCreateForm: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { activeContext, roles } = useAdminAuthStore()
-  const routeFranchiseId = searchParams.get('franchiseId') || ''
+  const routeFranchiseId = searchParams.get('franchiseId')?.trim() || ''
+  const selectedFranchiseIdFromStore = useShiftManagementStore(
+    (state) => state.selectedFranchiseId,
+  )
+  const setSelectedFranchiseId = useShiftManagementStore(
+    (state) => state.setSelectedFranchiseId,
+  )
   const currentRoleCode = activeContext?.role ?? roles[0]?.role ?? null
-  const currentFranchiseId = activeContext?.franchise_id ?? roles[0]?.franchise_id ?? ''
-  const isManagerContext = currentRoleCode === 'MANAGER' && Boolean(currentFranchiseId)
-  const returnToCalendarPath = `/admin/shifts/calendar?franchiseId=${
-    isManagerContext ? currentFranchiseId : routeFranchiseId || currentFranchiseId
-  }`
+  const currentFranchiseId = activeContext?.franchise_id ?? ''
+  const isManagerContext =
+    (currentRoleCode === 'MANAGER' || currentRoleCode === 'STAFF') &&
+    Boolean(currentFranchiseId)
+  const resolvedAdminFranchiseId = selectedFranchiseIdFromStore || routeFranchiseId
+  const resolvedFranchiseId = isManagerContext ? currentFranchiseId : resolvedAdminFranchiseId
 
   const {
     currentStep,
@@ -38,15 +46,21 @@ export const ShiftCreateForm: React.FC = () => {
     staffList,
     isFranchisesLoading,
     isUsersLoading,
+    selectedFranchiseId: createdShiftFranchiseId,
     handleCreateShift,
     handleAssignStaff,
     goBackToStep1,
   } = useCreateShift(() => {
-    navigate(
-      isManagerContext || routeFranchiseId || currentFranchiseId
-        ? returnToCalendarPath
-        : '/admin/shifts',
-    )
+    const nextFranchiseId =
+      createdShiftFranchiseId || resolvedFranchiseId || currentFranchiseId || null
+
+    if (nextFranchiseId) {
+      setSelectedFranchiseId(nextFranchiseId)
+      navigate('/admin/shifts/calendar', { replace: true })
+      return
+    }
+
+    navigate('/admin/shifts', { replace: true })
   })
 
   const managerFranchiseName = useMemo(() => {
@@ -89,27 +103,33 @@ export const ShiftCreateForm: React.FC = () => {
 
   // ──────── Navigation ────────
   const handleCancel = () => {
-    navigate(
-      isManagerContext || routeFranchiseId || currentFranchiseId
-        ? returnToCalendarPath
-        : '/admin/shifts',
-    )
+    if (resolvedFranchiseId || currentFranchiseId) {
+      navigate('/admin/shifts/calendar', { replace: true })
+      return
+    }
+
+    navigate('/admin/shifts', { replace: true })
   }
 
   const handleBackStep1 = () => {
     goBackToStep1()
   }
 
+  useLayoutEffect(() => {
+    if (routeFranchiseId) {
+      setSelectedFranchiseId(routeFranchiseId)
+      navigate('/admin/shifts/create', { replace: true })
+    }
+  }, [navigate, routeFranchiseId, setSelectedFranchiseId])
+
   useEffect(() => {
-    const defaultFranchiseId = isManagerContext ? currentFranchiseId : routeFranchiseId
+    if (!resolvedFranchiseId) return
 
-    if (!defaultFranchiseId) return
-
-    setStep1Value('franchiseId', defaultFranchiseId, {
+    setStep1Value('franchiseId', resolvedFranchiseId, {
       shouldValidate: true,
       shouldDirty: false,
     })
-  }, [currentFranchiseId, isManagerContext, routeFranchiseId, setStep1Value])
+  }, [resolvedFranchiseId, setStep1Value])
 
   useEffect(() => {
     if (currentStep === 2) {

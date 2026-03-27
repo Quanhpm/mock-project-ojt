@@ -7,6 +7,9 @@ import { useAdminAuthStore } from "../stores/admin-auth.store";
 import { useLoadingStore } from "@/stores/loading.store";
 import { useToast } from "@/hooks/use-toast.hook";
 import { ROUTER_URL } from "@/routes/router.const";
+import { resetAdminGlobalFranchiseScope } from "@/modules/admin/order-management/stores/admin-global-franchise-scope.store";
+import { resetOrderListUi } from "@/modules/admin/order-management/stores/order-list-ui.store";
+import { resetPosSession } from "@/modules/admin/order-management/stores/pos-session.store";
 import type { AdminLoginFormValues } from "../schemas/admin-login.schema";
 
 export function useAdminLogin() {
@@ -27,6 +30,9 @@ export function useAdminLogin() {
       try {
         // Reset cờ redirect trước khi login (user đang ở trang login = hợp lệ)
         resetAuthRedirecting();
+        resetAdminGlobalFranchiseScope();
+        resetOrderListUi();
+        resetPosSession();
 
         // 1. POST /auth → backend set HttpOnly Cookie
         await login({ email: data.email, password: data.password });

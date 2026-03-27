@@ -67,9 +67,17 @@ export const usePaymentHistory = () => {
   const activeContext = useAdminAuthStore((state) => state.activeContext);
   const roles = useAdminAuthStore((state) => state.roles);
   const { error: showError } = useToast();
-  const [franchiseOptions, setFranchiseOptions] = useState<OrderFranchiseOption[]>([]);
-  const [isLoadingFranchiseOptions, setIsLoadingFranchiseOptions] = useState(false);
-  const [selectedAdminFranchiseId, setSelectedAdminFranchiseId] = useState<string | null>(null);
+  const {
+    franchiseId,
+    franchiseName,
+    franchiseOptions,
+    isSwitchingFranchise: isLoadingFranchiseOptions,
+    requiresFranchiseSelection,
+    hasInvalidFranchiseContext,
+    switchFranchise: selectFranchise,
+    clearSelectedFranchise,
+    isAdminGlobalMode,
+  } = useOrderFranchiseContext({ adminGlobalScopeKey: "payments" });
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

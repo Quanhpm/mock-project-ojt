@@ -3,11 +3,64 @@ import { useNavigate } from 'react-router-dom'
 import { getProfile, switchContext } from '@/apis/endpoints/auth.api'
 import type { UserRoleItem } from '@/apis/endpoints/auth.api'
 import { useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+import { useAdminGlobalFranchiseScopeStore } from '@/modules/admin/order-management/stores/admin-global-franchise-scope.store'
+import {
+  resolveAdminGlobalFranchiseScopeKey,
+  withoutAdminGlobalFranchiseId,
+} from '@/modules/admin/order-management/utils/admin-global-franchise-scope'
+import { usePosSessionStore } from '@/modules/admin/order-management/stores/pos-session.store'
 import { useLoadingStore } from '@/stores/loading.store'
 import { ROUTER_URL } from '@/routes/router.const'
 
 const DASHBOARD_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.DASHBOARD}`
 const ITEMS_PER_PAGE = 6
+const SELECT_FRANCHISE_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.SELECT_FRANCHISE}`
+const ORDER_POS_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS}`
+const ORDER_POS_REVIEW_PATH = `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER_POS_REVIEW}`
+
+const getRedirectToFromState = (state: unknown): string | null => {
+  if (!state || typeof state !== 'object') {
+    return null
+  }
+
+  const redirectTo = (state as { redirectTo?: unknown }).redirectTo
+
+  if (typeof redirectTo === 'string') {
+    return redirectTo
+  }
+
+  if (!redirectTo || typeof redirectTo !== 'object') {
+    return null
+  }
+
+  const pathname = typeof (redirectTo as { pathname?: unknown }).pathname === 'string'
+    ? (redirectTo as { pathname: string }).pathname
+    : ''
+  const search = typeof (redirectTo as { search?: unknown }).search === 'string'
+    ? (redirectTo as { search: string }).search
+    : ''
+  const hash = typeof (redirectTo as { hash?: unknown }).hash === 'string'
+    ? (redirectTo as { hash: string }).hash
+    : ''
+
+  return pathname ? `${pathname}${search}${hash}` : null
+}
+
+const normalizeRedirectTo = (redirectTo: string | null) => {
+  if (!redirectTo || redirectTo.startsWith(SELECT_FRANCHISE_PATH)) {
+    return DASHBOARD_PATH
+  }
+
+  return redirectTo
+}
+
+const isPosRedirectTarget = (redirectTo: string | null) => {
+  if (!redirectTo) {
+    return false
+  }
+
+  return redirectTo.startsWith(ORDER_POS_PATH) || redirectTo.startsWith(ORDER_POS_REVIEW_PATH)
+}
 
 interface UseFranchiseSelectionReturn {
   userName: string
@@ -37,6 +90,16 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
   const [switching, setSwitching] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const isAdminGlobalMode =
+    storeActiveContext?.role === 'ADMIN' &&
+    storeActiveContext?.scope === 'GLOBAL' &&
+    !storeActiveContext?.franchise_id
+  const redirectTo = normalizeRedirectTo(
+    searchParams.get('redirectTo')?.trim() || getRedirectToFromState(location.state),
+  )
+  const isPosRedirect = isPosRedirectTarget(redirectTo)
+  const cleanRedirectTo = withoutAdminGlobalFranchiseId(redirectTo)
+  const redirectScopeKey = resolveAdminGlobalFranchiseScopeKey(cleanRedirectTo)
   
   // Track mounted state để tránh setState sau khi unmount
   const isMountedRef = useRef(false)
@@ -85,6 +148,28 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     setSwitching(franchiseId)
     incrementGlobalLoading()
     try {
+      if (isAdminGlobalMode) {
+        if (redirectScopeKey) {
+          useAdminGlobalFranchiseScopeStore
+            .getState()
+            .setSelectedFranchiseId(redirectScopeKey, franchiseId)
+        }
+
+        if (isPosRedirect) {
+          usePosSessionStore.getState().setSessionFranchiseId(franchiseId)
+          navigate(cleanRedirectTo, { replace: true })
+          return
+        }
+
+        if (redirectScopeKey) {
+          navigate(cleanRedirectTo, { replace: true })
+          return
+        }
+
+        navigate(redirectTo, { replace: true })
+        return
+      }
+
       await switchContext(franchiseId)
       
       // Lấy profile mới sau khi switch
@@ -116,6 +201,28 @@ export const useFranchiseSelection = (): UseFranchiseSelectionReturn => {
     setSwitching('GLOBAL')
     incrementGlobalLoading()
     try {
+      if (isAdminGlobalMode) {
+        if (redirectScopeKey) {
+          useAdminGlobalFranchiseScopeStore
+            .getState()
+            .clearSelectedFranchiseId(redirectScopeKey)
+        }
+
+        if (isPosRedirect) {
+          usePosSessionStore.getState().setSessionFranchiseId(null)
+          navigate(cleanRedirectTo, { replace: true })
+          return
+        }
+
+        if (redirectScopeKey) {
+          navigate(cleanRedirectTo, { replace: true })
+          return
+        }
+
+        navigate(cleanRedirectTo, { replace: true })
+        return
+      }
+
       // Gọi API với franchise_id = null để switch sang GLOBAL
       await switchContext(null)
       

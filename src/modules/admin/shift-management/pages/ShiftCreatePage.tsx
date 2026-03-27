@@ -8,9 +8,7 @@ export default function ShiftCreatePage() {
   const roleCode = getRoleCode(store)
 
   if (roleCode === 'STAFF') {
-    const fallbackPath = activeContext?.franchise_id
-      ? `/admin/shifts/calendar?franchiseId=${activeContext.franchise_id}`
-      : '/admin/shifts'
+    const fallbackPath = activeContext?.franchise_id ? '/admin/shifts/calendar' : '/admin/shifts'
 
     return <Navigate to={fallbackPath} replace />
   }

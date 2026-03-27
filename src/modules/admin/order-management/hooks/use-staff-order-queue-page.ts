@@ -80,7 +80,9 @@ const mergeQueueOrdersWithExistingDetails = (
 
 export const useStaffOrderQueuePage = () => {
   const { error: showError, success: showSuccess } = useToast();
-  const franchiseContext = useOrderFranchiseContext();
+  const franchiseContext = useOrderFranchiseContext({
+    adminGlobalScopeKey: "staff-queue",
+  });
   const {
     franchiseId,
     franchiseName,

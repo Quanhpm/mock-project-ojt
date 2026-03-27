@@ -10,11 +10,16 @@ export const OrderListPage = () => {
     statusFilter,
     searchQuery,
     selectedOrderId,
+    isMobileDetailOpen,
+    isDetailFocused,
     setStatusFilter,
     setSearchQuery,
     selectOrder,
+    closeMobileDetail,
     reload,
   } = useOrderListPage();
+  const isShowingMobileDetail = Boolean(isMobileDetailOpen && selectedOrderId);
+  const isSidebarCollapsed = Boolean(isDetailFocused && selectedOrderId);
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: "calc(100vh - 48px)" }}>
@@ -46,7 +51,14 @@ export const OrderListPage = () => {
         {/* Cột phải: Chi tiết đơn hàng (Detail) */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[32px] border border-gray-200 bg-white shadow-sm ring-1 ring-black/5">
           {selectedOrderId ? (
-            <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-6 md:p-8 scrollbar-hide">
+            <div className="h-full min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 md:p-8 scrollbar-hide">
+              <button
+                type="button"
+                onClick={closeMobileDetail}
+                className="mb-4 inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-gray-300 hover:text-gray-900 lg:hidden"
+              >
+                ← Danh sách đơn
+              </button>
               <OrderDetailPage
                 providedOrderId={selectedOrderId}
                 isEmbedded

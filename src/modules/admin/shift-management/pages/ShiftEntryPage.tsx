@@ -14,9 +14,7 @@ function ShiftEntryPage() {
   useEffect(() => {
     if (isFranchiseScopedShiftRole && activeContext?.franchise_id) {
       setSelectedFranchiseId(activeContext.franchise_id)
-      navigate(`/admin/shifts/calendar?franchiseId=${activeContext.franchise_id}`, {
-        replace: true,
-      })
+      navigate('/admin/shifts/calendar', { replace: true })
       return
     }
 

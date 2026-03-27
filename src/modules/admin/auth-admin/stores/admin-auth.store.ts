@@ -8,6 +8,9 @@ import type {
 import { HttpError } from "@/apis/http.types";
 import { isAuthRedirecting } from "@/apis";
 import { getProfile, logout as logoutApi } from "@/apis/endpoints/auth.api";
+import { resetAdminGlobalFranchiseScope } from "@/modules/admin/order-management/stores/admin-global-franchise-scope.store";
+import { resetOrderListUi } from "@/modules/admin/order-management/stores/order-list-ui.store";
+import { resetPosSession } from "@/modules/admin/order-management/stores/pos-session.store";
 
 // ======================== State Interface ========================
 
@@ -81,6 +84,9 @@ export const useAdminAuthStore = create<AdminAuthState>((set) => ({
     } catch {
       // Ignore error — server có thể đã hết session
     } finally {
+      resetAdminGlobalFranchiseScope();
+      resetOrderListUi();
+      resetPosSession();
       set({
         admin: null,
         roles: [],

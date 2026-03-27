@@ -1,6 +1,30 @@
+import { useEffect, useRef } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { ROUTER_URL } from "../router.const";
 import { useAdminAuthStore } from "@/modules/admin/auth-admin/stores/admin-auth.store";
+import { resetAdminGlobalFranchiseScope } from "@/modules/admin/order-management/stores/admin-global-franchise-scope.store";
+import { resetOrderListUi } from "@/modules/admin/order-management/stores/order-list-ui.store";
+import { resetPosSession } from "@/modules/admin/order-management/stores/pos-session.store";
+import {
+  resolveAdminGlobalFranchiseScopeKey,
+  type AdminGlobalFranchiseScopeKey,
+} from "@/modules/admin/order-management/utils/admin-global-franchise-scope";
+
+const clearAdminGlobalModuleState = (scopeKey: AdminGlobalFranchiseScopeKey | null) => {
+  if (!scopeKey) {
+    return;
+  }
+
+  resetAdminGlobalFranchiseScope(scopeKey);
+
+  if (scopeKey === "orders") {
+    resetOrderListUi();
+  }
+
+  if (scopeKey === "order-pos") {
+    resetPosSession();
+  }
+};
 
 /**
  * Guard bắt buộc FRANCHISE user phải chọn franchise trước khi vào dashboard.
@@ -11,6 +35,13 @@ const SelectFranchiseGuard = () => {
   const location = useLocation();
   const activeContext = useAdminAuthStore((s) => s.activeContext);
   const roles = useAdminAuthStore((s) => s.roles);
+  const isAdminGlobalMode =
+    activeContext?.role === "ADMIN" &&
+    activeContext?.scope === "GLOBAL" &&
+    !activeContext?.franchise_id;
+  const currentAdminGlobalScope = resolveAdminGlobalFranchiseScopeKey(location.pathname);
+  const previousAdminGlobalScopeRef = useRef(currentAdminGlobalScope);
+  const previousIsAdminGlobalModeRef = useRef(isAdminGlobalMode);
   const selfManagedFranchiseRoutes = [
     `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`,
     `${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.PAYMENT}`,
@@ -20,6 +51,22 @@ const SelectFranchiseGuard = () => {
     (rootPath) =>
       location.pathname === rootPath || location.pathname.startsWith(`${rootPath}/`),
   );
+
+  useEffect(() => {
+    const previousScope = previousAdminGlobalScopeRef.current;
+    const wasAdminGlobalMode = previousIsAdminGlobalModeRef.current;
+
+    if (previousScope && previousScope !== currentAdminGlobalScope) {
+      clearAdminGlobalModuleState(previousScope);
+    }
+
+    if (wasAdminGlobalMode && !isAdminGlobalMode && previousScope === currentAdminGlobalScope) {
+      resetAdminGlobalFranchiseScope(previousScope);
+    }
+
+    previousAdminGlobalScopeRef.current = currentAdminGlobalScope;
+    previousIsAdminGlobalModeRef.current = isAdminGlobalMode;
+  }, [currentAdminGlobalScope, isAdminGlobalMode]);
 
   // Order, payment va delivery module tu xu ly franchise context de ho tro gate rieng trong page.
   if (isSelfManagedFranchiseRoute) {

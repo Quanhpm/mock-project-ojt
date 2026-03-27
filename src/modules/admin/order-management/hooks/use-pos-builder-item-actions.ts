@@ -30,7 +30,7 @@ interface UsePosBuilderItemActionsOptions {
   syncPersistedCartState: (nextCart: CartDetail | null) => void;
   loadPersistedCart: (cartId: string, expectedCustomerId?: string | null) => Promise<CartDetail | null>;
   setIsMutatingCart: (value: boolean) => void;
-  goToReviewPage: (cartId: string, customerId?: string) => void;
+  goToReviewPage: () => void;
 }
 
 export const usePosBuilderItemActions = ({
@@ -88,7 +88,7 @@ export const usePosBuilderItemActions = ({
       }
 
       showInfo("Món trong cart active sẽ được chỉnh ở bước kiểm tra đơn");
-      goToReviewPage(targetCartId, targetCustomerId);
+      goToReviewPage();
     },
     [
       activeCartId,

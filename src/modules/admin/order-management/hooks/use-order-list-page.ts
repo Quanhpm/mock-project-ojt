@@ -3,15 +3,21 @@ import { useToast } from "@/hooks/use-toast.hook";
 import { loadFranchiseOrdersUsecase } from "../usecases/load-franchise-orders.usecase";
 import type { FranchiseOrderListItem, OrderStatus } from "../models/order.models";
 import { useOrderFranchiseContext } from "./use-order-franchise-context";
+import { useOrderListUiStore } from "../stores/order-list-ui.store";
 
 export const useOrderListPage = () => {
   const { error: showError } = useToast();
-  const { franchiseId } = useOrderFranchiseContext();
+  const { franchiseId } = useOrderFranchiseContext({ adminGlobalScopeKey: "orders" });
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [searchQuery, setSearchQuery] = useState("");
   const [rawOrders, setRawOrders] = useState<FranchiseOrderListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
+  const selectedOrderId = useOrderListUiStore((state) => state.selectedOrderId);
+  const isMobileDetailOpen = useOrderListUiStore((state) => state.isMobileDetailOpen);
+  const isDetailFocused = useOrderListUiStore((state) => state.isDetailFocused);
+  const setSelectedOrderId = useOrderListUiStore((state) => state.setSelectedOrderId);
+  const setIsMobileDetailOpen = useOrderListUiStore((state) => state.setIsMobileDetailOpen);
+  const setIsDetailFocused = useOrderListUiStore((state) => state.setIsDetailFocused);
 
   const loadOrders = useCallback(async () => {
     if (!franchiseId) {
@@ -56,20 +62,51 @@ export const useOrderListPage = () => {
     return [...filteredOrders].reverse();
   }, [filteredOrders]);
 
-  useEffect(() => {
+  const resolvedSelectedOrderId = useMemo(() => {
     if (displayOrders.length === 0) {
-      setSelectedOrderId(undefined);
+      return null;
+    }
+
+    if (selectedOrderId && displayOrders.some((order) => order._id === selectedOrderId)) {
+      return selectedOrderId;
+    }
+
+    return displayOrders[0]._id;
+  }, [displayOrders, selectedOrderId]);
+
+  useEffect(() => {
+    if (isLoading) {
       return;
     }
 
-    setSelectedOrderId((currentSelectedOrderId) => {
-      if (currentSelectedOrderId && displayOrders.some((order) => order._id === currentSelectedOrderId)) {
-        return currentSelectedOrderId;
+    if (displayOrders.length === 0) {
+      if (
+        selectedOrderId !== null ||
+        isMobileDetailOpen ||
+        isDetailFocused
+      ) {
+        setSelectedOrderId(null);
+        setIsMobileDetailOpen(false);
+        setIsDetailFocused(false);
       }
 
-      return displayOrders[0]._id;
-    });
-  }, [displayOrders]);
+      return;
+    }
+
+    if (resolvedSelectedOrderId !== selectedOrderId) {
+      setSelectedOrderId(resolvedSelectedOrderId);
+    }
+  }, [
+    displayOrders.length,
+    isDetailFocused,
+    isLoading,
+    isMobileDetailOpen,
+    resolvedSelectedOrderId,
+    selectedOrderId,
+    setIsDetailFocused,
+    setIsMobileDetailOpen,
+    setSelectedOrderId,
+  ]);
 
   const summary = useMemo(() => {
     return {
@@ -84,9 +121,15 @@ export const useOrderListPage = () => {
   const selectOrder = useCallback(
     (orderId: string) => {
       setSelectedOrderId(orderId);
+      setIsMobileDetailOpen(true);
+      setIsDetailFocused(true);
     },
-    [],
+    [setIsDetailFocused, setIsMobileDetailOpen, setSelectedOrderId],
   );
+
+  const closeMobileDetail = useCallback(() => {
+    setIsMobileDetailOpen(false);
+  }, [setIsMobileDetailOpen]);
 
   return {
     isLoading,
@@ -95,10 +138,13 @@ export const useOrderListPage = () => {
     statusFilter,
     searchQuery,
     summary,
-    selectedOrderId,
+    selectedOrderId: resolvedSelectedOrderId ?? undefined,
+    isMobileDetailOpen,
+    isDetailFocused,
     setStatusFilter,
     setSearchQuery,
     selectOrder,
+    closeMobileDetail,
     reload: loadOrders,
   };
 };
