@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast.hook";
 import type { CartDetail, CartItem } from "../models/cart.models";
 import type { CustomerOption } from "../models/customer.models";
 import type { PosProduct, PosProductFranchiseLookupItem } from "../models/menu.models";
+import type { UpdateCartPayload } from "../models/request.models";
 import type { PosProductCatalogSelection } from "../services/menu-catalog.service";
 import { cartService } from "../services/cart.service";
 import {
@@ -21,9 +22,6 @@ import { usePosSession } from "./use-pos-session";
 interface UsePosReviewActionsOptions {
   cart: CartDetail | null;
   setCart: (nextCart: CartDetail | null) => void;
-  draftAddress: string;
-  draftPhone: string;
-  draftMessage: string;
   voucherCode: string;
   setActiveCartId: (cartId: string | null) => void;
   setIsMutatingCart: (value: boolean) => void;
@@ -55,9 +53,6 @@ interface UsePosReviewActionsOptions {
 export const usePosReviewActions = ({
   cart,
   setCart,
-  draftAddress,
-  draftPhone,
-  draftMessage,
   voucherCode,
   setActiveCartId,
   setIsMutatingCart,
@@ -90,57 +85,6 @@ export const usePosReviewActions = ({
     setEditingItem(null);
     closeConfigurator();
   }, [closeConfigurator]);
-
-  const saveCartInfo = useCallback(
-    async ({ silent = true }: { silent?: boolean } = {}) => {
-      if (!cart?._id) {
-        return null;
-      }
-
-      try {
-        setIsMutatingCart(true);
-        const nextCart = ensureCartDetail(
-          await cartService.updateCart(cart._id, {
-            address: draftAddress.trim(),
-            phone: draftPhone.trim(),
-            message: draftMessage,
-          }),
-          "updateCart",
-        );
-
-        hydrateReviewCart(nextCart);
-        syncCheckoutDraftsFromCart(nextCart, null, { force: true });
-
-        if (!silent) {
-          showSuccess("Đã lưu thông tin cart");
-        }
-
-        return nextCart;
-      } catch (error) {
-        console.error("[OrderPOSReview] Failed to save cart info", error);
-
-        if (!silent) {
-          showError("Không lưu được thông tin cart");
-        }
-
-        return null;
-      } finally {
-        setIsMutatingCart(false);
-      }
-    },
-    [
-      cart?._id,
-      draftAddress,
-      draftMessage,
-      draftPhone,
-      ensureCartDetail,
-      hydrateReviewCart,
-      setIsMutatingCart,
-      showError,
-      showSuccess,
-      syncCheckoutDraftsFromCart,
-    ],
-  );
 
   const resolveProductForCartItem = useCallback(
     (item: CartItem) => {
@@ -492,58 +436,42 @@ export const usePosReviewActions = ({
     syncCheckoutDraftsFromCart,
   ]);
 
-  const checkoutCart = useCallback(async () => {
-    if (!cart?._id) {
-      showError("Chưa có cart để checkout");
-      return;
-    }
-
-    const normalizedDraftPhone = draftPhone.trim();
-
-    if (!normalizedDraftPhone) {
-      showError("Số điện thoại đang trống, vui lòng kiểm tra lại");
-      return;
-    }
-
-    try {
-      setIsMutatingCart(true);
-      const order = await checkoutCartUsecase(cart._id, {
-        address: draftAddress.trim(),
-        phone: normalizedDraftPhone,
-        message: draftMessage,
-      });
-
-      setActiveCartId(null);
-
-      if (order?._id) {
-        showSuccess("Checkout thành công");
-        navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
-          replace: true,
-        });
-        return;
+  const checkoutCart = useCallback(
+    async (payload: UpdateCartPayload) => {
+      if (!cart?._id) {
+        showError("Chưa có cart để checkout");
+        return false;
       }
 
-      showSuccess("Checkout thành công, đơn hàng đang được đồng bộ");
-      navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
-        replace: true,
-      });
-    } catch (error) {
-      console.error("[OrderPOSReview] Failed to checkout cart", error);
-      showError("Checkout thất bại");
-    } finally {
-      setIsMutatingCart(false);
-    }
-  }, [
-    cart?._id,
-    draftAddress,
-    draftMessage,
-    draftPhone,
-    navigate,
-    setActiveCartId,
-    setIsMutatingCart,
-    showError,
-    showSuccess,
-  ]);
+      try {
+        setIsMutatingCart(true);
+        const order = await checkoutCartUsecase(cart._id, payload);
+
+        setActiveCartId(null);
+
+        if (order?._id) {
+          showSuccess("Checkout thành công");
+          navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}/${order._id}`, {
+            replace: true,
+          });
+          return true;
+        }
+
+        showSuccess("Checkout thành công, đơn hàng đang được đồng bộ");
+        navigate(`${ROUTER_URL.ADMIN}/${ROUTER_URL.ADMIN_ROUTER.ORDER}`, {
+          replace: true,
+        });
+        return true;
+      } catch (error) {
+        console.error("[OrderPOSReview] Failed to checkout cart", error);
+        showError("Checkout thất bại");
+        return false;
+      } finally {
+        setIsMutatingCart(false);
+      }
+    },
+    [cart?._id, navigate, setActiveCartId, setIsMutatingCart, showError, showSuccess],
+  );
 
   const openCancelCurrentOrderModal = useCallback(() => {
     if (!cart?._id) {
@@ -608,7 +536,6 @@ export const usePosReviewActions = ({
     canApplyVoucher,
     editCartItem,
     closeProductConfigurator,
-    saveCartInfo,
     openCancelCurrentOrderModal,
     closeCancelCurrentOrderModal,
     applyVoucher,

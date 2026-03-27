@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { CalendarDay, DailyShiftView, ShiftAssignmentView } from '../hooks/useShiftCalendar.hook'
 import type { ShiftCalendarViewMode } from '../stores/shift-management.store'
+import { formatDateKey } from '../utils/shift.helpers'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,9 +45,6 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const formatDateKey = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
 const getStatusClass = (a: ShiftAssignmentView) =>
   STATUS_STYLES[a.status] ?? 'bg-slate-50 text-slate-700 ring-slate-200'
@@ -106,24 +104,36 @@ const DroppableDayCell: React.FC<DroppableDayCellProps> = ({
     <div
       ref={setNodeRef}
       role="button"
-      tabIndex={0}
-      onClick={() => onSelectDate(day.date)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectDate(day.date) } }}
+      tabIndex={disabled ? -1 : 0}
+      aria-disabled={disabled}
+      onClick={() => {
+        if (disabled) return
+        onSelectDate(day.date)
+      }}
+      onKeyDown={(e) => {
+        if (disabled) return
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelectDate(day.date)
+        }
+      }}
       className={[
         'relative h-full min-h-[92px] border-b border-r border-slate-200 text-left last:border-r-0 focus:outline-none transition-colors sm:min-h-[100px]',
         day.isCurrentMonth ? 'bg-white' : 'bg-slate-50 text-slate-400',
         isSelected ? 'ring-2 ring-inset ring-primary z-10' : '',
         isHovered && !disabled ? 'bg-primary/5 ring-2 ring-primary ring-inset' : 'hover:bg-slate-50',
-        disabled ? 'pointer-events-none opacity-50' : '',
+        disabled
+          ? 'pointer-events-none cursor-not-allowed bg-slate-100/90 text-slate-400 opacity-70'
+          : 'cursor-pointer',
       ].join(' ')}
     >
       <div className="p-2 xl:p-2.5">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <span className={`text-sm font-semibold ${day.isToday || isHovered ? 'text-primary' : 'text-slate-900'}`}>
+          <span className={`text-sm font-semibold ${disabled ? 'text-slate-400' : day.isToday || isHovered ? 'text-primary' : 'text-slate-900'}`}>
             {day.date.getDate()}
           </span>
           {visibleItems.length > 0 && (
-            <span className="shrink-0 text-[10px] text-slate-400">
+            <span className={`shrink-0 text-[10px] ${disabled ? 'text-slate-400' : 'text-slate-400'}`}>
               {viewMode === 'assignment' ? `${day.assignments.length} asn` : `${day.shifts.length} shifts`}
             </span>
           )}
@@ -245,9 +255,12 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
 
   useEffect(() => {
     if (!hoveredDateKey) return
+    const hoveredDay = calendarDays.find((day) => formatDateKey(day.date) === hoveredDateKey)
+    if (!hoveredDay || hoveredDay.isPast) return
+
     const t = setTimeout(() => setModalDayKey(hoveredDateKey), 700)
     return () => clearTimeout(t)
-  }, [hoveredDateKey])
+  }, [calendarDays, hoveredDateKey])
 
   useEffect(() => {
     if ((closeSignal ?? 0) <= 0) return
@@ -261,7 +274,9 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
     }
   }, [closeSignal])
 
-  const modalDay = modalDayKey ? calendarDays.find((d) => formatDateKey(d.date) === modalDayKey) : null
+  const modalDay = modalDayKey
+    ? calendarDays.find((d) => formatDateKey(d.date) === modalDayKey && !d.isPast)
+    : null
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -301,7 +316,7 @@ export const ShiftCalendar: React.FC<ShiftCalendarProps> = ({
                   isHovered={hoveredDateKey === dayKey}
                   viewMode={viewMode}
                   maxVisible={2}
-                  disabled={!!modalDayKey}
+                  disabled={day.isPast || !!modalDayKey}
                   onSelectDate={onSelectDate}
                   onOpenShiftDetail={onOpenShiftDetail}
                 />

@@ -3,6 +3,7 @@ import { searchUserFranchiseRoles, shiftApi } from '@/apis/endpoints'
 import type { UserFranchiseRoleItem } from '@/apis/endpoints'
 import type { DailyShiftView } from './useShiftCalendar.hook'
 import { useToast } from '@/hooks/use-toast.hook'
+import { extractBackendMessage } from '../utils/shift.helpers'
 
 export interface AssignableUserOption {
   userId: string
@@ -117,7 +118,7 @@ export const useDailyAssignment = (
         return true
       } catch (submitError) {
         console.error('Failed to assign user:', submitError)
-        error('Failed to assign user', 'Please try again.')
+        error('Failed to assign user', extractBackendMessage(submitError, 'Please try again.'))
         return false
       } finally {
         setIsSubmitting(false)

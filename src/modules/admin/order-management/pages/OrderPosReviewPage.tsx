@@ -1,4 +1,6 @@
+import { useCallback, useState } from "react";
 import { PosCancelCartModal } from "../partials/pos/PosCancelCartModal";
+import { PosReviewCheckoutModal } from "../partials/pos/PosReviewCheckoutModal";
 import { PosProductConfigModal } from "../partials/pos/PosProductConfigModal";
 import { PosReviewEmptyState } from "../partials/pos/PosReviewEmptyState";
 import { PosReviewMainColumn } from "../partials/pos/PosReviewMainColumn";
@@ -29,13 +31,9 @@ export const OrderPosReviewPage = () => {
     toppingGroups,
     selectedToppings,
     configuredTotalPrice,
-    setDraftAddress,
-    setDraftPhone,
-    setDraftMessage,
     setVoucherCode,
     editCartItem,
     closeProductConfigurator,
-    saveCartInfo,
     saveEditedCartItem,
     setConfiguredSize,
     setConfiguredNote,
@@ -54,6 +52,23 @@ export const OrderPosReviewPage = () => {
     confirmCancelCurrentOrder,
     goBackToBuilder,
   } = useOrderPosReviewPage();
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+
+  const openCheckoutModal = useCallback(() => {
+    if (!canCheckout || isMutatingCart) {
+      return;
+    }
+
+    setIsCheckoutModalOpen(true);
+  }, [canCheckout, isMutatingCart]);
+
+  const closeCheckoutModal = useCallback(() => {
+    if (isMutatingCart) {
+      return;
+    }
+
+    setIsCheckoutModalOpen(false);
+  }, [isMutatingCart]);
 
   if (isLoadingCart) {
     return null;
@@ -72,15 +87,8 @@ export const OrderPosReviewPage = () => {
         <PosReviewMainColumn
           franchiseName={franchiseDisplayName}
           displayItems={displayItems}
-          draftAddress={draftAddress}
-          draftMessage={draftMessage}
           isMutatingCart={isMutatingCart}
           onBack={goBackToBuilder}
-          onDraftAddressChange={setDraftAddress}
-          onDraftMessageChange={setDraftMessage}
-          onSaveCartInfo={() => {
-            void saveCartInfo();
-          }}
           onEditItem={editCartItem}
           onIncreaseItem={addOneMoreOfCartItem}
           onDecreaseItem={decreaseCartItemQuantity}
@@ -91,19 +99,14 @@ export const OrderPosReviewPage = () => {
         <PosReviewSummarySidebar
           cart={cart}
           customerName={customerName}
-          draftPhone={draftPhone}
           voucherCode={voucherCode}
           isMutatingCart={isMutatingCart}
           canApplyVoucher={canApplyVoucher}
           canCheckout={canCheckout}
-          onDraftPhoneChange={setDraftPhone}
-          onSaveCartInfo={() => {
-            void saveCartInfo();
-          }}
           onVoucherCodeChange={setVoucherCode}
           onApplyVoucher={applyVoucher}
           onRemoveVoucher={removeVoucher}
-          onCheckout={checkoutCart}
+          onCheckout={openCheckoutModal}
         />
       </main>
 
@@ -111,7 +114,19 @@ export const OrderPosReviewPage = () => {
         canCheckout={canCheckout}
         isMutatingCart={isMutatingCart}
         onBack={goBackToBuilder}
-        onCheckout={checkoutCart}
+        onCheckout={openCheckoutModal}
+      />
+
+      <PosReviewCheckoutModal
+        open={isCheckoutModalOpen}
+        initialValues={{
+          address: draftAddress,
+          phone: draftPhone,
+          message: draftMessage,
+        }}
+        isSubmitting={isMutatingCart}
+        onClose={closeCheckoutModal}
+        onConfirm={checkoutCart}
       />
 
       <PosProductConfigModal

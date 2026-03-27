@@ -36,7 +36,7 @@ export const PosReviewMobileNav = ({
         className="flex w-20 flex-col items-center gap-1 text-gray-400 transition hover:text-amber-800 disabled:opacity-50"
       >
         <CreditCard size={20} />
-        <span className="text-center text-[10px] font-bold uppercase tracking-widest">Checkout</span>
+        <span className="text-center text-[10px] font-bold uppercase tracking-widest">Thanh toán</span>
       </button>
     </div>
   );

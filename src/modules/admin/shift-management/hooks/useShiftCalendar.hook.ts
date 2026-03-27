@@ -17,6 +17,7 @@ import type { ShiftFilters } from './useShiftFilters.hook'
 import type { ShiftAssignmentLookupData } from '../utils/shift-import.excel'
 import type { ShiftCalendarViewMode } from '../stores/shift-management.store'
 import { getRoleCode, useAdminAuthStore } from '@/modules/admin/auth-admin/stores/admin-auth.store'
+import { formatDateKey, isPastDate } from '../utils/shift.helpers'
 
 export type ShiftAssignmentStatus = ApiShiftAssignmentStatus
 
@@ -52,6 +53,7 @@ export interface CalendarDay {
   date: Date
   isCurrentMonth: boolean
   isToday: boolean
+  isPast: boolean
   assignments: ShiftAssignmentView[]
   shifts: DailyShiftView[]
 }
@@ -68,13 +70,6 @@ interface CalendarSnapshot {
   shiftsMap: Map<string, ShiftItem>
   franchisesData: FranchiseOptionItem[]
   franchisesMap: Map<string, FranchiseOptionItem>
-}
-
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
 }
 
 const normalizeDateKey = (dateValue: string) => {
@@ -599,6 +594,7 @@ export const useShiftCalendar = (
         date: currentDate,
         isCurrentMonth: currentDate.getMonth() === monthDate.getMonth(),
         isToday: dateKey === todayKey,
+        isPast: isPastDate(currentDate),
         assignments: assignmentsForDay,
         shifts: allShiftsForDay,
       })

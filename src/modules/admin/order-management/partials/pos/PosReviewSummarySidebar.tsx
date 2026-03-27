@@ -6,13 +6,10 @@ const currency = new Intl.NumberFormat("vi-VN");
 interface PosReviewSummarySidebarProps {
   cart: CartDetail;
   customerName: string;
-  draftPhone: string;
   voucherCode: string;
   isMutatingCart: boolean;
   canApplyVoucher: boolean;
   canCheckout: boolean;
-  onDraftPhoneChange: (value: string) => void;
-  onSaveCartInfo: () => void | Promise<void>;
   onVoucherCodeChange: (value: string) => void;
   onApplyVoucher: () => void | Promise<void>;
   onRemoveVoucher?: () => void | Promise<void>;
@@ -22,13 +19,10 @@ interface PosReviewSummarySidebarProps {
 export const PosReviewSummarySidebar = ({
   cart,
   customerName,
-  draftPhone,
   voucherCode,
   isMutatingCart,
   canApplyVoucher,
   canCheckout,
-  onDraftPhoneChange,
-  onSaveCartInfo,
   onVoucherCodeChange,
   onApplyVoucher,
   onRemoveVoucher,
@@ -57,22 +51,6 @@ export const PosReviewSummarySidebar = ({
               title={customerName}
             >
               {customerName}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-gray-500">Số điện thoại</span>
-            <span className="w-full font-medium text-gray-900 sm:w-auto">
-              <input
-                type="tel"
-                value={draftPhone}
-                onChange={(event) => onDraftPhoneChange(event.target.value)}
-                onBlur={() => {
-                  void onSaveCartInfo();
-                }}
-                disabled={isMutatingCart}
-                className="w-full border-none bg-transparent p-0 text-left font-medium text-gray-900 placeholder:text-gray-400 focus:ring-0 disabled:opacity-50 sm:w-auto sm:text-right"
-                placeholder="Nhập SĐT..."
-              />
             </span>
           </div>
         </div>
@@ -174,9 +152,6 @@ export const PosReviewSummarySidebar = ({
             {isMutatingCart ? "Đang xử lý..." : "Xác nhận thanh toán"}
           </span>
         </button>
-        <p className="mt-6 px-4 text-center text-xs text-gray-400">
-          Bật tính năng thông báo sau khi xác nhận đơn hàng tại quầy!
-        </p>
       </div>
     </aside>
   );

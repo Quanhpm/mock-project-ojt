@@ -26,18 +26,13 @@ import type {
   ShiftAssignmentView,
 } from '../hooks/useShiftCalendar.hook'
 import { useShiftManagementStore } from '../stores/shift-management.store'
-
-const formatDateKey = (date: Date) => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-const parseDateKey = (dateKey: string | null) => {
-  if (!dateKey) return null
-  return new Date(`${dateKey}T00:00:00`)
-}
+import {
+  extractBackendMessage,
+  formatDateKey,
+  isPastDate,
+  isPastDateKey,
+  parseDateKey,
+} from '../utils/shift.helpers'
 
 interface ActiveDragUser {
   userId: string
@@ -125,6 +120,7 @@ function ShiftManagement() {
   } = useShiftCalendar(filters, resolvedFranchiseId, viewMode)
 
   const selectedDate = parseDateKey(selectedDateKey)
+  const selectedDateIsPast = selectedDate ? isPastDate(selectedDate) : false
 
   const selectedAssignments = useMemo(() => {
     if (!selectedDateKey) return []
@@ -232,7 +228,7 @@ function ShiftManagement() {
   }
 
   const handleOpenQuickAssignModal = () => {
-    if (!selectedDateKey) return
+    if (!selectedDateKey || selectedDateIsPast) return
     setIsQuickAssignModalOpen(true)
   }
 
@@ -250,10 +246,13 @@ function ShiftManagement() {
   }
 
   const handleSelectDate = (date: Date) => {
+    if (isPastDate(date)) return
     setSelectedDate(formatDateKey(date))
   }
 
   const handleOpenShiftDetail = (shiftId: string, workDate: string) => {
+    if (isPastDateKey(workDate)) return
+
     if (isStaff) {
       setSelectedDate(workDate)
       return
@@ -280,7 +279,10 @@ function ShiftManagement() {
       reloadCalendarData()
     } catch (updateError) {
       console.error('Failed to update assignment status:', updateError)
-      showError('Failed to update assignment status', 'Please try again.')
+      showError(
+        'Failed to update assignment status',
+        extractBackendMessage(updateError, 'Please try again.'),
+      )
     } finally {
       setUpdatingAssignmentId(null)
     }
@@ -302,7 +304,7 @@ function ShiftManagement() {
       setDeleteTarget(null)
     } catch (deleteError) {
       console.error('Failed to delete assignment:', deleteError)
-      showError('Failed to delete assignment', 'Please try again.')
+      showError('Failed to delete assignment', extractBackendMessage(deleteError, 'Please try again.'))
     } finally {
       setDeletingAssignmentId(null)
     }
@@ -332,7 +334,7 @@ function ShiftManagement() {
       setEditingShift(null)
     } catch (updateError) {
       console.error('Failed to update shift:', updateError)
-      showError('Failed to update shift', 'Please try again.')
+      showError('Failed to update shift', extractBackendMessage(updateError, 'Please try again.'))
     } finally {
       setIsUpdatingShift(false)
     }
@@ -371,7 +373,7 @@ function ShiftManagement() {
       return true
     } catch (bulkImportError) {
       console.error('Failed to import shift assignments:', bulkImportError)
-      showError('Import failed', 'Please try again.')
+      showError('Import failed', extractBackendMessage(bulkImportError, 'Please try again.'))
       return false
     } finally {
       setIsImportingShifts(false)
@@ -382,7 +384,7 @@ function ShiftManagement() {
     shiftId: string
     userId: string
   }) => {
-    if (!selectedDateKey) return
+    if (!selectedDateKey || selectedDateIsPast) return
 
     const assignedUserIds = new Set(quickAssignAssignedUserIdsByShiftId[values.shiftId] || [])
     if (assignedUserIds.has(values.userId)) {
@@ -406,7 +408,10 @@ function ShiftManagement() {
       setIsQuickAssignModalOpen(false)
     } catch (quickAssignError) {
       console.error('Failed to create quick assignment:', quickAssignError)
-      showError('Failed to create assignment', 'Please try again.')
+      showError(
+        'Failed to create assignment',
+        extractBackendMessage(quickAssignError, 'Please try again.'),
+      )
     } finally {
       setIsQuickAssignSubmitting(false)
     }
@@ -425,8 +430,18 @@ function ShiftManagement() {
   const handleDragOver = (event: DragOverEvent) => {
     const overData = event.over?.data.current
     if (overData?.type === 'date') {
+      if (isPastDateKey(overData.date)) {
+        setHoveredDateKey(null)
+        return
+      }
+
       setHoveredDateKey(overData.date)
     } else if (overData?.type === 'shift') {
+      if (isPastDateKey(overData.workDate)) {
+        setHoveredDateKey(null)
+        return
+      }
+
       setHoveredDateKey(overData.workDate)
     } else {
       setHoveredDateKey(null)
@@ -437,66 +452,76 @@ function ShiftManagement() {
     setActiveDragUser(null)
     setHoveredDateKey(null)
 
-    const overData = event.over?.data.current
-    const activeData = event.active.data.current
+    try {
+      const overData = event.over?.data.current
+      const activeData = event.active.data.current
 
-    if (overData?.type === 'shift') {
-      const shiftId = overData.shiftId
-      const workDate = overData.workDate
+      if (!overData || !activeData) return
 
-      if (activeData?.type === 'user') {
-        const userId = activeData.user.userId
-        const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
-        
-        if (assignedIds.includes(userId)) {
-          showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
-          return
-        }
+      if (overData.type === 'date' && isPastDateKey(overData.date)) return
+      if (overData.type === 'shift' && isPastDateKey(overData.workDate)) return
 
-        try {
-          await shiftApi.assignShiftToUser({
-            shift_id: shiftId,
-            user_id: userId,
-            work_date: workDate,
-          })
-          success('Gán nhân viên thành công', `Đã phân công ${activeData.user.userName}.`)
-          reloadCalendarData()
-        } catch {
-          showError('Gán nhân viên thất bại', 'Vui lòng thử lại.')
-        }
-      } else if (activeData?.type === 'assignment') {
-        const userId = activeData.user.userId
-        const oldAssignmentId = activeData.assignmentId
-        const oldShiftId = activeData.shiftId
-        const oldWorkDate = activeData.workDate
+      if (overData.type === 'shift') {
+        const shiftId = overData.shiftId
+        const workDate = overData.workDate
 
-        if (oldShiftId === shiftId && oldWorkDate === workDate) {
-          return
-        }
+        if (activeData.type === 'user') {
+          const userId = activeData.user.userId
+          const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
 
-        const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
-        if (assignedIds.includes(userId)) {
-          showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
-          return
-        }
+          if (assignedIds.includes(userId)) {
+            showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
+            return
+          }
 
-        try {
-          await shiftApi.deleteShiftAssignment(oldAssignmentId)
-          await shiftApi.assignShiftToUser({
-            shift_id: shiftId,
-            user_id: userId,
-            work_date: workDate,
-          })
-          success('Chuyển ca thành công', `Đã chuyển ${activeData.user.userName} sang ca mới.`)
-          reloadCalendarData()
-        } catch {
-          showError('Chuyển ca thất bại', 'Vui lòng thử lại.')
+          try {
+            await shiftApi.assignShiftToUser({
+              shift_id: shiftId,
+              user_id: userId,
+              work_date: workDate,
+            })
+            success('Gán nhân viên thành công', `Đã phân công ${activeData.user.userName}.`)
+            reloadCalendarData()
+          } catch (assignError) {
+            showError(
+              'Gán nhân viên thất bại',
+              extractBackendMessage(assignError, 'Vui lòng thử lại.'),
+            )
+          }
+        } else if (activeData.type === 'assignment') {
+          const userId = activeData.user.userId
+          const oldAssignmentId = activeData.assignmentId
+          const oldShiftId = activeData.shiftId
+          const oldWorkDate = activeData.workDate
+
+          if (oldShiftId === shiftId && oldWorkDate === workDate) {
+            return
+          }
+
+          const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
+          if (assignedIds.includes(userId)) {
+            showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
+            return
+          }
+
+          try {
+            await shiftApi.deleteShiftAssignment(oldAssignmentId)
+            await shiftApi.assignShiftToUser({
+              shift_id: shiftId,
+              user_id: userId,
+              work_date: workDate,
+            })
+            success('Chuyển ca thành công', `Đã chuyển ${activeData.user.userName} sang ca mới.`)
+            reloadCalendarData()
+          } catch (moveError) {
+            showError('Chuyển ca thất bại', extractBackendMessage(moveError, 'Vui lòng thử lại.'))
+          }
         }
       }
+    } finally {
+      // Đóng modal bất kể thả vào đâu
+      setCloseSignal((prev) => prev + 1)
     }
-
-    // Đóng modal bất kể thả vào đâu
-    setCloseSignal((prev) => prev + 1)
   }
 
   return (
@@ -627,20 +652,20 @@ function ShiftManagement() {
                   <ShiftCalendar
                     monthLabel={monthLabel}
                     calendarDays={calendarDays}
-                    selectedDate={selectedDate}
-                    viewMode={viewMode}
-                    hoveredDateKey={hoveredDateKey}
-                    closeSignal={closeSignal}
-                    onSelectDate={handleSelectDate}
-                    onPrevMonth={handlePrevMonth}
-                    onNextMonth={handleNextMonth}
-                    onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
-                  />
+                  selectedDate={selectedDate}
+                  viewMode={viewMode}
+                  hoveredDateKey={hoveredDateKey}
+                  closeSignal={closeSignal}
+                  onSelectDate={handleSelectDate}
+                  onPrevMonth={handlePrevMonth}
+                  onNextMonth={handleNextMonth}
+                  onOpenShiftDetail={(shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                />
                 ) : (
                   <ShiftDailyTimeline
                     selectedDay={calendarDays.find((d) => formatDateKey(d.date) === selectedDateKey)}
                     onSelectDate={handleSelectDate}
-                    onOpenShiftDetail={isStaff ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                    onOpenShiftDetail={isStaff || selectedDateIsPast ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
                   />
                 )}
               </div>
@@ -654,8 +679,8 @@ function ShiftManagement() {
                     selectedDate={selectedDate}
                     assignments={selectedAssignments}
                     shifts={selectedShifts}
-                    onCreateAssignment={isStaff ? undefined : handleOpenQuickAssignModal}
-                    onOpenShiftDetail={isStaff ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
+                    onCreateAssignment={isStaff || selectedDateIsPast ? undefined : handleOpenQuickAssignModal}
+                    onOpenShiftDetail={isStaff || selectedDateIsPast ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
                     onEditShift={isStaff ? undefined : handleEditShift}
                     onStatusChange={isStaff ? undefined : handleStatusChange}
                     onDeleteAssignment={isStaff ? undefined : handleDeleteRequest}

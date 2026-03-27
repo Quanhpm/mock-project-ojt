@@ -34,37 +34,41 @@ export const StaffOrderQueueHeader = ({
   };
 
   return (
-    <div className="rounded-[32px] border border-[#EDE5D8] bg-white px-4 py-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] sm:px-6 md:px-8">
+    <div className="rounded-3xl border border-gray-200 bg-white p-4 shadow-sm ring-1 ring-black/5 sm:p-6 md:p-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-xl">
-          <p className="inline-flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">
-            <span className="h-2 w-2 rounded-full bg-[#C85712] animate-pulse" />
+          <p className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.16em] text-gray-500">
+            <span className="inline-flex h-5 items-center rounded-full bg-amber-50 px-2 text-[10px] font-black text-amber-700 ring-1 ring-amber-700/10">
+              LIVE
+            </span>
             Staff Order Queue
           </p>
-          <h1 className="mt-3 text-[2.5rem] font-black leading-none tracking-tight text-gray-900">
+          <h1 className="mt-3 text-3xl font-black leading-none tracking-tight text-gray-900">
             Hàng đợi làm món
           </h1>
-          <p className="mt-4 text-[0.95rem] leading-relaxed text-gray-500">
+          <p className="mt-3 text-sm leading-relaxed text-gray-500">
             Theo dõi các order vừa thanh toán và đang chuẩn bị, ưu tiên hiển thị đơn mới nhất lên trước để staff xử lý nhanh.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col justify-center rounded-[24px] bg-[#FCFBF8] px-6 py-4 ring-1 ring-inset ring-[#EDE5D8]">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">Chi nhánh</p>
-            <p className="mt-1.5 text-[0.95rem] font-black text-gray-900">{franchiseName || "Theo franchise hiện tại"}</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col justify-center rounded-2xl bg-gray-50 px-5 py-3.5 ring-1 ring-black/5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Chi nhánh</p>
+            <p className="mt-1 text-sm font-bold text-gray-900">{franchiseName || "Theo franchise hiện tại"}</p>
           </div>
 
-          <div className="flex flex-col justify-center rounded-[24px] bg-gradient-to-br from-orange-50 to-orange-100 px-6 py-4 ring-1 ring-inset ring-[#C85712]/10 shadow-inner">
-            <p className="text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">Đơn đang chờ</p>
-            <p className="mt-1 text-3xl font-black tracking-tight text-[#C85712]">{totalOrders}</p>
+          <div className="flex flex-col justify-center rounded-2xl bg-amber-50/60 px-5 py-3.5 ring-1 ring-amber-700/10">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Đơn đang chờ</p>
+            <p className="mt-1 text-2xl font-black tracking-tight text-amber-800">{totalOrders}</p>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 rounded-[24px] bg-gradient-to-r from-[#FCFBF8] to-[#FDFCF9] p-4 ring-1 ring-inset ring-[#EDE5D8]">
-        <p className="px-3 text-[0.65rem] font-black uppercase tracking-[0.2em] text-[#A3581E]">Lọc theo trạng thái</p>
-        <div className="mt-3 flex flex-wrap gap-2.5">
+      <div className="mt-6 rounded-2xl bg-gray-50/80 p-3 ring-1 ring-black/5">
+        <div className="mb-2 flex items-center gap-2 px-2 text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">
+          <span>Lọc theo trạng thái</span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
           {SORT_OPTIONS.map((option) => {
             const isActive = sortMode === option.value;
 
@@ -73,15 +77,15 @@ export const StaffOrderQueueHeader = ({
                 key={option.value}
                 type="button"
                 onClick={() => onSortChange(option.value)}
-                className={`flex w-full items-center justify-between gap-2.5 rounded-[16px] px-4 py-3 text-[0.9rem] font-black uppercase tracking-[0.05em] transition-all active:scale-95 sm:w-auto sm:px-5 ${
+                className={`flex w-full items-center justify-between gap-2.5 rounded-2xl px-4 py-3 text-sm font-bold transition-all active:scale-95 sm:w-auto sm:px-5 ${
                   isActive
-                    ? "bg-gradient-to-r from-[#C85712] to-[#A3581E] text-white shadow-[0_4px_12px_-4px_rgba(200,87,18,0.4)]"
-                    : "bg-white text-gray-600 ring-1 ring-inset ring-gray-200 hover:bg-[#FDFCF9] hover:text-[#C85712] hover:ring-[#F0D8B7]"
+                    ? "bg-amber-700 text-white shadow-lg shadow-amber-700/20"
+                    : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50 hover:text-amber-800 hover:ring-amber-600/20"
                 }`}
               >
                 <span>{option.label}</span>
                 <span
-                  className={`flex h-5 items-center justify-center rounded-lg px-2 text-[0.7rem] font-black shadow-inner ${
+                  className={`flex h-5 items-center justify-center rounded-lg px-2 text-xs font-black ${
                     isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"
                   }`}
                 >

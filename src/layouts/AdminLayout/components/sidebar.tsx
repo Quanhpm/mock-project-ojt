@@ -35,6 +35,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const roleCode = getRoleCode(store);
   const franchiseId = getFranchiseId(store);
   const { admin } = store;
+  const [hasAvatarError, setHasAvatarError] = React.useState(false);
+  const avatarUrl = admin?.avatar_url?.trim() || "";
+
+  React.useEffect(() => {
+    setHasAvatarError(false);
+  }, [avatarUrl]);
 
   const handleLogout = async () => {
     await logout();
@@ -162,12 +168,21 @@ const Sidebar: React.FC<SidebarProps> = ({
           `}
         >
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center"
+            className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: THEME_COLORS.primary }}
           >
-            <span className="text-white font-semibold text-sm">
-              {admin?.email?.charAt(0).toUpperCase() || "A"}
-            </span>
+            {avatarUrl && !hasAvatarError ? (
+              <img
+                src={avatarUrl}
+                alt={admin?.name || admin?.email || "Admin avatar"}
+                className="h-full w-full object-cover"
+                onError={() => setHasAvatarError(true)}
+              />
+            ) : (
+              <span className="text-white font-semibold text-sm">
+                {(admin?.name || admin?.email || "A").charAt(0).toUpperCase()}
+              </span>
+            )}
           </div>
           <div className="flex-1 min-w-0 text-left">
             <p
@@ -177,7 +192,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : "text-gray-800 group-hover:text-amber-900"
               }`}
             >
-              {admin?.email || "Admin User"}
+              {admin?.name || admin?.email || "Admin User"}
             </p>
             <p
               className={`text-xs truncate transition-colors ${
@@ -186,7 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : "text-gray-500 group-hover:text-amber-700"
               }`}
             >
-              {roleCode} {franchiseId && `- Franchise ${franchiseId}`}
+              {admin?.email || roleCode} {franchiseId && `- Franchise ${franchiseId}`}
             </p>
           </div>
         </button>

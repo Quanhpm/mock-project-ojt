@@ -10,8 +10,6 @@ import { loadPosReviewCartUsecase } from "../usecases/load-pos-review-cart.useca
 import { usePosMenuData } from "./use-pos-menu-data";
 import { usePosSession } from "./use-pos-session";
 
-const DEFAULT_COUNTER_MESSAGE = "Mua tại quầy";
-
 const buildCustomerOptionFromCart = (cart: CartDetail): CustomerOption => {
   return {
     id: cart.customer_id,
@@ -38,7 +36,7 @@ export const usePosReviewLoader = () => {
   const [cart, setCart] = useState<CartDetail | null>(null);
   const [draftAddressState, setDraftAddressState] = useState("");
   const [draftPhoneState, setDraftPhoneState] = useState("");
-  const [draftMessageState, setDraftMessageState] = useState(DEFAULT_COUNTER_MESSAGE);
+  const [draftMessageState, setDraftMessageState] = useState("");
   const [voucherCode, setVoucherCode] = useState("");
 
   const selectedCustomerIdRef = useRef<string | null>(selectedCustomer?.id ?? null);
@@ -127,7 +125,7 @@ export const usePosReviewLoader = () => {
       const { force = false } = options;
       const nextAddress = customer?.address || nextCart.address || "";
       const nextPhone = customer?.phone || nextCart.phone || "";
-      const nextMessage = nextCart.message || DEFAULT_COUNTER_MESSAGE;
+      const nextMessage = nextCart.message ?? "";
 
       if (force || !isDraftAddressDirtyRef.current) {
         setDraftAddressState(nextAddress);

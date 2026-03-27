@@ -1,36 +1,34 @@
 import type { StaffQueueOrder } from "../../models/order.models";
-import { StaffOrderQueueCard } from "./StaffOrderQueueCard";
+import { StaffOrderQueueListItem } from "./StaffOrderQueueListItem";
 
-interface StaffOrderQueueGridProps {
+interface StaffOrderQueueListProps {
   orders: StaffQueueOrder[];
   isLoading: boolean;
+  selectedOrderId?: string;
   emptyStateTitle?: string;
   emptyStateDescription?: string;
-  updatingOrderId?: string | null;
   loadMoreTriggerIndex?: number;
   onLoadMoreTriggerRef?: (node: HTMLDivElement | null) => void;
-  onMarkPreparing: (order: StaffQueueOrder) => void;
-  onMarkReadyForPickup: (order: StaffQueueOrder) => void;
+  onSelectOrder: (orderId: string) => void;
 }
 
-export const StaffOrderQueueGrid = ({
+export const StaffOrderQueueList = ({
   orders,
   isLoading,
+  selectedOrderId,
   emptyStateTitle,
   emptyStateDescription,
-  updatingOrderId,
   loadMoreTriggerIndex,
   onLoadMoreTriggerRef,
-  onMarkPreparing,
-  onMarkReadyForPickup,
-}: StaffOrderQueueGridProps) => {
+  onSelectOrder,
+}: StaffOrderQueueListProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+      <div className="flex flex-col gap-3">
         {[...Array(6)].map((_, index) => (
           <div
             key={index}
-            className="min-h-[520px] animate-pulse rounded-[24px] border border-gray-200 bg-gray-50/50 ring-1 ring-black/5"
+            className="h-[132px] animate-pulse rounded-[24px] border border-gray-200 bg-gray-100"
           />
         ))}
       </div>
@@ -55,17 +53,16 @@ export const StaffOrderQueueGrid = ({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 xl:grid-cols-2 2xl:grid-cols-3">
+    <div className="flex flex-col gap-3">
       {orders.map((order, index) => (
         <div
           key={order._id}
           ref={index === loadMoreTriggerIndex ? onLoadMoreTriggerRef : undefined}
         >
-          <StaffOrderQueueCard
+          <StaffOrderQueueListItem
             order={order}
-            isUpdating={updatingOrderId === order._id}
-            onMarkPreparing={onMarkPreparing}
-            onMarkReadyForPickup={onMarkReadyForPickup}
+            isSelected={selectedOrderId === order._id}
+            onClick={() => onSelectOrder(order._id)}
           />
         </div>
       ))}
@@ -73,4 +70,4 @@ export const StaffOrderQueueGrid = ({
   );
 };
 
-export default StaffOrderQueueGrid;
+export default StaffOrderQueueList;

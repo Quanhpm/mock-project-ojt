@@ -1,12 +1,9 @@
 import {
   ArrowLeft,
-  Clock,
-  MapPin,
   Minus,
   Plus,
   Store,
   Trash2,
-  Truck,
 } from "lucide-react";
 import type { CartItem } from "../../models/cart.models";
 
@@ -15,13 +12,8 @@ const currency = new Intl.NumberFormat("vi-VN");
 interface PosReviewMainColumnProps {
   franchiseName?: string;
   displayItems: CartItem[];
-  draftAddress: string;
-  draftMessage: string;
   isMutatingCart: boolean;
   onBack: () => void;
-  onDraftAddressChange: (value: string) => void;
-  onDraftMessageChange: (value: string) => void;
-  onSaveCartInfo: () => void | Promise<void>;
   onEditItem: (item: CartItem) => void;
   onIncreaseItem: (item: CartItem) => void | Promise<void>;
   onDecreaseItem: (item: CartItem) => void | Promise<void>;
@@ -32,13 +24,8 @@ interface PosReviewMainColumnProps {
 export const PosReviewMainColumn = ({
   franchiseName,
   displayItems,
-  draftAddress,
-  draftMessage,
   isMutatingCart,
   onBack,
-  onDraftAddressChange,
-  onDraftMessageChange,
-  onSaveCartInfo,
   onEditItem,
   onIncreaseItem,
   onDecreaseItem,
@@ -191,57 +178,6 @@ export const PosReviewMainColumn = ({
           >
             Xóa giỏ hàng
           </button>
-        </div>
-
-        <div className="border-t border-gray-100 pt-6">
-          <label className="mb-3 block text-sm font-bold uppercase tracking-widest text-gray-400">
-            GHI CHÚ TRƯỚC KHI THANH TOÁN
-          </label>
-          <textarea
-            value={draftMessage}
-            onChange={(event) => onDraftMessageChange(event.target.value)}
-            onBlur={() => {
-              void onSaveCartInfo();
-            }}
-            disabled={isMutatingCart}
-            className="min-h-[100px] w-full resize-none border-0 border-b-2 border-gray-200 bg-transparent px-0 py-4 text-gray-900 transition-all placeholder:text-gray-400 focus:border-amber-800 focus:ring-0 disabled:opacity-50"
-            placeholder="Thêm ghi chú tổng cho cửa hàng (Ví dụ: Mang về, nhiều đá...)"
-          />
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center gap-4">
-          <Truck className="text-amber-800" size={24} />
-          <h3 className="text-xl font-bold">Thông tin giao hàng</h3>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex gap-4 rounded-xl bg-gray-50 p-4 ring-1 ring-black/5">
-            <MapPin className="mt-0.5 shrink-0 text-gray-400" size={20} />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-gray-900">Địa chỉ nhận hàng</p>
-              <input
-                type="text"
-                value={draftAddress}
-                onChange={(event) => onDraftAddressChange(event.target.value)}
-                onBlur={() => {
-                  void onSaveCartInfo();
-                }}
-                disabled={isMutatingCart}
-                placeholder="Nhập địa chỉ..."
-                className="mt-1 w-full border-none bg-transparent p-0 text-sm text-gray-600 focus:ring-0 disabled:opacity-50"
-              />
-            </div>
-          </div>
-
-          <div className="flex gap-4 rounded-xl bg-gray-50 p-4 ring-1 ring-black/5">
-            <Clock className="mt-0.5 shrink-0 text-gray-400" size={20} />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-gray-900">Thời gian phục vụ</p>
-              <p className="mt-1 text-sm text-gray-600">Sớm nhất có thể (10 - 20 phút)</p>
-            </div>
-          </div>
         </div>
       </section>
     </div>

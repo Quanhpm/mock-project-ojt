@@ -5,6 +5,7 @@ import type {
   FranchiseOptionItem,
   UserFranchiseRoleItem,
 } from '@/apis/endpoints'
+import { extractBackendMessage } from '../utils/shift.helpers'
 
 // ======================== Types ========================
 
@@ -144,8 +145,7 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
         setError('Failed to create shift. No shift ID returned.')
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create shift.'
-      setError(message)
+      setError(extractBackendMessage(err, 'Failed to create shift.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -170,8 +170,7 @@ export const useCreateShift = (onSuccess?: () => void): UseCreateShiftReturn => 
         })
         onSuccess?.()
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : 'Failed to assign staff.'
-        setError(message)
+        setError(extractBackendMessage(err, 'Failed to assign staff.'))
       } finally {
         setIsSubmitting(false)
       }
