@@ -8,6 +8,7 @@ import { changePassword, logoutCustomer } from '@/apis/endpointsCLIENT/customerA
 import { ROUTER_URL } from '@/routes/router.const';
 import { useClientAuthStore } from '../../stores/client-auth.store';
 import { changePasswordSchema } from '../../schemas/client-change-password.schema';
+import { ConfirmModal } from './ConfirmLeaveModal';
 
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
@@ -18,6 +19,9 @@ function SecurityForm() {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showChangePasswordConfirm, setShowChangePasswordConfirm] = useState(false);
+  const [pendingPasswordData, setPendingPasswordData] = useState<ChangePasswordFormValues | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const { success, error: showError } = useToast();
 
@@ -30,11 +34,23 @@ function SecurityForm() {
     resolver: zodResolver(changePasswordSchema),
   });
 
-  const onSubmit = handleSubmit(async (data) => {
+  const handleOpenChangePasswordConfirm = handleSubmit((data) => {
+    setPendingPasswordData(data);
+    setShowChangePasswordConfirm(true);
+  });
+
+  const handleConfirmChangePassword = async () => {
+    if (!pendingPasswordData) {
+      return;
+    }
+
+    setShowChangePasswordConfirm(false);
+    setIsChangingPassword(true);
+
     try {
       await changePassword({
-        old_password: data.currentPassword,
-        new_password: data.newPassword,
+        old_password: pendingPasswordData.currentPassword,
+        new_password: pendingPasswordData.newPassword,
       });
       success('Đổi mật khẩu thành công!');
       reset();
@@ -49,17 +65,39 @@ function SecurityForm() {
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         'Đổi mật khẩu thất bại, vui lòng thử lại.';
       showError(msg);
+    } finally {
+      setIsChangingPassword(false);
+      setPendingPasswordData(null);
     }
-  });
+  };
 
   return (
-    <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-      <div className="flex items-center gap-2 mb-4">
-        <span className="material-symbols-outlined text-primary text-[20px]">lock</span>
-        <h3 className="text-sm font-bold text-gray-800">Bảo mật</h3>
-      </div>
+    <>
+      <ConfirmModal
+        isOpen={showChangePasswordConfirm}
+        title="Xác nhận đổi mật khẩu"
+        description="Bạn có chắc chắn muốn đổi mật khẩu không?"
+        cancelLabel="Huỷ"
+        confirmLabel="Xác nhận"
+        icon="lock_reset"
+        iconBgClass="bg-primary/10 border border-primary/20"
+        iconColorClass="text-primary"
+        onCancel={() => {
+          setShowChangePasswordConfirm(false);
+          setPendingPasswordData(null);
+        }}
+        onConfirm={() => {
+          void handleConfirmChangePassword();
+        }}
+      />
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <section className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="material-symbols-outlined text-primary text-[20px]">lock</span>
+          <h3 className="text-sm font-bold text-gray-800">Bảo mật</h3>
+        </div>
+
+        <form onSubmit={handleOpenChangePasswordConfirm} className="flex flex-col gap-4">
         {/* Current Password */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
@@ -143,10 +181,10 @@ function SecurityForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isChangingPassword}
           className="cursor-pointer w-full py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-[#6c4830] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? (
+          {isSubmitting || isChangingPassword ? (
             <>
               <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
               Đang đổi...
@@ -158,8 +196,9 @@ function SecurityForm() {
             </>
           )}
         </button>
-      </form>
-    </section>
+        </form>
+      </section>
+    </>
   );
 }
 

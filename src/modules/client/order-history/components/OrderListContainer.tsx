@@ -1,5 +1,4 @@
 import { formatCurrency, formatDate } from '@/utils';
-import { Eye } from 'lucide-react';
 import { statusConfig } from '../order.config';
 import type { OrderData } from '../order.types';
 
@@ -30,7 +29,7 @@ interface OrderListContainerProps {
 function OrderListContainer({ orders, onViewDetail }: OrderListContainerProps) {
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:hidden">
+      <div className="sm:hidden space-y-4">
         {orders.map((order) => {
           const config = statusConfig[order.status.code];
           return (
@@ -50,14 +49,14 @@ function OrderListContainer({ orders, onViewDetail }: OrderListContainerProps) {
                 className="w-full inline-flex items-center justify-center gap-1 px-4 py-2 rounded-lg text-sm font-bold text-zinc-500 hover:text-white hover:bg-primary transition-all cursor-pointer border-2 border-zinc-200 hover:border-primary active:scale-95"
               >
                 Xem chi tiết
-                <Eye className="size-4" />
+                <span className="material-symbols-outlined text-base">visibility</span>
               </button>
             </div>
           );
         })}
       </div>
 
-      <div className="hidden lg:block overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl">
+      <div className="hidden sm:block overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -95,7 +94,7 @@ function OrderListContainer({ orders, onViewDetail }: OrderListContainerProps) {
                         className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-bold text-zinc-400 hover:text-white hover:bg-primary transition-all cursor-pointer border-2 border-zinc-200 hover:border-primary shadow-sm hover:shadow-md active:scale-95"
                       >
                         Xem chi tiết
-                        <Eye className="size-4" />
+                        <span className="material-symbols-outlined text-base">visibility</span>
                       </button>
                     </td>
                   </tr>

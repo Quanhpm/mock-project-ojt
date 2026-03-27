@@ -29,10 +29,8 @@ export const HomePrivateRoutes = (
       <Route path={ROUTER_URL.HOME_ROUTER.ORDER_HISTORY} element={<OrderHistoryPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.PROFILE} element={<ProfilePage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.LOYALTY} element={<ClientLoyaltyPage />} />
-      {/* <Route path={ROUTER_URL.HOME_ROUTER.CHANGE_PASSWORD} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Change Password Page</h1></div>} /> */}
       <Route path={ROUTER_URL.HOME_ROUTER.CHECKOUT} element={<PaymentPage />} />
       <Route path={ROUTER_URL.HOME_ROUTER.PAYMENT} element={<ConfirmPaymentPage />} />
-      {/* <Route path={ROUTER_URL.HOME_ROUTER.SELECT_FRANCHISE} element={<div className="container mx-auto p-8"><h1 className="text-3xl font-bold">Select Franchise Page</h1></div>} /> */}
     </Route>
   </Route>
 );

@@ -17,7 +17,7 @@ function OrderStatsCards({ stats }: OrderStatsCardsProps) {
   return (
     <section className={`grid grid-cols-1 sm:grid-cols-2 ${lgColsClass} gap-6`}>
       {stats.map((stat) => {
-        const Icon = stat.icon;
+        const Icon = stat.iconComponent;
 
         return (
           <div

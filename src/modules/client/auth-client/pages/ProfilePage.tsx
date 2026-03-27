@@ -6,6 +6,8 @@ import { useAuth } from '../context/useAuth';
 import { useClientAuthStore } from '../stores/client-auth.store';
 import { type CustomerUser } from '@/apis/endpointsCLIENT/customerAuth.api';
 import EditProfileModal from '../components/EditProfileModal/index';
+import { ConfirmModal } from '../components/EditProfileModal/ConfirmLeaveModal';
+import { FileLock, LogOut, ShieldUser } from 'lucide-react';
 const DEFAULT_AVATAR_URL = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1774416364/656316159_2765483763813101_1192292787245113307_n_kr1os8.png?fbclid=IwZXh0bgNhZW0CMTAAYnJpZBExMEU4VTBtbWMxR1BqV3JJQnNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR7mDjwZ2GYTsnzs9LxPUaahnkXp2BCJjlLXBWw4D10khK11nfzUFnqKzf7phw_aem_c0TH6FN1XaCmQQSHionzKw';
 
 
@@ -23,6 +25,7 @@ function ProfilePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalInitialTab, setModalInitialTab] = useState<'profile' | 'security'>('profile');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Sync local state when store updates
   useEffect(() => {
@@ -139,7 +142,7 @@ function ProfilePage() {
             <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                 <span className="material-symbols-outlined text-sm">person</span>
-                Full Name
+                Họ và Tên
               </p>
               <p className="text-lg font-semibold text-gray-900">{profile.name}</p>
             </div>
@@ -147,7 +150,7 @@ function ProfilePage() {
             <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                 <span className="material-symbols-outlined text-sm">mail</span>
-                Email Address
+                Địa chỉ email
               </p>
               <p className="text-lg font-semibold text-gray-900">{profile.email}</p>
             </div>
@@ -155,7 +158,7 @@ function ProfilePage() {
             <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                 <span className="material-symbols-outlined text-sm">call</span>
-                Phone Number
+                Số điện thoại
               </p>
               <p className="text-lg font-semibold text-gray-900">{profile.phone || 'Chưa cung cấp'}</p>
             </div>
@@ -163,7 +166,7 @@ function ProfilePage() {
             <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
               <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
                 <span className="material-symbols-outlined text-sm">location_on</span>
-                Address
+                Địa chỉ
               </p>
               <p className="text-lg font-semibold leading-snug text-gray-900">{profile.address || 'Chưa cung cấp'}</p>
             </div>
@@ -171,7 +174,7 @@ function ProfilePage() {
 
           <section className="mb-12">
             <h2 className="mb-6 flex items-center gap-3 px-2 text-xl font-extrabold">
-              <span className="material-symbols-outlined text-primary">security</span>
+              <ShieldUser className="h-6 w-6 text-primary" />
               Quyền riêng tư &amp; Bảo mật
             </h2>
 
@@ -182,7 +185,7 @@ function ProfilePage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <span className="material-symbols-outlined">lock_reset</span>
+                    <FileLock className="h-5 w-5" />
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">Đổi mật khẩu</p>
@@ -201,7 +204,7 @@ function ProfilePage() {
               <div className="flex flex-col justify-between gap-4 p-6 md:flex-row md:items-center">
                 <div className="flex items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
-                    <span className="material-symbols-outlined">logout</span>
+                    <LogOut className="h-5 w-5" />
                   </div>
                   <div>
                     <p className="font-bold text-gray-900">Đăng xuất</p>
@@ -209,7 +212,7 @@ function ProfilePage() {
                   </div>
                 </div>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutConfirm(true)}
                   className="rounded-full border-2 border-red-400 px-6 py-2 text-sm font-bold text-red-500 transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-500 hover:text-white hover:shadow-lg active:scale-95 md:text-base"
                 >
                   Đăng xuất
@@ -242,9 +245,24 @@ function ProfilePage() {
         onClose={() => setIsModalOpen(false)}
         onSaved={handleSaved}
       />
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Xác nhận đăng xuất"
+        description="Bạn có chắc muốn đăng xuất khỏi tài khoản hiện tại không?"
+        cancelLabel="Ở lại"
+        confirmLabel="Đăng xuất"
+        icon="logout"
+        iconBgClass="bg-red-50 border border-red-200"
+        iconColorClass="text-red-500"
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          void handleLogout();
+        }}
+      />
     </>
   );
 }
 
 export default ProfilePage;
-

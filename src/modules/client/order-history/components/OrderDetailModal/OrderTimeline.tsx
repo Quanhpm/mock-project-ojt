@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { formatDate } from '@/utils';
-import { Check, Clock3, LoaderCircle, XCircle } from 'lucide-react';
 import type { OrderStatusCode } from './order-detail.constants';
 
 type TimelineCode = 'DRAFT' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'OUT_FOR_DELIVERY' | 'COMPLETED';
@@ -37,13 +36,15 @@ function TimelineStep({ step, isPassed, isCurrent }: TimelineStepProps) {
         }`}
       >
         {isPassed ? (
-          <Check className="size-4 text-white" />
+          <span className="material-symbols-outlined text-white text-sm">check</span>
         ) : isCurrent ? (
-          isPreparingCurrent ? (
-            <LoaderCircle className="size-4 text-primary animate-[spin_2.5s_linear_infinite]" />
-          ) : (
-            <Clock3 className="size-4 text-primary" />
-          )
+          <span
+            className={`material-symbols-outlined text-primary text-sm ${
+              isPreparingCurrent ? 'animate-[spin_2.5s_linear_infinite]' : ''
+            }`}
+          >
+            {isPreparingCurrent ? 'skillet' : 'pending_actions'}
+          </span>
         ) : null}
       </div>
 
@@ -76,12 +77,12 @@ function TimelineStep({ step, isPassed, isCurrent }: TimelineStepProps) {
 function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
   const timelineSteps = useMemo<TimelineStepData[]>(
     () => [
-      { code: 'DRAFT', label: 'Đã đặt hàng', description: formatDate(createdAt) },
-      { code: 'CONFIRMED', label: 'Đã xác nhận', description: 'Cửa hàng đã xác nhận đơn hàng' },
-      { code: 'PREPARING', label: 'Đang chuẩn bị', description: 'Đang pha chế thức uống' },
-      { code: 'READY_FOR_PICKUP', label: 'Sẵn sàng nhận món', description: 'Đơn hàng đã sẵn sàng tại cửa hàng' },
-      { code: 'OUT_FOR_DELIVERY', label: 'Đang giao hàng', description: 'Đơn hàng đang được giao đến khách hàng' },
-      { code: 'COMPLETED', label: 'Hoàn thành', description: 'Đã giao hàng thành công' },
+      { code: 'DRAFT', label: 'Đặt hàng thành công', description: formatDate(createdAt) },
+      { code: 'CONFIRMED', label: 'Đã xác nhận đơn', description: 'Cửa hàng đã xác nhận đơn hàng của bạn' },
+      { code: 'PREPARING', label: 'Đang chuẩn bị', description: 'Cửa hàng đang chuẩn bị món' },
+      { code: 'READY_FOR_PICKUP', label: 'Sẵn sàng giao', description: 'Shipper đã nhận đơn tại cửa hàng' },
+      { code: 'OUT_FOR_DELIVERY', label: 'Đang giao hàng', description: 'Đơn hàng đang được giao đến bạn' },
+      { code: 'COMPLETED', label: 'Giao hàng thành công', description: 'Đơn hàng đã được giao thành công' },
     ],
     [createdAt],
   );
@@ -95,7 +96,7 @@ function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
       </h3>
       {status === 'CANCELLED' ? (
         <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 flex items-start gap-3">
-          <XCircle className="size-5 text-rose-500 shrink-0" />
+          <span className="material-symbols-outlined text-rose-500">close</span>
           <div>
             <p className="text-sm font-bold text-rose-700">Đơn hàng đã bị hủy</p>
             <p className="text-xs text-rose-700">Đơn hàng không thể tiếp tục xử lý.</p>
@@ -103,7 +104,7 @@ function OrderTimeline({ status, createdAt }: OrderTimelineProps) {
         </div>
       ) : (
         <div className="relative space-y-6">
-          <div className="absolute left-2.75 top-2 bottom-2 w-0.5 bg-slate-200" />
+          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-slate-200" />
           {timelineSteps.map((step, index) => {
             const isCurrent = index === currentStepIndex;
             const isPassed = currentStepIndex > index;

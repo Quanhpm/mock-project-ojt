@@ -21,7 +21,7 @@ export interface OrderData {
   id: string | number;
   code: string;
   cartId?: string;
-  failedReason?: string;
+  failed_reason?: string;
   store: {
     id: string | number;
     name: string;
@@ -45,7 +45,7 @@ export interface OrderData {
     items_count: number;
     created_at: string;
   };
-  cancelReason?: string | null;
+  fail_reason?: string | null;
   message?: string | null;
   orderItems: OrderItemData[];
 }

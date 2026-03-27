@@ -4,50 +4,50 @@ export const PAGE_SIZE = 5;
 
 export const statusConfig = {
   CANCELLED: {
-    label: 'Đã huỷ',
-    color: 'bg-red-500 text-white',
+    label: 'Đã hủy',
+    color: 'bg-red-100 text-red-600',
     textColor: 'text-red-600',
     bgLight: 'bg-red-50',
   },
 
   DRAFT: {
-    label: 'Chờ xác nhận',
-    color: 'bg-orange-500 text-white',
+    label: 'Chờ thanh toán',
+    color: 'bg-orange-100 text-orange-600',
     textColor: 'text-orange-600',
     bgLight: 'bg-orange-50',
   },
 
   CONFIRMED: {
     label: 'Đã xác nhận',
-    color: 'bg-sky-500 text-white',
-    textColor: 'text-sky-600',
-    bgLight: 'bg-sky-50',
-  },
-
-  PREPARING: {
-    label: 'Đang pha chế',
-    color: 'bg-blue-500 text-white',
+    color: 'bg-blue-100 text-blue-600',
     textColor: 'text-blue-600',
     bgLight: 'bg-blue-50',
   },
 
+  PREPARING: {
+    label: 'Đang chuẩn bị',
+    color: 'bg-indigo-100 text-indigo-600',
+    textColor: 'text-indigo-600',
+    bgLight: 'bg-indigo-50',
+  },
+
+  READY_FOR_PICKUP: {
+    label: 'Đã bàn giao shipper',
+    color: 'bg-cyan-100 text-cyan-600',
+    textColor: 'text-cyan-600',
+    bgLight: 'bg-cyan-50',
+  },
+
   OUT_FOR_DELIVERY: {
     label: 'Đang giao hàng',
-    color: 'bg-amber-500 text-white',
+    color: 'bg-amber-100 text-amber-600',
     textColor: 'text-amber-600',
     bgLight: 'bg-amber-50',
   },
 
-  READY_FOR_PICKUP: {
-    label: 'Chờ lấy hàng',
-    color: 'bg-teal-500 text-white',
-    textColor: 'text-teal-600',
-    bgLight: 'bg-teal-50',
-  },
-
   COMPLETED: {
-    label: 'Hoàn tất',
-    color: 'bg-emerald-500 text-white',
+    label: 'Hoàn thành',
+    color: 'bg-emerald-100 text-emerald-600',
     textColor: 'text-emerald-600',
     bgLight: 'bg-emerald-50',
   },

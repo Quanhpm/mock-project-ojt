@@ -49,7 +49,6 @@ interface RawOrderApi {
   subtotal_amount?: number;
   promotion_discount?: number;
   voucher_discount?: number;
-  message?: string;
   created_at?: string;
   updated_at?: string;
   order_items?: RawOrderItemApi[];
@@ -172,7 +171,7 @@ const mapRawOrderToUiOrder = (rawOrder: RawOrderApi): OrderData => {
         : typeof rawOrder.cartId === 'string'
           ? rawOrder.cartId
           : undefined,
-    failedReason:
+    failed_reason:
       typeof rawOrder.failed_reason === 'string'
         ? rawOrder.failed_reason
         : typeof rawOrder.failedReason === 'string'
@@ -200,8 +199,6 @@ const mapRawOrderToUiOrder = (rawOrder: RawOrderApi): OrderData => {
       items_count: itemsCount,
       created_at: rawOrder.created_at ?? rawOrder.updated_at ?? new Date().toISOString(),
     },
-    cancelReason: rawOrder.failed_reason ?? null,
-    message: rawOrder.message ?? null,
     orderItems: mappedItems,
   };
 };
