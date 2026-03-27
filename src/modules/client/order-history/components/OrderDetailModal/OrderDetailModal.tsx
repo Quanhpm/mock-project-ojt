@@ -125,7 +125,7 @@ function OrderDetailModal({ open, order, onClose, triggerPosition }: OrderDetail
           <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-7 space-y-6">
               <OrderStatusHeader order={order} />
-              <OrderFailedReason status={order.status.code} reason={order.cancelReason} />
+              <OrderFailedReason status={order.status.code} reason={order.failed_reason ?? order.fail_reason} />
               <OrderItemsList items={order.orderItems} />
             </div>
 

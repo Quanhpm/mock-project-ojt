@@ -6,6 +6,11 @@ import { useAuth } from '../context/useAuth';
 import { useClientAuthStore } from '../stores/client-auth.store';
 import { type CustomerUser } from '@/apis/endpointsCLIENT/customerAuth.api';
 import EditProfileModal from '../components/EditProfileModal/index';
+import { ConfirmModal } from '../components/EditProfileModal/ConfirmLeaveModal';
+import { FileLock, LogOut, ShieldUser } from 'lucide-react';
+const DEFAULT_AVATAR_URL = 'https://res.cloudinary.com/de2dyvcb7/image/upload/v1774416364/656316159_2765483763813101_1192292787245113307_n_kr1os8.png?fbclid=IwZXh0bgNhZW0CMTAAYnJpZBExMEU4VTBtbWMxR1BqV3JJQnNydGMGYXBwX2lkEDIyMjAzOTE3ODgyMDA4OTIAAR7mDjwZ2GYTsnzs9LxPUaahnkXp2BCJjlLXBWw4D10khK11nfzUFnqKzf7phw_aem_c0TH6FN1XaCmQQSHionzKw';
+
+
 
 // ─────────────────────────── Profile Page ───────────────────────────
 
@@ -19,6 +24,8 @@ function ProfilePage() {
   const [isFetching] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState<'profile' | 'security'>('profile');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Sync local state when store updates
   useEffect(() => {
@@ -42,6 +49,16 @@ function ProfilePage() {
       setIsLoggingOut(false);
       showError(result.message, 'Đăng xuất thất bại');
     }
+  };
+
+  const openProfileModal = () => {
+    setModalInitialTab('profile');
+    setIsModalOpen(true);
+  };
+
+  const openSecurityModal = () => {
+    setModalInitialTab('security');
+    setIsModalOpen(true);
   };
 
   if (isLoggingOut) {
@@ -77,204 +94,175 @@ function ProfilePage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
-        <main className="max-w-4xl mx-auto space-y-8">
+      <div className="min-h-screen bg-gray-50 px-4 py-10 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-4xl py-2 md:py-8">
+          <section className="mb-12 flex flex-col items-center gap-8 rounded-xl border border-gray-100 bg-white p-8 shadow-sm md:flex-row">
+            <div className="relative group">
+              <div className="h-24 w-24 overflow-hidden rounded-full ring-4 ring-primary/20">
+                {profile.avatar_url ? (
+                  <img
+                    src={profile?.avatar_url || DEFAULT_AVATAR_URL}
+                    alt={profile.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={DEFAULT_AVATAR_URL}
+                    alt={profile.name}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+              <button
+                onClick={openProfileModal}
+                className="absolute bottom-0 right-0 rounded-full border-2 border-white bg-primary p-1.5 text-white shadow-lg transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl active:scale-95"
+              >
+                <span className="material-symbols-outlined text-sm">edit</span>
+              </button>
+            </div>
 
-          {/* ══ Profile Header ══ */}
-          <section className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-sm border border-gray-200 flex flex-col md:flex-row items-center justify-between gap-6">
-            {/* Avatar + Identity */}
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              {/* Avatar */}
-              <div className="relative group">
-                <div className="w-32 h-32 rounded-full border-4 border-white shadow-md overflow-hidden bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                  {profile.avatar_url ? (
-                    <img
-                      src={profile.avatar_url}
-                      alt={profile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="material-symbols-outlined text-[56px] text-gray-300">person</span>
-                  )}
+            <div className="flex-grow text-center md:text-left">
+              <h1 className="mb-1 text-3xl font-extrabold tracking-tight text-gray-900">{profile.name}</h1>
+              <p className="font-medium text-gray-500">{profile.email}</p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
+              </div>
+            </div>
+
+            <div className="hidden md:block">
+              {/* <button
+                onClick={() => setIsModalOpen(true)}
+                className="rounded-full bg-primary/15 px-6 py-3 font-bold text-primary transition-all hover:bg-primary hover:text-white active:scale-95"
+              >
+                Chỉnh sửa hồ sơ
+              </button> */}
+            </div>
+          </section>
+
+          <section className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                <span className="material-symbols-outlined text-sm">person</span>
+                Họ và Tên
+              </p>
+              <p className="text-lg font-semibold text-gray-900">{profile.name}</p>
+            </div>
+
+            <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                <span className="material-symbols-outlined text-sm">mail</span>
+                Địa chỉ email
+              </p>
+              <p className="text-lg font-semibold text-gray-900">{profile.email}</p>
+            </div>
+
+            <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                <span className="material-symbols-outlined text-sm">call</span>
+                Số điện thoại
+              </p>
+              <p className="text-lg font-semibold text-gray-900">{profile.phone || 'Chưa cung cấp'}</p>
+            </div>
+
+            <div className="group rounded-xl border border-transparent bg-white p-6 shadow-sm transition-colors hover:border-gray-200">
+              <p className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-500">
+                <span className="material-symbols-outlined text-sm">location_on</span>
+                Địa chỉ
+              </p>
+              <p className="text-lg font-semibold leading-snug text-gray-900">{profile.address || 'Chưa cung cấp'}</p>
+            </div>
+          </section>
+
+          <section className="mb-12">
+            <h2 className="mb-6 flex items-center gap-3 px-2 text-xl font-extrabold">
+              <ShieldUser className="h-6 w-6 text-primary" />
+              Quyền riêng tư &amp; Bảo mật
+            </h2>
+
+            <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+              <button
+                onClick={openSecurityModal}
+                className="group flex w-full items-center justify-between p-6 text-left transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-50 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <FileLock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Đổi mật khẩu</p>
+                    <p className="text-sm text-gray-500">Cập nhật mật khẩu để bảo mật tài khoản</p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  title="Thay đổi ảnh"
-                  className="cursor-pointer absolute bottom-1 right-1 p-2 bg-primary text-white rounded-full shadow-lg hover:opacity-90 transition-opacity"
-                >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </button>
+                <span className="material-symbols-outlined text-gray-400 transition-transform group-hover:translate-x-1">
+                  chevron_right
+                </span>
+              </button>
+
+              <div className="px-6">
+                <div className="h-px bg-gray-100" />
               </div>
 
-              {/* Name + Email + Status */}
-              <div className="text-center md:text-left">
-                <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                  <h1 className="text-3xl font-bold tracking-tight text-gray-900">{profile.name}</h1>
+              <div className="flex flex-col justify-between gap-4 p-6 md:flex-row md:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
+                    <LogOut className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">Đăng xuất</p>
+                    <p className="text-sm text-gray-500">Rời khỏi phiên làm việc hiện tại</p>
+                  </div>
                 </div>
-                <p className="text-gray-500 font-medium">{profile.email}</p>
-                <div className="mt-2 flex items-center justify-center md:justify-start gap-2 text-sm text-green-600">
-                  {profile.is_active ? (
-                    <>
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                      </span>
-                      Đang hoạt động
-                    </>
-                  ) : (
-                    <>
-                      <span className="inline-flex rounded-full h-2 w-2 bg-gray-400" />
-                      <span className="text-gray-400">Không hoạt động</span>
-                    </>
-                  )}
-                </div>
+                <button
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="rounded-full border-2 border-red-400 px-6 py-2 text-sm font-bold text-red-500 transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-red-500 hover:text-white hover:shadow-lg active:scale-95 md:text-base"
+                >
+                  Đăng xuất
+                </button>
               </div>
             </div>
           </section>
 
-          {/* ══ Main Grid ══ */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-            {/* ── Personal Information ── */}
-            <div className="md:col-span-2 space-y-6">
-              <section className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-6 border-b border-gray-100 pb-4">
-                  <span className="material-symbols-outlined text-primary text-[20px]">person</span>
-                  <h2 className="text-xl font-bold text-gray-800">Thông tin cá nhân</h2>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Họ và tên</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
-                      {profile.name}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Địa chỉ Email</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-500 text-sm">
-                      {profile.email}
-                    </div>
-                    <p className="text-[10px] text-gray-400 italic">Liên hệ hỗ trợ để thay đổi email chính.</p>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Số điện thoại</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
-                      {profile.phone || <span className="text-gray-400">Chưa cung cấp</span>}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Địa chỉ</label>
-                    <div className="px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 text-sm">
-                      {profile.address || <span className="text-gray-400">Chưa cung cấp</span>}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Action Footer */}
-              <div className="flex items-center justify-end gap-4">
-                <a
-                  href="/"
-                  className="inline-flex items-center px-6 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-100 transition-colors text-sm"
-                >
-                  Quay về trang chủ
-                </a>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="cursor-pointer inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white font-semibold rounded-xl hover:bg-[#6c4830] shadow-sm transition-all active:scale-95 text-sm"
-                >
-                  <span className="material-symbols-outlined text-[16px]">edit</span>
-                  Chỉnh sửa hồ sơ
-                </button>
-              </div>
-            </div>
-
-            {/* ── Sidebar ── */}
-            <aside className="space-y-6">
-
-              {/* Account Detail */}
-              <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-5 border-b border-gray-100 pb-4">
-                  <span className="material-symbols-outlined text-primary text-[20px]">shield</span>
-                  <h2 className="text-base font-bold text-gray-800">Chi tiết tài khoản</h2>
-                </div>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Thành viên từ</p>
-                    <p className="text-sm text-gray-700">
-                      {new Date(profile.created_at).toLocaleDateString('vi-VN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Trạng thái</p>
-                    {profile.is_verified ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
-                        <span className="material-symbols-outlined text-[14px]">verified</span>
-                        Tài khoản đã xác thực
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 border border-amber-200">
-                        <span className="material-symbols-outlined text-[14px]">pending</span>
-                        Chờ xác thực
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              {/* Session & Security */}
-              <section className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-2 mb-5 text-red-500">
-                  <span className="material-symbols-outlined text-[20px]">warning</span>
-                  <h2 className="text-base font-bold">Phiên &amp; Bảo mật</h2>
-                </div>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="cursor-pointer w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200 group"
-                  >
-                    <span className="text-sm font-medium text-gray-700">Đổi mật khẩu</span>
-                    <span className="material-symbols-outlined text-[18px] text-gray-400 group-hover:translate-x-1 transition-transform">
-                      chevron_right
-                    </span>
-                  </button>
-                  <div className="pt-1">
-                    <button
-                      onClick={handleLogout}
-                      className="cursor-pointer w-full px-4 py-2.5 border border-red-400 text-red-500 font-semibold rounded-xl hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 text-sm"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">logout</span>
-                      Đăng xuất
-                    </button>
-                  </div>
-                </div>
-              </section>
-
-            </aside>
-          </div>
+          <footer className="flex flex-col items-center justify-end gap-4 border-t border-gray-200 py-8 sm:flex-row">
+            <button
+              onClick={() => navigate('/')}
+              className="w-full rounded-full border-2 border-gray-300 px-8 py-3 font-bold text-gray-600 transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-gray-100 hover:shadow-md active:scale-95 sm:w-auto"
+            >
+              Quay về trang chủ
+            </button>
+            <button
+              onClick={openProfileModal}
+              className="w-full rounded-full bg-primary px-10 py-3 font-bold text-white shadow-lg shadow-primary/20 transform-gpu transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[#8a6143] hover:shadow-xl hover:shadow-primary/30 active:scale-95 sm:w-auto"
+            >
+              Chỉnh sửa hồ sơ
+            </button>
+          </footer>
         </main>
       </div>
 
       <EditProfileModal
         isOpen={isModalOpen}
+        initialTab={modalInitialTab}
         profile={profile}
         onClose={() => setIsModalOpen(false)}
         onSaved={handleSaved}
+      />
+
+      <ConfirmModal
+        isOpen={showLogoutConfirm}
+        title="Xác nhận đăng xuất"
+        description="Bạn có chắc muốn đăng xuất khỏi tài khoản hiện tại không?"
+        cancelLabel="Ở lại"
+        confirmLabel="Đăng xuất"
+        icon="logout"
+        iconBgClass="bg-red-50 border border-red-200"
+        iconColorClass="text-red-500"
+        onCancel={() => setShowLogoutConfirm(false)}
+        onConfirm={() => {
+          setShowLogoutConfirm(false);
+          void handleLogout();
+        }}
       />
     </>
   );
 }
 
 export default ProfilePage;
-

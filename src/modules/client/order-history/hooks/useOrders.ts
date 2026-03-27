@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { CheckCircle2, CircleEllipsis, ClipboardList } from 'lucide-react';
 import { getOrdersByCustomerId } from '@/apis/endpointsCLIENT';
 import { useClientAuthStore } from '@/modules/client/auth-client';
 import { PAGE_SIZE } from '../order.config';
 import { buildSummaryFromOrders, normalizeOrdersPayload } from '../order.utils';
 import type { FilterOption, OrderData, OrdersResponse } from '../order.types';
+import type { LucideIcon } from 'lucide-react';
+import { ClipboardList, CheckCircle, CircleEllipsis } from 'lucide-react';
 
 export interface OrderStatItem {
   key: string;
   label: string;
   value: string;
-  icon: LucideIcon;
+  iconComponent: LucideIcon;
   iconClass: string;
 }
 
@@ -67,22 +67,22 @@ export const useOrders = () => {
         key: 'total',
         label: 'Tổng đơn hàng',
         value: summary.total_orders.toString(),
-        icon: ClipboardList,
-        iconClass: 'bg-primary/10 text-primary',
+        iconComponent: ClipboardList,
+        iconClass: 'bg-[#e8f1ff] text-[#0055a5]',
       },
       {
         key: 'completed',
         label: 'Hoàn thành',
         value: summary.completed_orders.toString(),
-        icon: CheckCircle2,
-        iconClass: 'bg-emerald-500/10 text-emerald-500',
+        iconComponent: CheckCircle,
+        iconClass: 'bg-[#e9f9ef] text-[#0d7a3a]',
       },
       {
         key: 'pending',
         label: 'Đang xử lý',
         value: summary.preparing_orders.toString(),
-        icon: CircleEllipsis,
-        iconClass: 'bg-amber-500/10 text-amber-500',
+        iconComponent: CircleEllipsis,
+        iconClass: 'bg-[#fff4e5] text-[#a15c00]',
       },
     ],
     [summary],
@@ -99,7 +99,8 @@ export const useOrders = () => {
           order.status.code === 'DRAFT' ||
           order.status.code === 'PREPARING' ||
           order.status.code === 'CONFIRMED' ||
-          order.status.code === 'READY_FOR_PICKUP',
+          order.status.code === 'READY_FOR_PICKUP' ||
+          order.status.code === 'OUT_FOR_DELIVERY',
       );
     } else if (selectedFilter === 'cancelled') {
       filtered = filtered.filter((order) => order.status.code === 'CANCELLED');

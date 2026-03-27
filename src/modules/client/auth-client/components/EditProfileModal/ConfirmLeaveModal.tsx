@@ -26,8 +26,8 @@ export function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+    <div className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="modal-panel-enter w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center gap-3 mb-3">
             <span className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${iconBgClass}`}>

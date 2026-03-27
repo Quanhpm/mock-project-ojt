@@ -45,7 +45,7 @@ function RegisterPage() {
             description=""
             footer={footer}
         >
-            <RegisterForm onSubmit={handleRegister} isLoading={false} error={errorMessage || ''} />
+            <RegisterForm onSubmit={handleRegister} isLoading={isLoading} error={errorMessage || ''} />
         </AuthCard>
     );
 }

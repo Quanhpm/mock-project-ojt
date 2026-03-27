@@ -111,10 +111,10 @@ export function useItemPage() {
     const address = user?.address?.trim() ?? '';
     const phone = user?.phone?.trim() ?? '';
 
-    if (!address || !phone) {
-      error('Thiếu thông tin giao hàng', 'Vui lòng cập nhật địa chỉ và số điện thoại trong hồ sơ');
-      return;
-    }
+    // if (!address || !phone) {
+    //   error('Thiếu thông tin giao hàng', 'Vui lòng cập nhật địa chỉ và số điện thoại trong hồ sơ');
+    //   return;
+    // }
 
     setIsAddingToCart(true);
 
