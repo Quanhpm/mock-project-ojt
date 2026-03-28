@@ -400,7 +400,7 @@ const HomeHeader: React.FC = () => {
             <Link
               to="/order-history"
               onClick={closeMobileMenu}
-              className={`hidden items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/order-history' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-lg font-semibold transition-all ${location.pathname === '/order-history' ? 'bg-[var(--cf-primary)] text-white shadow-lg' : 'text-[var(--cf-primary)] hover:bg-[var(--cf-surface)]/35'}`}
             >
               <ClipboardClock size={18} className={location.pathname === '/order-history' ? 'text-white' : 'text-[var(--cf-secondary)]'} />
               <span>Lịch Sử Đơn Hàng</span>
