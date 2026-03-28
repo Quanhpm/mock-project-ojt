@@ -30,7 +30,7 @@ function CartDetail() {
           onOpenCancelCartConfirm={vm.openCancelCartConfirm}
         />
 
-        <div className="flex flex-col items-start gap-6 lg:flex-row lg:gap-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
           <CartDetailItemsSection
             items={vm.cart.items}
             isDeleting={vm.isDeleting}

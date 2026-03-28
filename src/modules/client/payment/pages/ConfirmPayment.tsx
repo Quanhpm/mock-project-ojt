@@ -32,7 +32,7 @@ export default function PaymentSuccess() {
   const total = state?.total;
   const paymentId = state?.paymentId ?? "";
   const formattedTotal = formatConfirmPaymentTotal(total);
-  const { paymentData, userInfo, franchiseName } = usePaymentData(paymentId);
+  const { paymentData, userInfo, orderInfo } = usePaymentData(paymentId);
   const paidAtLabel = paymentData?.paid_at
     ? formatDateTime(paymentData.paid_at)
     : "Chưa cập nhật";
@@ -57,10 +57,10 @@ export default function PaymentSuccess() {
               <div className="border-b border-[rgba(176,137,104,0.14)] p-8 md:p-12 lg:border-b-0 lg:border-r lg:pr-16">
                 <SuccessHeader />
                 <CustomerInfo
-                  address={userInfo?.address}
-                  franchiseName={franchiseName}
+                  address={orderInfo?.address || userInfo?.address}
+                  franchiseName={orderInfo?.franchise_name}
                   name={userInfo?.name}
-                  phone={userInfo?.phone}
+                  phone={orderInfo?.phone || userInfo?.phone}
                 />
               </div>
 
