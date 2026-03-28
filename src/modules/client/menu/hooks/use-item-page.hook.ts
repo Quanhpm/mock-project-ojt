@@ -19,7 +19,6 @@ export function useItemPage() {
 
   // Get auth state
   const isLoggedIn = useClientAuthStore((state) => state.isLoggedIn);
-  const user = useClientAuthStore((state) => state.user);
 
   // Load product details
   const { product, loading, selectedSize, toppingOptions, setSelectedSize } = useProductDetail(
@@ -115,15 +114,6 @@ export function useItemPage() {
       return;
     }
 
-    // Validate delivery info
-    const address = user?.address?.trim() ?? '';
-    const phone = user?.phone?.trim() ?? '';
-
-    // if (!address || !phone) {
-    //   error('Thiếu thông tin giao hàng', 'Vui lòng cập nhật địa chỉ và số điện thoại trong hồ sơ');
-    //   return;
-    // }
-
     setIsAddingToCart(true);
 
     try {
@@ -131,13 +121,11 @@ export function useItemPage() {
         franchise_id: franchiseId,
         product_franchise_id: selectedSize.product_franchise_id,
         quantity: qty,
-        address,
-        phone,
         options: selectedToppings.map((topping) => ({
           product_franchise_id: topping.product_franchise_id,
           quantity: 1,
         })),
-        message:
+        note:
           selectedToppings.length > 0
             ? `Topping: ${selectedToppings.map((topping) => topping.name).join(', ')}`
             : undefined,

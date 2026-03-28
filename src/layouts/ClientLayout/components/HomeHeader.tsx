@@ -7,7 +7,7 @@ import logo2 from '@/assets/img/logo2.png';
 import { useAuth } from '@/modules/client/auth-client/context/useAuth';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { normalizeOrdersPayload } from '@/modules/client/order-history/order.utils';
-import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
+import { getAllFranchisesCached, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
 import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import { useLoadingStore } from '@/stores/loading.store';
 import { ConfirmModal } from '@/modules/client/auth-client/components/EditProfileModal/ConfirmLeaveModal';
@@ -29,6 +29,7 @@ const HomeHeader: React.FC = () => {
   const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
   const selectedFranchiseId = useMenuStore((state) => state.franchiseId);
   const setFranchiseId = useMenuStore((state) => state.setFranchiseId);
+  const initialSelectedFranchiseIdRef = useRef(selectedFranchiseId);
   const incrementLoading = useLoadingStore((state) => state.increment);
   const decrementLoading = useLoadingStore((state) => state.decrement);
   const { success, error } = useToast();
@@ -49,7 +50,7 @@ const HomeHeader: React.FC = () => {
 
     const fetchFranchises = async () => {
       try {
-        const response = await getAllFranchises();
+        const response = await getAllFranchisesCached();
         const nextFranchises = response ?? [];
 
         if (!isMounted) {
@@ -58,7 +59,7 @@ const HomeHeader: React.FC = () => {
 
         setFranchises(nextFranchises);
 
-        if (!selectedFranchiseId && nextFranchises.length > 0) {
+        if (!initialSelectedFranchiseIdRef.current && nextFranchises.length > 0) {
           setFranchiseId(nextFranchises[0].id);
         }
       } catch {
@@ -73,7 +74,7 @@ const HomeHeader: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedFranchiseId, setFranchiseId]);
+  }, [setFranchiseId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
