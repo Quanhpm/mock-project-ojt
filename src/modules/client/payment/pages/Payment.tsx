@@ -139,6 +139,7 @@ export default function Payment() {
               customerName={orderData?.customer_name ?? ""}
               franchiseName={orderData?.franchise_name ?? ""}
               phone={orderData?.phone ?? ""}
+              message={orderData?.message ?? ""}
             />
 
             <OrderSummary

@@ -5,6 +5,7 @@ interface DeliveryInfoProps {
   address: string;
   customerName?: string;
   phone?: string;
+  message?: string;
 }
 
 export function DeliveryInfo({
@@ -12,6 +13,7 @@ export function DeliveryInfo({
   address,
   customerName,
   phone,
+  message,
 }: DeliveryInfoProps) {
   return (
     <section className="rounded-[24px] border border-[var(--cf-primary)]/10 bg-white/85 p-4 shadow-[0_16px_36px_rgba(127,85,57,0.06)] backdrop-blur-sm">
@@ -49,8 +51,12 @@ export function DeliveryInfo({
             )}
           </div>
 
-          <p className="mt-2 text-sm leading-6 text-[var(--cf-dark)]">
-            {address || "Chưa có địa chỉ giao hàng cho đơn này."}
+          <p className="mt-1 text-sm leading-6 text-[var(--cf-dark)]">
+            Địa chỉ giao: {address || "Chưa có địa chỉ giao hàng cho đơn này."}
+          </p>
+
+          <p className="mt-1 text-sm leading-6 text-[var(--cf-dark)]">
+            Ghi chú: {message || "Không có ghi chú."}
           </p>
         </div>
       </div>
