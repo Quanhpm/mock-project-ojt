@@ -2,14 +2,11 @@ import { useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion, type PanInfo } from 'framer-motion';
 import { ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getCart, getCustomerCarts } from '@/apis/endpointsCLIENT/cart.api';
 import { useCartCount } from '@/modules/client/cart/hooks';
-import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { ROUTER_URL } from '@/routes/router.const';
 
 function FloatingCartButton() {
   const navigate = useNavigate();
-  const customerId = useClientAuthStore((state) => state.user?.id);
   const { count, isLoading } = useCartCount();
   const dragConstraintsRef = useRef<HTMLDivElement>(null);
   const hasDraggedRef = useRef(false);
@@ -34,19 +31,11 @@ function FloatingCartButton() {
     setIsNavigating(true);
 
     try {
-      try {
-        await getCart();
-      } catch {
-        if (customerId) {
-          await getCustomerCarts(customerId, 'ACTIVE');
-        }
-      }
-
       navigate(ROUTER_URL.HOME_ROUTER.CART);
     } finally {
       setIsNavigating(false);
     }
-  }, [customerId, isNavigating, navigate]);
+  }, [isNavigating, navigate]);
 
   return (
     <div

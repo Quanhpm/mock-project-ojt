@@ -4,10 +4,7 @@ export interface AddCartItemRequest {
   franchise_id: string;
   product_franchise_id: string;
   quantity: number;
-  address: string;
-  phone: string;
   note?: string;
-  message?: string;
   options?: Array<{
     product_franchise_id: string;
     quantity: number;
@@ -15,9 +12,9 @@ export interface AddCartItemRequest {
 }
 
 export interface UpdateCartRequest {
-  address: string;
-  phone: string;
-  note?: string;
+  address?: string;
+  phone?: string;
+  message?: string;
 }
 
 export interface UpdateCartItemOptionRequest {
@@ -52,30 +49,11 @@ export interface CountCustomerCartsResponse {
   count: number;
 }
 
-export interface CartCountByFranchiseResponse {
-  count: number;
-}
-
 interface CheckoutCartRequest {
   address: string;
   phone: string;
   message?: string;
 }
-
-export const getCart = (): Promise<unknown> => {
-  return httpClient.get<unknown>({
-    url: '/cart',
-  });
-};
-
-export const getCartCountByFranchise = (
-  franchiseId: string,
-): Promise<CartCountByFranchiseResponse | null> => {
-  return httpClient.get<CartCountByFranchiseResponse, { franchiseId: string }>({
-    url: '/cart/count',
-    params: { franchiseId },
-  });
-};
 
 export const addCartItem = (
   data: AddCartItemRequest,

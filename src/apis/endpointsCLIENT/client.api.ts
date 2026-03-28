@@ -75,10 +75,34 @@ interface ProductDetailResponse {
 }
 
 // API Endpoints
+let allFranchisesCache: FranchiseResponse[] | null = null;
+let allFranchisesRequest: Promise<FranchiseResponse[] | null> | null = null;
+
 export const getAllFranchises = (): Promise<FranchiseResponse[] | null> => {
     return httpClient.get<FranchiseResponse[]>({
         url: "clients/franchises",
     });
+}
+
+export const getAllFranchisesCached = async (): Promise<FranchiseResponse[] | null> => {
+    if (allFranchisesCache) {
+        return allFranchisesCache;
+    }
+
+    if (allFranchisesRequest) {
+        return allFranchisesRequest;
+    }
+
+    allFranchisesRequest = getAllFranchises()
+        .then((response) => {
+            allFranchisesCache = response ?? [];
+            return allFranchisesCache;
+        })
+        .finally(() => {
+            allFranchisesRequest = null;
+        });
+
+    return allFranchisesRequest;
 }
 
 export const getAllCategoriesByFranchise = (franchiseId: string): Promise<CategoryResponse[] | null> => {

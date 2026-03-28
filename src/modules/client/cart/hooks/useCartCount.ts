@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  getCartCountByFranchise,
   getCustomerCarts,
 } from '@/apis/endpointsCLIENT/cart.api';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
@@ -91,7 +90,7 @@ export function useCartCount() {
   );
 
   const refresh = useCallback(async () => {
-    if (!franchiseId) {
+    if (!franchiseId || !customerId) {
       setCount(0);
       return;
     }
@@ -99,26 +98,15 @@ export function useCartCount() {
     setIsLoading(true);
 
     try {
-      const result = await getCartCountByFranchise(franchiseId);
-      setCount(result?.count ?? 0);
+      const payload = await getCustomerCarts(customerId, 'ACTIVE');
+      const nextCount = extractCartsFromPayload(payload)
+        .map(toCartSummary)
+        .filter((cart) => cart.franchiseId === franchiseId)
+        .reduce((sum, cart) => sum + cart.itemsCount, 0);
+
+      setCount(nextCount);
     } catch {
-      if (!customerId) {
-        setCount(0);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const payload = await getCustomerCarts(customerId, 'ACTIVE');
-        const nextCount = extractCartsFromPayload(payload)
-          .map(toCartSummary)
-          .filter((cart) => cart.franchiseId === franchiseId)
-          .reduce((sum, cart) => sum + cart.itemsCount, 0);
-
-        setCount(nextCount);
-      } catch {
-        setCount(0);
-      }
+      setCount(0);
     } finally {
       setIsLoading(false);
     }

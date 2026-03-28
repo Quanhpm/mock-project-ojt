@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useClientAuthStore } from '@/modules/client/auth-client/stores/client-auth.store';
 import { ShoppingCart, User, ChevronDown, LogOut, KeyRound, UserCircle, Menu, X, House, CupSoda, MapPin, Info, LogIn, UserPlus, Globe, Share2, Store } from 'lucide-react';
 import { useClientLogout } from '@/modules/client/auth-client/hooks/use-client-logout.hook';
-import { getAllFranchises, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
+import { getAllFranchisesCached, type FranchiseResponse } from '@/apis/endpointsCLIENT/client.api';
 import { useStore as useMenuStore } from '@/modules/client/menu/hooks/use-store.hook';
 import logo2 from '@/assets/img/logo2.png';
 
@@ -22,6 +22,7 @@ const ClientHeader = () => {
   const [franchises, setFranchises] = useState<FranchiseResponse[]>([]);
   const selectedFranchiseId = useMenuStore((state) => state.franchiseId);
   const setFranchiseId = useMenuStore((state) => state.setFranchiseId);
+  const initialSelectedFranchiseIdRef = useRef(selectedFranchiseId);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mobileMenuItems = [
@@ -38,7 +39,7 @@ const ClientHeader = () => {
 
     const fetchFranchises = async () => {
       try {
-        const response = await getAllFranchises();
+        const response = await getAllFranchisesCached();
         const nextFranchises = response ?? [];
 
         if (!isMounted) {
@@ -47,7 +48,7 @@ const ClientHeader = () => {
 
         setFranchises(nextFranchises);
 
-        if (!selectedFranchiseId && nextFranchises.length > 0) {
+        if (!initialSelectedFranchiseIdRef.current && nextFranchises.length > 0) {
           setFranchiseId(nextFranchises[0].id);
         }
       } catch {
@@ -62,7 +63,7 @@ const ClientHeader = () => {
     return () => {
       isMounted = false;
     };
-  }, [selectedFranchiseId, setFranchiseId]);
+  }, [setFranchiseId]);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
