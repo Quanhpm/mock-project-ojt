@@ -1,180 +1,58 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, Edit2, Trash2, RotateCcw, Package } from "lucide-react";
-import { useFranchiseSearch } from "../hooks";
+import {
+  Edit2,
+  Eye,
+  Package,
+  Plus,
+  RotateCcw,
+  Store,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast.hook";
-import FranchiseDetailModal from "./FranchiseDetailModal";
-import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
-import type { Franchise } from "../../../../types/franchise.types";
+import { Pagination } from "@/modules/admin/user-management/components/Pagination";
+import type { Franchise } from "@/types/franchise.types";
+import { useFranchiseSearch } from "../hooks";
 import FranchiseDelete from "./FranchiseDelete";
+import FranchiseDetailModal from "./FranchiseDetailModal";
+import FranchiseEditModal from "./FranchiseEditModal";
 import FranchiseRestore from "./FranchiseRestore";
 import { FranchiseSearch } from "./FranchiseSearch";
-import FranchiseEditModal from "./FranchiseEditModal";
+import { useGetFranchiseById } from "./hooks/useGetFranchiseById";
 
-// ============================================================================
-// STYLES
-// ============================================================================
-
-const styles = {
-  container: {
-    display: "flex" as const,
-    minHeight: "100dvh",
-    width: "100%",
-    overflowX: "hidden" as const,
-  },
-  main: {
-    flex: 1,
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    minHeight: "100dvh",
-    overflowX: "hidden" as const,
-    position: "relative" as const,
-  },
-  header: {
-    width: "100%",
-    padding: "24px 20px",
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    gap: "20px",
-    flexShrink: 0,
-    zIndex: 10,
-    backgroundColor: "#ffffff",
-  },
-  contentArea: {
-    flex: 1,
-    display: "flex" as const,
-    flexDirection: "column" as const,
-    padding: "0 20px 28px",
-    overflow: "visible" as const,
-  },
-  filterContainer: {
-    backgroundColor: "white",
-    padding: "20px 24px",
-    borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    marginBottom: "20px",
-    display: "flex" as const,
-    alignItems: "flex-end" as const,
-    gap: "16px",
-    flexWrap: "wrap" as const,
-    border: "1px solid #e5e7eb",
-  },
-  tableContainer: {
-    flex: 1,
-    backgroundColor: "white",
-    borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    overflowX: "auto" as const,
-    overflowY: "auto" as const,
-    position: "relative" as const,
-    border: "1px solid #e5e7eb",
-  },
-  table: {
-    width: "100%",
-    minWidth: "840px",
-    borderCollapse: "collapse" as const,
-    fontSize: "15px",
-  },
-  tableHead: {
-    position: "sticky" as const,
-    top: 0,
-    backgroundColor: "#f9fafb",
-    borderBottom: "1px solid #e5e7eb",
-    zIndex: 10,
-  },
-  paginationContainer: {
-    marginTop: "20px",
-    display: "flex" as const,
-    flexWrap: "wrap" as const,
-    gap: "12px",
-    justifyContent: "space-between" as const,
-    alignItems: "center" as const,
-    fontSize: "15px",
-    padding: "20px 24px",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-    border: "1px solid #e5e7eb",
-  },
-};
-
-const getButtonStyles = {
-  primary: {
-    display: "flex" as const,
-    alignItems: "center" as const,
-    gap: "8px",
-    backgroundColor: "#8B5A2B",
-    color: "white",
-    padding: "12px 24px",
-    borderRadius: "8px",
-    boxShadow: "0 2px 4px rgba(139, 90, 43, 0.2)",
-    transition: "all 0.2s",
-    cursor: "pointer" as const,
-    border: "none" as const,
-    fontWeight: "700" as const,
-    fontSize: "15px",
-  },
-  pagination: {
-    padding: "8px 12px",
-    border: "1px solid #e5e7eb",
-    borderRadius: "6px",
-    fontSize: "14px",
-    fontWeight: "600" as const,
-    transition: "all 0.2s",
-    cursor: "pointer" as const,
-  },
-  filterInput: {
-    width: "100%",
-    padding: "10px 14px",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    fontSize: "15px",
-    fontFamily: "inherit",
-    backgroundColor: "#f9fafb",
-    transition: "border-color 0.2s",
-  },
-  clearFilter: {
-    padding: "10px 16px",
-    backgroundColor: "#f3f4f6",
-    border: "1px solid #e5e7eb",
-    borderRadius: "8px",
-    fontSize: "14px",
-    fontWeight: "500" as const,
-    color: "#374151",
-    cursor: "pointer" as const,
-    transition: "all 0.2s",
-  },
-  actionButton: {
-    padding: "8px",
-    backgroundColor: "transparent",
-    border: "none" as const,
-    borderRadius: "8px",
-    cursor: "pointer" as const,
-    transition: "all 0.2s",
-    display: "flex" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-  },
-  toggleSwitch: {
-    position: "relative" as const,
-    display: "inline-flex" as const,
-    alignItems: "center" as const,
-    cursor: "pointer" as const,
-  },
-  toggleInput: {
-    appearance: "none" as const,
-    width: 0,
-    height: 0,
-    opacity: 0,
-  },
-};
-
-// ============================================================================
-// MAIN COMPONENT
-// ============================================================================
+const SkeletonRow = () => (
+  <tr className="animate-pulse">
+    <td className="p-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-slate-200 shrink-0" />
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="h-4 w-32 bg-slate-200 rounded" />
+          <div className="h-3 w-24 bg-slate-100 rounded" />
+        </div>
+      </div>
+    </td>
+    <td className="p-4">
+      <div className="h-4 w-24 bg-slate-200 rounded" />
+    </td>
+    <td className="p-4">
+      <div className="h-4 w-56 bg-slate-100 rounded" />
+    </td>
+    <td className="p-4">
+      <div className="h-6 w-11 bg-slate-200 rounded-full" />
+    </td>
+    <td className="p-4">
+      <div className="ml-auto flex justify-end gap-2">
+        <div className="h-9 w-9 rounded-lg bg-slate-100" />
+        <div className="h-9 w-9 rounded-lg bg-slate-100" />
+        <div className="h-9 w-9 rounded-lg bg-slate-100" />
+      </div>
+    </td>
+  </tr>
+);
 
 export default function FranchiseTable() {
   const navigate = useNavigate();
+  const { error: showError } = useToast();
 
   const searchState = useFranchiseSearch();
   const {
@@ -193,26 +71,20 @@ export default function FranchiseTable() {
     restoreFranchise,
   } = searchState;
 
-  useEffect(() => {
-    executeSearch();
-  }, [currentPage, executeSearch]);
-
   const [isLoadingDetail, setIsLoadingDetail] = useState<string | null>(null);
-  const [pageInput, setPageInput] = useState("");
-  const { error: showError } = useToast();
+  const { franchise: selectedFranchise, isLoading: isLoadingFranchiseDetail, fetchFranchise } =
+    useGetFranchiseById();
 
-  // Detail Modal State
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const { franchise: selectedFranchise, isLoading: isLoadingFranchiseDetail, fetchFranchise } = useGetFranchiseById();
-
-  // Delete Modal State
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; franchiseId: string | number; franchiseName: string }>({
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    franchiseId: string | number;
+    franchiseName: string;
+  }>({
     isOpen: false,
     franchiseId: "",
     franchiseName: "",
   });
-
-  // Restore Modal State
   const [restoreModal, setRestoreModal] = useState<{
     isOpen: boolean;
     franchiseId: string | number;
@@ -222,8 +94,6 @@ export default function FranchiseTable() {
     franchiseId: "",
     franchiseName: "",
   });
-
-  // Edit Modal State
   const [editModal, setEditModal] = useState<{
     isOpen: boolean;
     franchiseId: string | number | null;
@@ -232,15 +102,17 @@ export default function FranchiseTable() {
     franchiseId: null,
   });
 
-  // Prevent body scroll
-  useEffect(() => {
-    document.body.style.overflow = "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
+  const hasMountedRef = useRef(false);
 
-  // Auto-correct currentPage if it exceeds totalPages after deletion
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    void executeSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
+
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -249,149 +121,110 @@ export default function FranchiseTable() {
 
   const handleViewFranchise = async (id: string | number) => {
     setIsLoadingDetail(String(id));
+
     try {
       await fetchFranchise(String(id));
       setIsDetailModalOpen(true);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Lỗi tải chi tiết nhượng quyền";
-      showError("Lỗi", errorMessage);
+        err instanceof Error ? err.message : "Failed to load franchise details";
+      showError("Error", errorMessage);
     } finally {
       setIsLoadingDetail(null);
     }
   };
 
-  const renderTableRow = (franchise: Franchise, index: number) => {
+  const handleClearFilters = () => {
+    clearFilters();
+    void executeSearch({
+      keyword: "",
+      is_active: null,
+      is_deleted: false,
+      page: 1,
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderTableRow = (franchise: Franchise) => {
+    const initial = franchise.name?.charAt(0)?.toUpperCase() || "F";
+
     return (
       <tr
         key={franchise.id}
-        style={{
-          borderBottom: "1px solid #e5e7eb",
-          backgroundColor: index % 2 === 0 ? "#ffffff" : "#f9fafb",
-          transition: "background-color 0.2s",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#f3f4f6";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor =
-            index % 2 === 0 ? "#ffffff" : "#f9fafb";
-        }}
+        className="group hover:bg-slate-50 transition-colors"
       >
-        {/* Name */}
-        <td style={{ padding: "16px 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                width: "40px",
-                height: "40px",
-                borderRadius: "8px",
-                backgroundImage: `url('${franchise.logo_url}')`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                border: "1px solid #e5e7eb",
-                backgroundColor: "#f3f4f6",
-              }}
-            />
-            <span style={{ fontWeight: "600", color: "#1f2937" }}>
-              {franchise.name}
-            </span>
+        <td className="p-4">
+          <div className="flex items-center gap-3">
+            {franchise.logo_url ? (
+              <div
+                className="h-10 w-10 rounded-lg shrink-0 border border-slate-200 bg-slate-100"
+                style={{
+                  backgroundImage: `url('${franchise.logo_url}')`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-sm border border-transparent">
+                {initial}
+              </div>
+            )}
+            <div className="flex flex-col min-w-0">
+              <span className="font-semibold text-slate-900 truncate">
+                {franchise.name}
+              </span>
+              <span className="text-sm text-slate-500 truncate">
+                {franchise.code}
+              </span>
+            </div>
           </div>
         </td>
 
-        {/* Code */}
-        <td style={{ padding: "16px 20px", color: "#6b7280" }}>
-          {franchise.code}
+        <td className="p-4 text-slate-600">{franchise.code || "—"}</td>
+
+        <td className="p-4 text-slate-600 max-w-[320px]">
+          <span className="block truncate">{franchise.address || "—"}</span>
         </td>
 
-        {/* Address */}
-        <td
-          style={{
-            padding: "16px 20px",
-            color: "#6b7280",
-            maxWidth: "250px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {franchise.address}
-        </td>
-
-        {/* Status */}
-        <td style={{ padding: "16px 20px" }}>
+        <td className="p-4">
           <label
-            style={
-              {
-                ...getButtonStyles.toggleSwitch,
-                cursor: isLoading || franchise.is_deleted ? "not-allowed" : "pointer",
-              } as React.CSSProperties
-            }
+            className="relative inline-flex items-center"
+            style={{
+              opacity: isLoading || franchise.is_deleted ? 0.5 : 1,
+              cursor:
+                isLoading || franchise.is_deleted ? "not-allowed" : "pointer",
+            }}
           >
             <input
               type="checkbox"
-                  checked={Boolean(franchise.is_active)}
-                  onChange={() =>
-                    !isLoading && !franchise.is_deleted && toggleFranchiseStatus(franchise.id, Boolean(franchise.is_active))
-                  }
-              style={getButtonStyles.toggleInput as React.CSSProperties}
+              checked={Boolean(franchise.is_active)}
+              onChange={() =>
+                !isLoading &&
+                !franchise.is_deleted &&
+                toggleFranchiseStatus(
+                  franchise.id,
+                  Boolean(franchise.is_active),
+                )
+              }
               disabled={isLoading || franchise.is_deleted}
+              className="sr-only peer"
             />
-            <div
-              style={{
-                width: "44px",
-                height: "24px",
-                backgroundColor: franchise.is_active ? "#8B5A2B" : "#d1d5db",
-                borderRadius: "12px",
-                transition: "background-color 0.3s",
-                position: "relative",
-                opacity: isLoading || franchise.is_deleted ? 0.6 : 1,
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  left: franchise.is_active ? "22px" : "2px",
-                  width: "20px",
-                  height: "20px",
-                  backgroundColor: "white",
-                  borderRadius: "50%",
-                  transition: "left 0.3s",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                }}
-              />
-            </div>
+            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
           </label>
         </td>
 
-        {/* Actions */}
-        <td style={{ padding: "16px 20px", textAlign: "right" }}>
-          <div
-            style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
-          >
+        <td className="p-4 text-right">
+          <div className="flex gap-2 justify-end">
             <button
               onClick={() => handleViewFranchise(franchise.id)}
               disabled={isLoadingDetail === String(franchise.id)}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: isLoadingDetail === String(franchise.id) ? "#c0c0c0" : "#4b5563",
-                  opacity: isLoadingDetail === String(franchise.id) ? 0.6 : 1,
-                } as React.CSSProperties
+              className="p-2 rounded-lg text-slate-600 hover:bg-sky-100 hover:text-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              title={
+                isLoadingDetail === String(franchise.id) ? "Loading..." : "View"
               }
-              onMouseEnter={(e) => {
-                if (isLoadingDetail !== String(franchise.id)) {
-                  e.currentTarget.style.backgroundColor = "#e0f2fe";
-                  e.currentTarget.style.color = "#0066cc";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color =
-                  isLoadingDetail === String(franchise.id) ? "#c0c0c0" : "#4b5563";
-              }}
-              title={isLoadingDetail === String(franchise.id) ? "Loading..." : "View"}
             >
               <Eye size={20} />
             </button>
@@ -399,42 +232,20 @@ export default function FranchiseTable() {
             {!franchise.is_deleted && (
               <>
                 <button
-                  onClick={() => navigate(`/admin/franchises/${franchise.id}/products`)}
-                  style={
-                    {
-                      ...getButtonStyles.actionButton,
-                      color: "#4b5563",
-                    } as React.CSSProperties
+                  onClick={() =>
+                    navigate(`/admin/franchises/${franchise.id}/products`)
                   }
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#ede9fe";
-                    e.currentTarget.style.color = "#7c3aed";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#4b5563";
-                  }}
+                  className="p-2 rounded-lg text-slate-600 hover:bg-violet-100 hover:text-violet-700 transition-colors"
                   title="Products"
                 >
                   <Package size={20} />
                 </button>
 
                 <button
-                  onClick={() => setEditModal({ isOpen: true, franchiseId: franchise.id })}
-                  style={
-                    {
-                      ...getButtonStyles.actionButton,
-                      color: "#4b5563",
-                    } as React.CSSProperties
+                  onClick={() =>
+                    setEditModal({ isOpen: true, franchiseId: franchise.id })
                   }
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#fef3c7";
-                    e.currentTarget.style.color = "#92400e";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "transparent";
-                    e.currentTarget.style.color = "#4b5563";
-                  }}
+                  className="p-2 rounded-lg text-slate-600 hover:bg-amber-100 hover:text-amber-700 transition-colors"
                   title="Edit"
                 >
                   <Edit2 size={20} />
@@ -448,35 +259,22 @@ export default function FranchiseTable() {
                   setRestoreModal({
                     isOpen: true,
                     franchiseId: franchise.id,
-                    franchiseName: franchise.name
+                    franchiseName: franchise.name,
                   });
-                } else {
-                  setDeleteModal({
-                    isOpen: true,
-                    franchiseId: franchise.id,
-                    franchiseName: franchise.name
-                  });
+                  return;
                 }
+
+                setDeleteModal({
+                  isOpen: true,
+                  franchiseId: franchise.id,
+                  franchiseName: franchise.name,
+                });
               }}
-              style={
-                {
-                  ...getButtonStyles.actionButton,
-                  color: "#4b5563",
-                } as React.CSSProperties
-              }
-              onMouseEnter={(e) => {
-                if (franchise.is_deleted) {
-                  e.currentTarget.style.backgroundColor = "#f3f4f6";
-                  e.currentTarget.style.color = "#1f2937";
-                } else {
-                  e.currentTarget.style.backgroundColor = "#fee2e2";
-                  e.currentTarget.style.color = "#dc2626";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "transparent";
-                e.currentTarget.style.color = "#4b5563";
-              }}
+              className={`p-2 rounded-lg transition-colors ${
+                franchise.is_deleted
+                  ? "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  : "text-slate-600 hover:bg-red-100 hover:text-red-600"
+              }`}
               title={franchise.is_deleted ? "Restore" : "Delete"}
             >
               {franchise.is_deleted ? (
@@ -492,347 +290,131 @@ export default function FranchiseTable() {
   };
 
   return (
-    <div style={styles.container}>
-      <main style={styles.main}>
-        <header style={styles.header}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <nav
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                fontSize: "14px",
-                color: "#6c757d",
-              }}
-            >
-              <a
-                href="#"
-                style={{
-                  color: "#6c757d",
-                  textDecoration: "none",
-                  transition: "color 0.2s",
-                }}
-              >
+    <div className="flex flex-col w-full min-h-screen">
+      <main className="flex flex-col flex-1">
+        <header className="w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex flex-col gap-5 sm:gap-6 shrink-0 z-10">
+          <div className="flex flex-col gap-1">
+            <nav className="flex items-center gap-2 text-sm text-slate-500">
+              <a className="hover:text-primary transition-colors" href="#">
                 Home
               </a>
-              <span style={{ fontSize: "16px" }}>›</span>
-              <span style={{ color: "#212529", fontWeight: "500" }}>
-                Franchises
+              <span className="material-symbols-outlined text-[16px]">
+                chevron_right
               </span>
+              <span className="text-slate-900 font-medium">Franchises</span>
             </nav>
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              flexWrap: "wrap",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: "16px",
-            }}
-          >
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-            >
-              <h1
-                style={{
-                  fontSize: "clamp(28px, 4vw, 36px)",
-                  fontWeight: "900",
-                  letterSpacing: "-0.025em",
-                  color: "#212529",
-                  margin: 0,
-                }}
-              >
+
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
                 Franchise Management
-              </h1>
-              <p style={{ color: "#6c757d", margin: 0, fontSize: "15px" }}>
-                Total Franchises: {totalItems || 0}
+              </h2>
+              <p className="text-slate-500">
+                Total Franchises: {isLoading ? "..." : totalItems}
               </p>
             </div>
+
             <button
               onClick={() => navigate("/admin/franchises/create")}
-              style={{ ...getButtonStyles.primary, alignSelf: "flex-start" } as React.CSSProperties}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#6d4423";
-                e.currentTarget.style.boxShadow =
-                  "0 4px 8px rgba(139, 90, 43, 0.3)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#8B5A2B";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 4px rgba(139, 90, 43, 0.2)";
-              }}
+              className="inline-flex w-full sm:w-auto justify-center px-5 py-2.5 rounded-lg bg-primary text-white font-semibold shadow-sm hover:bg-[#6c4830] transition-colors items-center gap-2 text-sm"
             >
-              <span style={{ fontSize: "20px" }}>+</span>
-              <span>Create Franchise</span>
+              <Plus size={18} />
+              Create Franchise
             </button>
           </div>
         </header>
 
-        <div style={styles.contentArea}>
+        <div className="px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
           <FranchiseSearch
             searchState={searchState}
             onSearch={executeSearch}
-            onClearFilters={() => {
-              clearFilters();
-              setCurrentPage(1);
-            }}
+            onClearFilters={handleClearFilters}
           />
 
-          <div style={styles.tableContainer}>
-            <table style={styles.table}>
-              <thead style={styles.tableHead}>
-                <tr>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "700",
-                      color: "#6b7280",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Name
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "700",
-                      color: "#6b7280",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Code
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "700",
-                      color: "#6b7280",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Address
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "left",
-                      fontWeight: "700",
-                      color: "#6b7280",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Status
-                  </th>
-                  <th
-                    style={{
-                      padding: "16px 20px",
-                      textAlign: "right",
-                      fontWeight: "700",
-                      color: "#6b7280",
-                      whiteSpace: "nowrap",
-                      fontSize: "13px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {isLoading && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        padding: "48px 20px",
-                        textAlign: "center",
-                        color: "#6b7280",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          color: "#8B5A2B",
-                        }}
-                      >
-                        Loading franchise data...
-                      </div>
-                    </td>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[840px] text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Franchise
+                    </th>
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Code
+                    </th>
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Address
+                    </th>
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                      Status
+                    </th>
+                    <th className="p-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">
+                      Actions
+                    </th>
                   </tr>
-                )}
+                </thead>
 
-                {!isLoading && error && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        padding: "48px 20px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          marginBottom: "8px",
-                          color: "#dc2626",
-                        }}
-                      >
-                        ❌ An error occurred
-                      </div>
-                      <p
-                        style={{
-                          fontSize: "14px",
-                          margin: "0",
-                          color: "#dc2626",
-                        }}
-                      >
-                        {error}
-                      </p>
-                    </td>
-                  </tr>
-                )}
+                <tbody className="divide-y divide-slate-100">
+                  {isLoading &&
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <SkeletonRow key={index} />
+                    ))}
 
-                {!isLoading && !error && franchises?.length > 0 && (
-                  <>
-                    {franchises.map((franchise, index) =>
-                      renderTableRow(franchise, index),
-                    )}
-                  </>
-                )}
+                  {!isLoading && error && (
+                    <tr>
+                      <td colSpan={5} className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <span className="text-red-500">
+                            <Store size={40} />
+                          </span>
+                          <p className="text-red-600 font-medium">
+                            Failed to load franchises
+                          </p>
+                          <p className="text-sm text-red-400">{error}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
 
-                {!isLoading && !error && franchises?.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        padding: "48px 20px",
-                        textAlign: "center",
-                        color: "#6b7280",
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "600",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        📭 No data found
-                      </div>
-                      <p style={{ fontSize: "14px", margin: "0" }}>
-                        Try adjusting your filters or create a new franchise
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  {!isLoading &&
+                    !error &&
+                    franchises.map((franchise) => renderTableRow(franchise))}
 
-          {!isLoading && totalPages > 0 && (
-            <div style={styles.paginationContainer}>
-              <span style={{ color: "#6b7280" }}>
-                Showing {Math.min((currentPage - 1) * pageSize + 1, totalItems)} to{" "}
-                {Math.min(currentPage * pageSize, totalItems)} of {totalItems}
-              </span>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  style={{
-                    ...getButtonStyles.pagination,
-                    opacity: currentPage === 1 ? 0.5 : 1,
-                    cursor: currentPage === 1 ? "not-allowed" : "pointer",
-                  } as React.CSSProperties}
-                >
-                  Previous
-                </button>
-                {(() => {
-                  const pages: (number | "...")[] = [];
-                  if (totalPages <= 5) {
-                    for (let i = 1; i <= totalPages; i++) pages.push(i);
-                  } else {
-                    const ws = Math.max(1, Math.min(currentPage - 1, totalPages - 2));
-                    const we = ws + 2;
-                    if (ws > 2) pages.push(1, "..."); else for (let i = 1; i < ws; i++) pages.push(i);
-                    for (let i = ws; i <= we; i++) pages.push(i);
-                    if (we < totalPages - 1) pages.push("...", totalPages); else for (let i = we + 1; i <= totalPages; i++) pages.push(i);
-                  }
-                  return pages.map((page, idx) =>
-                    page === "..." ? (
-                      <span key={`e-${idx}`} style={{ padding: "0 6px", color: "#6b7280", fontWeight: "600", lineHeight: "36px" }}>...</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        style={{
-                          ...getButtonStyles.pagination,
-                          backgroundColor: page === currentPage ? "#8B5A2B" : "white",
-                          color: page === currentPage ? "white" : "#374151",
-                        } as React.CSSProperties}
-                      >
-                        {page}
-                      </button>
-                    )
-                  );
-                })()}
-                <button
-                  onClick={() =>
-                    setCurrentPage(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  style={{
-                    ...getButtonStyles.pagination,
-                    opacity: currentPage === totalPages ? 0.5 : 1,
-                    cursor:
-                      currentPage === totalPages ? "not-allowed" : "pointer",
-                  } as React.CSSProperties}
-                >
-                  Next
-                </button>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "8px" }}>
-                  <span style={{ fontSize: "13px", color: "#6b7280", whiteSpace: "nowrap" }}>Go to page</span>
-                  <input
-                    type="number" min={1} max={totalPages}
-                    value={pageInput}
-                    onChange={(e) => setPageInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        const n = Number.parseInt(pageInput, 10);
-                        if (!Number.isNaN(n) && n >= 1 && n <= totalPages) setCurrentPage(n);
-                        setPageInput("");
-                      }
-                    }}
-                    placeholder={String(currentPage)}
-                    style={{ width: "52px", height: "36px", border: "1px solid #e5e7eb", borderRadius: "6px", textAlign: "center", fontSize: "14px", outline: "none", padding: "0 4px" }}
-                  />
-                </div>
-              </div>
+                  {!isLoading && !error && franchises.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <span className="text-slate-300">
+                            <Store size={48} />
+                          </span>
+                          <p className="text-slate-500 font-medium">
+                            No franchises found
+                          </p>
+                          <p className="text-sm text-slate-400">
+                            There are no franchise records to display.
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+
+            {!isLoading && franchises.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={pageSize}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
         </div>
       </main>
 
-      {/* Franchise Detail Modal */}
       <FranchiseDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
@@ -840,16 +422,14 @@ export default function FranchiseTable() {
         isLoading={isLoadingFranchiseDetail}
       />
 
-      {/* Delete Franchise Modal */}
       <FranchiseDelete
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setDeleteModal((prev) => ({ ...prev, isOpen: false }))}
         onConfirm={() => deleteFranchise(deleteModal.franchiseId)}
         franchiseId={deleteModal.franchiseId}
         franchiseName={deleteModal.franchiseName}
       />
 
-      {/* Restore Franchise Modal */}
       <FranchiseRestore
         isOpen={restoreModal.isOpen}
         franchiseId={restoreModal.franchiseId}
@@ -857,18 +437,27 @@ export default function FranchiseTable() {
         isRestoring={isLoading}
         onConfirm={() => {
           restoreFranchise(restoreModal.franchiseId);
-          setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" });
+          setRestoreModal({
+            isOpen: false,
+            franchiseId: "",
+            franchiseName: "",
+          });
         }}
-        onClose={() => setRestoreModal({ isOpen: false, franchiseId: "", franchiseName: "" })}
+        onClose={() =>
+          setRestoreModal({
+            isOpen: false,
+            franchiseId: "",
+            franchiseName: "",
+          })
+        }
       />
 
-      {/* Edit Franchise Modal */}
       <FranchiseEditModal
         isOpen={editModal.isOpen}
         onClose={() => setEditModal({ isOpen: false, franchiseId: null })}
         franchiseId={editModal.franchiseId}
         onSuccess={() => {
-          executeSearch();
+          void executeSearch();
         }}
       />
     </div>

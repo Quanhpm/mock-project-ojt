@@ -168,6 +168,7 @@ export default function ProductTable() {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [searchInput, setSearchInput] = useState(filters.keyword);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
   const [franchiseOptions, setFranchiseOptions] = useState<FranchiseSelectItem[]>([]);
 
@@ -217,7 +218,6 @@ export default function ProductTable() {
   });
   const [pageInput, setPageInput] = useState("");
   const hasInitializedFilterSearch = useRef(false);
-  const hasInitializedKeywordSearch = useRef(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1024 : true,
   );
@@ -287,6 +287,10 @@ export default function ProductTable() {
     void loadFranchises();
   }, [isGlobalScope]);
 
+  useEffect(() => {
+    setSearchInput(filters.keyword);
+  }, [filters.keyword]);
+
   // Keyboard shortcuts - Ctrl+K to focus search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -349,12 +353,7 @@ export default function ProductTable() {
       case "Enter":
         e.preventDefault();
         if (selectedHistoryIndex >= 0) {
-          setFilters((prev) => ({
-            ...prev,
-            keyword: searchHistory[selectedHistoryIndex],
-          }));
-          setIsSearchDropdownOpen(false);
-          setSelectedHistoryIndex(-1);
+          void handleSearch(searchHistory[selectedHistoryIndex]);
         } else {
           void handleSearch();
         }
@@ -367,18 +366,30 @@ export default function ProductTable() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (nextKeyword = searchInput) => {
+    const trimmedKeyword = nextKeyword.trim();
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
+    setSearchInput(trimmedKeyword);
+    setFilters((prev) => ({
+      ...prev,
+      keyword: trimmedKeyword,
+    }));
+
     if (currentPage !== 1) {
       setCurrentPage(1);
       return;
     }
-    await executeSearch();
+
+    await executeSearch({
+      keyword: trimmedKeyword,
+      page: 1,
+    });
   };
 
   const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, keyword: "" }));
+    setSearchInput("");
+    setSelectedHistoryIndex(-1);
     searchInputRef.current?.focus();
   };
 
@@ -405,28 +416,6 @@ export default function ProductTable() {
     // Intentionally omit executeSearch from deps to avoid resetting currentPage when callback identity changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.franchise_id, filters.is_active, filters.is_deleted]);
-
-  useEffect(() => {
-    if (!hasInitializedKeywordSearch.current) {
-      hasInitializedKeywordSearch.current = true;
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-        return;
-      }
-
-      void executeSearch();
-    }, 400);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-    // Intentionally omit executeSearch from deps to avoid unnecessary retriggers from callback identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.keyword]);
 
   const handleDeleteClick = (productId: string, productName: string) => {
     setDeleteModal({
@@ -814,21 +803,15 @@ export default function ProductTable() {
                     <input
                       ref={searchInputRef}
                       type="text"
-                      value={filters.keyword}
+                      value={searchInput}
                       onChange={(e) => {
-                        setFilters((prev) => ({
-                          ...prev,
-                          keyword: e.target.value,
-                        }));
+                        setSearchInput(e.target.value);
                         if (e.target.value.trim()) {
                           setIsSearchDropdownOpen(false);
                         }
                       }}
                       onFocus={() => {
-                        if (
-                          !filters.keyword.trim() &&
-                          searchHistory.length > 0
-                        ) {
+                        if (!searchInput.trim() && searchHistory.length > 0) {
                           setIsSearchDropdownOpen(true);
                         }
                       }}
@@ -850,7 +833,7 @@ export default function ProductTable() {
                     />
 
                     {/* Clear Button */}
-                    {filters.keyword && (
+                    {searchInput && (
                       <button
                         onClick={handleClearSearch}
                         style={{
@@ -897,7 +880,7 @@ export default function ProductTable() {
                   {/* Search Dropdown - History & Suggestions */}
                   {isSearchDropdownOpen &&
                     searchHistory.length > 0 &&
-                    !filters.keyword && (
+                    !searchInput && (
                       <div
                         style={{
                           position: "absolute",
@@ -963,10 +946,7 @@ export default function ProductTable() {
                           <div
                             key={index}
                             onClick={() => {
-                              setFilters((prev) => ({
-                                ...prev,
-                                keyword: item,
-                              }));
+                              setSearchInput(item);
                               setIsSearchDropdownOpen(false);
                               setSelectedHistoryIndex(-1);
                             }}

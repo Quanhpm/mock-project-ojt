@@ -44,7 +44,7 @@ interface UseProductSearchReturn {
   setPageSize: (size: number) => void;
 
   // Actions
-  executeSearch: () => Promise<void>;
+  executeSearch: (overrides?: Partial<SearchFilters> & { page?: number }) => Promise<void>;
   clearFilters: () => Promise<void>;
 
   // Search history
@@ -287,8 +287,10 @@ export const useProductSearch = (
     tableScope,
   ]);
 
-  const executeSearch = useCallback(async () => {
-    await runSearch(filters, currentPage);
+  const executeSearch = useCallback(async (overrides?: Partial<SearchFilters> & { page?: number }) => {
+    const nextFilters = { ...filters, ...(overrides || {}) } as SearchFilters;
+    const nextPage = overrides?.page ?? currentPage;
+    await runSearch(nextFilters, nextPage);
   }, [currentPage, filters, runSearch]);
 
   // Clear all filters

@@ -26,12 +26,17 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
     clearHistory,
     isSearchDropdownOpen,
     setIsSearchDropdownOpen,
+    currentPage,
+    setCurrentPage,
   } = searchState;
 
   // ── Refs & local state ──
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const onSearchRef = useRef(onSearch);
   const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
+  const [draftKeyword, setDraftKeyword] = useState(filters.keyword);
+  const [searchRequestVersion, setSearchRequestVersion] = useState(0);
 
   // ── Keyboard shortcut: Ctrl+K → focus input ──
   useEffect(() => {
@@ -61,16 +66,49 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
 
+  useEffect(() => {
+    setDraftKeyword(filters.keyword);
+  }, [filters.keyword]);
+
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    if (searchRequestVersion === 0) return;
+    onSearchRef.current();
+  }, [searchRequestVersion]);
+
   // ── Handlers ──
   const handleSearch = () => {
+    const nextKeyword = draftKeyword;
+
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
-    onSearch();
+    setFilters((prev) => ({ ...prev, keyword: nextKeyword }));
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    setSearchRequestVersion((prev) => prev + 1);
   };
 
   const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, keyword: "" }));
+    setDraftKeyword("");
     searchInputRef.current?.focus();
+  };
+
+  const handleClearFilters = () => {
+    setDraftKeyword("");
+    setIsSearchDropdownOpen(false);
+    setSelectedHistoryIndex(-1);
+    onClearFilters();
+
+    if (currentPage === 1) {
+      setSearchRequestVersion((prev) => prev + 1);
+    }
   };
 
   const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -96,10 +134,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
       case "Enter":
         e.preventDefault();
         if (selectedHistoryIndex >= 0) {
-          setFilters((prev) => ({
-            ...prev,
-            keyword: searchHistory[selectedHistoryIndex],
-          }));
+          setDraftKeyword(searchHistory[selectedHistoryIndex]);
           setIsSearchDropdownOpen(false);
           setSelectedHistoryIndex(-1);
         } else {
@@ -151,18 +186,15 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
             <input
               ref={searchInputRef}
               type="text"
-              value={filters.keyword}
+              value={draftKeyword}
               onChange={(e) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  keyword: e.target.value,
-                }));
+                setDraftKeyword(e.target.value);
                 if (e.target.value.trim()) {
                   setIsSearchDropdownOpen(false);
                 }
               }}
               onFocus={() => {
-                if (!filters.keyword.trim() && searchHistory.length > 0) {
+                if (!draftKeyword.trim() && searchHistory.length > 0) {
                   setIsSearchDropdownOpen(true);
                 }
               }}
@@ -172,7 +204,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
             />
 
             {/* Clear Button */}
-            {filters.keyword && (
+            {draftKeyword && (
               <button
                 onClick={handleClearSearch}
                 className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900 transition-all"
@@ -195,7 +227,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
           {/* Search Dropdown - History */}
           {isSearchDropdownOpen &&
             searchHistory.length > 0 &&
-            !filters.keyword && (
+            !draftKeyword && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                 <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center">
                   <span className="text-xs font-semibold text-slate-500 uppercase">
@@ -216,7 +248,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
                   <div
                     key={index}
                     onClick={() => {
-                      setFilters((prev) => ({ ...prev, keyword: item }));
+                      setDraftKeyword(item);
                       setIsSearchDropdownOpen(false);
                       setSelectedHistoryIndex(-1);
                     }}
@@ -311,7 +343,7 @@ export function UserSearch({ searchState, onSearch, onClearFilters }: UserSearch
 
         {/* Clear Filters Button */}
         <button
-          onClick={onClearFilters}
+          onClick={handleClearFilters}
           className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap self-start"
         >
           Clear filters

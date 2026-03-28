@@ -33,6 +33,8 @@ const DEFAULT_FORM_VALUES: AssignFranchiseFormValues = {
   use_default_product: false,
 };
 
+const SIZE_LETTERS_ONLY_REGEX = /[^\p{L}\s]/gu;
+
 const formatPriceInput = (value: string): string => {
   const digitsOnly = value.replace(/\D/g, "");
 
@@ -372,7 +374,10 @@ export default function AssignFranchiseModal({
                     autoComplete="off"
                     value={selectedSize}
                     onChange={(event) => {
-                      const nextSize = event.target.value;
+                      const nextSize = event.target.value.replace(
+                        SIZE_LETTERS_ONLY_REGEX,
+                        "",
+                      );
                       lastManualSizeRef.current = nextSize;
                       setValue("size", nextSize, {
                         shouldDirty: true,

@@ -1,22 +1,11 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { UseFranchiseSearchReturn } from "../hooks/useFranchiseSearch.hook";
 
-// ============================================================================
-// PROPS
-// ============================================================================
-
 interface FranchiseSearchProps {
-  /** Toàn bộ return value của useFranchiseSearch được truyền từ FranchiseTable */
   searchState: UseFranchiseSearchReturn;
-  /** Callback được gọi khi người dùng bấm "Tìm kiếm" hoặc nhấn Enter */
   onSearch: () => void;
-  /** Callback được gọi khi người dùng bấm "Xóa bộ lọc" */
   onClearFilters: () => void;
 }
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export function FranchiseSearch({
   searchState,
@@ -30,29 +19,31 @@ export function FranchiseSearch({
     clearHistory,
     isSearchDropdownOpen,
     setIsSearchDropdownOpen,
+    currentPage,
     setCurrentPage,
     executeSearch,
   } = searchState;
 
-  // ── Refs & local state ──
   const searchInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
+  const onSearchRef = useRef(onSearch);
+  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState(-1);
+  const [draftKeyword, setDraftKeyword] = useState(filters.keyword);
+  const [searchRequestVersion, setSearchRequestVersion] = useState(0);
 
-  // ── Keyboard shortcut: Ctrl+K → focus input ──
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+        event.preventDefault();
         searchInputRef.current?.focus();
         setIsSearchDropdownOpen(true);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setIsSearchDropdownOpen]);
 
-  // ── Click outside → đóng dropdown ──
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -63,49 +54,76 @@ export function FranchiseSearch({
         setSelectedHistoryIndex(-1);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsSearchDropdownOpen]);
 
-  // ── Handlers ──
+  useEffect(() => {
+    setDraftKeyword(filters.keyword);
+  }, [filters.keyword]);
+
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    if (searchRequestVersion === 0) return;
+    onSearchRef.current();
+  }, [searchRequestVersion]);
+
   const handleSearch = () => {
+    const nextKeyword = draftKeyword;
+
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
-    onSearch();
+    setFilters((prev) => ({ ...prev, keyword: nextKeyword }));
+
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+      return;
+    }
+
+    setSearchRequestVersion((prev) => prev + 1);
   };
 
   const handleClearSearch = () => {
-    setFilters((prev) => ({ ...prev, keyword: "" }));
+    setDraftKeyword("");
     searchInputRef.current?.focus();
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleClearAllFilters = () => {
+    setDraftKeyword("");
+    setIsSearchDropdownOpen(false);
+    setSelectedHistoryIndex(-1);
+    onClearFilters();
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isSearchDropdownOpen || searchHistory.length === 0) {
-      if (e.key === "Enter") {
-        e.preventDefault();
+      if (event.key === "Enter") {
+        event.preventDefault();
         handleSearch();
       }
       return;
     }
 
-    switch (e.key) {
+    switch (event.key) {
       case "ArrowDown":
-        e.preventDefault();
+        event.preventDefault();
         setSelectedHistoryIndex((prev) =>
           prev < searchHistory.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
-        e.preventDefault();
+        event.preventDefault();
         setSelectedHistoryIndex((prev) => (prev > 0 ? prev - 1 : -1));
         break;
       case "Enter":
-        e.preventDefault();
+        event.preventDefault();
         if (selectedHistoryIndex >= 0) {
-          setFilters((prev) => ({
-            ...prev,
-            keyword: searchHistory[selectedHistoryIndex],
-          }));
+          setDraftKeyword(searchHistory[selectedHistoryIndex]);
           setIsSearchDropdownOpen(false);
           setSelectedHistoryIndex(-1);
         } else {
@@ -113,15 +131,18 @@ export function FranchiseSearch({
         }
         break;
       case "Escape":
-        e.preventDefault();
+        event.preventDefault();
         setIsSearchDropdownOpen(false);
         setSelectedHistoryIndex(-1);
+        break;
+      default:
         break;
     }
   };
 
   const handleStatusFilterChange = (value: string) => {
     let is_active: boolean | null;
+
     if (value === "null") {
       is_active = null;
     } else if (value === "true") {
@@ -129,56 +150,24 @@ export function FranchiseSearch({
     } else {
       is_active = false;
     }
+
     setFilters((prev) => ({ ...prev, is_active }));
     setCurrentPage(1);
-    executeSearch({ is_active, page: 1 });
+    void executeSearch({ is_active, page: 1 });
   };
 
   const handleDeletedFilterChange = (value: boolean) => {
     setFilters((prev) => ({ ...prev, is_deleted: value }));
     setCurrentPage(1);
-    executeSearch({ is_deleted: value, page: 1 });
+    void executeSearch({ is_deleted: value, page: 1 });
   };
 
-  // ── Render ──
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        padding: "16px 20px",
-        borderRadius: "12px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-        marginBottom: "20px",
-        border: "1px solid #e5e7eb",
-      }}
-    >
-      {/* Row 1: keyword input + Search button */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-          alignItems: "center",
-          marginBottom: "12px",
-        }}
-      >
-        {/* Search Bar */}
-        <div
-          style={{ flex: "1 1 320px", position: "relative" }}
-          ref={dropdownRef}
-        >
-          <div style={{ position: "relative" }}>
-            {/* Search Icon */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "12px",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                color: "#9ca3af",
-              }}
-            >
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+      <div className="flex flex-col lg:flex-row gap-3 lg:items-center mb-3">
+        <div className="flex-1 relative" ref={dropdownRef}>
+          <div className="relative">
+            <div className="absolute top-1/2 left-3 -translate-y-1/2 pointer-events-none text-slate-400">
               <svg
                 width="18"
                 height="18"
@@ -192,80 +181,30 @@ export function FranchiseSearch({
               </svg>
             </div>
 
-            {/* Search Input */}
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Search by name, code, address... (Ctrl+K)"
-              value={filters.keyword}
-              onChange={(e) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  keyword: e.target.value,
-                }));
-                if (e.target.value.trim()) {
+              value={draftKeyword}
+              onChange={(event) => {
+                setDraftKeyword(event.target.value);
+                if (event.target.value.trim()) {
                   setIsSearchDropdownOpen(false);
                 }
               }}
               onFocus={() => {
-                if (!filters.keyword.trim() && searchHistory.length > 0) {
+                if (!draftKeyword.trim() && searchHistory.length > 0) {
                   setIsSearchDropdownOpen(true);
                 }
               }}
               onKeyDown={handleSearchKeyDown}
-              onFocusCapture={(e) => {
-                e.currentTarget.style.borderColor = "#8B5A2B";
-                e.currentTarget.style.backgroundColor = "#ffffff";
-              }}
-              onBlurCapture={(e) => {
-                e.currentTarget.style.borderColor = "#e5e7eb";
-                e.currentTarget.style.backgroundColor = "#f9fafb";
-              }}
-              style={{
-                width: "100%",
-                padding: "10px 14px",
-                paddingLeft: "40px",
-                paddingRight: filters.keyword ? "40px" : "14px",
-                border: "1px solid #e5e7eb",
-                borderRadius: "8px",
-                fontSize: "15px",
-                fontFamily: "inherit",
-                backgroundColor: "#f9fafb",
-                transition: "border-color 0.2s",
-                boxSizing: "border-box",
-                outline: "none",
-              }}
+              placeholder="Search by name, code, address... (Ctrl+K)"
+              className="w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
             />
 
-            {/* Clear Button */}
-            {filters.keyword && (
+            {draftKeyword && (
               <button
                 onClick={handleClearSearch}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#bdbdbd";
-                  e.currentTarget.style.color = "#212529";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e0e0e0";
-                  e.currentTarget.style.color = "#6c757d";
-                }}
-                style={{
-                  position: "absolute",
-                  top: "50%",
-                  right: "12px",
-                  transform: "translateY(-50%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "20px",
-                  height: "20px",
-                  border: "none",
-                  borderRadius: "50%",
-                  backgroundColor: "#e0e0e0",
-                  color: "#6c757d",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
+                className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 hover:text-slate-900 transition-all"
               >
                 <svg
                   width="12"
@@ -282,66 +221,21 @@ export function FranchiseSearch({
             )}
           </div>
 
-          {/* Search Dropdown - History */}
           {isSearchDropdownOpen &&
             searchHistory.length > 0 &&
-            !filters.keyword && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "white",
-                  border: "1px solid #e0e0e0",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                  zIndex: 50,
-                  maxHeight: "250px",
-                  overflowY: "auto",
-                }}
-              >
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    borderBottom: "1px solid #f0f0f0",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      color: "#6c757d",
-                      textTransform: "uppercase",
-                    }}
-                  >
+            !draftKeyword && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center">
+                  <span className="text-xs font-semibold text-slate-500 uppercase">
                     Recent searches
                   </span>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={(event) => {
+                      event.stopPropagation();
                       clearHistory();
                       setIsSearchDropdownOpen(false);
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#fee")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "transparent")
-                    }
-                    style={{
-                      fontSize: "11px",
-                      color: "#ef4444",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: "2px 8px",
-                      borderRadius: "4px",
-                      transition: "all 0.2s",
-                    }}
+                    className="text-xs text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
                   >
                     Clear
                   </button>
@@ -350,31 +244,13 @@ export function FranchiseSearch({
                   <div
                     key={index}
                     onClick={() => {
-                      setFilters((prev) => ({ ...prev, keyword: item }));
+                      setDraftKeyword(item);
                       setIsSearchDropdownOpen(false);
                       setSelectedHistoryIndex(-1);
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f9fafb")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        selectedHistoryIndex === index
-                          ? "#f3f4f6"
-                          : "transparent")
-                    }
-                    style={{
-                      padding: "10px 12px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      backgroundColor:
-                        selectedHistoryIndex === index
-                          ? "#f3f4f6"
-                          : "transparent",
-                      transition: "background-color 0.2s",
-                    }}
+                    className={`px-3 py-2 cursor-pointer flex items-center gap-2 hover:bg-slate-50 ${
+                      selectedHistoryIndex === index ? "bg-slate-100" : ""
+                    }`}
                   >
                     <svg
                       width="16"
@@ -383,47 +259,21 @@ export function FranchiseSearch({
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
-                      style={{ color: "#9ca3af" }}
+                      className="text-slate-400"
                     >
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
-                    <span style={{ fontSize: "14px", color: "#374151" }}>
-                      {item}
-                    </span>
+                    <span className="text-sm text-slate-700">{item}</span>
                   </div>
                 ))}
               </div>
             )}
         </div>
 
-        {/* Search Button */}
         <button
-          type="button"
           onClick={handleSearch}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#6d4423";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#8B5A2B";
-          }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            backgroundColor: "#8B5A2B",
-            color: "white",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            border: "none",
-            fontWeight: "600",
-            fontSize: "15px",
-            cursor: "pointer",
-            transition: "all 0.2s",
-            whiteSpace: "nowrap",
-            height: "42px",
-            minWidth: "140px",
-          }}
+          className="w-full lg:w-auto justify-center px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-[#6c4830] transition-colors font-medium text-sm flex items-center gap-2 whitespace-nowrap"
         >
           <svg
             width="16"
@@ -440,63 +290,20 @@ export function FranchiseSearch({
         </button>
       </div>
 
-      {/* Row 2: Filters + Clear button */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-          gap: "12px",
-          alignItems: "center",
-        }}
-      >
-        {/* Status Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:flex-wrap">
         <select
-          value={
-            filters.is_active === null ? "null" : String(filters.is_active)
-          }
-          onChange={(e) => handleStatusFilterChange(e.target.value)}
-          style={{
-            padding: "9px 16px",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontFamily: "inherit",
-            backgroundColor: "#f9fafb",
-            cursor: "pointer",
-            outline: "none",
-            minWidth: 0,
-          }}
+          value={filters.is_active === null ? "null" : String(filters.is_active)}
+          onChange={(event) => handleStatusFilterChange(event.target.value)}
+          className="px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         >
           <option value="null">All statuses</option>
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select>
 
-        {/* Deleted Select (Original toggle dropdown) */}
-        <select
-          value={filters.is_deleted ? "true" : "false"}
-          onChange={(e) => handleDeletedFilterChange(e.target.value === "true")}
-          style={{
-            padding: "9px 16px",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontFamily: "inherit",
-            backgroundColor: "#f9fafb",
-            cursor: "pointer",
-            outline: "none",
-            minWidth: 0,
-          }}
-        >
-          <option value="false">Not deleted</option>
-          <option value="true">Deleted</option>
-        </select>
-
-        {/* Deleted Toggle Button */}
         <button
           onClick={() => handleDeletedFilterChange(!filters.is_deleted)}
           style={{
-            width: "100%",
             padding: "9px 16px",
             borderRadius: "8px",
             border: "1px solid #e0e0e0",
@@ -511,11 +318,13 @@ export function FranchiseSearch({
             alignItems: "center",
             gap: "6px",
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = filters.is_deleted ? "#f57c00" : "#bdbdbd";
+          onMouseEnter={(event) => {
+            event.currentTarget.style.borderColor = filters.is_deleted
+              ? "#f57c00"
+              : "#bdbdbd";
           }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = "#e0e0e0";
+          onMouseLeave={(event) => {
+            event.currentTarget.style.borderColor = "#e0e0e0";
           }}
         >
           <svg
@@ -533,28 +342,9 @@ export function FranchiseSearch({
           {filters.is_deleted ? "Deleted" : "Current"}
         </button>
 
-        {/* Clear Filters Button */}
         <button
-          onClick={onClearFilters}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#e5e7eb";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#f3f4f6";
-          }}
-          style={{
-            width: "100%",
-            padding: "9px 16px",
-            backgroundColor: "#f3f4f6",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-            fontSize: "14px",
-            fontWeight: "500",
-            color: "#374151",
-            cursor: "pointer",
-            transition: "all 0.2s",
-            whiteSpace: "nowrap",
-          }}
+          onClick={handleClearAllFilters}
+          className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm whitespace-nowrap self-start"
         >
           Clear filters
         </button>

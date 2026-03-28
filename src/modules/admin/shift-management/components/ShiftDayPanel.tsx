@@ -14,12 +14,13 @@ interface ShiftDayPanelProps {
   assignments: ShiftAssignmentView[]
   shifts: DailyShiftView[]
   onCreateAssignment?: () => void
-  onOpenShiftDetail?: (shift: DailyShiftView) => void
   onEditShift?: (shift: DailyShiftView) => void
+  onDeleteShift?: (shift: DailyShiftView) => void
   onStatusChange?: (assignmentId: string, status: ShiftAssignmentStatus) => void
   onDeleteAssignment?: (assignment: ShiftAssignmentView) => void
   updatingAssignmentId: string | null
   deletingAssignmentId: string | null
+  deletingShiftId: string | null
 }
 
 const formatDateLabel = (date: Date) => {
@@ -37,12 +38,13 @@ export const ShiftDayPanel: React.FC<ShiftDayPanelProps> = ({
   assignments,
   shifts,
   onCreateAssignment,
-  onOpenShiftDetail,
   onEditShift,
+  onDeleteShift,
   onStatusChange,
   onDeleteAssignment,
   updatingAssignmentId,
   deletingAssignmentId,
+  deletingShiftId,
 }) => {
   return (
     <div className="relative flex h-full min-h-0 flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -146,18 +148,23 @@ export const ShiftDayPanel: React.FC<ShiftDayPanelProps> = ({
                         <button
                           type="button"
                           onClick={() => onEditShift(shift)}
+                          disabled={deletingShiftId === shift.shiftId}
                           className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
                         >
                           Edit Shift
                         </button>
                       )}
-                      {onOpenShiftDetail && (
+                      {onDeleteShift && (
                         <button
                           type="button"
-                          onClick={() => onOpenShiftDetail(shift)}
-                          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-600"
+                          onClick={() => onDeleteShift(shift)}
+                          disabled={deletingShiftId === shift.shiftId}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          aria-label={`Delete shift ${shift.shiftName}`}
                         >
-                          Open Daily Assignment
+                          <span className="material-symbols-outlined text-[18px]">
+                            {deletingShiftId === shift.shiftId ? 'hourglass_top' : 'delete'}
+                          </span>
                         </button>
                       )}
                     </div>

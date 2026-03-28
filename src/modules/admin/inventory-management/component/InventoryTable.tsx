@@ -137,7 +137,6 @@ if (!document.head.querySelector("style[data-inventory-table]")) {
 
 export default function InventoryTable() {
   const { error: toastError, success: toastSuccess } = useToast();
-  const SEARCH_DEBOUNCE_DELAY = 400;
   const inventoryTableResolver = zodResolver(
     inventoryTableFormSchema,
   ) as Resolver<
@@ -148,7 +147,7 @@ export default function InventoryTable() {
 
   // === Existing state ===
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [committedSearchTerm, setCommittedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [toolbarLoadingAction, setToolbarLoadingAction] = useState<ToolbarLoadingAction>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -408,28 +407,14 @@ export default function InventoryTable() {
     searchCondition: {
       is_deleted: showDeleted,
       ...(franchiseFilter ? { franchise_id: franchiseFilter } : {}),
-      ...(debouncedSearchTerm ? { keyword: debouncedSearchTerm } : {}),
+      ...(committedSearchTerm ? { keyword: committedSearchTerm } : {}),
     },
     pageInfo: { pageNum: page, pageSize: itemsPerPage },
-  }), [debouncedSearchTerm, franchiseFilter, itemsPerPage, showDeleted]);
-
-  useEffect(() => {
-    const nextKeyword = searchInput.trim();
-
-    if (nextKeyword === debouncedSearchTerm) return;
-
-    const debounceTimer = window.setTimeout(() => {
-      setToolbarLoadingAction("search");
-      setDebouncedSearchTerm(nextKeyword);
-      setCurrentPage(1);
-    }, SEARCH_DEBOUNCE_DELAY);
-
-    return () => window.clearTimeout(debounceTimer);
-  }, [SEARCH_DEBOUNCE_DELAY, debouncedSearchTerm, searchInput]);
+  }), [committedSearchTerm, franchiseFilter, itemsPerPage, showDeleted]);
 
   useEffect(() => {
     void refetch(buildPayload(currentPage));
-  }, [buildPayload, currentPage, debouncedSearchTerm, refetch]);
+  }, [buildPayload, currentPage, refetch]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") { e.preventDefault(); searchInputRef.current?.focus(); }
@@ -474,7 +459,7 @@ export default function InventoryTable() {
   const handleClearFilters = useCallback(() => {
     setToolbarLoadingAction("clear");
     setSearchInput("");
-    setDebouncedSearchTerm("");
+    setCommittedSearchTerm("");
     setStatusFilter("all");
     setFranchiseFilter("");
     setShowDeleted(false);
@@ -483,7 +468,7 @@ export default function InventoryTable() {
 
   const handleSearch = useCallback(() => {
     setToolbarLoadingAction("search");
-    setDebouncedSearchTerm(searchInput.trim());
+    setCommittedSearchTerm(searchInput.trim());
     setCurrentPage(1);
   }, [searchInput]);
 

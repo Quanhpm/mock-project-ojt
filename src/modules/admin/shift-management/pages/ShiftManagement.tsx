@@ -8,6 +8,7 @@ import { useAdminAuthStore, getRoleCode } from '@/modules/admin/auth-admin/store
 import { useToast } from '@/hooks/use-toast.hook'
 import {
   DailyAssignmentModal,
+  DeleteShiftDialog,
   DeleteShiftAssignmentDialog,
   EditShiftModal,
   PageHeader,
@@ -69,6 +70,8 @@ function ShiftManagement() {
   const [deleteTarget, setDeleteTarget] = useState<ShiftAssignmentView | null>(null)
   const [editingShift, setEditingShift] = useState<DailyShiftView | null>(null)
   const [isUpdatingShift, setIsUpdatingShift] = useState(false)
+  const [deletingShiftId, setDeletingShiftId] = useState<string | null>(null)
+  const [deleteShiftTarget, setDeleteShiftTarget] = useState<DailyShiftView | null>(null)
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isImportingShifts, setIsImportingShifts] = useState(false)
   const [isQuickAssignModalOpen, setIsQuickAssignModalOpen] = useState(false)
@@ -319,6 +322,37 @@ function ShiftManagement() {
 
   const handleEditShift = (shift: DailyShiftView) => {
     setEditingShift(shift)
+  }
+
+  const handleDeleteShiftRequest = (shift: DailyShiftView) => {
+    setDeleteShiftTarget(shift)
+  }
+
+  const handleDeleteShiftConfirm = async () => {
+    if (!deleteShiftTarget) return
+
+    setDeletingShiftId(deleteShiftTarget.shiftId)
+
+    try {
+      await shiftApi.deleteShift(deleteShiftTarget.shiftId)
+
+      if (dailyAssignment.shiftId === deleteShiftTarget.shiftId) {
+        closeDailyAssignment()
+      }
+
+      if (editingShift?.shiftId === deleteShiftTarget.shiftId) {
+        setEditingShift(null)
+      }
+
+      success('Shift deleted', `${deleteShiftTarget.shiftName} has been removed.`)
+      reloadCalendarData()
+      setDeleteShiftTarget(null)
+    } catch (deleteError) {
+      console.error('Failed to delete shift:', deleteError)
+      showError('Failed to delete shift', extractBackendMessage(deleteError, 'Please try again.'))
+    } finally {
+      setDeletingShiftId(null)
+    }
   }
 
   const handleUpdateShift = async (values: {
@@ -699,12 +733,13 @@ function ShiftManagement() {
                     assignments={selectedAssignments}
                     shifts={selectedShifts}
                     onCreateAssignment={isStaff || selectedDateIsPast ? undefined : handleOpenQuickAssignModal}
-                    onOpenShiftDetail={isStaff || selectedDateIsPast ? undefined : (shift) => handleOpenShiftDetail(shift.shiftId, shift.workDate)}
                     onEditShift={isStaff ? undefined : handleEditShift}
+                    onDeleteShift={isStaff ? undefined : handleDeleteShiftRequest}
                     onStatusChange={isStaff ? undefined : handleStatusChange}
                     onDeleteAssignment={isStaff ? undefined : handleDeleteRequest}
                     updatingAssignmentId={updatingAssignmentId}
                     deletingAssignmentId={deletingAssignmentId}
+                    deletingShiftId={deletingShiftId}
                   />
                 )}
               </div>
@@ -749,6 +784,14 @@ function ShiftManagement() {
         isDeleting={Boolean(deletingAssignmentId)}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
+      />
+
+      <DeleteShiftDialog
+        isOpen={Boolean(deleteShiftTarget)}
+        shift={deleteShiftTarget}
+        isDeleting={Boolean(deletingShiftId)}
+        onClose={() => setDeleteShiftTarget(null)}
+        onConfirm={handleDeleteShiftConfirm}
       />
 
       <EditShiftModal
