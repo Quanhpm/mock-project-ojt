@@ -60,7 +60,12 @@ const SelectFranchiseGuard = () => {
       clearAdminGlobalModuleState(previousScope);
     }
 
-    if (wasAdminGlobalMode && !isAdminGlobalMode && previousScope === currentAdminGlobalScope) {
+    if (
+      wasAdminGlobalMode &&
+      !isAdminGlobalMode &&
+      previousScope &&
+      previousScope === currentAdminGlobalScope
+    ) {
       resetAdminGlobalFranchiseScope(previousScope);
     }
 

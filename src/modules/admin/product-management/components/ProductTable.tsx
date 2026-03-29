@@ -366,8 +366,8 @@ export default function ProductTable() {
     }
   };
 
-  const handleSearch = async (nextKeyword = searchInput) => {
-    const trimmedKeyword = nextKeyword.trim();
+  const handleSearch = async (nextKeyword?: string) => {
+    const trimmedKeyword = (nextKeyword ?? searchInput).trim();
     setIsSearchDropdownOpen(false);
     setSelectedHistoryIndex(-1);
     setSearchInput(trimmedKeyword);
@@ -1000,7 +1000,9 @@ export default function ProductTable() {
 
                 {/* Search Button */}
                 <button
-                  onClick={handleSearch}
+                  onClick={() => {
+                    void handleSearch();
+                  }}
                   disabled={isLoading}
                   style={{
                     height: "48px",

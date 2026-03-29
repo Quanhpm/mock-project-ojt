@@ -19,6 +19,19 @@ interface FormData {
   is_active: boolean;
 }
 
+const toNumericFranchiseId = (value: string | number | null | undefined) => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === "string") {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+  }
+
+  return 0;
+};
+
 export default function FranchiseEditForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -53,7 +66,7 @@ export default function FranchiseEditForm() {
     if (franchise) {
       const f = franchise;
       setFormData({
-        id: f.id ?? 0,
+        id: toNumericFranchiseId(f.id),
         code: f.code || "",
         name: f.name || "",
         hotline: f.hotline || "",

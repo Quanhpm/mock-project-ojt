@@ -14,7 +14,8 @@ export function usePaymentSuccess() {
     const total = state?.total ?? "";
     const paymentId = state?.paymentId ?? "";
 
-    const { paymentData, userInfo, franchiseName } = usePaymentData(paymentId);
+    const { paymentData, userInfo, orderInfo } = usePaymentData(paymentId);
+    const franchiseName = orderInfo?.franchise_name ?? "";
 
     useEffect(() => {
         if (!showSuccessPopup) return;

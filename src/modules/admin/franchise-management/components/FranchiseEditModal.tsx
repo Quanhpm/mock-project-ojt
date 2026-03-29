@@ -25,6 +25,19 @@ interface FranchiseEditModalProps {
   onSuccess?: () => void;
 }
 
+const toNumericFranchiseId = (value: string | number | null | undefined) => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === "string") {
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : 0;
+  }
+
+  return 0;
+};
+
 export default function FranchiseEditModal({
   isOpen,
   onClose,
@@ -76,7 +89,7 @@ export default function FranchiseEditModal({
     if (franchise && isOpen) {
       const f = franchise;
       setFormData({
-        id: f.id ?? 0,
+        id: toNumericFranchiseId(f.id),
         code: f.code || "",
         name: f.name || "",
         hotline: f.hotline || "",
