@@ -508,7 +508,8 @@ function ShiftManagement() {
 
         if (activeData.type === 'user') {
           const userId = activeData.user.userId
-          const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
+          const shiftGroup = shiftGroupsByDate[workDate]?.find((s) => s.shiftId === shiftId)
+          const assignedIds = shiftGroup?.assignments.map((a) => a.staffId) || []
 
           if (assignedIds.includes(userId)) {
             showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
@@ -539,7 +540,8 @@ function ShiftManagement() {
             return
           }
 
-          const assignedIds = quickAssignAssignedUserIdsByShiftId[shiftId] || []
+          const shiftGroup = shiftGroupsByDate[workDate]?.find((s) => s.shiftId === shiftId)
+          const assignedIds = shiftGroup?.assignments.map((a) => a.staffId) || []
           if (assignedIds.includes(userId)) {
             showWarning('Đã tồn tại', 'Nhân viên này đã được phân công vào ca này.')
             return
