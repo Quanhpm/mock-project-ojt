@@ -127,6 +127,7 @@ export default function PromotionEditModal({
 
   // Format value display based on type
   const formatValueDisplay = (value: number) => {
+    if (value === undefined || value === null) return "";
     if (selectedType === "PERCENT") {
       return value.toString();
     }
