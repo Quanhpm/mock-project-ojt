@@ -13,6 +13,9 @@ import {
   Award,
   CreditCard,
   Truck,
+  TicketCheck,
+  ClipboardList,
+  Monitor,
 } from "lucide-react";
 import React from "react";
 import type { RoleCode } from "@/config/permissions.config";
@@ -191,7 +194,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   {
     label: "Promotions",
     path: ROUTER_URL.ADMIN_ROUTER.PROMOTION,
-    icon: <Ticket size={18} />,
+    icon: <TicketCheck size={18} />,
     component: React.lazy(() => import("@/modules/admin/promotion-management/pages/PromotionListPage")),
     module: "promotions",
   },
@@ -273,7 +276,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   {
     label: "Order Queue",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER_STAFF_QUEUE,
-    icon: <ShoppingCart size={18} />,
+    icon: <ClipboardList size={18} />,
     component: React.lazy(
       () => import("@/modules/admin/order-management/pages/StaffOrderQueuePage"),
     ),
@@ -283,7 +286,7 @@ export const ADMIN_MENU: AdminMenuItem[] = [
   {
     label: "POS",
     path: ROUTER_URL.ADMIN_ROUTER.ORDER_POS,
-    icon: <ShoppingCart size={18} />,
+    icon: <Monitor size={18} />,
     component: React.lazy(() => import("@/modules/admin/order-management/pages/OrderPosPage")),
     module: "orders",
     allowedRoles: ["ADMIN", "MANAGER", "STAFF"],
